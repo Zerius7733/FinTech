@@ -5,7 +5,13 @@ from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import AliasChoices, BaseModel, Field
 
+from backend.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
+from backend.commodity_price_retriever import fetch_commodity_price
 from backend.crypto_price_retriever import fetch_crypto_price
+from backend.services.auth_registry import RegisterConflictError
+from backend.services.auth_registry import RegisterValidationError
+from backend.services.portfolio_selector import get_positions_by_asset_class
+from backend.services.auth_registry import register_login_user
 from backend.services.recommendation import generate_gpt_recommendations
 from backend.services.recommendation import generate_user_recommendations
 from backend.services.wealth_wellness.engine import calculate_user_wellness
@@ -18,6 +24,8 @@ from backend.users_assets_update import update_assets_file
 BASE_DIR = Path(__file__).resolve().parent
 JSON_PATH = BASE_DIR / "json_data" / "user.json"
 CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
+LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
+COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
 
 app = FastAPI(
     title="FinTech Wellness API",
@@ -54,10 +62,10 @@ def _write_users_data(data: Dict[str, Any]) -> None:
 def _parse_market_query(query: str) -> Dict[str, str]:
     parts = [part.strip().upper() for part in query.split(",", maxsplit=1)]
     if len(parts) != 2 or not parts[0] or not parts[1]:
-        raise ValueError("query must be in format 'STOCK, SPY' or 'CRYPTO, BTC'")
+        raise ValueError("query must be in format 'STOCK, SPY', 'CRYPTO, BTC', or 'COMMODITY, GOLD'")
     asset_type, ticker = parts
-    if asset_type not in {"STOCK", "CRYPTO"}:
-        raise ValueError("asset type must be STOCK or CRYPTO")
+    if asset_type not in {"STOCK", "CRYPTO", "COMMODITY"}:
+        raise ValueError("asset type must be STOCK, CRYPTO, or COMMODITY")
     return {"asset_type": asset_type, "ticker": ticker}
 
 
@@ -81,9 +89,33 @@ class UserRiskUpdateRequest(BaseModel):
     )
 
 
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    user_id: str | None = None
+
+
 @app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
+def register_user(payload: RegisterRequest) -> Dict[str, Any]:
+    try:
+        result = register_login_user(
+            login_csv_path=LOGIN_CSV_PATH,
+            username=payload.username,
+            password=payload.password,
+            user_id=payload.user_id,
+        )
+        return {"status": "ok", **result}
+    except RegisterValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RegisterConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
 
 
 @app.get("/users", tags=["Users"], summary="Get all users")
@@ -236,10 +268,13 @@ def update_user_risk_and_recalibrate(payload: UserRiskUpdateRequest) -> Dict[str
 @app.get(
     "/market/quote",
     tags=["Market"],
-    summary="Get quote for STOCK or CRYPTO",
+    summary="Get quote for STOCK, CRYPTO, or COMMODITY",
 )
 def get_market_quote(
-    query: str = Query(..., description="Format: STOCK, SPY or CRYPTO, BTC"),
+    query: str = Query(
+        ...,
+        description="Format: STOCK, SPY or CRYPTO, BTC or COMMODITY, GOLD",
+    ),
 ) -> Dict[str, Any]:
     try:
         parsed = _parse_market_query(query)
@@ -250,12 +285,21 @@ def get_market_quote(
             price = fetch_latest_prices([ticker])[ticker]
             return {"status": "ok", "asset_type": asset_type, "symbol": ticker, "price": price}
 
-        crypto_quote = fetch_crypto_price(ticker)
+        if asset_type == "CRYPTO":
+            crypto_quote = fetch_crypto_price(ticker)
+            return {
+                "status": "ok",
+                "asset_type": asset_type,
+                "symbol": crypto_quote["symbol"],
+                "price": crypto_quote["price"],
+            }
+
+        commodity_quote = fetch_commodity_price(ticker)
         return {
             "status": "ok",
             "asset_type": asset_type,
-            "symbol": crypto_quote["symbol"],
-            "price": crypto_quote["price"],
+            "symbol": commodity_quote["symbol"],
+            "price": commodity_quote["price"],
         }
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -279,6 +323,40 @@ def get_portfolio_by_user_id(user_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read portfolio failed: {exc}") from exc
+
+
+@app.get(
+    "/portfolio/{user_id}/{asset_class}",
+    tags=["Portfolio"],
+    summary="Get portfolio positions by asset class (stocks, cryptos, commodities)",
+)
+def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        bucket, positions = get_positions_by_asset_class(
+            user=user,
+            asset_class=asset_class,
+            commodity_alias_symbols=COMMODITY_ALIAS_TO_SYMBOL.values(),
+            common_commodity_etfs=COMMON_COMMODITY_ETFS,
+        )
+
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "asset_class": bucket,
+            "count": len(positions),
+            "positions": positions,
+        }
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"read asset class failed: {exc}") from exc
 
 
 @app.get("/update/assets", tags=["Updates"], summary="Update users' assets")

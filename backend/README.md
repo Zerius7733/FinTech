@@ -182,3 +182,33 @@ Put your token in either:
    - content: `OPENAI_API_KEY=your_token_here`
 
 The GPT client also checks `backend/.env` for backward compatibility.
+
+## Commodity Support
+
+You can now query commodity prices via:
+
+- `GET /market/quote?query=COMMODITY,%20GOLD`
+- `GET /market/quote?query=COMMODITY,%20SILVER`
+
+Commodity portfolio-only endpoint:
+
+- `GET /portfolio/{user_id}/commodities`
+- `GET /portfolio/{user_id}/cryptos`
+- `GET /portfolio/{user_id}/stocks`
+
+To store commodities in a user portfolio, add positions like:
+
+```json
+{
+  "symbol": "GC=F",
+  "asset_type": "COMMODITY",
+  "qty": 1.5,
+  "avg_price": 2300.0
+}
+```
+
+Supported commodity aliases for quote lookup include:
+
+- `GOLD -> GC=F`
+- `SILVER -> SI=F`
+- `OIL -> CL=F`
