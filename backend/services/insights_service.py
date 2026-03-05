@@ -15,7 +15,6 @@ import pandas as pd
 import yfinance as yf
 
 from backend.services.guardrails.no_advice import validate_text
-
 # ----------------------------
 # Config / Maps
 # ----------------------------
@@ -31,9 +30,23 @@ COMMODITY_TICKER_MAP: Dict[str, Tuple[str, str]] = {
     "NG": ("NG=F", "Natural Gas"),
 }
 
-OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
-OPENAI_MODEL_NEWS = os.getenv("OPENAI_NEWS_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
-OPENAI_MODEL_NARRATIVE = os.getenv("OPENAI_NARRATIVE_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
+OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
+GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+
+def _openrouter_news_model() -> str:
+    _load_env_once()
+    return os.getenv("OPENROUTER_NEWS_MODEL", "perplexity/sonar").strip() or "perplexity/sonar"
+
+
+def _openrouter_narrative_model() -> str:
+    _load_env_once()
+    return os.getenv("OPENROUTER_NARRATIVE_MODEL", "openai/gpt-4o-mini").strip() or "openai/gpt-4o-mini"
+
+
+def _groq_narrative_model() -> str:
+    _load_env_once()
+    return os.getenv("GROQ_NARRATIVE_MODEL", "llama-3.3-70b-versatile").strip() or "llama-3.3-70b-versatile"
 
 
 # ----------------------------
@@ -91,13 +104,32 @@ def _load_env_once() -> None:
     global _ENV_LOADED
     if _ENV_LOADED:
         return
+
+    def _load_dotenv_file(path: Path) -> None:
+        if not path.exists():
+            return
+        try:
+            for raw_line in path.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip("'").strip('"')
+                if key and key not in os.environ:
+                    os.environ[key] = value
+        except Exception:
+            return
+
+    repo_root = Path(__file__).resolve().parents[2]
+    cwd_root = Path.cwd()
     try:
         from dotenv import load_dotenv  # type: ignore
-        repo_root = Path(__file__).resolve().parents[2]
         load_dotenv(repo_root / ".env", override=False)
-        load_dotenv(Path.cwd() / ".env", override=False)
+        load_dotenv(cwd_root / ".env", override=False)
     except Exception:
-        pass
+        _load_dotenv_file(repo_root / ".env")
+        _load_dotenv_file(cwd_root / ".env")
     _ENV_LOADED = True
 
 
@@ -138,6 +170,7 @@ async def _request_json(
     *,
     params: Optional[Dict[str, Any]] = None,
     json_payload: Optional[Dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None,
     timeout: float = 12.0,
     max_retries: int = 2,
 ) -> Dict[str, Any]:
@@ -149,6 +182,7 @@ async def _request_json(
                 url,
                 params=params,
                 json=json_payload,
+                headers=headers,
                 timeout=timeout,
             )
             # Important: show useful error bodies
@@ -368,6 +402,52 @@ def _build_notable_moves(frame: pd.DataFrame) -> List[Dict[str, Any]]:
     return deduped
 
 
+def _build_tldr_and_conclusion(
+    metrics: Dict[str, Any],
+    notable_moves: List[Dict[str, Any]],
+) -> Tuple[List[str], str]:
+    up_moves = [m for m in notable_moves if m.get("tag") == "largest_up_day"]
+    down_moves = [m for m in notable_moves if m.get("tag") == "largest_down_day"]
+    high_vol = [m for m in notable_moves if m.get("tag") == "high_volume_day"]
+
+    top_up = up_moves[0] if up_moves else None
+    top_down = down_moves[0] if down_moves else None
+    top_vol = high_vol[0] if high_vol else None
+
+    return_pct = float(metrics.get("return_pct", 0.0))
+    vol_ann = float(metrics.get("volatility_annualized", 0.0))
+    mdd = float(metrics.get("max_drawdown_pct", 0.0))
+
+    bullet_1 = f"Period return: {return_pct:.2f}% with annualized volatility {vol_ann:.3f}."
+    if top_up and top_down:
+        bullet_2 = (
+            f"Largest up day: {top_up.get('date')} ({float(top_up.get('move_pct', 0.0)):.2f}%), "
+            f"largest down day: {top_down.get('date')} ({float(top_down.get('move_pct', 0.0)):.2f}%)."
+        )
+    else:
+        bullet_2 = f"Maximum drawdown in window: {mdd:.2f}%."
+
+    if top_vol:
+        bullet_3 = (
+            f"Highest volume spike was on {top_vol.get('date')} "
+            f"with volume {int(float(top_vol.get('volume', 0.0))):,}."
+        )
+    else:
+        bullet_3 = f"Volume trend change across window: {float(metrics.get('volume_change_pct', 0.0)):.2f}%."
+
+    if return_pct > 0:
+        trend = "ended higher"
+    elif return_pct < 0:
+        trend = "ended lower"
+    else:
+        trend = "ended flat"
+    conclusion = (
+        f"Over this period, the asset {trend} ({return_pct:.2f}%) with peak drawdown of {mdd:.2f}%, "
+        "indicating meaningful price swings during the window."
+    )
+    return [bullet_1, bullet_2, bullet_3], conclusion
+
+
 # ----------------------------
 # OpenAI Web Search (drivers)
 # ----------------------------
@@ -397,7 +477,7 @@ def _news_queries(asset_type: str, symbol: str, name: str, move_date: str) -> Li
         base = f"{symbol} {name} commodity".strip()
 
     # Keep queries short; date window helps recency.
-    return [f"{base} {kw} {start}..{end}" for kw in keywords[:4]]
+    return [f"{base} {kw} around {dt.isoformat()}" for kw in keywords[:4]]
 
 
 def _extract_json_object(text: str) -> Dict[str, Any]:
@@ -425,10 +505,12 @@ def _extract_json_object(text: str) -> Dict[str, Any]:
 
 
 def _responses_extract_text(resp_json: Dict[str, Any]) -> str:
-    """
-    Best-effort extraction of model text from Responses API payload.
-    """
-    # Some SDKs expose response.output_text; raw HTTP returns 'output' items.
+    # 1) Try "output_text" convenience if present (some SDKs / responses include it)
+    ot = resp_json.get("output_text")
+    if isinstance(ot, str) and ot.strip():
+        return ot.strip()
+
+    # 2) Standard "output" list
     output = resp_json.get("output", [])
     if not isinstance(output, list):
         return ""
@@ -437,105 +519,218 @@ def _responses_extract_text(resp_json: Dict[str, Any]) -> str:
     for item in output:
         if not isinstance(item, dict):
             continue
-        if item.get("type") != "message":
+
+        # Sometimes text is nested directly
+        if isinstance(item.get("text"), str) and item["text"].strip():
+            chunks.append(item["text"].strip())
             continue
-        content = item.get("content", [])
+
+        # Messages contain content parts
+        content = item.get("content")
         if not isinstance(content, list):
             continue
         for part in content:
             if not isinstance(part, dict):
                 continue
-            # observed types include: "output_text" / "text"
-            if part.get("type") in {"output_text", "text"}:
-                t = part.get("text")
-                if isinstance(t, str) and t.strip():
-                    chunks.append(t.strip())
+            # common part types: output_text, text
+            t = part.get("text")
+            if isinstance(t, str) and t.strip():
+                chunks.append(t.strip())
+
     return "\n".join(chunks).strip()
 
 
+def _chat_completion_extract_text(resp_json: Dict[str, Any]) -> str:
+    choices = resp_json.get("choices", [])
+    if not isinstance(choices, list) or not choices:
+        return ""
+    first = choices[0]
+    if not isinstance(first, dict):
+        return ""
+    message = first.get("message", {})
+    if not isinstance(message, dict):
+        return ""
+    content = message.get("content", "")
+    if isinstance(content, str):
+        return content.strip()
+    return ""
+
+
+def _extract_openai_web_results(resp_json: Dict[str, Any]) -> List[Dict[str, Any]]:
+    results: List[Dict[str, Any]] = []
+    seen_urls = set()
+
+    def _add_row(headline: str, url: str, source: str = "", published: str = "") -> None:
+        h = str(headline or "").strip()
+        u = str(url or "").strip()
+        s = str(source or "").strip()
+        p = str(published or "").strip()
+        if not h or not u or u in seen_urls:
+            return
+        seen_urls.add(u)
+        results.append({"headline": h, "source": s, "url": u, "published_at": p})
+
+    output = resp_json.get("output", [])
+    if isinstance(output, list):
+        for item in output:
+            if not isinstance(item, dict):
+                continue
+
+            if item.get("type") == "web_search_call":
+                tool_results = item.get("results", [])
+                if isinstance(tool_results, list):
+                    for r in tool_results:
+                        if not isinstance(r, dict):
+                            continue
+                        _add_row(
+                            headline=r.get("title", ""),
+                            url=r.get("url", ""),
+                            source=r.get("source", ""),
+                            published=r.get("published_date", ""),
+                        )
+
+                action = item.get("action", {})
+                if isinstance(action, dict):
+                    sources = action.get("sources", [])
+                    if isinstance(sources, list):
+                        for s in sources:
+                            if not isinstance(s, dict):
+                                continue
+                            _add_row(
+                                headline=s.get("title", ""),
+                                url=s.get("url", ""),
+                                source=s.get("source", ""),
+                                published=s.get("published_date", ""),
+                            )
+
+            content = item.get("content", [])
+            if isinstance(content, list):
+                for part in content:
+                    if not isinstance(part, dict):
+                        continue
+                    annotations = part.get("annotations", [])
+                    if not isinstance(annotations, list):
+                        continue
+                    for ann in annotations:
+                        if not isinstance(ann, dict):
+                            continue
+                        _add_row(
+                            headline=ann.get("title", "") or ann.get("text", "") or "News item",
+                            url=ann.get("url", ""),
+                            source=ann.get("source", ""),
+                            published=ann.get("published_date", ""),
+                        )
+    return results
+
+
+def _fetch_yfinance_news(symbol: str, max_items: int = 10) -> List[Dict[str, Any]]:
+    out: List[Dict[str, Any]] = []
+    try:
+        ticker = yf.Ticker(symbol)
+        items = ticker.news or []
+    except Exception:
+        return out
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title", "")).strip()
+        url = str(item.get("link", "")).strip()
+        source = str(item.get("publisher", "")).strip()
+        ts = item.get("providerPublishTime")
+        published = ""
+        if isinstance(ts, (int, float)) and ts > 0:
+            published = datetime.fromtimestamp(float(ts), tz=timezone.utc).date().isoformat()
+        if title and url:
+            out.append(
+                {
+                    "headline": title,
+                    "source": source,
+                    "url": url,
+                    "published_at": published,
+                }
+            )
+        if len(out) >= max_items:
+            break
+    return out
+
 async def _openai_web_search_news(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
-    """
-    Use OpenAI Responses API with the web_search tool to retrieve recent news results.
-    Requires only OPENAI_API_KEY.
-    """
     cached = NEWS_CACHE.get(query)
     if cached is not None:
         return cached.get("results", [])
 
     _load_env_once()
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    if not api_key:
+    openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+    if not openrouter_api_key:
         NEWS_CACHE.set(query, {"results": []})
         return []
 
     system_prompt = (
-        "You are a news retriever. Use the web search tool to find recent relevant news. "
-        "Return ONLY JSON. No commentary."
+        "You are a market news retriever. Return only JSON object with key 'results'. "
+        "results must be an array of up to 5 objects with keys: headline, source, url, published_at. "
+        "Use only real web sources. If unavailable, return {\"results\": []}."
     )
-    user_prompt = (
-        "Search the web for recent news relevant to this query:\n"
-        f"{query}\n\n"
-        "Return JSON with shape:\n"
-        "{"
-        '"results": ['
-        '{"headline": "...", "source": "...", "url": "...", "published_at": "YYYY-MM-DD"},'
-        "...]"
-        "}\n"
-        "Rules:\n"
-        "- Max 5 results\n"
-        "- Prefer credible outlets\n"
-        "- If date unknown, use empty string for published_at\n"
-    )
-
     payload = {
-        "model": OPENAI_MODEL_NEWS,
-        "input": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "tools": [{"type": "web_search", "search_context_size": "low"}],
-        # Include web search sources in the response payload (useful for debugging / auditing)
-        "include": ["web_search_call.action.sources", "web_search_call.results"],
+        "model": _openrouter_news_model(),
         "temperature": 0.0,
+        "response_format": {"type": "json_object"},
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Query: {query}"},
+        ],
     }
 
     resp_json = await _request_json(
         client,
         "POST",
-        OPENAI_RESPONSES_URL,
+        OPENROUTER_CHAT_URL,
         json_payload=payload,
+        headers={
+            "Authorization": f"Bearer {openrouter_api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "http://localhost:8000"),
+            "X-Title": os.getenv("OPENROUTER_APP_NAME", "FinTech Insights API"),
+        },
         timeout=20.0,
         max_retries=1,
     )
+    if os.getenv("NEWS_DEBUG", "").strip() == "1":
+        Path("openrouter_news_debug.json").write_text(
+            json.dumps(resp_json, indent=2)[:300000],
+            encoding="utf-8"
+        )
 
-    text = _responses_extract_text(resp_json)
-    obj = _extract_json_object(text)
-    raw = obj.get("results", [])
+    text = _chat_completion_extract_text(resp_json)
+    parsed = _extract_json_object(text)
+    results_raw = parsed.get("results", []) if isinstance(parsed, dict) else []
     results: List[Dict[str, Any]] = []
-    if isinstance(raw, list):
-        for item in raw[:5]:
-            if not isinstance(item, dict):
+    if isinstance(results_raw, list):
+        for row in results_raw[:10]:
+            if not isinstance(row, dict):
                 continue
-            headline = str(item.get("headline", "")).strip()
-            url = str(item.get("url", "")).strip()
-            source = str(item.get("source", "")).strip()
-            published_at = str(item.get("published_at", "")).strip()
-            if headline and url:
+            title = str(row.get("headline", "")).strip()
+            url = str(row.get("url", "")).strip()
+            source = str(row.get("source", "")).strip()
+            published = str(row.get("published_at", "")).strip()
+            if title and url:
                 results.append(
                     {
-                        "headline": headline,
+                        "headline": title,
                         "source": source,
                         "url": url,
-                        "published_at": published_at,
+                        "published_at": published,
                     }
                 )
 
     NEWS_CACHE.set(query, {"results": results})
     return results
 
-
 async def _build_drivers(
-    client: httpx.AsyncClient, asset_type: str, symbol: str, name: str, notable_moves: List[Dict[str, Any]]
+    client: httpx.AsyncClient,
+    asset_type: str,
+    symbol: str,
+    name: str,
+    notable_moves: List[Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
     urls_seen = set()
     drivers: List[Dict[str, Any]] = []
@@ -567,9 +762,30 @@ async def _build_drivers(
                 if len(drivers) >= 15:
                     return drivers
 
+    if drivers:
+        return drivers
+
+    if asset_type == "stock":
+        fallback = _fetch_yfinance_news(symbol=symbol, max_items=10)
+        for row in fallback:
+            url = str(row.get("url", "")).strip()
+            if not url or url in urls_seen:
+                continue
+            urls_seen.add(url)
+            published = str(row.get("published_at", "")).strip()
+            date_value = published[:10] if published else _now_utc_date().isoformat()
+            drivers.append(
+                {
+                    "date": date_value,
+                    "headline": str(row.get("headline", "")).strip(),
+                    "source": str(row.get("source", "")).strip(),
+                    "url": url,
+                }
+            )
+            if len(drivers) >= 15:
+                break
+
     return drivers
-
-
 # ----------------------------
 # Narrative (LLM, grounded, no-advice)
 # ----------------------------
@@ -587,11 +803,12 @@ async def _generate_narrative_with_llm(
     It must cite only provided drivers by URL and must pass validate_text().
     """
     _load_env_once()
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    if not api_key:
+    openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+    groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
+    if not openrouter_api_key and not groq_api_key:
         if not drivers:
             return "No major news items retrieved in this window. Narrative based on metrics only.", []
-        return "Narrative unavailable because OPENAI_API_KEY is not set.", []
+        return "Narrative unavailable because no LLM provider key is set.", []
 
     system_base = (
         "You are a financial market activity explainer. "
@@ -612,10 +829,34 @@ async def _generate_narrative_with_llm(
         ),
     }
 
-    async def _call_model(system_prompt: str) -> Dict[str, Any]:
+    async def _call_model(
+        system_prompt: str,
+        *,
+        provider: str,
+    ) -> Dict[str, Any]:
+        if provider == "openrouter":
+            endpoint = OPENROUTER_CHAT_URL
+            key = openrouter_api_key
+            model = _openrouter_narrative_model()
+            headers = {
+                "Authorization": f"Bearer {key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "http://localhost:8000"),
+                "X-Title": os.getenv("OPENROUTER_APP_NAME", "FinTech Insights API"),
+            }
+        else:
+            endpoint = GROQ_CHAT_URL
+            key = groq_api_key
+            model = _groq_narrative_model()
+            headers = {
+                "Authorization": f"Bearer {key}",
+                "Content-Type": "application/json",
+            }
+
         payload = {
-            "model": OPENAI_MODEL_NARRATIVE,
-            "input": [
+            "model": model,
+            "response_format": {"type": "json_object"},
+            "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": json.dumps(user_payload)},
             ],
@@ -624,12 +865,13 @@ async def _generate_narrative_with_llm(
         resp_json = await _request_json(
             client,
             "POST",
-            OPENAI_RESPONSES_URL,
+            endpoint,
             json_payload=payload,
+            headers=headers,
             timeout=timeout_seconds,
             max_retries=1,
         )
-        text = _responses_extract_text(resp_json)
+        text = _chat_completion_extract_text(resp_json)
         return _extract_json_object(text)
 
     def _metrics_only_fallback() -> str:
@@ -642,13 +884,38 @@ async def _generate_narrative_with_llm(
         )
 
     try:
-        parsed = await _call_model(system_base)
+        providers = []
+        if openrouter_api_key:
+            providers.append("openrouter")
+        if groq_api_key:
+            providers.append("groq")
+
+        parsed: Dict[str, Any] = {}
+        for provider in providers:
+            try:
+                parsed = await _call_model(system_base, provider=provider)
+                if parsed:
+                    break
+            except Exception:
+                continue
         narrative = str(parsed.get("narrative", "")).strip()
+        if not narrative and not parsed:
+            if not drivers:
+                return _metrics_only_fallback(), []
+            return "Unable to generate narrative without violating no-advice constraints.", []
 
         ok, _reasons = validate_text(narrative)
         if not ok:
             strict_prompt = system_base + "\nIf you might violate the forbidden list, output an empty narrative."
-            parsed = await _call_model(strict_prompt)
+            strict_parsed: Dict[str, Any] = {}
+            for provider in providers:
+                try:
+                    strict_parsed = await _call_model(strict_prompt, provider=provider)
+                    if strict_parsed:
+                        break
+                except Exception:
+                    continue
+            parsed = strict_parsed or parsed
             narrative = str(parsed.get("narrative", "")).strip()
             ok, _reasons = validate_text(narrative)
             if not ok or not narrative:
@@ -687,6 +954,7 @@ async def _generate_narrative_with_llm(
 # ----------------------------
 
 async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str, Any]:
+    _load_env_once()
     atype = _normalize_type(asset_type)
     sym = _normalize_symbol(symbol)
 
@@ -700,13 +968,7 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
 
     start, end = _period_window(months)
 
-    async with httpx.AsyncClient(
-        headers={
-            # Put Authorization here so both web_search and narrative calls share it
-            "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY','').strip()}",
-            "Content-Type": "application/json",
-        }
-    ) as client:
+    async with httpx.AsyncClient() as client:
         # Price series
         if atype == "stock":
             price_series = await asyncio.to_thread(_fetch_stock_history, sym, start, end)
@@ -727,6 +989,7 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
 
     if not drivers and narrative.strip() == "":
         narrative = "No major news items retrieved in this window. Narrative based on metrics only."
+    tldr, conclusion = _build_tldr_and_conclusion(metrics, notable_moves)
 
     result = {
         "type": atype,
@@ -741,6 +1004,9 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
         "notable_moves": notable_moves,
         "drivers": drivers,
         "narrative": narrative,
+        "tldr": tldr,
+        "conclusion": conclusion,
+        "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
         "citations": citations,
         "warnings": ["Informational only. No investment recommendation."],
     }

@@ -110,6 +110,9 @@ class InsightsResponse(BaseModel):
     notable_moves: list[Dict[str, Any]]
     drivers: list[Dict[str, Any]]
     narrative: str
+    tldr: list[str]
+    conclusion: str
+    disclaimer: str
     citations: list[Dict[str, Any]]
     warnings: list[str]
 
@@ -184,6 +187,9 @@ class InsightsResponse(BaseModel):
     notable_moves: list[Dict[str, Any]]
     drivers: list[Dict[str, Any]]
     narrative: str
+    tldr: list[str]
+    conclusion: str
+    disclaimer: str
     citations: list[Dict[str, Any]]
     warnings: list[str]
 
