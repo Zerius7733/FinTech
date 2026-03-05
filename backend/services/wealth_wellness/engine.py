@@ -5,6 +5,7 @@ from backend.services.wealth_wellness.debt_income_metric import calculate_debt_i
 from backend.services.wealth_wellness.diversification_metric import calculate_diversification_metric
 from backend.services.wealth_wellness.liquidity_metric import calculate_liquidity_metric
 from backend.services.wealth_wellness.score import calculate_financial_wellness_score
+from backend.services.wealth_wellness.stress_index import calculate_financial_stress_index
 
 
 def calculate_user_wellness(user: Dict[str, Any]) -> Dict[str, Any]:
@@ -14,9 +15,11 @@ def calculate_user_wellness(user: Dict[str, Any]) -> Dict[str, Any]:
 
     metrics = {**liquidity, **diversification, **debt_income}
     score = calculate_financial_wellness_score(metrics)
+    stress_index = calculate_financial_stress_index(metrics)
     return {
         "wellness_metrics": metrics,
         "financial_wellness_score": score,
+        "financial_stress_index": stress_index,
     }
 
 
@@ -33,6 +36,7 @@ def update_wellness_file(json_path: str = "json_data/user.json") -> Dict[str, An
         result = calculate_user_wellness(user)
         user["wellness_metrics"] = result["wellness_metrics"]
         user["financial_wellness_score"] = result["financial_wellness_score"]
+        user["financial_stress_index"] = result["financial_stress_index"]
         results[user_id] = result
 
     with open(json_path, "w", encoding="utf-8") as f:
