@@ -2,11 +2,12 @@ import asyncio
 import json
 import math
 import os
+import re
 import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 import numpy as np
@@ -15,8 +16,11 @@ import yfinance as yf
 
 from backend.services.guardrails.no_advice import validate_text
 
+# ----------------------------
+# Config / Maps
+# ----------------------------
 
-COMMODITY_TICKER_MAP = {
+COMMODITY_TICKER_MAP: Dict[str, Tuple[str, str]] = {
     "XAU": ("GC=F", "Gold"),
     "GOLD": ("GC=F", "Gold"),
     "XAG": ("SI=F", "Silver"),
@@ -27,6 +31,14 @@ COMMODITY_TICKER_MAP = {
     "NG": ("NG=F", "Natural Gas"),
 }
 
+OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
+OPENAI_MODEL_NEWS = os.getenv("OPENAI_NEWS_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
+OPENAI_MODEL_NARRATIVE = os.getenv("OPENAI_NARRATIVE_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
+
+
+# ----------------------------
+# Simple TTL Cache
+# ----------------------------
 
 class TTLCache:
     def __init__(self, ttl_seconds: int) -> None:
@@ -52,6 +64,10 @@ NEWS_CACHE = TTLCache(ttl_seconds=1800)
 _ENV_LOADED = False
 
 
+# ----------------------------
+# Types / Errors
+# ----------------------------
+
 class InsightError(Exception):
     def __init__(self, message: str, status_code: int = 500) -> None:
         super().__init__(message)
@@ -67,13 +83,16 @@ class PriceSeries:
     source: str
 
 
+# ----------------------------
+# Env loading
+# ----------------------------
+
 def _load_env_once() -> None:
     global _ENV_LOADED
     if _ENV_LOADED:
         return
     try:
         from dotenv import load_dotenv  # type: ignore
-
         repo_root = Path(__file__).resolve().parents[2]
         load_dotenv(repo_root / ".env", override=False)
         load_dotenv(Path.cwd() / ".env", override=False)
@@ -81,6 +100,10 @@ def _load_env_once() -> None:
         pass
     _ENV_LOADED = True
 
+
+# ----------------------------
+# Helpers
+# ----------------------------
 
 def _now_utc_date() -> date:
     return datetime.now(timezone.utc).date()
@@ -115,7 +138,7 @@ async def _request_json(
     *,
     params: Optional[Dict[str, Any]] = None,
     json_payload: Optional[Dict[str, Any]] = None,
-    timeout: float = 8.0,
+    timeout: float = 12.0,
     max_retries: int = 2,
 ) -> Dict[str, Any]:
     last_exc: Optional[Exception] = None
@@ -128,8 +151,15 @@ async def _request_json(
                 json=json_payload,
                 timeout=timeout,
             )
-            response.raise_for_status()
+            # Important: show useful error bodies
+            if response.status_code >= 400:
+                raise InsightError(
+                    f"HTTP {response.status_code} from {url}: {response.text[:2000]}",
+                    status_code=502,
+                )
             return response.json()
+        except InsightError:
+            raise
         except Exception as exc:
             last_exc = exc
             if attempt >= max_retries:
@@ -158,6 +188,10 @@ def _normalize_yf_frame(df: pd.DataFrame) -> pd.DataFrame:
     out.index = pd.to_datetime(out.index)
     return out.sort_index()
 
+
+# ----------------------------
+# Price history fetchers
+# ----------------------------
 
 def _fetch_stock_history(symbol: str, start: date, end: date) -> PriceSeries:
     df = yf.download(symbol, start=str(start), end=str(end + timedelta(days=1)), interval="1d", progress=False)
@@ -241,9 +275,14 @@ def _fetch_commodity_history(symbol: str, start: date, end: date) -> PriceSeries
     return PriceSeries(symbol=symbol, name=display_name, category="commodity", frame=frame, source="yfinance")
 
 
+# ----------------------------
+# Analytics
+# ----------------------------
+
 def _compute_metrics(frame: pd.DataFrame) -> Dict[str, Any]:
     close = frame["close"].astype(float)
     returns = close.pct_change().dropna()
+
     start_price = float(close.iloc[0])
     end_price = float(close.iloc[-1])
     return_pct = ((end_price / start_price) - 1.0) * 100.0 if start_price else 0.0
@@ -289,7 +328,7 @@ def _build_notable_moves(frame: pd.DataFrame) -> List[Dict[str, Any]]:
                     "date": idx.date().isoformat(),
                     "move_pct": round(float(work.at[idx, "move_pct"]), 4),
                     "close": round(float(work.at[idx, "close"]), 4),
-                    "volume": float(work.at[idx, "volume"]) if not math.isnan(float(work.at[idx, "volume"])) else 0.0,
+                    "volume": float(work.at[idx, "volume"]) if pd.notna(work.at[idx, "volume"]) else 0.0,
                     "tag": "largest_up_day",
                 }
             )
@@ -299,7 +338,7 @@ def _build_notable_moves(frame: pd.DataFrame) -> List[Dict[str, Any]]:
                     "date": idx.date().isoformat(),
                     "move_pct": round(float(work.at[idx, "move_pct"]), 4),
                     "close": round(float(work.at[idx, "close"]), 4),
-                    "volume": float(work.at[idx, "volume"]) if not math.isnan(float(work.at[idx, "volume"])) else 0.0,
+                    "volume": float(work.at[idx, "volume"]) if pd.notna(work.at[idx, "volume"]) else 0.0,
                     "tag": "largest_down_day",
                 }
             )
@@ -307,7 +346,7 @@ def _build_notable_moves(frame: pd.DataFrame) -> List[Dict[str, Any]]:
     vol = work["volume"].dropna()
     if len(vol) > 0:
         for idx in vol.nlargest(2).index:
-            move_pct = float(work.at[idx, "move_pct"]) if idx in work.index and pd.notna(work.at[idx, "move_pct"]) else 0.0
+            move_pct = float(work.at[idx, "move_pct"]) if pd.notna(work.at[idx, "move_pct"]) else 0.0
             out.append(
                 {
                     "date": idx.date().isoformat(),
@@ -318,7 +357,6 @@ def _build_notable_moves(frame: pd.DataFrame) -> List[Dict[str, Any]]:
                 }
             )
 
-    # Dedupe exact tag+date and keep stable order.
     seen = set()
     deduped: List[Dict[str, Any]] = []
     for row in out:
@@ -330,64 +368,170 @@ def _build_notable_moves(frame: pd.DataFrame) -> List[Dict[str, Any]]:
     return deduped
 
 
+# ----------------------------
+# OpenAI Web Search (drivers)
+# ----------------------------
+
 def _news_queries(asset_type: str, symbol: str, name: str, move_date: str) -> List[str]:
     dt = date.fromisoformat(move_date)
     start = (dt - timedelta(days=3)).isoformat()
     end = (dt + timedelta(days=3)).isoformat()
+
     keywords = [
         "earnings",
         "guidance",
+        "SEC",
         "lawsuit",
         "rate decision",
         "ETF",
         "hack",
-        "upgrade",
-        "downgrade",
         "regulation",
         "OPEC",
+        "supply",
     ]
-    return [f"{asset_type} {symbol} {name} {kw} {start} to {end}" for kw in keywords[:3]]
+
+    base = f"{symbol} {name}".strip()
+    if asset_type == "crypto":
+        base = f"{symbol} {name} crypto".strip()
+    if asset_type == "commodity":
+        base = f"{symbol} {name} commodity".strip()
+
+    # Keep queries short; date window helps recency.
+    return [f"{base} {kw} {start}..{end}" for kw in keywords[:4]]
 
 
-async def _fetch_news_for_query(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
+def _extract_json_object(text: str) -> Dict[str, Any]:
+    """
+    Extract a JSON object from text safely.
+    Handles cases where model returns extra text around JSON.
+    """
+    text = text.strip()
+    if not text:
+        return {}
+    # Fast path
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+
+    # Try to find first {...} block
+    m = re.search(r"\{.*\}", text, flags=re.DOTALL)
+    if not m:
+        return {}
+    try:
+        return json.loads(m.group(0))
+    except Exception:
+        return {}
+
+
+def _responses_extract_text(resp_json: Dict[str, Any]) -> str:
+    """
+    Best-effort extraction of model text from Responses API payload.
+    """
+    # Some SDKs expose response.output_text; raw HTTP returns 'output' items.
+    output = resp_json.get("output", [])
+    if not isinstance(output, list):
+        return ""
+
+    chunks: List[str] = []
+    for item in output:
+        if not isinstance(item, dict):
+            continue
+        if item.get("type") != "message":
+            continue
+        content = item.get("content", [])
+        if not isinstance(content, list):
+            continue
+        for part in content:
+            if not isinstance(part, dict):
+                continue
+            # observed types include: "output_text" / "text"
+            if part.get("type") in {"output_text", "text"}:
+                t = part.get("text")
+                if isinstance(t, str) and t.strip():
+                    chunks.append(t.strip())
+    return "\n".join(chunks).strip()
+
+
+async def _openai_web_search_news(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
+    """
+    Use OpenAI Responses API with the web_search tool to retrieve recent news results.
+    Requires only OPENAI_API_KEY.
+    """
     cached = NEWS_CACHE.get(query)
     if cached is not None:
         return cached.get("results", [])
 
     _load_env_once()
-    api_key = os.getenv("SEARCH_API_KEY", "").strip()
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
         NEWS_CACHE.set(query, {"results": []})
         return []
 
-    payload = await _request_json(
+    system_prompt = (
+        "You are a news retriever. Use the web search tool to find recent relevant news. "
+        "Return ONLY JSON. No commentary."
+    )
+    user_prompt = (
+        "Search the web for recent news relevant to this query:\n"
+        f"{query}\n\n"
+        "Return JSON with shape:\n"
+        "{"
+        '"results": ['
+        '{"headline": "...", "source": "...", "url": "...", "published_at": "YYYY-MM-DD"},'
+        "...]"
+        "}\n"
+        "Rules:\n"
+        "- Max 5 results\n"
+        "- Prefer credible outlets\n"
+        "- If date unknown, use empty string for published_at\n"
+    )
+
+    payload = {
+        "model": OPENAI_MODEL_NEWS,
+        "input": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "tools": [{"type": "web_search", "search_context_size": "low"}],
+        # Include web search sources in the response payload (useful for debugging / auditing)
+        "include": ["web_search_call.action.sources", "web_search_call.results"],
+        "temperature": 0.0,
+    }
+
+    resp_json = await _request_json(
         client,
         "POST",
-        "https://api.tavily.com/search",
-        json_payload={
-            "api_key": api_key,
-            "query": query,
-            "max_results": 5,
-            "search_depth": "basic",
-            "include_answer": False,
-            "include_images": False,
-        },
+        OPENAI_RESPONSES_URL,
+        json_payload=payload,
+        timeout=20.0,
+        max_retries=1,
     )
-    results = payload.get("results", [])
-    if not isinstance(results, list):
-        results = []
-    normalized: List[Dict[str, Any]] = []
-    for item in results:
-        normalized.append(
-            {
-                "headline": item.get("title", ""),
-                "source": item.get("source", ""),
-                "url": item.get("url", ""),
-                "published_at": item.get("published_date", ""),
-            }
-        )
-    NEWS_CACHE.set(query, {"results": normalized})
-    return normalized
+
+    text = _responses_extract_text(resp_json)
+    obj = _extract_json_object(text)
+    raw = obj.get("results", [])
+    results: List[Dict[str, Any]] = []
+    if isinstance(raw, list):
+        for item in raw[:5]:
+            if not isinstance(item, dict):
+                continue
+            headline = str(item.get("headline", "")).strip()
+            url = str(item.get("url", "")).strip()
+            source = str(item.get("source", "")).strip()
+            published_at = str(item.get("published_at", "")).strip()
+            if headline and url:
+                results.append(
+                    {
+                        "headline": headline,
+                        "source": source,
+                        "url": url,
+                        "published_at": published_at,
+                    }
+                )
+
+    NEWS_CACHE.set(query, {"results": results})
+    return results
 
 
 async def _build_drivers(
@@ -395,18 +539,22 @@ async def _build_drivers(
 ) -> List[Dict[str, Any]]:
     urls_seen = set()
     drivers: List[Dict[str, Any]] = []
+
     for move in notable_moves:
         move_date = move["date"]
         queries = _news_queries(asset_type, symbol, name, move_date)
+
         for query in queries:
-            results = await _fetch_news_for_query(client, query)
+            results = await _openai_web_search_news(client, query)
             for row in results:
                 url = str(row.get("url", "")).strip()
                 if not url or url in urls_seen:
                     continue
                 urls_seen.add(url)
+
                 published = str(row.get("published_at", "")).strip()
                 date_value = published[:10] if published else move_date
+
                 drivers.append(
                     {
                         "date": date_value,
@@ -415,18 +563,29 @@ async def _build_drivers(
                         "url": url,
                     }
                 )
+
                 if len(drivers) >= 15:
                     return drivers
+
     return drivers
 
 
+# ----------------------------
+# Narrative (LLM, grounded, no-advice)
+# ----------------------------
+
 async def _generate_narrative_with_llm(
+    client: httpx.AsyncClient,
     metrics: Dict[str, Any],
     notable_moves: List[Dict[str, Any]],
     drivers: List[Dict[str, Any]],
     *,
-    timeout_seconds: float = 12.0,
+    timeout_seconds: float = 20.0,
 ) -> Tuple[str, List[Dict[str, Any]]]:
+    """
+    Uses Responses API (no tool needed here) to produce a grounded narrative.
+    It must cite only provided drivers by URL and must pass validate_text().
+    """
     _load_env_once()
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
@@ -435,39 +594,43 @@ async def _generate_narrative_with_llm(
         return "Narrative unavailable because OPENAI_API_KEY is not set.", []
 
     system_base = (
-        "You are a financial market explainer. Use only provided data. "
-        "Do not provide investment advice, recommendations, directives, or target prices. "
-        "Forbidden: buy/sell/hold/should/recommend/opportunity/undervalued/overvalued."
+        "You are a financial market activity explainer. "
+        "Use ONLY the provided metrics, notable_moves, and drivers. "
+        "Do not provide investment advice or recommendations.\n"
+        "Forbidden words/phrases: buy, sell, hold, should, recommend, opportunity, undervalued, overvalued, target price.\n"
+        "Write neutral descriptive language only."
     )
+
     user_payload = {
         "metrics": metrics,
         "notable_moves": notable_moves,
         "drivers": drivers,
-        "task": "Return strict JSON with keys: narrative, selected_driver_urls, citation_map. "
-        "Keep narrative neutral and descriptive.",
+        "task": (
+            "Return STRICT JSON only with keys: "
+            "narrative (string), selected_driver_urls (array of urls you used, subset of drivers), citation_map (object id->url). "
+            "Narrative should be concise (5-10 sentences), mention notable dates/moves, and cite with [1], [2] etc that map to citation_map."
+        ),
     }
 
     async def _call_model(system_prompt: str) -> Dict[str, Any]:
-        async with httpx.AsyncClient() as client:
-            payload = {
-                "model": "gpt-4.1-mini",
-                "temperature": 0.1,
-                "response_format": {"type": "json_object"},
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": json.dumps(user_payload)},
-                ],
-            }
-            response = await client.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json=payload,
-                timeout=timeout_seconds,
-            )
-            response.raise_for_status()
-            body = response.json()
-            content = body["choices"][0]["message"]["content"]
-            return json.loads(content)
+        payload = {
+            "model": OPENAI_MODEL_NARRATIVE,
+            "input": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": json.dumps(user_payload)},
+            ],
+            "temperature": 0.1,
+        }
+        resp_json = await _request_json(
+            client,
+            "POST",
+            OPENAI_RESPONSES_URL,
+            json_payload=payload,
+            timeout=timeout_seconds,
+            max_retries=1,
+        )
+        text = _responses_extract_text(resp_json)
+        return _extract_json_object(text)
 
     def _metrics_only_fallback() -> str:
         return (
@@ -481,44 +644,52 @@ async def _generate_narrative_with_llm(
     try:
         parsed = await _call_model(system_base)
         narrative = str(parsed.get("narrative", "")).strip()
-        ok, _ = validate_text(narrative)
+
+        ok, _reasons = validate_text(narrative)
         if not ok:
-            strict_prompt = system_base + " If any forbidden language appears, output empty narrative."
+            strict_prompt = system_base + "\nIf you might violate the forbidden list, output an empty narrative."
             parsed = await _call_model(strict_prompt)
             narrative = str(parsed.get("narrative", "")).strip()
-            ok, _ = validate_text(narrative)
+            ok, _reasons = validate_text(narrative)
             if not ok or not narrative:
-                return (
-                    "Unable to generate narrative without violating no-advice constraints.",
-                    [],
-                )
+                return "Unable to generate narrative without violating no-advice constraints.", []
 
         selected_urls = parsed.get("selected_driver_urls", [])
         if not isinstance(selected_urls, list):
             selected_urls = []
         selected_urls = [str(u).strip() for u in selected_urls if str(u).strip()]
-        selected_set = set(selected_urls)
+
+        # Build citations (id -> url) in the order the model selected
         citations: List[Dict[str, Any]] = []
-        if selected_set:
-            idx = 1
-            for url in selected_urls:
-                citations.append({"id": idx, "url": url})
-                idx += 1
+        idx = 1
+        for url in selected_urls:
+            citations.append({"id": idx, "url": url})
+            idx += 1
+
+        # If there were no drivers at all, ensure narrative is metrics-based
+        if not drivers and not narrative:
+            return _metrics_only_fallback(), []
+
         return narrative, citations
+
+    except InsightError:
+        raise
     except httpx.TimeoutException:
-        return (
-            "Narrative generation timed out. Returning computed metrics and retrieved drivers only.",
-            [],
-        )
+        return "Narrative generation timed out. Returning computed metrics and retrieved drivers only.", []
     except Exception:
         if not drivers:
             return _metrics_only_fallback(), []
         return "Unable to generate narrative without violating no-advice constraints.", []
 
 
+# ----------------------------
+# Public function
+# ----------------------------
+
 async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str, Any]:
     atype = _normalize_type(asset_type)
     sym = _normalize_symbol(symbol)
+
     if months <= 0 or months > 24:
         raise InsightError("months must be between 1 and 24", status_code=400)
 
@@ -528,7 +699,15 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
         return cached
 
     start, end = _period_window(months)
-    async with httpx.AsyncClient() as client:
+
+    async with httpx.AsyncClient(
+        headers={
+            # Put Authorization here so both web_search and narrative calls share it
+            "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY','').strip()}",
+            "Content-Type": "application/json",
+        }
+    ) as client:
+        # Price series
         if atype == "stock":
             price_series = await asyncio.to_thread(_fetch_stock_history, sym, start, end)
         elif atype == "crypto":
@@ -539,9 +718,13 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
         frame = price_series.frame
         metrics = _compute_metrics(frame)
         notable_moves = _build_notable_moves(frame)
+
+        # Drivers via OpenAI web_search tool
         drivers = await _build_drivers(client, atype, price_series.symbol, price_series.name, notable_moves)
 
-    narrative, citations = await _generate_narrative_with_llm(metrics, notable_moves, drivers)
+        # Narrative via OpenAI (grounded in drivers)
+        narrative, citations = await _generate_narrative_with_llm(client, metrics, notable_moves, drivers)
+
     if not drivers and narrative.strip() == "":
         narrative = "No major news items retrieved in this window. Narrative based on metrics only."
 
@@ -561,5 +744,6 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
         "citations": citations,
         "warnings": ["Informational only. No investment recommendation."],
     }
+
     INSIGHTS_CACHE.set(cache_key, result)
     return result
