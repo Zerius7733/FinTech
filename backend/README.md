@@ -15,7 +15,7 @@ This backend computes user-level financial metrics from `backend/json_data/user.
 
 ### 1) Liquidity Months
 
-- Formula: `liquidity_months = cash_balance / (income / 12)`
+- Formula: `liquidity_months = cash_balance / (income)`
 - What it means:
   - This estimates how long a user can continue covering normal spending if income is interrupted.
   - It treats `income` as a proxy for monthly cash need.
@@ -32,7 +32,7 @@ This backend computes user-level financial metrics from `backend/json_data/user.
 
 ### 2) Liquidity Score (0-100)
 
-- Formula: `liquidity_score = clamp((liquidity_months / 6) * 100, 0, 100)`
+- Formula: `liquidity_score = clamp((liquidity_months / 6*risk_profile) * 100, 0, 100)`
 - What it means:
   - Converts liquidity months to a normalized 0-100 scale so it can be blended with other metrics.
   - A 6-month buffer is treated as the target for full score.
