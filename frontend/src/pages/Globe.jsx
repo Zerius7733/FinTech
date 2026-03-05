@@ -942,9 +942,9 @@ export default function Globe() {
             <div style={S.eyeLine} /> Wealth Wellness Hub <div style={S.eyeLine} />
           </div>
           <h1 style={S.heroTitle}>
-            Your wealth,<br />mapped across the{' '}
+            One globe.<br />Every asset.<br />
             <em style={{ fontStyle:'normal', background:'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
-              world.
+              Zero guesswork.
             </em>
           </h1>
           <p style={S.heroSub}>
