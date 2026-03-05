@@ -34,7 +34,7 @@ def _iter_positions(user: Dict[str, Any]):
                 yield position
         return
     if isinstance(portfolio, dict):
-        for key in ("stocks", "cryptos"):
+        for key in ("stocks", "cryptos", "commodities"):
             positions = portfolio.get(key, [])
             if not isinstance(positions, list):
                 continue

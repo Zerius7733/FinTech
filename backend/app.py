@@ -5,6 +5,8 @@ from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import AliasChoices, BaseModel, Field
 
+from backend.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
+from backend.commodity_price_retriever import fetch_commodity_price
 from backend.crypto_price_retriever import fetch_crypto_price
 from backend.services.recommendation import generate_gpt_recommendations
 from backend.services.recommendation import generate_user_recommendations
@@ -18,6 +20,7 @@ from backend.users_assets_update import update_assets_file
 BASE_DIR = Path(__file__).resolve().parent
 JSON_PATH = BASE_DIR / "json_data" / "user.json"
 CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
+COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
 
 app = FastAPI(
     title="FinTech Wellness API",
@@ -54,10 +57,10 @@ def _write_users_data(data: Dict[str, Any]) -> None:
 def _parse_market_query(query: str) -> Dict[str, str]:
     parts = [part.strip().upper() for part in query.split(",", maxsplit=1)]
     if len(parts) != 2 or not parts[0] or not parts[1]:
-        raise ValueError("query must be in format 'STOCK, SPY' or 'CRYPTO, BTC'")
+        raise ValueError("query must be in format 'STOCK, SPY', 'CRYPTO, BTC', or 'COMMODITY, GOLD'")
     asset_type, ticker = parts
-    if asset_type not in {"STOCK", "CRYPTO"}:
-        raise ValueError("asset type must be STOCK or CRYPTO")
+    if asset_type not in {"STOCK", "CRYPTO", "COMMODITY"}:
+        raise ValueError("asset type must be STOCK, CRYPTO, or COMMODITY")
     return {"asset_type": asset_type, "ticker": ticker}
 
 
@@ -79,6 +82,44 @@ class UserRiskUpdateRequest(BaseModel):
     risk_profile: str = Field(
         validation_alias=AliasChoices("risk_profile", "risk_appetite", "risk_appetitie")
     )
+
+
+def _iter_portfolio_positions(user: Dict[str, Any]):
+    portfolio = user.get("portfolio", [])
+    if isinstance(portfolio, list):
+        for position in portfolio:
+            if isinstance(position, dict):
+                yield position
+        return
+    if isinstance(portfolio, dict):
+        for key in ("stocks", "cryptos", "commodities"):
+            positions = portfolio.get(key, [])
+            if not isinstance(positions, list):
+                continue
+            for position in positions:
+                if isinstance(position, dict):
+                    yield position
+
+
+def _is_commodity_position(position: Dict[str, Any]) -> bool:
+    asset_type = str(position.get("asset_type", "")).strip().upper()
+    symbol = str(position.get("symbol", "")).strip().upper()
+    if asset_type == "COMMODITY":
+        return True
+    if symbol in COMMODITY_ALIAS_TO_SYMBOL.values():
+        return True
+    if symbol in COMMON_COMMODITY_ETFS:
+        return True
+    if symbol.endswith("=F"):
+        return True
+    return False
+
+
+def _is_crypto_position(position: Dict[str, Any]) -> bool:
+    symbol = str(position.get("symbol", "")).strip().upper()
+    if symbol.endswith("-USD"):
+        return True
+    return False
 
 
 @app.get("/health", tags=["Health"], summary="API health check")
@@ -236,10 +277,13 @@ def update_user_risk_and_recalibrate(payload: UserRiskUpdateRequest) -> Dict[str
 @app.get(
     "/market/quote",
     tags=["Market"],
-    summary="Get quote for STOCK or CRYPTO",
+    summary="Get quote for STOCK, CRYPTO, or COMMODITY",
 )
 def get_market_quote(
-    query: str = Query(..., description="Format: STOCK, SPY or CRYPTO, BTC"),
+    query: str = Query(
+        ...,
+        description="Format: STOCK, SPY or CRYPTO, BTC or COMMODITY, GOLD",
+    ),
 ) -> Dict[str, Any]:
     try:
         parsed = _parse_market_query(query)
@@ -250,12 +294,21 @@ def get_market_quote(
             price = fetch_latest_prices([ticker])[ticker]
             return {"status": "ok", "asset_type": asset_type, "symbol": ticker, "price": price}
 
-        crypto_quote = fetch_crypto_price(ticker)
+        if asset_type == "CRYPTO":
+            crypto_quote = fetch_crypto_price(ticker)
+            return {
+                "status": "ok",
+                "asset_type": asset_type,
+                "symbol": crypto_quote["symbol"],
+                "price": crypto_quote["price"],
+            }
+
+        commodity_quote = fetch_commodity_price(ticker)
         return {
             "status": "ok",
             "asset_type": asset_type,
-            "symbol": crypto_quote["symbol"],
-            "price": crypto_quote["price"],
+            "symbol": commodity_quote["symbol"],
+            "price": commodity_quote["price"],
         }
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -279,6 +332,63 @@ def get_portfolio_by_user_id(user_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read portfolio failed: {exc}") from exc
+
+
+@app.get(
+    "/portfolio/{user_id}/{asset_class}",
+    tags=["Portfolio"],
+    summary="Get portfolio positions by asset class (stocks, cryptos, commodities)",
+)
+def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        normalized = asset_class.strip().lower()
+        aliases = {
+            "stock": "stocks",
+            "stocks": "stocks",
+            "crypto": "cryptos",
+            "cryptos": "cryptos",
+            "commodity": "commodities",
+            "commodities": "commodities",
+        }
+        bucket = aliases.get(normalized)
+        if not bucket:
+            raise HTTPException(
+                status_code=400,
+                detail="asset_class must be one of: stocks, cryptos, commodities",
+            )
+
+        portfolio = user.get("portfolio", {})
+        if isinstance(portfolio, dict):
+            positions = portfolio.get(bucket, [])
+            if not isinstance(positions, list):
+                positions = []
+        else:
+            all_positions = list(_iter_portfolio_positions(user))
+            if bucket == "commodities":
+                positions = [p for p in all_positions if _is_commodity_position(p)]
+            elif bucket == "cryptos":
+                positions = [p for p in all_positions if _is_crypto_position(p)]
+            else:
+                positions = [
+                    p for p in all_positions if not _is_commodity_position(p) and not _is_crypto_position(p)
+                ]
+
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "asset_class": bucket,
+            "count": len(positions),
+            "positions": positions,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"read asset class failed: {exc}") from exc
 
 
 @app.get("/update/assets", tags=["Updates"], summary="Update users' assets")
