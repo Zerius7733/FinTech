@@ -201,6 +201,24 @@ Confirm and merge holdings into user portfolio:
 
 `confirm` merges by `asset_class + symbol` and adds quantities (e.g., existing `3 SPY` + imported `10 SPY` => `13 SPY`).
 
+## Compatibility Endpoint
+
+Evaluate a target asset against the user's full profile:
+
+- `GET /users/{user_id}/compatibility?target_type=stock|crypto|commodity&symbol=...`
+
+Response includes:
+
+- `compatibility_score` and `rating`
+- factor scores:
+  - `risk_fit` (user risk vs asset risk)
+  - `liquidity_fit` (user buffer vs asset volatility)
+  - `concentration_impact` (whether adding target may worsen concentration)
+  - `stress_guardrail` (penalty/block if stress is elevated)
+- `already_in_portfolio` and `existing_position`
+- guardrail disclaimer:
+  - `CMC-style guardrail: AI can make mistakes. Please DYOR. Not financial advice.`
+
 Import records are stored in `backend/json_data/screenshot_imports.json` as a temporary confirmation queue:
 
 - `pending` imports auto-expire after 24 hours
