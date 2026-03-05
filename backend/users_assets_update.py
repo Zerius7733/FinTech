@@ -10,6 +10,17 @@ def _to_float(value: Any) -> float:
     return float(value)
 
 
+def _portfolio_positions(user: Dict[str, Any]):
+    portfolio = user.get("portfolio", [])
+    if isinstance(portfolio, list):
+        return portfolio
+    if isinstance(portfolio, dict):
+        stocks = portfolio.get("stocks", []) if isinstance(portfolio.get("stocks", []), list) else []
+        cryptos = portfolio.get("cryptos", []) if isinstance(portfolio.get("cryptos", []), list) else []
+        return stocks + cryptos
+    return []
+
+
 def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, Any]:
     updated = json.loads(json.dumps(users))
     with open(csv_path, "r", encoding="utf-8", newline="") as f:
@@ -27,7 +38,7 @@ def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, An
             user["liability"] = round(_to_float(row.get("liability")), 2)
             user["income"] = round(_to_float(row.get("income")), 2)
             user["estate"] = round(_to_float(row.get("estate")), 2)
-            portfolio_total = sum(float(p.get("market_value", 0)) for p in user.get("portfolio", []))
+            portfolio_total = sum(float(p.get("market_value", 0)) for p in _portfolio_positions(user))
             user["portfolio_value"] = round(portfolio_total, 2)
             user["total_balance"] = round(user["cash_balance"] + portfolio_total + user["estate"], 2)
             user["net_worth"] = round(user["total_balance"] - user["liability"], 2)

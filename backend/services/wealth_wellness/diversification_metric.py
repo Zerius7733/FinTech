@@ -3,7 +3,16 @@ from typing import Dict, Any, List
 
 def _extract_position_values(user: Dict[str, Any]) -> List[float]:
     values: List[float] = []
-    for position in user.get("portfolio", []):
+    portfolio = user.get("portfolio", [])
+    positions: List[Dict[str, Any]] = []
+    if isinstance(portfolio, list):
+        positions = portfolio
+    elif isinstance(portfolio, dict):
+        stocks = portfolio.get("stocks", []) if isinstance(portfolio.get("stocks", []), list) else []
+        cryptos = portfolio.get("cryptos", []) if isinstance(portfolio.get("cryptos", []), list) else []
+        positions = stocks + cryptos
+
+    for position in positions:
         market_value = float(position.get("market_value", 0))
         if market_value > 0:
             values.append(market_value)
