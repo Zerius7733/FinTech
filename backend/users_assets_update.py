@@ -1,11 +1,12 @@
 import csv
 import json
-from datetime import datetime, timezone
 from typing import Any, Dict 
 
 def _to_float(value: Any) -> float:
     if value is None or value == "":
         return 0.0
+    if isinstance(value, str):
+        value = value.replace(",", "").replace("_", "").strip()
     return float(value)
 
 
@@ -25,24 +26,23 @@ def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, An
             user["cash_balance"] = round(dbs + uob + ocbc, 2)
             user["liability"] = round(_to_float(row.get("liability")), 2)
             user["income"] = round(_to_float(row.get("income")), 2)
+            user["estate"] = round(_to_float(row.get("estate")), 2)
             portfolio_total = sum(float(p.get("market_value", 0)) for p in user.get("portfolio", []))
             user["portfolio_value"] = round(portfolio_total, 2)
-            user["total_balance"] = round(user["cash_balance"] + portfolio_total, 2)
+            user["total_balance"] = round(user["cash_balance"] + portfolio_total + user["estate"], 2)
             user["net_worth"] = round(user["total_balance"] - user["liability"], 2)
     return updated
 
 def update_assets_file(
     json_path: str = "json_data/user.json", csv_path: str = "csv_data/users_assets.csv"
 ) -> Dict[str, Any]:
+    print(f"[assets] syncing from {csv_path} -> {json_path}")
     with open(json_path, "r", encoding="utf-8") as f:
         users = json.load(f)
     updated = update_assets_from_csv(users, csv_path=csv_path)
-    updated["_meta"] = {
-        "assets_synced_at_utc": datetime.now(timezone.utc).isoformat(),
-        "assets_source": csv_path,
-    }
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(updated, f, indent=2)
+    print("[assets] sync complete")
     return updated
 
 def main():

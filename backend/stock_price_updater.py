@@ -1,8 +1,7 @@
 import csv
 import json
-from datetime import datetime, timezone
 from typing import Any, Dict, Iterable
-from users_assets_update import update_assets_file
+from backend.users_assets_update import update_assets_file
 import yfinance as yf
 
 
@@ -49,6 +48,7 @@ def update_stock_prices(users: Dict[str, Any], prices: Dict[str, float]) -> Dict
 
 
 def update_stock_prices_file(path: str = "json_data/user.json", yf_module: Any = yf) -> Dict[str, Any]:
+    print(f"[prices] updating prices in {path}")
     with open(path, "r", encoding="utf-8") as f:
         users = json.load(f)
     all_symbols = []
@@ -59,24 +59,12 @@ def update_stock_prices_file(path: str = "json_data/user.json", yf_module: Any =
                 all_symbols.append(symbol)
     prices = fetch_latest_prices(all_symbols, yf_module=yf_module)
     updated = update_stock_prices(users, prices)
-    updated["_meta"] = {
-        "updated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "symbols_updated": sorted(prices.keys()),
-    }
     with open(path, "w", encoding="utf-8") as f:
         json.dump(updated, f, indent=2)
+    print(f"[prices] updated {len(prices)} symbols")
     return updated
 
 if __name__ == "__main__":
     result = update_stock_prices_file()
     result = update_assets_file(json_path="json_data/user.json", csv_path="csv_data/users_assets.csv")
-    print(
-        json.dumps(
-            {
-                "status": "ok",
-                "updated_at_utc": result.get("_meta", {}).get("updated_at_utc"),
-                "symbols_updated": result.get("_meta", {}).get("symbols_updated", []),
-            },
-            indent=2,
-        )
-    )
+    print("stock and asset updates complete")

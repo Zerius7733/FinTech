@@ -1,8 +1,8 @@
 {
   "u001": {
     "name": "Alice Tan",
-    "cash_balance": 6600.5,
-    "liability": 6600.5,
+    "cash_balance": 16600.5,
+    "liability": 475000.0,
     "portfolio": [
       {
         "symbol": "AAPL",
@@ -20,9 +20,19 @@
       }
     ],
     "portfolio_value": 5581.44,
-    "total_balance": 12181.94,
-    "net_worth": 5581.44,
-    "income": 5000.0
+    "total_balance": 522181.94,
+    "net_worth": 47181.94,
+    "income": 5000.0,
+    "estate": 500000.0,
+    "wellness_metrics": {
+      "liquidity_months": 39.84,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.5083,
+      "diversification_score": 98.34,
+      "debt_income_ratio": 95.0,
+      "debt_income_score": 0.0
+    },
+    "financial_wellness_score": 64.5
   },
   "u002": {
     "name": "Brandon Lim",
@@ -47,7 +57,17 @@
     "portfolio_value": 2172.88,
     "total_balance": 8573.63,
     "net_worth": 2172.88,
-    "income": 4000.0
+    "income": 4000.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 19.2,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.6223,
+      "diversification_score": 75.54,
+      "debt_income_ratio": 1.6002,
+      "debt_income_score": 85.0
+    },
+    "financial_wellness_score": 87.41
   },
   "u003": {
     "name": "Cheryl Ng",
@@ -72,7 +92,17 @@
     "portfolio_value": 5970.1,
     "total_balance": 14970.3,
     "net_worth": 5970.1,
-    "income": 3000.0
+    "income": 3000.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 36.0,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.7028,
+      "diversification_score": 59.45,
+      "debt_income_ratio": 3.0001,
+      "debt_income_score": 50.0
+    },
+    "financial_wellness_score": 70.34
   },
   "u004": {
     "name": "Daniel Koh",
@@ -97,7 +127,17 @@
     "portfolio_value": 4792.83,
     "total_balance": 12143.23,
     "net_worth": 4792.83,
-    "income": 4500.0
+    "income": 4500.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 19.6,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.5066,
+      "diversification_score": 98.69,
+      "debt_income_ratio": 1.6334,
+      "debt_income_score": 84.16
+    },
+    "financial_wellness_score": 94.06
   },
   "u005": {
     "name": "Ethan Lee",
@@ -122,7 +162,17 @@
     "portfolio_value": 7486.36,
     "total_balance": 20086.61,
     "net_worth": 7486.36,
-    "income": 4600.0
+    "income": 4600.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 32.87,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.8447,
+      "diversification_score": 31.05,
+      "debt_income_ratio": 2.7392,
+      "debt_income_score": 56.52
+    },
+    "financial_wellness_score": 64.1
   },
   "u006": {
     "name": "Farah Aziz",
@@ -147,7 +197,17 @@
     "portfolio_value": 2316.68,
     "total_balance": 10806.78,
     "net_worth": 2316.68,
-    "income": 4750.0
+    "income": 4750.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 21.45,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.7771,
+      "diversification_score": 44.58,
+      "debt_income_ratio": 1.7874,
+      "debt_income_score": 80.32
+    },
+    "financial_wellness_score": 76.49
   },
   "u007": {
     "name": "Grace Wong",
@@ -172,7 +232,17 @@
     "portfolio_value": 2169.1,
     "total_balance": 5519.85,
     "net_worth": 2169.1,
-    "income": 4800.0
+    "income": 4800.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 8.38,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.5127,
+      "diversification_score": 97.46,
+      "debt_income_ratio": 0.6981,
+      "debt_income_score": 100.0
+    },
+    "financial_wellness_score": 99.24
   },
   "u008": {
     "name": "Hafiz Rahman",
@@ -197,7 +267,17 @@
     "portfolio_value": 3976.39,
     "total_balance": 13126.89,
     "net_worth": 3976.39,
-    "income": 5200.0
+    "income": 5200.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 21.12,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.5631,
+      "diversification_score": 87.38,
+      "debt_income_ratio": 1.7597,
+      "debt_income_score": 81.01
+    },
+    "financial_wellness_score": 89.57
   },
   "u009": {
     "name": "Isabella Goh",
@@ -222,7 +302,17 @@
     "portfolio_value": 2076.92,
     "total_balance": 5017.17,
     "net_worth": 2076.92,
-    "income": 3500.0
+    "income": 3500.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 10.08,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.5014,
+      "diversification_score": 99.72,
+      "debt_income_ratio": 0.8401,
+      "debt_income_score": 100.0
+    },
+    "financial_wellness_score": 99.92
   },
   "u010": {
     "name": "Jason Teo",
@@ -247,10 +337,16 @@
     "portfolio_value": 2505.0,
     "total_balance": 10205.0,
     "net_worth": 2505.0,
-    "income": 4900.0
-  },
-  "_meta": {
-    "assets_synced_at_utc": "2026-03-05T07:51:58.572890+00:00",
-    "assets_source": "csv_data/users_assets.csv"
+    "income": 4900.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 18.86,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.6776,
+      "diversification_score": 64.47,
+      "debt_income_ratio": 1.5714,
+      "debt_income_score": 85.71
+    },
+    "financial_wellness_score": 84.34
   }
 }
