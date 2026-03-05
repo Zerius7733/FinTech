@@ -4,10 +4,13 @@ import math
 import os
 import re
 import time
+import email.utils
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import quote_plus
 
 import httpx
 import numpy as np
@@ -30,23 +33,14 @@ COMMODITY_TICKER_MAP: Dict[str, Tuple[str, str]] = {
     "NG": ("NG=F", "Natural Gas"),
 }
 
-OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
-GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
-
-
-def _openrouter_news_model() -> str:
+def _ollama_base_url() -> str:
     _load_env_once()
-    return os.getenv("OPENROUTER_NEWS_MODEL", "perplexity/sonar").strip() or "perplexity/sonar"
+    return os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").strip().rstrip("/")
 
 
-def _openrouter_narrative_model() -> str:
+def _ollama_model() -> str:
     _load_env_once()
-    return os.getenv("OPENROUTER_NARRATIVE_MODEL", "openai/gpt-4o-mini").strip() or "openai/gpt-4o-mini"
-
-
-def _groq_narrative_model() -> str:
-    _load_env_once()
-    return os.getenv("GROQ_NARRATIVE_MODEL", "llama-3.3-70b-versatile").strip() or "llama-3.3-70b-versatile"
+    return os.getenv("OLLAMA_MODEL", "qwen2.5:7b-instruct").strip() or "qwen2.5:7b-instruct"
 
 
 # ----------------------------
@@ -199,7 +193,12 @@ async def _request_json(
             if attempt >= max_retries:
                 break
             await asyncio.sleep(0.25 * (attempt + 1))
-    raise InsightError(f"request failed: {last_exc}", status_code=502)
+    if last_exc is None:
+        raise InsightError("request failed: unknown_error", status_code=502)
+    raise InsightError(
+        f"request failed: {type(last_exc).__name__}: {str(last_exc) or 'no_error_message'}",
+        status_code=502,
+    )
 
 
 def _normalize_yf_frame(df: pd.DataFrame) -> pd.DataFrame:
@@ -449,7 +448,7 @@ def _build_tldr_and_conclusion(
 
 
 # ----------------------------
-# OpenAI Web Search (drivers)
+# News Retrieval (drivers)
 # ----------------------------
 
 def _news_queries(asset_type: str, symbol: str, name: str, move_date: str) -> List[str]:
@@ -558,6 +557,7 @@ def _chat_completion_extract_text(resp_json: Dict[str, Any]) -> str:
 
 def _extract_openai_web_results(resp_json: Dict[str, Any]) -> List[Dict[str, Any]]:
     results: List[Dict[str, Any]] = []
+    recent_fallback: List[Dict[str, Any]] = []
     seen_urls = set()
 
     def _add_row(headline: str, url: str, source: str = "", published: str = "") -> None:
@@ -659,68 +659,67 @@ async def _openai_web_search_news(client: httpx.AsyncClient, query: str) -> List
     if cached is not None:
         return cached.get("results", [])
 
-    _load_env_once()
-    openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
-    if not openrouter_api_key:
-        NEWS_CACHE.set(query, {"results": []})
-        return []
-
-    system_prompt = (
-        "You are a market news retriever. Return only JSON object with key 'results'. "
-        "results must be an array of up to 5 objects with keys: headline, source, url, published_at. "
-        "Use only real web sources. If unavailable, return {\"results\": []}."
+    rss_url = (
+        "https://news.google.com/rss/search?"
+        f"q={quote_plus(query + ' when:1d')}&hl=en-US&gl=US&ceid=US:en"
     )
-    payload = {
-        "model": _openrouter_news_model(),
-        "temperature": 0.0,
-        "response_format": {"type": "json_object"},
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Query: {query}"},
-        ],
-    }
-
-    resp_json = await _request_json(
-        client,
-        "POST",
-        OPENROUTER_CHAT_URL,
-        json_payload=payload,
-        headers={
-            "Authorization": f"Bearer {openrouter_api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "http://localhost:8000"),
-            "X-Title": os.getenv("OPENROUTER_APP_NAME", "FinTech Insights API"),
-        },
-        timeout=20.0,
-        max_retries=1,
-    )
-    if os.getenv("NEWS_DEBUG", "").strip() == "1":
-        Path("openrouter_news_debug.json").write_text(
-            json.dumps(resp_json, indent=2)[:300000],
-            encoding="utf-8"
-        )
-
-    text = _chat_completion_extract_text(resp_json)
-    parsed = _extract_json_object(text)
-    results_raw = parsed.get("results", []) if isinstance(parsed, dict) else []
     results: List[Dict[str, Any]] = []
-    if isinstance(results_raw, list):
-        for row in results_raw[:10]:
-            if not isinstance(row, dict):
+    recent_fallback: List[Dict[str, Any]] = []
+    today = _now_utc_date()
+
+    try:
+        response = await client.get(rss_url, timeout=10.0)
+        if response.status_code >= 400:
+            NEWS_CACHE.set(query, {"results": []})
+            return []
+
+        root = ET.fromstring(response.text)
+        for item in root.findall(".//item"):
+            title = (item.findtext("title") or "").strip()
+            url = (item.findtext("link") or "").strip()
+            source = (item.findtext("source") or "").strip()
+            pub_raw = (item.findtext("pubDate") or "").strip()
+            if not title or not url:
                 continue
-            title = str(row.get("headline", "")).strip()
-            url = str(row.get("url", "")).strip()
-            source = str(row.get("source", "")).strip()
-            published = str(row.get("published_at", "")).strip()
-            if title and url:
-                results.append(
-                    {
-                        "headline": title,
-                        "source": source,
-                        "url": url,
-                        "published_at": published,
-                    }
-                )
+
+            published_at = ""
+            try:
+                dt = email.utils.parsedate_to_datetime(pub_raw)
+                if dt is not None:
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    dt_utc = dt.astimezone(timezone.utc)
+                    published_at = dt_utc.date().isoformat()
+                    # prioritize current-day news; keep recent as fallback
+                    if dt_utc.date() != today:
+                        if 0 <= (today - dt_utc.date()).days <= 7:
+                            recent_fallback.append(
+                                {
+                                    "headline": title,
+                                    "source": source,
+                                    "url": url,
+                                    "published_at": published_at,
+                                }
+                            )
+                        continue
+            except Exception:
+                continue
+
+            results.append(
+                {
+                    "headline": title,
+                    "source": source,
+                    "url": url,
+                    "published_at": published_at,
+                }
+            )
+            if len(results) >= 10:
+                break
+    except Exception:
+        results = []
+
+    if not results and recent_fallback:
+        results = recent_fallback[:10]
 
     NEWS_CACHE.set(query, {"results": results})
     return results
@@ -799,16 +798,9 @@ async def _generate_narrative_with_llm(
     timeout_seconds: float = 20.0,
 ) -> Tuple[str, List[Dict[str, Any]]]:
     """
-    Uses Responses API (no tool needed here) to produce a grounded narrative.
+    Uses local Ollama chat API to produce a grounded narrative.
     It must cite only provided drivers by URL and must pass validate_text().
     """
-    _load_env_once()
-    openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
-    groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
-    if not openrouter_api_key and not groq_api_key:
-        if not drivers:
-            return "No major news items retrieved in this window. Narrative based on metrics only.", []
-        return "Narrative unavailable because no LLM provider key is set.", []
 
     system_base = (
         "You are a financial market activity explainer. "
@@ -829,49 +821,34 @@ async def _generate_narrative_with_llm(
         ),
     }
 
-    async def _call_model(
-        system_prompt: str,
-        *,
-        provider: str,
-    ) -> Dict[str, Any]:
-        if provider == "openrouter":
-            endpoint = OPENROUTER_CHAT_URL
-            key = openrouter_api_key
-            model = _openrouter_narrative_model()
-            headers = {
-                "Authorization": f"Bearer {key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "http://localhost:8000"),
-                "X-Title": os.getenv("OPENROUTER_APP_NAME", "FinTech Insights API"),
-            }
-        else:
-            endpoint = GROQ_CHAT_URL
-            key = groq_api_key
-            model = _groq_narrative_model()
-            headers = {
-                "Authorization": f"Bearer {key}",
-                "Content-Type": "application/json",
-            }
-
+    async def _call_model(system_prompt: str) -> Dict[str, Any]:
         payload = {
-            "model": model,
-            "response_format": {"type": "json_object"},
+            "model": _ollama_model(),
+            "stream": False,
+            "format": "json",
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": json.dumps(user_payload)},
             ],
-            "temperature": 0.1,
+            "options": {"temperature": 0.1},
         }
         resp_json = await _request_json(
             client,
             "POST",
-            endpoint,
+            f"{_ollama_base_url()}/api/chat",
             json_payload=payload,
-            headers=headers,
+            headers={"Content-Type": "application/json"},
             timeout=timeout_seconds,
             max_retries=1,
         )
-        text = _chat_completion_extract_text(resp_json)
+        message = resp_json.get("message", {})
+        text = ""
+        if isinstance(message, dict):
+            content = message.get("content", "")
+            if isinstance(content, str):
+                text = content.strip()
+        if not text:
+            text = _chat_completion_extract_text(resp_json)
         return _extract_json_object(text)
 
     def _metrics_only_fallback() -> str:
@@ -884,22 +861,9 @@ async def _generate_narrative_with_llm(
         )
 
     try:
-        providers = []
-        if openrouter_api_key:
-            providers.append("openrouter")
-        if groq_api_key:
-            providers.append("groq")
-
-        parsed: Dict[str, Any] = {}
-        for provider in providers:
-            try:
-                parsed = await _call_model(system_base, provider=provider)
-                if parsed:
-                    break
-            except Exception:
-                continue
+        parsed = await _call_model(system_base)
         narrative = str(parsed.get("narrative", "")).strip()
-        if not narrative and not parsed:
+        if not narrative:
             if not drivers:
                 return _metrics_only_fallback(), []
             return "Unable to generate narrative without violating no-advice constraints.", []
@@ -907,14 +871,7 @@ async def _generate_narrative_with_llm(
         ok, _reasons = validate_text(narrative)
         if not ok:
             strict_prompt = system_base + "\nIf you might violate the forbidden list, output an empty narrative."
-            strict_parsed: Dict[str, Any] = {}
-            for provider in providers:
-                try:
-                    strict_parsed = await _call_model(strict_prompt, provider=provider)
-                    if strict_parsed:
-                        break
-                except Exception:
-                    continue
+            strict_parsed = await _call_model(strict_prompt)
             parsed = strict_parsed or parsed
             narrative = str(parsed.get("narrative", "")).strip()
             ok, _reasons = validate_text(narrative)
@@ -926,7 +883,6 @@ async def _generate_narrative_with_llm(
             selected_urls = []
         selected_urls = [str(u).strip() for u in selected_urls if str(u).strip()]
 
-        # Build citations (id -> url) in the order the model selected
         citations: List[Dict[str, Any]] = []
         idx = 1
         for url in selected_urls:
@@ -940,7 +896,9 @@ async def _generate_narrative_with_llm(
         return narrative, citations
 
     except InsightError:
-        raise
+        if not drivers:
+            return _metrics_only_fallback(), []
+        return "Narrative generation unavailable. Returning computed metrics and retrieved drivers only.", []
     except httpx.TimeoutException:
         return "Narrative generation timed out. Returning computed metrics and retrieved drivers only.", []
     except Exception:
@@ -981,10 +939,9 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
         metrics = _compute_metrics(frame)
         notable_moves = _build_notable_moves(frame)
 
-        # Drivers via OpenAI web_search tool
         drivers = await _build_drivers(client, atype, price_series.symbol, price_series.name, notable_moves)
 
-        # Narrative via OpenAI (grounded in drivers)
+        # Narrative via Ollama (grounded in metrics + drivers)
         narrative, citations = await _generate_narrative_with_llm(client, metrics, notable_moves, drivers)
 
     if not drivers and narrative.strip() == "":
