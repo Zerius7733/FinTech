@@ -6,6 +6,8 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from pydantic import AliasChoices, BaseModel, Field
 
 import backend.services.api_deps as api
+from backend.services.compatibility import evaluate_compatibility
+from backend.services.compatibility import synthesize_compatibility_with_llm
 from backend.services.screenshot_importer import create_pending_import
 from backend.services.screenshot_importer import DEFAULT_VISION_MODEL
 from backend.services.screenshot_importer import parse_screenshot_with_llm
@@ -28,6 +30,7 @@ app = FastAPI(
         {"name": "Health", "description": "API health and readiness endpoints."},
         {"name": "Users", "description": "User retrieval endpoints."},
         {"name": "Recommendations", "description": "Personalized recommendation endpoints."},
+        {"name": "Compatibility", "description": "User profile compatibility endpoints."},
         {"name": "Imports", "description": "Screenshot import and portfolio merge endpoints."},
         {"name": "Updates", "description": "Endpoints that run data update jobs."},
         {"name": "Market", "description": "Live market quote retrieval endpoints."},
@@ -323,6 +326,61 @@ def get_user_wellness_by_id(user_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read wellness failed: {exc}") from exc
+
+
+@app.get(
+    "/users/{user_id}/compatibility",
+    tags=["Compatibility"],
+    summary="Evaluate compatibility between user profile and target asset",
+)
+async def get_user_target_compatibility(
+    user_id: str,
+    target_type: str = Query(..., description="stock | crypto | commodity"),
+    symbol: str = Query(..., description="Target symbol, e.g. SPY, BTC, GC=F"),
+    model: str = Query("gpt-4.1-mini", description="OpenAI model for synthesis"),
+) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        symbol_query = (symbol or "").strip().upper()
+        resolve_query = symbol_query[:-4] if symbol_query.endswith("-USD") else symbol_query
+        resolved = await api.resolve_asset(resolve_query)
+        resolved_category = str(resolved.get("category", "unknown")).lower()
+
+        result = evaluate_compatibility(
+            user=user,
+            target_type=target_type,
+            symbol=symbol,
+            resolved_category=resolved_category,
+        )
+        llm = synthesize_compatibility_with_llm(
+            user_id=user_id,
+            user=user,
+            compatibility=result,
+            model=model,
+        )
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "risk_profile": user.get("risk_profile"),
+            "financial_wellness_score": user.get("financial_wellness_score"),
+            "financial_stress_index": user.get("financial_stress_index"),
+            "resolved_asset": resolved,
+            "llm_model": llm.get("model"),
+            "llm_synthesis": llm.get("synthesis"),
+            **result,
+        }
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=f"compatibility synthesis failed: {exc}") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"compatibility check failed: {exc}") from exc
 
 
 @app.get(
@@ -658,4 +716,3 @@ def update_all() -> Dict[str, Any]:
         return summary
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"full update failed: {exc}") from exc
-
