@@ -18,7 +18,7 @@ This backend computes user-level financial metrics from `backend/json_data/user.
 - Formula: `liquidity_months = cash_balance / (income / 12)`
 - What it means:
   - This estimates how long a user can continue covering normal spending if income is interrupted.
-  - It treats `income / 12` as a proxy for monthly cash need.
+  - It treats `income` as a proxy for monthly cash need.
   - Example: if `cash_balance = 12,000` and monthly income proxy is `2,000`, liquidity is `6 months`.
 - Why it matters:
   - Low liquidity increases short-term default risk and forced selling risk.

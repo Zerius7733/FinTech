@@ -3,8 +3,7 @@ from typing import Dict, Any
 
 def calculate_liquidity_metric(user: Dict[str, Any]) -> Dict[str, float]:
     cash_balance = float(user.get("cash_balance", 0))
-    annual_income = float(user.get("income", 0))
-    monthly_income = annual_income / 12 if annual_income > 0 else 0.0
+    monthly_income = float(user.get("income", 0))
     if monthly_income <= 0:
         return {
             "liquidity_months": 0.0,
