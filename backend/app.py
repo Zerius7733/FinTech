@@ -8,6 +8,10 @@ from pydantic import AliasChoices, BaseModel, Field
 from backend.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
 from backend.commodity_price_retriever import fetch_commodity_price
 from backend.crypto_price_retriever import fetch_crypto_price
+from backend.services.auth_registry import RegisterConflictError
+from backend.services.auth_registry import RegisterValidationError
+from backend.services.portfolio_selector import get_positions_by_asset_class
+from backend.services.auth_registry import register_login_user
 from backend.services.recommendation import generate_gpt_recommendations
 from backend.services.recommendation import generate_user_recommendations
 from backend.services.wealth_wellness.engine import calculate_user_wellness
@@ -20,6 +24,7 @@ from backend.users_assets_update import update_assets_file
 BASE_DIR = Path(__file__).resolve().parent
 JSON_PATH = BASE_DIR / "json_data" / "user.json"
 CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
+LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
 
 app = FastAPI(
@@ -84,47 +89,33 @@ class UserRiskUpdateRequest(BaseModel):
     )
 
 
-def _iter_portfolio_positions(user: Dict[str, Any]):
-    portfolio = user.get("portfolio", [])
-    if isinstance(portfolio, list):
-        for position in portfolio:
-            if isinstance(position, dict):
-                yield position
-        return
-    if isinstance(portfolio, dict):
-        for key in ("stocks", "cryptos", "commodities"):
-            positions = portfolio.get(key, [])
-            if not isinstance(positions, list):
-                continue
-            for position in positions:
-                if isinstance(position, dict):
-                    yield position
-
-
-def _is_commodity_position(position: Dict[str, Any]) -> bool:
-    asset_type = str(position.get("asset_type", "")).strip().upper()
-    symbol = str(position.get("symbol", "")).strip().upper()
-    if asset_type == "COMMODITY":
-        return True
-    if symbol in COMMODITY_ALIAS_TO_SYMBOL.values():
-        return True
-    if symbol in COMMON_COMMODITY_ETFS:
-        return True
-    if symbol.endswith("=F"):
-        return True
-    return False
-
-
-def _is_crypto_position(position: Dict[str, Any]) -> bool:
-    symbol = str(position.get("symbol", "")).strip().upper()
-    if symbol.endswith("-USD"):
-        return True
-    return False
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    user_id: str | None = None
 
 
 @app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
+def register_user(payload: RegisterRequest) -> Dict[str, Any]:
+    try:
+        result = register_login_user(
+            login_csv_path=LOGIN_CSV_PATH,
+            username=payload.username,
+            password=payload.password,
+            user_id=payload.user_id,
+        )
+        return {"status": "ok", **result}
+    except RegisterValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RegisterConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
 
 
 @app.get("/users", tags=["Users"], summary="Get all users")
@@ -346,37 +337,12 @@ def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, An
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-        normalized = asset_class.strip().lower()
-        aliases = {
-            "stock": "stocks",
-            "stocks": "stocks",
-            "crypto": "cryptos",
-            "cryptos": "cryptos",
-            "commodity": "commodities",
-            "commodities": "commodities",
-        }
-        bucket = aliases.get(normalized)
-        if not bucket:
-            raise HTTPException(
-                status_code=400,
-                detail="asset_class must be one of: stocks, cryptos, commodities",
-            )
-
-        portfolio = user.get("portfolio", {})
-        if isinstance(portfolio, dict):
-            positions = portfolio.get(bucket, [])
-            if not isinstance(positions, list):
-                positions = []
-        else:
-            all_positions = list(_iter_portfolio_positions(user))
-            if bucket == "commodities":
-                positions = [p for p in all_positions if _is_commodity_position(p)]
-            elif bucket == "cryptos":
-                positions = [p for p in all_positions if _is_crypto_position(p)]
-            else:
-                positions = [
-                    p for p in all_positions if not _is_commodity_position(p) and not _is_crypto_position(p)
-                ]
+        bucket, positions = get_positions_by_asset_class(
+            user=user,
+            asset_class=asset_class,
+            commodity_alias_symbols=COMMODITY_ALIAS_TO_SYMBOL.values(),
+            common_commodity_etfs=COMMON_COMMODITY_ETFS,
+        )
 
         return {
             "status": "ok",
@@ -387,6 +353,8 @@ def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, An
         }
     except HTTPException:
         raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read asset class failed: {exc}") from exc
 
