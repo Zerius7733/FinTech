@@ -10,201 +10,207 @@ export const WS_CONFIG = {
 }
 
 // ── Portfolio nodes ─────────────────────────────────────────────────────────
-// Shape mirrors GET /api/portfolio/nodes
+// Nodes are clustered by investment TYPE, each mapped into its corresponding
+// zone territory on the globe (not by geography).
 export const MOCK_NODES = [
-  // ── Americas ──────────────────────────────────────────────────────────────
+
+  // ═══ EQUITIES ZONE (abstract · lat≈32, lng≈-117) ═════════════════════════
   {
-    id:'us', lat:38, lng:-97, label:'US Equity', flag:'🇺🇸', region:'North America',
+    id:'stocks_us', lat:42, lng:-126, label:'US Stocks', flag:'📈', region:'Equities',
     color:0x60a5fa, type:'equity', aum:184250, mtd:3.2,
     holdings:[
-      {ticker:'GOOGL',name:'Alphabet Inc.',   price:178.42, change: 2.14, shares:45,  dir:'up'},
-      {ticker:'MSFT', name:'Microsoft Corp.', price:414.80, change: 0.87, shares:28,  dir:'up'},
-      {ticker:'NVDA', name:'NVIDIA Corp.',    price:875.25, change:-1.23, shares:15,  dir:'dn'},
-      {ticker:'AMZN', name:'Amazon.com Inc.', price:196.10, change: 1.55, shares:52,  dir:'up'},
+      { ticker:'GOOGL', name:'Alphabet Inc.',    price:178.42, change: 2.14, shares:45, dir:'up' },
+      { ticker:'MSFT',  name:'Microsoft Corp.',  price:414.80, change: 0.87, shares:28, dir:'up' },
+      { ticker:'NVDA',  name:'NVIDIA Corp.',     price:875.25, change:-1.23, shares:15, dir:'dn' },
+      { ticker:'AMZN',  name:'Amazon.com Inc.',  price:196.10, change: 1.55, shares:52, dir:'up' },
     ],
     alloc:[
-      {label:'Tech',       pct:58, color:'#60a5fa'},
-      {label:'Consumer',   pct:22, color:'#a78bfa'},
-      {label:'Healthcare', pct:12, color:'#34d399'},
-      {label:'Other',      pct:8,  color:'#475569'},
+      { label:'Technology',  pct:58, color:'#60a5fa' },
+      { label:'Consumer',    pct:22, color:'#93c5fd' },
+      { label:'Healthcare',  pct:12, color:'#34d399'  },
+      { label:'Other',       pct:8,  color:'#475569'  },
     ],
     wellness:82, returnPct:'+18.4%',
   },
   {
-    id:'ca', lat:56, lng:-106, label:'Canada Energy', flag:'🇨🇦', region:'North America',
-    color:0xf97316, type:'commodity', aum:41800, mtd:1.8,
+    id:'stocks_global', lat:25, lng:-110, label:'Global Equities', flag:'🌐', region:'Equities',
+    color:0x60a5fa, type:'equity', aum:134500, mtd:2.1,
     holdings:[
-      {ticker:'ENB',  name:'Enbridge Inc.',     price:47.32, change: 1.2, shares:320, dir:'up'},
-      {ticker:'SU',   name:'Suncor Energy',     price:52.10, change: 0.9, shares:180, dir:'up'},
-      {ticker:'CNQ',  name:'Canadian Natural',  price:88.40, change:-0.4, shares:90,  dir:'dn'},
+      { ticker:'SAP',      name:'SAP SE',             price:186.40, change: 1.8,  shares:80,  dir:'up' },
+      { ticker:'NESN',     name:'Nestlé S.A.',         price:94.50,  change: 0.2,  shares:150, dir:'up' },
+      { ticker:'RELIANCE', name:'Reliance Ind.',       price:2820,   change: 2.4,  shares:50,  dir:'up' },
+      { ticker:'BABA',     name:'Alibaba Group',       price:74,     change:-3.2,  shares:300, dir:'dn' },
     ],
     alloc:[
-      {label:'Oil & Gas', pct:65, color:'#f97316'},
-      {label:'Pipelines', pct:25, color:'#fb923c'},
-      {label:'Utilities', pct:10, color:'#475569'},
+      { label:'Europe',    pct:38, color:'#60a5fa' },
+      { label:'Asia',      pct:42, color:'#3b82f6'  },
+      { label:'LatAm',     pct:12, color:'#1d4ed8'  },
+      { label:'Other',     pct:8,  color:'#475569'  },
     ],
-    wellness:72, returnPct:'+9.3%',
+    wellness:74, returnPct:'+11.2%',
   },
   {
-    id:'br', lat:-14, lng:-51, label:'Brazil Growth', flag:'🇧🇷', region:'Latin America',
-    color:0x4ade80, type:'equity', aum:29500, mtd:-1.4,
+    id:'stocks_em', lat:36, lng:-102, label:'Emerging Markets', flag:'🚀', region:'Equities',
+    color:0x60a5fa, type:'equity', aum:68400, mtd:-1.4,
     holdings:[
-      {ticker:'VALE3', name:'Vale S.A.',         price:68.20, change:-2.1, shares:200, dir:'dn'},
-      {ticker:'PETR4', name:'Petrobras',         price:38.50, change: 0.8, shares:400, dir:'up'},
-      {ticker:'ITUB4', name:'Itaú Unibanco',     price:28.90, change:-0.6, shares:500, dir:'dn'},
+      { ticker:'VALE3',    name:'Vale S.A.',            price:68.20,  change:-2.1,  shares:200, dir:'dn' },
+      { ticker:'TCS',      name:'Tata Consultancy',     price:3940,   change: 1.8,  shares:30,  dir:'up' },
+      { ticker:'0700.HK',  name:'Tencent Holdings',     price:362,    change:-1.8,  shares:120, dir:'dn' },
+      { ticker:'ITUB4',    name:'Itaú Unibanco',        price:28.90,  change:-0.6,  shares:500, dir:'dn' },
     ],
     alloc:[
-      {label:'Mining',    pct:40, color:'#4ade80'},
-      {label:'Energy',    pct:35, color:'#22c55e'},
-      {label:'Financials',pct:25, color:'#16a34a'},
+      { label:'LatAm',     pct:30, color:'#60a5fa' },
+      { label:'South Asia',pct:38, color:'#2563eb'  },
+      { label:'East Asia', pct:24, color:'#1d4ed8'  },
+      { label:'Other',     pct:8,  color:'#475569'  },
     ],
-    wellness:58, returnPct:'+4.7%',
+    wellness:61, returnPct:'+7.3%',
   },
 
-  // ── Europe ────────────────────────────────────────────────────────────────
+  // ═══ BONDS ZONE (abstract · lat≈53, lng≈-31) ════════════════════════════
   {
-    id:'uk', lat:51.5, lng:-0.1, label:'UK Bonds', flag:'🇬🇧', region:'Europe',
-    color:0xa78bfa, type:'bond', aum:62000, mtd:0.8,
+    id:'bonds_gov', lat:59, lng:-38, label:'Government Bonds', flag:'🏛️', region:'Bonds',
+    color:0xa78bfa, type:'bond', aum:95000, mtd:0.8,
     holdings:[
-      {ticker:'GILT-2Y', name:'UK 2Yr Gilt',   price:98.20, change: 0.12, shares:200, dir:'up'},
-      {ticker:'GILT-10Y',name:'UK 10Yr Gilt',  price:95.40, change:-0.08, shares:100, dir:'dn'},
-      {ticker:'ISF',     name:'iShares UK ETF',price:8.42,  change: 0.31, shares:600, dir:'up'},
-    ],
-    alloc:[{label:'Short Dur.',pct:55,color:'#a78bfa'},{label:'Long Dur.',pct:30,color:'#7c3aed'},{label:'IG Corp.',pct:15,color:'#6d28d9'}],
-    wellness:74, returnPct:'+2.1%',
-  },
-  {
-    id:'de', lat:51, lng:10, label:'EU Tech', flag:'🇩🇪', region:'Europe',
-    color:0x38bdf8, type:'equity', aum:53200, mtd:2.1,
-    holdings:[
-      {ticker:'SAP',  name:'SAP SE',          price:186.40, change: 1.8, shares:80,  dir:'up'},
-      {ticker:'SIE',  name:'Siemens AG',      price:176.20, change: 0.6, shares:60,  dir:'up'},
-      {ticker:'BAYN', name:'Bayer AG',        price:29.50,  change:-1.2, shares:200, dir:'dn'},
+      { ticker:'T-10Y',  name:'US 10Yr Treasury',   price:97.80,  change: 0.12, shares:200, dir:'up' },
+      { ticker:'GILT',   name:'UK 10Yr Gilt',        price:95.40,  change:-0.08, shares:100, dir:'dn' },
+      { ticker:'BUND',   name:'German Bund 10Yr',    price:99.10,  change: 0.05, shares:150, dir:'up' },
     ],
     alloc:[
-      {label:'Software',  pct:48, color:'#38bdf8'},
-      {label:'Industrial',pct:32, color:'#0ea5e9'},
-      {label:'Healthcare',pct:20, color:'#0284c7'},
+      { label:'US Treasuries',  pct:48, color:'#a78bfa' },
+      { label:'EU Sovereign',   pct:32, color:'#7c3aed'  },
+      { label:'Asia Sovereign', pct:20, color:'#6d28d9'  },
     ],
-    wellness:76, returnPct:'+11.2%',
+    wellness:80, returnPct:'+2.8%',
   },
   {
-    id:'ch', lat:46.8, lng:8.2, label:'Swiss Private', flag:'🇨🇭', region:'Europe',
-    color:0xf0abfc, type:'bond', aum:95000, mtd:0.4,
+    id:'bonds_corp', lat:47, lng:-24, label:'Corporate Bonds', flag:'🏢', region:'Bonds',
+    color:0xa78bfa, type:'bond', aum:62000, mtd:0.5,
     holdings:[
-      {ticker:'NESN', name:'Nestlé S.A.',     price:94.50, change: 0.2, shares:150, dir:'up'},
-      {ticker:'NOVN', name:'Novartis AG',     price:92.80, change: 0.5, shares:120, dir:'up'},
-      {ticker:'ROG',  name:'Roche Holding',  price:256.40,change:-0.3, shares:40,  dir:'dn'},
+      { ticker:'MSFT-5Y', name:'Microsoft 5Yr Bond',  price:101.20, change: 0.08, shares:100, dir:'up' },
+      { ticker:'JPM-3Y',  name:'JPMorgan 3Yr Note',   price:99.80,  change:-0.05, shares:150, dir:'dn' },
+      { ticker:'AAPL-7Y', name:'Apple 7Yr Bond',      price:102.40, change: 0.11, shares:80,  dir:'up' },
     ],
     alloc:[
-      {label:'Consumer',  pct:38, color:'#f0abfc'},
-      {label:'Pharma',    pct:42, color:'#e879f9'},
-      {label:'Financials',pct:20, color:'#c026d3'},
+      { label:'IG Corporate', pct:60, color:'#a78bfa' },
+      { label:'HY Corporate', pct:25, color:'#8b5cf6'  },
+      { label:'EM Debt',      pct:15, color:'#7c3aed'  },
     ],
-    wellness:88, returnPct:'+3.8%',
+    wellness:74, returnPct:'+3.2%',
   },
 
-  // ── Asia ──────────────────────────────────────────────────────────────────
+  // ═══ REAL ASSETS ZONE (abstract · lat≈14, lng≈40) ══════════════════════
   {
-    id:'sg', lat:1.35, lng:103.82, label:'SG Real Estate', flag:'🇸🇬', region:'Southeast Asia',
-    color:0xc9a84c, type:'real', aum:320000, mtd:1.1,
+    id:'real_estate', lat:21, lng:31, label:'Real Estate', flag:'🏠', region:'Real Assets',
+    color:0x34d399, type:'real', aum:320000, mtd:1.1,
     holdings:[
-      {ticker:'PRIV-01',name:'CBD Office Unit', price:850000,change: 1.1, shares:1,    dir:'up'},
-      {ticker:'REIT-AX',name:'Ascendas REIT',   price:2.84,  change: 0.35,shares:5000, dir:'up'},
-      {ticker:'CICT',   name:'CapitaLand Int.', price:1.98,  change:-0.1, shares:8000, dir:'dn'},
+      { ticker:'CBD-01',  name:'CBD Office Unit',    price:850000, change: 1.1,  shares:1,    dir:'up' },
+      { ticker:'REIT-AX', name:'Ascendas REIT',      price:2.84,   change: 0.35, shares:5000, dir:'up' },
+      { ticker:'VNQ',     name:'Vanguard REIT ETF',  price:88.40,  change:-0.4,  shares:200,  dir:'dn' },
+      { ticker:'CICT',    name:'CapitaLand Int.',    price:1.98,   change:-0.1,  shares:8000, dir:'dn' },
     ],
-    alloc:[{label:'Direct',pct:62,color:'#c9a84c'},{label:'REITs',pct:28,color:'#92400e'},{label:'Dev.',pct:10,color:'#78350f'}],
+    alloc:[
+      { label:'Direct Property', pct:55, color:'#c9a84c' },
+      { label:'REITs',           pct:30, color:'#a16207'  },
+      { label:'Mortgages',       pct:15, color:'#78350f'  },
+    ],
     wellness:68, returnPct:'+5.8%',
   },
   {
-    id:'jp', lat:35.7, lng:139.7, label:'Japan Equity', flag:'🇯🇵', region:'East Asia',
-    color:0xf87171, type:'equity', aum:35000, mtd:-0.5,
+    id:'infrastructure', lat:8, lng:49, label:'Infrastructure', flag:'🏗️', region:'Real Assets',
+    color:0x34d399, type:'real', aum:67300, mtd:0.9,
     holdings:[
-      {ticker:'7203.T',name:'Toyota Motor',  price:2845,  change:-0.5, shares:80,  dir:'dn'},
-      {ticker:'6758.T',name:'Sony Group',    price:12480, change: 1.2, shares:15,  dir:'up'},
-      {ticker:'9984.T',name:'SoftBank Group',price:7820,  change:-1.8, shares:30,  dir:'dn'},
-    ],
-    alloc:[{label:'Auto',pct:42,color:'#f87171'},{label:'Tech',pct:38,color:'#fca5a5'},{label:'Telecom',pct:20,color:'#fecaca'}],
-    wellness:71, returnPct:'+4.2%',
-  },
-  {
-    id:'in', lat:20, lng:77, label:'India Growth', flag:'🇮🇳', region:'South Asia',
-    color:0xfbbf24, type:'equity', aum:67300, mtd:4.8,
-    holdings:[
-      {ticker:'RELIANCE',name:'Reliance Ind.',   price:2820, change: 2.4, shares:50,  dir:'up'},
-      {ticker:'TCS',     name:'Tata Consultancy',price:3940, change: 1.8, shares:30,  dir:'up'},
-      {ticker:'HDFCBANK',name:'HDFC Bank',       price:1580, change: 0.9, shares:100, dir:'up'},
-      {ticker:'INFY',    name:'Infosys Ltd.',    price:1620, change:-0.6, shares:80,  dir:'dn'},
+      { ticker:'ENB',  name:'Enbridge Inc.',      price:47.32, change: 1.2, shares:320, dir:'up' },
+      { ticker:'BIP',  name:'Brookfield Infra.',  price:36.80, change: 0.6, shares:250, dir:'up' },
+      { ticker:'TRPL', name:'Transurban Group',   price:13.20, change:-0.3, shares:600, dir:'dn' },
     ],
     alloc:[
-      {label:'Tech & IT', pct:45, color:'#fbbf24'},
-      {label:'Energy',    pct:25, color:'#f59e0b'},
-      {label:'Financials',pct:20, color:'#d97706'},
-      {label:'Consumer',  pct:10, color:'#92400e'},
+      { label:'Utilities',  pct:40, color:'#c9a84c' },
+      { label:'Transport',  pct:35, color:'#a16207'  },
+      { label:'Telecoms',   pct:25, color:'#92400e'  },
     ],
-    wellness:79, returnPct:'+22.1%',
-  },
-  {
-    id:'cn', lat:35, lng:105, label:'China Tech', flag:'🇨🇳', region:'East Asia',
-    color:0xfb7185, type:'equity', aum:48900, mtd:-2.3,
-    holdings:[
-      {ticker:'0700.HK',name:'Tencent Holdings', price:362, change:-1.8, shares:120, dir:'dn'},
-      {ticker:'9988.HK',name:'Alibaba Group',    price:74,  change:-3.2, shares:300, dir:'dn'},
-      {ticker:'3690.HK',name:'Meituan',          price:128, change: 0.9, shares:200, dir:'up'},
-    ],
-    alloc:[
-      {label:'E-Commerce',pct:40, color:'#fb7185'},
-      {label:'Social/Gaming',pct:38, color:'#f43f5e'},
-      {label:'Delivery',  pct:22, color:'#e11d48'},
-    ],
-    wellness:52, returnPct:'-4.6%',
+    wellness:72, returnPct:'+6.4%',
   },
 
-  // ── Digital / Middle East ─────────────────────────────────────────────────
+  // ═══ DIGITAL ASSETS ZONE (abstract · lat≈41, lng≈115) ════════════════════
   {
-    id:'crypto', lat:25, lng:55, label:'Digital Assets', flag:'₿', region:'Global',
-    color:0x2dd4bf, type:'crypto', aum:48500, mtd:12.4,
+    id:'crypto_major', lat:48, lng:106, label:'Major Crypto', flag:'₿', region:'Digital Assets',
+    color:0x2dd4bf, type:'crypto', aum:38500, mtd:12.4,
     holdings:[
-      {ticker:'BTC', name:'Bitcoin',   price:67420, change: 5.21, shares:0.42, dir:'up'},
-      {ticker:'ETH', name:'Ethereum',  price: 3420, change:-2.10, shares:3.5,  dir:'dn'},
-      {ticker:'SOL', name:'Solana',    price:  182, change: 8.40, shares:20,   dir:'up'},
-      {ticker:'ARB', name:'Arbitrum',  price:  1.28,change: 4.20, shares:5000, dir:'up'},
+      { ticker:'BTC', name:'Bitcoin',   price:67420, change: 5.21, shares:0.42, dir:'up' },
+      { ticker:'ETH', name:'Ethereum',  price:3420,  change:-2.10, shares:3.5,  dir:'dn' },
+      { ticker:'SOL', name:'Solana',    price:182,   change: 8.40, shares:20,   dir:'up' },
     ],
     alloc:[
-      {label:'Bitcoin',  pct:52, color:'#2dd4bf'},
-      {label:'Ethereum', pct:28, color:'#0f766e'},
-      {label:'L1 Alt',   pct:12, color:'#14b8a6'},
-      {label:'L2 Alt',   pct:8,  color:'#0d9488'},
+      { label:'Bitcoin',  pct:62, color:'#2dd4bf' },
+      { label:'Ethereum', pct:28, color:'#0f766e'  },
+      { label:'Solana',   pct:10, color:'#14b8a6'  },
     ],
     wellness:55, returnPct:'+41.2%',
   },
-
-  // ── Oceania / Africa ──────────────────────────────────────────────────────
   {
-    id:'au', lat:-25, lng:133, label:'AU Commodities', flag:'🇦🇺', region:'Oceania',
-    color:0xfbbf24, type:'commodity', aum:28000, mtd:2.7,
+    id:'defi', lat:34, lng:124, label:'DeFi & Web3', flag:'🔗', region:'Digital Assets',
+    color:0x2dd4bf, type:'crypto', aum:10000, mtd:8.6,
     holdings:[
-      {ticker:'GOLD',name:'Gold ETF',      price:2320, change:1.4, shares:6,  dir:'up'},
-      {ticker:'IRON',name:'Iron Ore Fund', price: 118, change:3.2, shares:50, dir:'up'},
-      {ticker:'BHP', name:'BHP Group',     price: 44,  change:1.9, shares:200,dir:'up'},
-    ],
-    alloc:[{label:'Precious',pct:50,color:'#fbbf24'},{label:'Industrial',pct:35,color:'#f59e0b'},{label:'Mining Eq.',pct:15,color:'#92400e'}],
-    wellness:77, returnPct:'+9.1%',
-  },
-  {
-    id:'za', lat:-29, lng:25, label:'Africa Resources', flag:'🇿🇦', region:'Africa',
-    color:0x86efac, type:'commodity', aum:18400, mtd:0.6,
-    holdings:[
-      {ticker:'AGL', name:'Anglo American',   price:22.80, change: 0.8, shares:300, dir:'up'},
-      {ticker:'GFI', name:'Gold Fields Ltd.', price:14.50, change: 1.4, shares:400, dir:'up'},
-      {ticker:'SSW', name:'Sibanye Stillwater',price:4.20, change:-1.1, shares:800, dir:'dn'},
+      { ticker:'ARB',  name:'Arbitrum', price:1.28,  change: 4.20, shares:5000, dir:'up' },
+      { ticker:'UNI',  name:'Uniswap',  price:8.42,  change: 2.80, shares:800,  dir:'up' },
+      { ticker:'AAVE', name:'Aave',     price:142,   change:-3.10, shares:25,   dir:'dn' },
     ],
     alloc:[
-      {label:'Diversified', pct:42, color:'#86efac'},
-      {label:'Gold',        pct:38, color:'#4ade80'},
-      {label:'Platinum',    pct:20, color:'#22c55e'},
+      { label:'L2 Scaling', pct:45, color:'#2dd4bf' },
+      { label:'DEX / AMM',  pct:30, color:'#0f766e'  },
+      { label:'Lending',    pct:25, color:'#14b8a6'  },
     ],
-    wellness:61, returnPct:'+6.3%',
+    wellness:48, returnPct:'+28.4%',
+  },
+
+  // ═══ COMMODITIES ZONE (lat≈-38, lng≈-4) ════════════════════════════
+  // All commodities cluster in one southern zone — no geographic split
+  {
+    id:'precious_metals', lat:-29, lng:-15, label:'Precious Metals', flag:'🪙', region:'Commodities',
+    color:0xfbbf24, type:'commodity', aum:46400, mtd:2.7,
+    holdings:[
+      { ticker:'GOLD', name:'Gold ETF',         price:2320,  change:1.4,  shares:6,   dir:'up' },
+      { ticker:'SLV',  name:'Silver ETF',        price:27,    change:2.1,  shares:80,  dir:'up' },
+      { ticker:'GFI',  name:'Gold Fields Ltd.',  price:14.50, change:1.4,  shares:400, dir:'up' },
+    ],
+    alloc:[
+      { label:'Gold',     pct:65, color:'#fbbf24' },
+      { label:'Silver',   pct:20, color:'#f59e0b'  },
+      { label:'Platinum', pct:15, color:'#d97706'  },
+    ],
+    wellness:75, returnPct:'+9.8%',
+  },
+  {
+    id:'energy', lat:-44, lng:-5, label:'Energy & Oil', flag:'⛽', region:'Commodities',
+    color:0xfbbf24, type:'commodity', aum:41800, mtd:1.8,
+    holdings:[
+      { ticker:'SU',   name:'Suncor Energy', price:52.10,  change: 0.9, shares:180, dir:'up' },
+      { ticker:'XOM',  name:'ExxonMobil',    price:114.50, change: 1.4, shares:90,  dir:'up' },
+      { ticker:'SHEL', name:'Shell PLC',     price:31.80,  change:-0.5, shares:200, dir:'dn' },
+    ],
+    alloc:[
+      { label:'Oil & Gas',  pct:65, color:'#fbbf24' },
+      { label:'Pipelines',  pct:22, color:'#f59e0b'  },
+      { label:'Renewables', pct:13, color:'#92400e'  },
+    ],
+    wellness:70, returnPct:'+7.3%',
+  },
+  // Australia cluster comment removed — all in same commodities zone
+  {
+    id:'mining', lat:-38, lng:9, label:'Natural Resources', flag:'⛏️', region:'Commodities',
+    color:0xfbbf24, type:'commodity', aum:28000, mtd:1.2,
+    holdings:[
+      { ticker:'BHP',  name:'BHP Group',      price:44,    change:1.9,  shares:200, dir:'up' },
+      { ticker:'IRON', name:'Iron Ore Fund',  price:118,   change:3.2,  shares:50,  dir:'up' },
+      { ticker:'AGL',  name:'Anglo American', price:22.80, change:0.8,  shares:300, dir:'up' },
+    ],
+    alloc:[
+      { label:'Mining',   pct:55, color:'#fbbf24' },
+      { label:'Iron Ore', pct:28, color:'#f59e0b'  },
+      { label:'Lithium',  pct:17, color:'#d97706'  },
+    ],
+    wellness:69, returnPct:'+8.1%',
   },
 ]
 

@@ -438,6 +438,45 @@ const RISK_DEFS = [
   { min:67, max:100,icon:'🚀', title:'Aggressive Portfolio',   desc:'Factor: 0.5 · Growth-oriented. 90% equities, 5% bonds, 5% alternatives.', color:'var(--red)' },
 ]
 
+// ── Zone definitions — used for texture drawing AND hover detection ─────────
+const GLOBE_ZONES = [
+  {
+    label:'Equities',    cx:360,  cy:330, rx:265, ry:198,
+    core:[{cx:360,cy:330,rx:265,ry:198,rot:0.08},{cx:395,cy:348,rx:185,ry:140,rot:-0.05}],
+    dr:10,  dg:38,  db:98,    // very dark blue fill
+    lr:96,  lg:165, lb:250,   // light edge #60a5fa
+    color:'#60a5fa',
+  },
+  {
+    label:'Bonds',       cx:850,  cy:210, rx:188, ry:142,
+    core:[{cx:850,cy:210,rx:188,ry:142,rot:0},{cx:875,cy:228,rx:132,ry:100,rot:0.07}],
+    dr:48,  dg:20,  db:112,   // very dark purple
+    lr:167, lg:139, lb:250,
+    color:'#a78bfa',
+  },
+  {
+    label:'Real Assets', cx:1250, cy:430, rx:202, ry:158,
+    core:[{cx:1250,cy:430,rx:202,ry:158,rot:0.06},{cx:1272,cy:450,rx:148,ry:114,rot:-0.06}],
+    dr:10,  dg:68,  db:48,    // very dark emerald
+    lr:52,  lg:211, lb:153,   // light edge #34d399
+    color:'#34d399',
+  },
+  {
+    label:'Digital',     cx:1680, cy:280, rx:182, ry:152,
+    core:[{cx:1680,cy:280,rx:182,ry:152,rot:-0.07},{cx:1660,cy:300,rx:128,ry:108,rot:0.05}],
+    dr:6,   dg:68,  db:65,    // very dark teal
+    lr:45,  lg:212, lb:191,
+    color:'#2dd4bf',
+  },
+  {
+    label:'Commodities', cx:1000, cy:730, rx:272, ry:148,
+    core:[{cx:1000,cy:730,rx:272,ry:148,rot:0},{cx:1022,cy:752,rx:192,ry:108,rot:0.04}],
+    dr:105, dg:62,  db:5,     // very dark amber
+    lr:251, lg:191, lb:36,
+    color:'#fbbf24',
+  },
+]
+
 export default function Globe() {
   const navigate    = useNavigate()
   const canvasRef   = useRef(null)
@@ -460,6 +499,8 @@ export default function Globe() {
   const [dashShow,      setDashShow]    = useState(false)
   const [flyingIn,      setFlyingIn]    = useState(false)  // camera zoom animation
   const [riskPct,       setRiskPct]     = useState(50)
+  const [hoverZone,     setHoverZone]   = useState(null)
+  const [zonePos,        setZonePos]     = useState({ x:0, y:0 })
   const riskLevel = RISK_DEFS.find(r => riskPct >= r.min && riskPct <= r.max) || RISK_DEFS[1]
   const riskTrackRef  = useRef(null)
   const riskDragRef   = useRef(false)
@@ -467,7 +508,7 @@ export default function Globe() {
   // Animated counters
   useEffect(() => {
     setTimeout(() => {
-      animateCount(setAum, 1031950, 2000)   // sum of all 13 nodes
+      animateCount(setAum, 1096150, 2000)   // sum of all 12 type-based nodes
       animateCount(setPl,   21840,  1800)
     }, 400)
   }, [])
@@ -550,43 +591,73 @@ export default function Globe() {
     const ctx = texCanvas.getContext('2d')
     if (!ctx) { console.error('WealthSphere: could not get 2D context for globe texture'); return }
 
-    // Ocean gradient
+    // Pure space background — no ocean, no geography
     const og = ctx.createLinearGradient(0, 0, 0, 1024)
-    og.addColorStop(0, '#060e1e'); og.addColorStop(0.5, '#0a1628'); og.addColorStop(1, '#0d1f3c')
+    og.addColorStop(0, '#020409'); og.addColorStop(0.5, '#03060f'); og.addColorStop(1, '#040810')
     ctx.fillStyle = og; ctx.fillRect(0, 0, 2048, 1024)
 
-    // Fine lat/lng grid
-    ctx.strokeStyle = 'rgba(45,212,191,0.07)'; ctx.lineWidth = 0.7
-    for (let lat = -80; lat <= 80; lat += 15) {
-      const y = (90 - lat) / 180 * 1024
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(2048, y); ctx.stroke()
-    }
-    for (let lng = 0; lng <= 360; lng += 15) {
-      const x = lng / 360 * 2048
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1024); ctx.stroke()
+    // ── Abstract dot grid (no geographic meaning) ──────────────────────────
+    for (let gx = 0; gx < 2048; gx += 52) {
+      for (let gy = 0; gy < 1024; gy += 52) {
+        ctx.beginPath(); ctx.arc(gx, gy, 0.9, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(45,212,191,0.10)'; ctx.fill()
+      }
     }
 
-    // Landmasses
-    ctx.fillStyle = 'rgba(22,32,56,0.93)'
-    const blob = (cx,cy,rx,ry,rot=0) => {
-      ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, rot, 0, Math.PI*2); ctx.fill()
-    }
-    blob(360,320,190,145); blob(460,590,115,170); blob(985,295,82,62)
-    blob(985,525,105,155); blob(1325,330,248,145); blob(1462,645,104,72); blob(545,182,64,42)
+    // ── ABSTRACT INVESTMENT TYPE ZONES ─────────────────────────────────────
+    const ZONES = GLOBE_ZONES
 
-    // Coastline highlights
-    ctx.strokeStyle = 'rgba(45,212,191,0.14)'; ctx.lineWidth = 1.8
-    const blobS = (cx,cy,rx,ry) => { ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); ctx.stroke() }
-    blobS(360,320,190,145); blobS(985,525,105,155); blobS(1325,330,248,145)
+    ZONES.forEach(z => {
+      // Outer soft glow
+      const halo = ctx.createRadialGradient(z.cx, z.cy, z.rx * 0.4, z.cx, z.cy, z.rx * 1.8)
+      halo.addColorStop(0, `rgba(${z.dr},${z.dg},${z.db},0.38)`)
+      halo.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.save()
+      ctx.beginPath(); ctx.ellipse(z.cx, z.cy, z.rx * 1.8, z.ry * 1.8, 0, 0, Math.PI * 2)
+      ctx.fillStyle = halo; ctx.fill(); ctx.restore()
 
-    // City-light dots
-    ;[[368,295],[430,315],[990,285],[1010,315],[1340,315],[1360,345],[1390,365],[465,505],[495,545]].forEach(([cx,cy]) => {
-      ctx.beginPath(); ctx.arc(cx,cy,2.5,0,Math.PI*2)
-      ctx.fillStyle='rgba(201,168,76,0.55)'; ctx.fill()
-      const g = ctx.createRadialGradient(cx,cy,0,cx,cy,8)
-      g.addColorStop(0,'rgba(201,168,76,0.35)'); g.addColorStop(1,'transparent')
-      ctx.beginPath(); ctx.arc(cx,cy,8,0,Math.PI*2)
-      ctx.fillStyle=g; ctx.fill()
+      // Layered zone fills — darker opacities
+      z.core.forEach((s, i) => {
+        ctx.save()
+        ctx.translate(s.cx, s.cy); ctx.rotate(s.rot)
+        ctx.beginPath(); ctx.ellipse(0, 0, s.rx, s.ry, 0, 0, Math.PI * 2); ctx.clip()
+        const fg = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(s.rx, s.ry))
+        if (i === 0) {
+          fg.addColorStop(0,   `rgba(${z.dr},${z.dg},${z.db},0.92)`)
+          fg.addColorStop(0.5, `rgba(${z.dr},${z.dg},${z.db},0.72)`)
+          fg.addColorStop(1,   `rgba(${z.dr},${z.dg},${z.db},0.18)`)
+        } else {
+          fg.addColorStop(0,   `rgba(${z.lr},${z.lg},${z.lb},0.28)`)
+          fg.addColorStop(0.6, `rgba(${z.dr},${z.dg},${z.db},0.22)`)
+          fg.addColorStop(1,   'rgba(0,0,0,0)')
+        }
+        ctx.fillStyle = fg
+        ctx.fillRect(-s.rx - 2, -s.ry - 2, (s.rx + 2) * 2, (s.ry + 2) * 2)
+        ctx.restore()
+      })
+
+      // Outer dashed border
+      ctx.save()
+      ctx.beginPath(); ctx.ellipse(z.cx, z.cy, z.rx, z.ry, 0, 0, Math.PI * 2)
+      ctx.strokeStyle = `rgba(${z.lr},${z.lg},${z.lb},0.80)`
+      ctx.lineWidth = 2.2; ctx.setLineDash([11, 7]); ctx.stroke()
+      ctx.setLineDash([]); ctx.restore()
+
+      // Inner subtle ring
+      ctx.save()
+      ctx.beginPath(); ctx.ellipse(z.cx, z.cy, z.rx * 0.82, z.ry * 0.82, 0, 0, Math.PI * 2)
+      ctx.strokeStyle = `rgba(${z.lr},${z.lg},${z.lb},0.22)`
+      ctx.lineWidth = 1; ctx.stroke(); ctx.restore()
+
+      // Zone label
+      ctx.save()
+      ctx.font = 'bold 17px monospace'
+      ctx.fillStyle = `rgba(${z.lr},${z.lg},${z.lb},0.92)`
+      ctx.textAlign = 'center'
+      ctx.shadowColor = `rgba(${z.lr},${z.lg},${z.lb},0.65)`
+      ctx.shadowBlur = 12
+      ctx.fillText(z.label.toUpperCase(), z.cx, z.cy - z.ry * 0.52)
+      ctx.restore()
     })
 
     // ── Now create the WebGL renderer ──────────────────────
@@ -677,26 +748,28 @@ export default function Globe() {
         return m
       }
 
-      // Core dot — bright and large enough to see
+      // Core dot — lifted off the surface so it sits fully above the globe
+      const dotRadius = 0.044
       const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.022, 16, 16),
+        new THREE.SphereGeometry(dotRadius, 16, 16),
         new THREE.MeshBasicMaterial({ color: node.color })
       )
-      dot.position.copy(pos)
+      // Offset outward by dot radius so the bottom edge just kisses the globe surface
+      dot.position.copy(pos).addScaledVector(normal, dotRadius)
       globe.add(dot)   // ← child of globe
 
-      // Soft glow halo
+      // Soft glow halo — same centre as the dot so it wraps it symmetrically
       const halo = new THREE.Mesh(
-        new THREE.SphereGeometry(0.034, 16, 16),
+        new THREE.SphereGeometry(0.068, 16, 16),
         new THREE.MeshBasicMaterial({ color:node.color, transparent:true, opacity:0.28 })
       )
-      halo.position.copy(pos)
+      halo.position.copy(dot.position)
       globe.add(halo)  // ← child of globe
 
-      const ring   = mkRing(0.030, 0.046, 0.70)
-      const ring2  = mkRing(0.050, 0.060, 0.25)
-      const pulseA = mkRing(0.046, 0.066, 0.0)
-      const pulseB = mkRing(0.068, 0.084, 0.0)
+      const ring   = mkRing(0.060, 0.092, 0.70)
+      const ring2  = mkRing(0.100, 0.120, 0.25)
+      const pulseA = mkRing(0.092, 0.132, 0.0)
+      const pulseB = mkRing(0.136, 0.168, 0.0)
       pulseA._phase = Math.random() * Math.PI * 2
       pulseB._phase = pulseA._phase + Math.PI
 
@@ -704,14 +777,21 @@ export default function Globe() {
     })
     nodeObjsRef.current = nodeObjs
 
-    // ── Drag rotation ────────────────────────────────────────
+    // ── Drag rotation + momentum ──────────────────────────
     let isDrag = false, prev = {x:0,y:0}
-    const onDown = e => { isDrag=true; isDragRef.current=true; prev={x:e.clientX,y:e.clientY} }
-    const onUp   = () => { isDrag=false; isDragRef.current=false }
+    let velY = 0, velX = 0, lastDx = 0, lastDy = 0
+    const onDown = e => { isDrag=true; isDragRef.current=true; prev={x:e.clientX,y:e.clientY}; velY=0; velX=0 }
+    const onUp   = () => {
+      isDrag=false; isDragRef.current=false
+      // carry the last frame's drag velocity into momentum
+      velY = lastDx * 0.004
+      velX = lastDy * 0.004
+    }
     const onMove = e => {
       if (!isDrag) return
       const dx=e.clientX-prev.x, dy=e.clientY-prev.y
       globe.rotation.y += dx*0.004; globe.rotation.x += dy*0.004
+      lastDx=dx; lastDy=dy
       prev={x:e.clientX,y:e.clientY}
     }
     canvas.addEventListener('mousedown', onDown)
@@ -730,19 +810,44 @@ export default function Globe() {
       if (!hits.length) return null
       return nodeObjs.find(n => n.dot === hits[0].object) || null
     }
+    // Zone hover: raycast the sphere surface, read UV, map to texture space
+    const getZoneHit = (cx, cy) => {
+      if (!globeRef.current) return null
+      const rect = canvas.getBoundingClientRect()
+      m2d.x =  ((cx - rect.left) / rect.width)  * 2 - 1
+      m2d.y = -((cy - rect.top)  / rect.height) * 2 + 1
+      ray.setFromCamera(m2d, camera)
+      const hits = ray.intersectObject(globeRef.current, false)
+      if (!hits.length || !hits[0].uv) return null
+      const tx = hits[0].uv.x * 2048
+      const ty = (1 - hits[0].uv.y) * 1024
+      for (const z of GLOBE_ZONES) {
+        const ex = (tx - z.cx) / z.rx
+        const ey = (ty - z.cy) / z.ry
+        if (ex*ex + ey*ey <= 1) return z.label
+      }
+      return null
+    }
 
     // ── LAYER 3 — Hover → glass card ────────────────────────
     canvas.addEventListener('mousemove', e => {
-      if (isDrag) { setHoverNode(null); return }
+      if (isDrag) { setHoverNode(null); setHoverZone(null); return }
       const hit = getHit(e.clientX, e.clientY)
       if (hit) {
         const rect = canvas.getBoundingClientRect()
         setHoverPos({ x:e.clientX-rect.left+18, y:e.clientY-rect.top-30 })
         setHoverNode(hit.node)
+        setHoverZone(null)
         canvas.style.cursor = 'pointer'
       } else {
         if (!cardLockedRef.current) setHoverNode(null)
-        canvas.style.cursor = isDrag ? 'grabbing' : 'grab'
+        const zone = getZoneHit(e.clientX, e.clientY)
+        setHoverZone(zone)
+        if (zone) {
+          const rect = canvas.getBoundingClientRect()
+          setZonePos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+        }
+        canvas.style.cursor = 'grab'
       }
     })
 
@@ -766,8 +871,15 @@ export default function Globe() {
       starPoints.rotation.y += 0.00012
       starPoints.rotation.x += 0.000045
 
-      // Layer 1 — globe auto-rotate
-      if (!isDrag) globe.rotation.y += 0.0016
+      // Layer 1 — momentum spin-to-stop
+      if (!isDragRef.current) {
+        globe.rotation.y += velY
+        globe.rotation.x += velX
+        velY *= 0.91
+        velX *= 0.91
+        if (Math.abs(velY) < 0.00005) velY = 0
+        if (Math.abs(velX) < 0.00005) velX = 0
+      }
 
       // Layer 2 — pulse markers (no manual rotation sync needed — parented to globe)
       nodeObjs.forEach(n => {
@@ -862,6 +974,50 @@ export default function Globe() {
             onClick={() => hoverNode && openDashboard(hoverNode)}
           />
 
+          {/* Zone label chip — shown on zone hover */}
+          {hoverZone && (() => {
+            const z = GLOBE_ZONES.find(g => g.label === hoverZone)
+            if (!z) return null
+            return (
+              <div style={{
+                position:'absolute',
+                left: zonePos.x,
+                top:  zonePos.y - 56,
+                transform:'translateX(-50%)',
+                pointerEvents:'none',
+                zIndex:20,
+                display:'flex', flexDirection:'column', alignItems:'center', gap:4,
+              }}>
+                <div style={{
+                  fontFamily:'var(--font-display)',
+                  fontWeight:800,
+                  fontSize:'1.05rem',
+                  letterSpacing:'0.08em',
+                  textTransform:'uppercase',
+                  color: z.color,
+                  textShadow: `0 0 18px ${z.color}, 0 0 34px ${z.color}88`,
+                  background:'rgba(8,10,18,0.72)',
+                  border:`1.5px solid ${z.color}88`,
+                  borderRadius:8,
+                  padding:'5px 14px',
+                  backdropFilter:'blur(10px)',
+                  whiteSpace:'nowrap',
+                  boxShadow:`0 0 22px ${z.color}44, inset 0 0 12px ${z.color}18`,
+                  animation:'fadeUp 0.18s ease',
+                }}>
+                  {z.label}
+                </div>
+                {/* pointer caret */}
+                <div style={{
+                  width:0, height:0,
+                  borderLeft:'6px solid transparent',
+                  borderRight:'6px solid transparent',
+                  borderTop:`7px solid ${z.color}88`,
+                }} />
+              </div>
+            )
+          })()}
+
           {/* Fly-in vignette flash */}
           {flyingIn && (
             <div style={{
@@ -873,23 +1029,39 @@ export default function Globe() {
           )}
         </div>
 
-        {/* Legend */}
+        {/* Legend — highlights on zone hover */}
         <div style={S.legend}>
-          {[{c:'#60a5fa',l:'Equities'},{c:'#c9a84c',l:'Real Assets'},{c:'#2dd4bf',l:'Digital'},{c:'#a78bfa',l:'Bonds'},{c:'#f87171',l:'JP Equity'},{c:'#fbbf24',l:'Commodities'}].map(x => (
-            <div key={x.l} style={{ display:'flex', alignItems:'center', gap:7, fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:'var(--text-dim)' }}>
-              <div style={{ width:8, height:8, borderRadius:'50%', background:x.c, boxShadow:`0 0 5px ${x.c}` }} />
-              {x.l}
-            </div>
-          ))}
+          {GLOBE_ZONES.map(z => {
+            const active = hoverZone === z.label
+            return (
+              <div key={z.label} style={{
+                display:'flex', alignItems:'center', gap:7,
+                fontFamily:'var(--font-mono)',
+                fontSize: active ? '0.76rem' : '0.7rem',
+                fontWeight: active ? 700 : 400,
+                color: active ? '#fff' : 'var(--text-dim)',
+                textShadow: active ? `0 0 16px ${z.color}, 0 0 6px ${z.color}` : 'none',
+                transition:'all 0.18s ease',
+              }}>
+                <div style={{
+                  width: active ? 10 : 8, height: active ? 10 : 8,
+                  borderRadius:'50%', background:z.color,
+                  boxShadow: active ? `0 0 14px 4px ${z.color}` : `0 0 5px ${z.color}`,
+                  transition:'all 0.18s ease', flexShrink:0,
+                }} />
+                {z.label}
+              </div>
+            )
+          })}
         </div>
 
         {/* Stats bar */}
         <div style={S.statsBar}>
           {[
-            { label:'Total AUM',     val:`$${aum.toLocaleString()}`, sub:'across 13 markets', c:'var(--gold)'  },
-            { label:'Day P&L',       val:`+$${pl.toLocaleString()}`, sub:'+2.14% today',       c:'var(--green)' },
-            { label:'Wellness Score',val:'73 / 100',                 sub:'diversification',    c:'var(--teal)'  },
-            { label:'Active Positions',val:'38',                     sub:'across 7 classes',   c:'var(--gold)'  },
+            { label:'Total AUM',     val:`$${aum.toLocaleString()}`, sub:'across 5 asset types', c:'var(--gold)'  },
+            { label:'Day P&L',       val:`+$${pl.toLocaleString()}`, sub:'+2.14% today',          c:'var(--green)' },
+            { label:'Wellness Score',val:'73 / 100',                 sub:'diversification',        c:'var(--teal)'  },
+            { label:'Active Positions',val:'40',                    sub:'across 12 portfolios',   c:'var(--gold)'  },
           ].map((s,i) => (
             <div key={s.label} style={{ ...S.statItem, borderRight: i<3 ? '1px solid var(--border)' : 'none' }}>
               <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:4 }}>{s.label}</div>
