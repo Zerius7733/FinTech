@@ -183,6 +183,29 @@ Put your token in either:
 
 The GPT client also checks `backend/.env` for backward compatibility.
 
+## Screenshot Import (No Login, user_id only)
+
+Parse screenshot into candidate holdings:
+
+- `POST /users/{user_id}/imports/screenshot/parse`
+- Body:
+  - `image_base64`: image data URL or raw base64
+  - `model` (optional): default `gpt-4.1-mini`
+
+Confirm and merge holdings into user portfolio:
+
+- `POST /users/{user_id}/imports/screenshot/confirm`
+- Body:
+  - `import_id` (from parse response)
+  - `holdings` (optional override array for user-edited values)
+
+`confirm` merges by `asset_class + symbol` and adds quantities (e.g., existing `3 SPY` + imported `10 SPY` => `13 SPY`).
+
+Import records are stored in `backend/json_data/screenshot_imports.json` as a temporary confirmation queue:
+
+- `pending` imports auto-expire after 24 hours
+- `confirmed` imports are deleted immediately after successful confirm/merge
+
 ## Commodity Support
 
 You can now query commodity prices via:

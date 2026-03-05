@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Portfolio Screenshot Importer",
+  "version": "1.0.0",
+  "description": "Capture screenshot, parse holdings with backend LLM, and confirm import.",
+  "action": {
+    "default_title": "Portfolio Importer",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["activeTab", "tabs", "storage", "scripting"],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*"
+  ]
+}
