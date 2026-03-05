@@ -25,11 +25,13 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @app.get("/health")
+# Health check endpoint to verify the API is running.
 def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
 @app.get("/users")
+# Returns all users from the JSON data file.
 def get_users() -> Dict[str, Any]:
     try:
         with open(JSON_PATH, "r", encoding="utf-8") as f:
@@ -41,6 +43,7 @@ def get_users() -> Dict[str, Any]:
 
 
 @app.get("/users/{user_id}")
+# Returns one user by user_id, or 404 if not found.
 def get_user_by_id(user_id: str) -> Dict[str, Any]:
     try:
         with open(JSON_PATH, "r", encoding="utf-8") as f:
@@ -56,6 +59,7 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
 
 
 @app.get("/update/assets")
+# Updates users' asset holdings from the CSV source.
 def update_assets() -> Dict[str, Any]:
     try:
         print("[api] /update/assets called")
@@ -66,6 +70,7 @@ def update_assets() -> Dict[str, Any]:
 
 
 @app.get("/update/prices")
+# Updates stock prices for users' holdings.
 def update_prices() -> Dict[str, Any]:
     try:
         print("[api] /update/prices called")
@@ -76,6 +81,7 @@ def update_prices() -> Dict[str, Any]:
 
 
 @app.get("/update/wellness")
+# Recalculates wellness metrics for users.
 def update_wellness() -> Dict[str, Any]:
     try:
         print("[api] /update/wellness called")
@@ -86,6 +92,7 @@ def update_wellness() -> Dict[str, Any]:
 
 
 @app.get("/update/all")
+# Runs assets, prices, and wellness updates in sequence.
 def update_all() -> Dict[str, Any]:
     try:
         print("[api] /update/all called")
