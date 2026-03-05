@@ -92,7 +92,6 @@ class UserRiskUpdateRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: str
     password: str
-    user_id: str | None = None
 
 
 @app.get("/health", tags=["Health"], summary="API health check")
@@ -107,9 +106,8 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
             login_csv_path=LOGIN_CSV_PATH,
             username=payload.username,
             password=payload.password,
-            user_id=payload.user_id,
         )
-        return {"status": "ok", **result}
+        return {"status": "ok", "username": result["username"]}
     except RegisterValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RegisterConflictError as exc:
