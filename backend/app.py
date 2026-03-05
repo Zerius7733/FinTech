@@ -6,6 +6,8 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import AliasChoices, BaseModel, Field
 
 import backend.services.api_deps as api
+from backend.services.insights_service import InsightError
+from backend.services.insights_service import build_insights
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -95,6 +97,19 @@ class AssetResolveResponse(BaseModel):
     source: str
 
 
+class InsightsResponse(BaseModel):
+    type: str
+    symbol: str
+    name: str
+    period: Dict[str, Any]
+    metrics: Dict[str, Any]
+    notable_moves: list[Dict[str, Any]]
+    drivers: list[Dict[str, Any]]
+    narrative: str
+    citations: list[Dict[str, Any]]
+    warnings: list[str]
+
+
 @app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
@@ -111,6 +126,26 @@ async def resolve_asset_category(
 ) -> AssetResolveResponse:
     result = await api.resolve_asset(q)
     return AssetResolveResponse(**result)
+
+
+@app.get(
+    "/api/insights",
+    tags=["Market"],
+    summary="Get historical analytics + grounded narrative for a symbol",
+    response_model=InsightsResponse,
+)
+async def get_asset_insights(
+    type: str = Query(..., description="One of: stock, crypto, commodity"),
+    symbol: str = Query(..., description="Ticker/symbol to analyze"),
+    months: int = Query(3, ge=1, le=24, description="Historical window in months"),
+) -> InsightsResponse:
+    try:
+        result = await build_insights(asset_type=type, symbol=symbol, months=months)
+        return InsightsResponse(**result)
+    except InsightError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"insights failed: {exc}") from exc
 
 
 @app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
