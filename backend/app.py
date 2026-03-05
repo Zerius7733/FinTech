@@ -3,8 +3,10 @@ from pathlib import Path
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException, Query
+from pydantic import AliasChoices, BaseModel, Field
 
 from backend.crypto_price_retriever import fetch_crypto_price
+from backend.services.wealth_wellness.engine import calculate_user_wellness
 from backend.services.wealth_wellness.engine import update_wellness_file
 from backend.stock_price_updater import fetch_latest_prices
 from backend.stock_price_updater import update_stock_prices_file
@@ -41,6 +43,11 @@ def _read_users_data() -> Dict[str, Any]:
         return json.load(f)
 
 
+def _write_users_data(data: Dict[str, Any]) -> None:
+    with open(JSON_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
 def _parse_market_query(query: str) -> Dict[str, str]:
     parts = [part.strip().upper() for part in query.split(",", maxsplit=1)]
     if len(parts) != 2 or not parts[0] or not parts[1]:
@@ -49,6 +56,26 @@ def _parse_market_query(query: str) -> Dict[str, str]:
     if asset_type not in {"STOCK", "CRYPTO"}:
         raise ValueError("asset type must be STOCK or CRYPTO")
     return {"asset_type": asset_type, "ticker": ticker}
+
+
+def _normalize_risk_profile(value: str) -> str:
+    normalized = (value or "").strip().lower()
+    mapping = {
+        "low": "Low",
+        "moderate": "Moderate",
+        "medium": "Moderate",
+        "high": "High",
+    }
+    if normalized not in mapping:
+        raise ValueError("risk_appetite must be one of: Low, Moderate, High")
+    return mapping[normalized]
+
+
+class UserRiskUpdateRequest(BaseModel):
+    user_id: str
+    risk_profile: str = Field(
+        validation_alias=AliasChoices("risk_profile", "risk_appetite", "risk_appetitie")
+    )
 
 
 @app.get("/health", tags=["Health"], summary="API health check")
@@ -78,6 +105,67 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read user failed: {exc}") from exc
+
+
+@app.get(
+    "/users/{user_id}/wellness",
+    tags=["Users"],
+    summary="Get wellness section by user ID",
+)
+def get_user_wellness_by_id(user_id: str) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "wellness_metrics": user.get("wellness_metrics", {}),
+            "risk_profile": user.get("risk_profile"),
+            "financial_wellness_score": user.get("financial_wellness_score"),
+            "financial_stress_index": user.get("financial_stress_index"),
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"read wellness failed: {exc}") from exc
+
+
+@app.post(
+    "/users/risk",
+    tags=["Users"],
+    summary="Update user risk appetite and recalibrate scores",
+)
+def update_user_risk_and_recalibrate(payload: UserRiskUpdateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(payload.user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{payload.user_id}' not found")
+
+        user["risk_profile"] = _normalize_risk_profile(payload.risk_profile)
+        wellness_result = calculate_user_wellness(user)
+        user["wellness_metrics"] = wellness_result["wellness_metrics"]
+        user["financial_wellness_score"] = wellness_result["financial_wellness_score"]
+        user["financial_stress_index"] = wellness_result["financial_stress_index"]
+        users[payload.user_id] = user
+        _write_users_data(users)
+
+        return {
+            "status": "ok",
+            "user_id": payload.user_id,
+            "risk_profile": user["risk_profile"],
+            "wellness_metrics": user["wellness_metrics"],
+            "financial_wellness_score": user["financial_wellness_score"],
+            "financial_stress_index": user["financial_stress_index"],
+        }
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"risk update failed: {exc}") from exc
 
 
 @app.get(
