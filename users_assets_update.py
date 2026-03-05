@@ -1,0 +1,52 @@
+import csv
+import json
+from datetime import datetime, timezone
+from typing import Any, Dict 
+
+def _to_float(value: Any) -> float:
+    if value is None or value == "":
+        return 0.0
+    return float(value)
+
+
+def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, Any]:
+    updated = json.loads(json.dumps(users))
+    with open(csv_path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            user_id = (row.get("user_id") or "").strip()
+            if not user_id or user_id not in updated:
+                continue
+            user = updated[user_id]
+            dbs = _to_float(row.get("dbs"))
+            uob = _to_float(row.get("uob"))
+            ocbc = _to_float(row.get("ocbc"))
+            user["name"] = row.get("name", user.get("name"))
+            user["cash_balance"] = round(dbs + uob + ocbc, 2)
+            user["liability"] = round(_to_float(row.get("liability")), 2)
+            user["income"] = round(_to_float(row.get("income")), 2)
+            portfolio_total = sum(float(p.get("market_value", 0)) for p in user.get("portfolio", []))
+            user["portfolio_value"] = round(portfolio_total, 2)
+            user["total_balance"] = round(user["cash_balance"] + portfolio_total, 2)
+            user["net_worth"] = round(user["total_balance"] - user["liability"], 2)
+    return updated
+
+def update_assets_file(
+    json_path: str = "json_data/user.json", csv_path: str = "csv_data/users_assets.csv"
+) -> Dict[str, Any]:
+    with open(json_path, "r", encoding="utf-8") as f:
+        users = json.load(f)
+    updated = update_assets_from_csv(users, csv_path=csv_path)
+    updated["_meta"] = {
+        "assets_synced_at_utc": datetime.now(timezone.utc).isoformat(),
+        "assets_source": csv_path,
+    }
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(updated, f, indent=2)
+    return updated
+
+def main():
+    update_assets_file()
+
+if __name__ == "__main__": 
+    main()
