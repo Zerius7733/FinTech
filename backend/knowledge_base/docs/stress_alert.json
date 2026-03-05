@@ -1,0 +1,19 @@
+{
+  "id": "stress_alert",
+  "title": "Elevated financial stress response plan",
+  "category": "stress",
+  "priority": 95,
+  "conditions": {
+    "metric_gt": {
+      "financial_stress_index": 60.0
+    }
+  },
+  "actions": [
+    "Shift near-term focus to cashflow stability and debt reduction.",
+    "Reduce exposure to the most volatile holdings first.",
+    "Set a weekly tracking plan for liquidity and liabilities."
+  ],
+  "rationale": "Higher stress index indicates near-term financial pressure that should be stabilized first.",
+  "source": "CFPB Financial Well-Being",
+  "source_url": "https://www.consumerfinance.gov/consumer-tools/financial-well-being/"
+}

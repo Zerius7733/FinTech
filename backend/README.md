@@ -75,9 +75,11 @@ This backend computes user-level financial metrics from `backend/json_data/user.
 
 ### 5) Debt-Income Ratio
 
-- Formula: `debt_income_ratio = liability / (income * 12)`
+- Formula:
+  - `total_debt = liability + mortgage`
+  - `debt_income_ratio = total_debt / (income * 12)`
 - What it means:
-  - Compares outstanding liabilities to one year of income capacity.
+  - Compares total debt obligations (including mortgage) to one year of income capacity.
   - A ratio of `1.0` means debt equals one year of income.
 - Why it matters:
   - High ratios reduce financial flexibility and increase repayment stress.
@@ -86,14 +88,14 @@ This backend computes user-level financial metrics from `backend/json_data/user.
   - `< 1`: healthy debt load
   - `1-3`: moderate pressure
   - `> 3`: elevated risk
-  - `>= 5`: severe burden in this model
+  - `>= 8`: severe burden in this model
 - Direction: Lower is better.
 
 ### 6) Debt-Income Score (0-100)
 
 - Rule:
   - ratio `<= 1.0` -> `100`
-  - ratio `>= 5.0` -> `0`
+  - ratio `>= 8.0` -> `0`
   - otherwise linear between 100 and 0
 - What it means:
   - This converts debt burden into a comparable score for composite models.
@@ -161,3 +163,22 @@ This backend computes user-level financial metrics from `backend/json_data/user.
   - `venv\Scripts\python.exe -m uvicorn backend.app:app --reload --host 127.0.0.1 --port 8000`
 - Recompute and save via endpoint:
   - `GET http://127.0.0.1:8000/update/wellness`
+
+## Recommendation Endpoints
+
+- Rule-based:
+  - `GET /users/{user_id}/recommendations?limit=3`
+- GPT-wrapped:
+  - `GET /users/{user_id}/recommendations/gpt?limit=3&model=gpt-4.1-mini`
+
+## OpenAI Token Setup
+
+Put your token in either:
+
+1. Environment variable:
+   - macOS/Linux: `export OPENAI_API_KEY=your_token_here`
+2. Project root `.env` (recommended for this repo):
+   - file: `FinTech/.env`
+   - content: `OPENAI_API_KEY=your_token_here`
+
+The GPT client also checks `backend/.env` for backward compatibility.

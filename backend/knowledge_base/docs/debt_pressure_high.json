@@ -1,0 +1,19 @@
+{
+  "id": "debt_pressure_high",
+  "title": "Lower debt burden and improve resilience",
+  "category": "debt",
+  "priority": 90,
+  "conditions": {
+    "metric_gt": {
+      "debt_income_ratio": 3.0
+    }
+  },
+  "actions": [
+    "Prioritize high-interest debt repayment before adding new risk assets.",
+    "Refinance or restructure costly liabilities where possible.",
+    "Set a debt reduction milestone for the next 6 months."
+  ],
+  "rationale": "High debt-income ratios reduce flexibility and can dominate long-term outcomes.",
+  "source": "CFPB Debt Collection Tools",
+  "source_url": "https://www.consumerfinance.gov/consumer-tools/debt-collection/"
+}

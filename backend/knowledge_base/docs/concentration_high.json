@@ -1,0 +1,19 @@
+{
+  "id": "concentration_high",
+  "title": "Reduce concentration risk",
+  "category": "diversification",
+  "priority": 85,
+  "conditions": {
+    "metric_lt": {
+      "diversification_score": 50.0
+    }
+  },
+  "actions": [
+    "Rebalance gradually so no single position dominates portfolio risk.",
+    "Add uncorrelated assets across sectors and asset classes.",
+    "Set a max-position-size rule for new allocations."
+  ],
+  "rationale": "Low diversification score signals concentration risk and higher drawdown sensitivity.",
+  "source": "Investor.gov Introduction to Investing",
+  "source_url": "https://www.investor.gov/introduction-investing"
+}

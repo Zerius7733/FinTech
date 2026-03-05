@@ -26,12 +26,28 @@ def fetch_latest_prices(symbols: Iterable[str], yf_module: Any = yf) -> Dict[str
     return prices
 
 
+def _iter_positions(user: Dict[str, Any]):
+    portfolio = user.get("portfolio", [])
+    if isinstance(portfolio, list):
+        for position in portfolio:
+            if isinstance(position, dict):
+                yield position
+        return
+    if isinstance(portfolio, dict):
+        for key in ("stocks", "cryptos"):
+            positions = portfolio.get(key, [])
+            if not isinstance(positions, list):
+                continue
+            for position in positions:
+                if isinstance(position, dict):
+                    yield position
+
+
 def update_stock_prices(users: Dict[str, Any], prices: Dict[str, float]) -> Dict[str, Any]:
     updated = json.loads(json.dumps(users))
     for user in updated.values():
-        portfolio = user.get("portfolio", [])
         portfolio_total = 0.0
-        for position in portfolio:
+        for position in _iter_positions(user):
             symbol = position.get("symbol")
             qty = float(position.get("qty", 0))
             if not symbol or symbol not in prices:
@@ -53,7 +69,7 @@ def update_stock_prices_file(path: str = "json_data/user.json", yf_module: Any =
         users = json.load(f)
     all_symbols = []
     for user in users.values():
-        for position in user.get("portfolio", []):
+        for position in _iter_positions(user):
             symbol = position.get("symbol")
             if symbol:
                 all_symbols.append(symbol)

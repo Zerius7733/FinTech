@@ -14,7 +14,7 @@ def calculate_user_wellness(user: Dict[str, Any]) -> Dict[str, Any]:
     debt_income = calculate_debt_income_metric(user)
 
     metrics = {**liquidity, **diversification, **debt_income}
-    score = calculate_financial_wellness_score(metrics)
+    score = calculate_financial_wellness_score(metrics,user)
     stress_index = calculate_financial_stress_index(metrics)
     return {
         "wellness_metrics": metrics,

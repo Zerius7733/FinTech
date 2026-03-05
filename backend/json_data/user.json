@@ -3,370 +3,560 @@
     "name": "Alice Tan",
     "cash_balance": 16600.5,
     "liability": 475000.0,
-    "portfolio": [
-      {
-        "symbol": "AAPL",
-        "qty": 12,
-        "avg_price": 182.4,
-        "market_value": 3150.24,
-        "current_price": 262.52
-      },
-      {
-        "symbol": "MSFT",
-        "qty": 6,
-        "avg_price": 410.2,
-        "market_value": 2431.2,
-        "current_price": 405.2
-      }
-    ],
-    "portfolio_value": 5581.44,
-    "total_balance": 522181.94,
-    "net_worth": 47181.94,
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "AAPL",
+          "qty": 12,
+          "avg_price": 182.4,
+          "market_value": 3150.24,
+          "current_price": 262.52
+        },
+        {
+          "symbol": "MSFT",
+          "qty": 6,
+          "avg_price": 410.2,
+          "market_value": 2431.2,
+          "current_price": 405.2
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.01,
+          "avg_price": 45000.0,
+          "current_price": 62000.0,
+          "market_value": 620.0
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.16,
+          "avg_price": 2500.0,
+          "current_price": 3400.0,
+          "market_value": 544.0
+        }
+      ]
+    },
+    "portfolio_value": 6745.44,
+    "total_balance": 523345.94,
+    "net_worth": 48345.94,
     "income": 5000.0,
     "estate": 500000.0,
     "wellness_metrics": {
       "liquidity_months": 3.32,
-      "liquidity_score": 44.27,
-      "diversification_hhi": 0.5083,
-      "diversification_score": 98.34,
-      "debt_income_ratio": 7.9167,
+      "liquidity_score": 55.34,
+      "diversification_hhi": 0.363,
+      "diversification_score": 84.94,
+      "debt_income_ratio": 12.9167,
       "debt_income_score": 0.0
     },
-    "risk_profile": "Moderate",
-    "financial_wellness_score": 45.0,
-    "financial_stress_index": 62.62
+    "risk_profile": "High",
+    "financial_wellness_score": 53.54,
+    "financial_stress_index": 60.88,
+    "mortgage": 300000.0
   },
   "u002": {
     "name": "Brandon Lim",
-    "cash_balance": 6400.75,
+    "cash_balance": 6.4,
     "liability": 6400.75,
-    "portfolio": [
-      {
-        "symbol": "TSLA",
-        "qty": 4,
-        "avg_price": 228.5,
-        "market_value": 1623.76,
-        "current_price": 405.94
-      },
-      {
-        "symbol": "NVDA",
-        "qty": 3,
-        "avg_price": 870.0,
-        "market_value": 549.12,
-        "current_price": 183.04
-      }
-    ],
-    "portfolio_value": 2172.88,
-    "total_balance": 8573.63,
-    "net_worth": 2172.88,
+    "mortgage": 0.0,
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "TSLA",
+          "qty": 4,
+          "avg_price": 228.5,
+          "market_value": 1623.76,
+          "current_price": 405.94
+        },
+        {
+          "symbol": "NVDA",
+          "qty": 3,
+          "avg_price": 870.0,
+          "market_value": 549.12,
+          "current_price": 183.04
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.02,
+          "avg_price": 45000.0,
+          "current_price": 62000.0,
+          "market_value": 1240.0
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.17,
+          "avg_price": 2500.0,
+          "current_price": 3400.0,
+          "market_value": 578.0
+        }
+      ]
+    },
+    "portfolio_value": 3990.88,
+    "total_balance": 10391.63,
+    "net_worth": 3990.88,
     "income": 4000.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 1.6,
-      "liquidity_score": 21.34,
-      "diversification_hhi": 0.6223,
-      "diversification_score": 75.54,
+      "liquidity_months": 0.0,
+      "liquidity_score": 0.03,
+      "diversification_hhi": 0.302,
+      "diversification_score": 93.07,
       "debt_income_ratio": 0.1333,
       "debt_income_score": 100.0
     },
-    "risk_profile": "Moderate",
-    "financial_wellness_score": 65.13,
-    "financial_stress_index": 36.36
+    "risk_profile": "Low",
+    "financial_wellness_score": 48.98,
+    "financial_stress_index": 41.37
   },
   "u003": {
     "name": "Cheryl Ng",
     "cash_balance": 9000.2,
     "liability": 9000.2,
-    "portfolio": [
-      {
-        "symbol": "QQQ",
-        "qty": 8,
-        "avg_price": 445.1,
-        "market_value": 4886.0,
-        "current_price": 610.75
-      },
-      {
-        "symbol": "AMZN",
-        "qty": 5,
-        "avg_price": 182.0,
-        "market_value": 1084.1,
-        "current_price": 216.82
-      }
-    ],
-    "portfolio_value": 5970.1,
-    "total_balance": 14970.3,
-    "net_worth": 5970.1,
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "TSLA",
+          "qty": 4,
+          "avg_price": 228.5,
+          "market_value": 1623.76,
+          "current_price": 405.94
+        },
+        {
+          "symbol": "NVDA",
+          "qty": 3,
+          "avg_price": 870.0,
+          "market_value": 549.12,
+          "current_price": 183.04
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.03,
+          "avg_price": 45000.0,
+          "current_price": 62000.0,
+          "market_value": 1860.0
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.18,
+          "avg_price": 2500.0,
+          "current_price": 3400.0,
+          "market_value": 612.0
+        }
+      ]
+    },
+    "portfolio_value": 4644.88,
+    "total_balance": 13645.08,
+    "net_worth": 4644.88,
     "income": 3000.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 3.0,
-      "liquidity_score": 40.0,
-      "diversification_hhi": 0.7028,
-      "diversification_score": 59.45,
+      "liquidity_score": 50.0,
+      "diversification_hhi": 0.3139,
+      "diversification_score": 91.48,
       "debt_income_ratio": 0.25,
       "debt_income_score": 100.0
     },
-    "risk_profile": "Moderate",
-    "financial_wellness_score": 66.84,
-    "financial_stress_index": 32.11
+    "risk_profile": "High",
+    "financial_wellness_score": 85.74,
+    "financial_stress_index": 21.7,
+    "mortgage": 0.0
   },
   "u004": {
     "name": "Daniel Koh",
     "cash_balance": 7350.4,
     "liability": 7350.4,
-    "portfolio": [
-      {
-        "symbol": "META",
-        "qty": 4,
-        "avg_price": 495.0,
-        "market_value": 2670.92,
-        "current_price": 667.73
-      },
-      {
-        "symbol": "GOOGL",
-        "qty": 7,
-        "avg_price": 152.3,
-        "market_value": 2121.91,
-        "current_price": 303.13
-      }
-    ],
-    "portfolio_value": 4792.83,
-    "total_balance": 12143.23,
-    "net_worth": 4792.83,
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "META",
+          "qty": 4,
+          "avg_price": 495.0,
+          "market_value": 2670.92,
+          "current_price": 667.73
+        },
+        {
+          "symbol": "GOOGL",
+          "qty": 7,
+          "avg_price": 152.3,
+          "market_value": 2121.91,
+          "current_price": 303.13
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.04,
+          "avg_price": 45000.0,
+          "current_price": 62000.0,
+          "market_value": 2480.0
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.19,
+          "avg_price": 2500.0,
+          "current_price": 3400.0,
+          "market_value": 646.0
+        }
+      ]
+    },
+    "portfolio_value": 7918.83,
+    "total_balance": 15269.23,
+    "net_worth": 7918.83,
     "income": 4500.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.63,
-      "liquidity_score": 21.78,
-      "diversification_hhi": 0.5066,
-      "diversification_score": 98.69,
+      "liquidity_score": 27.22,
+      "diversification_hhi": 0.2903,
+      "diversification_score": 94.63,
       "debt_income_ratio": 0.1361,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 72.23,
-    "financial_stress_index": 31.55
+    "financial_wellness_score": 72.92,
+    "financial_stress_index": 30.19,
+    "mortgage": 0.0
   },
   "u005": {
     "name": "Ethan Lee",
     "cash_balance": 12600.25,
     "liability": 12600.25,
-    "portfolio": [
-      {
-        "symbol": "SPY",
-        "qty": 10,
-        "avg_price": 520.4,
-        "market_value": 6851.3,
-        "current_price": 685.13
-      },
-      {
-        "symbol": "AVGO",
-        "qty": 2,
-        "avg_price": 1320.0,
-        "market_value": 635.06,
-        "current_price": 317.53
-      }
-    ],
-    "portfolio_value": 7486.36,
-    "total_balance": 20086.61,
-    "net_worth": 7486.36,
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "SPY",
+          "qty": 10,
+          "avg_price": 520.4,
+          "market_value": 6851.3,
+          "current_price": 685.13
+        },
+        {
+          "symbol": "AVGO",
+          "qty": 2,
+          "avg_price": 1320.0,
+          "market_value": 635.06,
+          "current_price": 317.53
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.05,
+          "avg_price": 45000.0,
+          "current_price": 62000.0,
+          "market_value": 3100.0
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.2,
+          "avg_price": 2500.0,
+          "current_price": 3400.0,
+          "market_value": 680.0
+        }
+      ]
+    },
+    "portfolio_value": 11266.36,
+    "total_balance": 23866.61,
+    "net_worth": 11266.36,
     "income": 4600.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 2.74,
-      "liquidity_score": 36.52,
-      "diversification_hhi": 0.8447,
-      "diversification_score": 31.05,
+      "liquidity_score": 45.65,
+      "diversification_hhi": 0.4523,
+      "diversification_score": 73.02,
       "debt_income_ratio": 0.2283,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 57.1,
-    "financial_stress_index": 39.18
+    "financial_wellness_score": 72.88,
+    "financial_stress_index": 27.14,
+    "mortgage": 0.0
   },
   "u006": {
     "name": "Farah Aziz",
     "cash_balance": 8490.1,
     "liability": 8490.1,
-    "portfolio": [
-      {
-        "symbol": "NFLX",
-        "qty": 3,
-        "avg_price": 640.0,
-        "market_value": 295.98,
-        "current_price": 98.66
-      },
-      {
-        "symbol": "AMD",
-        "qty": 10,
-        "avg_price": 165.3,
-        "market_value": 2020.7,
-        "current_price": 202.07
-      }
-    ],
-    "portfolio_value": 2316.68,
-    "total_balance": 10806.78,
-    "net_worth": 2316.68,
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "NFLX",
+          "qty": 3,
+          "avg_price": 640.0,
+          "market_value": 295.98,
+          "current_price": 98.66
+        },
+        {
+          "symbol": "AMD",
+          "qty": 10,
+          "avg_price": 165.3,
+          "market_value": 2020.7,
+          "current_price": 202.07
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.06,
+          "avg_price": 45000.0,
+          "current_price": 62000.0,
+          "market_value": 3720.0
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.21,
+          "avg_price": 2500.0,
+          "current_price": 3400.0,
+          "market_value": 714.0
+        }
+      ]
+    },
+    "portfolio_value": 6750.68,
+    "total_balance": 15240.78,
+    "net_worth": 6750.68,
     "income": 4750.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.79,
-      "liquidity_score": 23.83,
-      "diversification_hhi": 0.7771,
-      "diversification_score": 44.58,
+      "liquidity_score": 29.79,
+      "diversification_hhi": 0.4064,
+      "diversification_score": 79.15,
       "debt_income_ratio": 0.1489,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 56.71,
-    "financial_stress_index": 41.55
+    "financial_wellness_score": 69.17,
+    "financial_stress_index": 32.25,
+    "mortgage": 0.0
   },
   "u007": {
     "name": "Grace Wong",
     "cash_balance": 3350.75,
     "liability": 3350.75,
-    "portfolio": [
-      {
-        "symbol": "INTC",
-        "qty": 20,
-        "avg_price": 41.2,
-        "market_value": 911.6,
-        "current_price": 45.58
-      },
-      {
-        "symbol": "BAC",
-        "qty": 25,
-        "avg_price": 34.5,
-        "market_value": 1257.5,
-        "current_price": 50.3
-      }
-    ],
-    "portfolio_value": 2169.1,
-    "total_balance": 5519.85,
-    "net_worth": 2169.1,
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "INTC",
+          "qty": 20,
+          "avg_price": 41.2,
+          "market_value": 911.6,
+          "current_price": 45.58
+        },
+        {
+          "symbol": "BAC",
+          "qty": 25,
+          "avg_price": 34.5,
+          "market_value": 1257.5,
+          "current_price": 50.3
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.07,
+          "avg_price": 45000.0,
+          "current_price": 62000.0,
+          "market_value": 4340.0
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.22,
+          "avg_price": 2500.0,
+          "current_price": 3400.0,
+          "market_value": 748.0
+        }
+      ]
+    },
+    "portfolio_value": 7257.1,
+    "total_balance": 10607.85,
+    "net_worth": 7257.1,
     "income": 4800.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 0.7,
-      "liquidity_score": 9.31,
-      "diversification_hhi": 0.5127,
-      "diversification_score": 97.46,
+      "liquidity_score": 11.63,
+      "diversification_hhi": 0.4141,
+      "diversification_score": 78.12,
       "debt_income_ratio": 0.0582,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 67.5,
-    "financial_stress_index": 36.78
+    "financial_wellness_score": 62.51,
+    "financial_stress_index": 39.72,
+    "mortgage": 0.0
   },
   "u008": {
     "name": "Hafiz Rahman",
     "cash_balance": 9150.5,
     "liability": 9150.5,
-    "portfolio": [
-      {
-        "symbol": "JPM",
-        "qty": 9,
-        "avg_price": 191.0,
-        "market_value": 2694.51,
-        "current_price": 299.39
-      },
-      {
-        "symbol": "V",
-        "qty": 4,
-        "avg_price": 275.4,
-        "market_value": 1281.88,
-        "current_price": 320.47
-      }
-    ],
-    "portfolio_value": 3976.39,
-    "total_balance": 13126.89,
-    "net_worth": 3976.39,
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "JPM",
+          "qty": 9,
+          "avg_price": 191.0,
+          "market_value": 2694.51,
+          "current_price": 299.39
+        },
+        {
+          "symbol": "V",
+          "qty": 4,
+          "avg_price": 275.4,
+          "market_value": 1281.88,
+          "current_price": 320.47
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.08,
+          "avg_price": 45000.0,
+          "current_price": 62000.0,
+          "market_value": 4960.0
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.23,
+          "avg_price": 2500.0,
+          "current_price": 3400.0,
+          "market_value": 782.0
+        }
+      ]
+    },
+    "portfolio_value": 9718.39,
+    "total_balance": 18868.89,
+    "net_worth": 9718.39,
     "income": 5200.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.76,
-      "liquidity_score": 23.46,
-      "diversification_hhi": 0.5631,
-      "diversification_score": 87.38,
+      "liquidity_score": 29.33,
+      "diversification_hhi": 0.3612,
+      "diversification_score": 85.17,
       "debt_income_ratio": 0.1466,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 69.42,
-    "financial_stress_index": 33.14
+    "financial_wellness_score": 70.82,
+    "financial_stress_index": 31.23,
+    "mortgage": 0.0
   },
   "u009": {
     "name": "Isabella Goh",
     "cash_balance": 2940.25,
     "liability": 2940.25,
-    "portfolio": [
-      {
-        "symbol": "KO",
-        "qty": 14,
-        "avg_price": 61.2,
-        "market_value": 1093.4,
-        "current_price": 78.1
-      },
-      {
-        "symbol": "PEP",
-        "qty": 6,
-        "avg_price": 171.3,
-        "market_value": 983.52,
-        "current_price": 163.92
-      }
-    ],
-    "portfolio_value": 2076.92,
-    "total_balance": 5017.17,
-    "net_worth": 2076.92,
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "KO",
+          "qty": 14,
+          "avg_price": 61.2,
+          "market_value": 1093.4,
+          "current_price": 78.1
+        },
+        {
+          "symbol": "PEP",
+          "qty": 6,
+          "avg_price": 171.3,
+          "market_value": 983.52,
+          "current_price": 163.92
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.09,
+          "avg_price": 45000.0,
+          "current_price": 62000.0,
+          "market_value": 5580.0
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.24,
+          "avg_price": 2500.0,
+          "current_price": 3400.0,
+          "market_value": 816.0
+        }
+      ]
+    },
+    "portfolio_value": 8472.92,
+    "total_balance": 11413.17,
+    "net_worth": 8472.92,
     "income": 3500.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 0.84,
-      "liquidity_score": 11.2,
-      "diversification_hhi": 0.5014,
-      "diversification_score": 99.72,
+      "liquidity_score": 14.0,
+      "diversification_hhi": 0.4731,
+      "diversification_score": 70.25,
       "debt_income_ratio": 0.07,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 68.84,
-    "financial_stress_index": 35.58
+    "financial_wellness_score": 60.97,
+    "financial_stress_index": 40.35,
+    "mortgage": 0.0
   },
   "u010": {
     "name": "Jason Teo",
     "cash_balance": 7700.0,
     "liability": 7700.0,
-    "portfolio": [
-      {
-        "symbol": "BABA",
-        "qty": 15,
-        "avg_price": 86.2,
-        "market_value": 1999.05,
-        "current_price": 133.27
-      },
-      {
-        "symbol": "PDD",
-        "qty": 5,
-        "avg_price": 148.5,
-        "market_value": 505.95,
-        "current_price": 101.19
-      }
-    ],
-    "portfolio_value": 2505.0,
-    "total_balance": 10205.0,
-    "net_worth": 2505.0,
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "BABA",
+          "qty": 15,
+          "avg_price": 86.2,
+          "market_value": 1999.05,
+          "current_price": 133.27
+        },
+        {
+          "symbol": "PDD",
+          "qty": 5,
+          "avg_price": 148.5,
+          "market_value": 505.95,
+          "current_price": 101.19
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.1,
+          "avg_price": 45000.0,
+          "current_price": 62000.0,
+          "market_value": 6200.0
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.25,
+          "avg_price": 2500.0,
+          "current_price": 3400.0,
+          "market_value": 850.0
+        }
+      ]
+    },
+    "portfolio_value": 9555.0,
+    "total_balance": 17255.0,
+    "net_worth": 9555.0,
     "income": 4900.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.57,
-      "liquidity_score": 20.95,
-      "diversification_hhi": 0.6776,
-      "diversification_score": 64.47,
+      "liquidity_score": 26.19,
+      "diversification_hhi": 0.4755,
+      "diversification_score": 69.93,
       "debt_income_ratio": 0.131,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 61.67,
-    "financial_stress_index": 38.73
+    "financial_wellness_score": 65.15,
+    "financial_stress_index": 35.54,
+    "mortgage": 0.0
   }
 }
