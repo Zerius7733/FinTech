@@ -163,3 +163,22 @@ This backend computes user-level financial metrics from `backend/json_data/user.
   - `venv\Scripts\python.exe -m uvicorn backend.app:app --reload --host 127.0.0.1 --port 8000`
 - Recompute and save via endpoint:
   - `GET http://127.0.0.1:8000/update/wellness`
+
+## Recommendation Endpoints
+
+- Rule-based:
+  - `GET /users/{user_id}/recommendations?limit=3`
+- GPT-wrapped:
+  - `GET /users/{user_id}/recommendations/gpt?limit=3&model=gpt-4.1-mini`
+
+## OpenAI Token Setup
+
+Put your token in either:
+
+1. Environment variable:
+   - macOS/Linux: `export OPENAI_API_KEY=your_token_here`
+2. Project root `.env` (recommended for this repo):
+   - file: `FinTech/.env`
+   - content: `OPENAI_API_KEY=your_token_here`
+
+The GPT client also checks `backend/.env` for backward compatibility.

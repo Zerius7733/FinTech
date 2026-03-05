@@ -1,0 +1,17 @@
+{
+  "id": "high_risk_guardrails",
+  "title": "High-risk profile with guardrails",
+  "category": "risk_profile",
+  "priority": 70,
+  "conditions": {
+    "risk_profile_in": ["High"]
+  },
+  "actions": [
+    "Keep position sizing disciplined even if conviction is high.",
+    "Use staged entries instead of all-in buys.",
+    "Review downside scenarios monthly and predefine exit rules."
+  ],
+  "rationale": "High risk appetite can improve upside but needs strict downside controls.",
+  "source": "FINRA Know Your Risk Tolerance",
+  "source_url": "https://www.finra.org/investors/insights/know-your-risk-tolerance"
+}

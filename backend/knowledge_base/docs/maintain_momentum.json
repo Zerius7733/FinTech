@@ -1,0 +1,22 @@
+{
+  "id": "maintain_momentum",
+  "title": "Maintain healthy financial trajectory",
+  "category": "general",
+  "priority": 40,
+  "conditions": {
+    "metric_gte": {
+      "financial_wellness_score": 70.0
+    },
+    "metric_lte": {
+      "financial_stress_index": 40.0
+    }
+  },
+  "actions": [
+    "Continue periodic rebalancing and keep emergency savings funded.",
+    "Increase long-term allocation gradually while maintaining diversification.",
+    "Review major goals quarterly and align allocations to timeline."
+  ],
+  "rationale": "Good wellness and manageable stress suggest maintaining discipline rather than overreacting.",
+  "source": "Investor.gov Introduction to Investing",
+  "source_url": "https://www.investor.gov/introduction-investing"
+}

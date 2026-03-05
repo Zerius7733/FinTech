@@ -1,0 +1,19 @@
+{
+  "id": "liquidity_critical",
+  "title": "Rebuild emergency liquidity immediately",
+  "category": "liquidity",
+  "priority": 100,
+  "conditions": {
+    "metric_lt": {
+      "liquidity_months": 1.0
+    }
+  },
+  "actions": [
+    "Pause new speculative buys until you build at least 3 months of liquidity.",
+    "Auto-transfer 10-20% of monthly income into cash reserves.",
+    "Trim non-essential expenses for the next 8-12 weeks."
+  ],
+  "rationale": "Liquidity below 1 month increases fragility and forced-selling risk during market stress.",
+  "source": "CFPB Emergency Fund Guide",
+  "source_url": "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/"
+}

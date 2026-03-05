@@ -1,0 +1,22 @@
+{
+  "id": "liquidity_low",
+  "title": "Increase liquidity buffer",
+  "category": "liquidity",
+  "priority": 80,
+  "conditions": {
+    "metric_gte": {
+      "liquidity_months": 1.0
+    },
+    "metric_lt": {
+      "liquidity_months": 3.0
+    }
+  },
+  "actions": [
+    "Target a 3-6 month emergency reserve before increasing portfolio risk.",
+    "Direct a fixed amount from each paycheck into cash holdings.",
+    "Avoid adding leverage until liquidity is above 3 months."
+  ],
+  "rationale": "A 1-3 month buffer is workable but still sensitive to income shocks.",
+  "source": "FDIC Money Smart",
+  "source_url": "https://www.fdic.gov/consumer-resource-center/money-smart"
+}

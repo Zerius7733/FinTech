@@ -6,6 +6,8 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import AliasChoices, BaseModel, Field
 
 from backend.crypto_price_retriever import fetch_crypto_price
+from backend.services.recommendation import generate_gpt_recommendations
+from backend.services.recommendation import generate_user_recommendations
 from backend.services.wealth_wellness.engine import calculate_user_wellness
 from backend.services.wealth_wellness.engine import update_wellness_file
 from backend.stock_price_updater import fetch_latest_prices
@@ -23,6 +25,7 @@ app = FastAPI(
     openapi_tags=[
         {"name": "Health", "description": "API health and readiness endpoints."},
         {"name": "Users", "description": "User retrieval endpoints."},
+        {"name": "Recommendations", "description": "Personalized recommendation endpoints."},
         {"name": "Updates", "description": "Endpoints that run data update jobs."},
         {"name": "Market", "description": "Live market quote retrieval endpoints."},
         {"name": "Portfolio", "description": "User portfolio information endpoints."},
@@ -130,6 +133,68 @@ def get_user_wellness_by_id(user_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read wellness failed: {exc}") from exc
+
+
+@app.get(
+    "/users/{user_id}/recommendations",
+    tags=["Recommendations"],
+    summary="Get rule-based recommendations by user ID",
+)
+def get_user_recommendations(
+    user_id: str,
+    limit: int = Query(3, ge=1, le=10, description="Maximum number of recommendation items"),
+) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        result = generate_user_recommendations(user, limit=limit)
+        return {"status": "ok", "user_id": user_id, **result}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"read recommendations failed: {exc}") from exc
+
+
+@app.get(
+    "/users/{user_id}/recommendations/gpt",
+    tags=["Recommendations"],
+    summary="Get GPT-generated recommendations by user ID",
+)
+def get_user_recommendations_gpt(
+    user_id: str,
+    limit: int = Query(3, ge=1, le=10, description="Maximum number of recommendation items"),
+    model: str = Query("gpt-4.1-mini", description="OpenAI model name"),
+) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        rule_based = generate_user_recommendations(user, limit=limit)
+        gpt_output = generate_gpt_recommendations(
+            user_id=user_id,
+            user=user,
+            rule_based=rule_based,
+            limit=limit,
+            model=model,
+        )
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "model": gpt_output["model"],
+            "rule_based": rule_based,
+            "gpt_recommendations": gpt_output["recommendations"],
+        }
+    except HTTPException:
+        raise
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"gpt recommendation failed: {exc}") from exc
 
 
 @app.post(
