@@ -2,9 +2,11 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 
+from backend.crypto_price_retriever import fetch_crypto_price
 from backend.services.wealth_wellness.engine import update_wellness_file
+from backend.stock_price_updater import fetch_latest_prices
 from backend.stock_price_updater import update_stock_prices_file
 from backend.users_assets_update import update_assets_file
 
@@ -13,7 +15,17 @@ BASE_DIR = Path(__file__).resolve().parent
 JSON_PATH = BASE_DIR / "json_data" / "user.json"
 CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 
-app = FastAPI(title="FinTech Wellness API", version="1.0.0")
+app = FastAPI(
+    title="FinTech Wellness API",
+    version="1.0.0",
+    openapi_tags=[
+        {"name": "Health", "description": "API health and readiness endpoints."},
+        {"name": "Users", "description": "User retrieval endpoints."},
+        {"name": "Updates", "description": "Endpoints that run data update jobs."},
+        {"name": "Market", "description": "Live market quote retrieval endpoints."},
+        {"name": "Portfolio", "description": "User portfolio information endpoints."},
+    ],
+)
 
 
 def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
@@ -24,27 +36,40 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-@app.get("/health")
+def _read_users_data() -> Dict[str, Any]:
+    with open(JSON_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _parse_market_query(query: str) -> Dict[str, str]:
+    parts = [part.strip().upper() for part in query.split(",", maxsplit=1)]
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        raise ValueError("query must be in format 'STOCK, SPY' or 'CRYPTO, BTC'")
+    asset_type, ticker = parts
+    if asset_type not in {"STOCK", "CRYPTO"}:
+        raise ValueError("asset type must be STOCK or CRYPTO")
+    return {"asset_type": asset_type, "ticker": ticker}
+
+
+@app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/users")
+@app.get("/users", tags=["Users"], summary="Get all users")
 def get_users() -> Dict[str, Any]:
     try:
-        with open(JSON_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        data = _read_users_data()
         users = {k: v for k, v in data.items() if not k.startswith("_")}
         return {"status": "ok", "count": len(users), "users": users}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read users failed: {exc}") from exc
 
 
-@app.get("/users/{user_id}")
+@app.get("/users/{user_id}", tags=["Users"], summary="Get user by ID")
 def get_user_by_id(user_id: str) -> Dict[str, Any]:
     try:
-        with open(JSON_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        data = _read_users_data()
         user = data.get(user_id)
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
@@ -55,7 +80,55 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"read user failed: {exc}") from exc
 
 
-@app.get("/update/assets")
+@app.get(
+    "/market/quote",
+    tags=["Market"],
+    summary="Get quote for STOCK or CRYPTO",
+)
+def get_market_quote(
+    query: str = Query(..., description="Format: STOCK, SPY or CRYPTO, BTC"),
+) -> Dict[str, Any]:
+    try:
+        parsed = _parse_market_query(query)
+        asset_type = parsed["asset_type"]
+        ticker = parsed["ticker"]
+
+        if asset_type == "STOCK":
+            price = fetch_latest_prices([ticker])[ticker]
+            return {"status": "ok", "asset_type": asset_type, "symbol": ticker, "price": price}
+
+        crypto_quote = fetch_crypto_price(ticker)
+        return {
+            "status": "ok",
+            "asset_type": asset_type,
+            "symbol": crypto_quote["symbol"],
+            "price": crypto_quote["price"],
+        }
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"quote retrieval failed: {exc}") from exc
+
+
+@app.get(
+    "/portfolio/{user_id}",
+    tags=["Portfolio"],
+    summary="Get portfolio positions by user ID",
+)
+def get_portfolio_by_user_id(user_id: str) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        return {"status": "ok", "user_id": user_id, "portfolio": user.get("portfolio", [])}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"read portfolio failed: {exc}") from exc
+
+
+@app.get("/update/assets", tags=["Updates"], summary="Update users' assets")
 def update_assets() -> Dict[str, Any]:
     try:
         print("[api] /update/assets called")
@@ -65,7 +138,7 @@ def update_assets() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"assets update failed: {exc}") from exc
 
 
-@app.get("/update/prices")
+@app.get("/update/prices", tags=["Updates"], summary="Update stock prices")
 def update_prices() -> Dict[str, Any]:
     try:
         print("[api] /update/prices called")
@@ -75,7 +148,7 @@ def update_prices() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"price update failed: {exc}") from exc
 
 
-@app.get("/update/wellness")
+@app.get("/update/wellness", tags=["Updates"], summary="Update wellness metrics")
 def update_wellness() -> Dict[str, Any]:
     try:
         print("[api] /update/wellness called")
@@ -85,7 +158,7 @@ def update_wellness() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"wellness update failed: {exc}") from exc
 
 
-@app.get("/update/all")
+@app.get("/update/all", tags=["Updates"], summary="Run full update pipeline")
 def update_all() -> Dict[str, Any]:
     try:
         print("[api] /update/all called")
