@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as THREE from 'three'
 import TickerBar from '../components/TickerBar.jsx'
+import Navbar from '../components/Navbar.jsx'
 import { MOCK_NODES, genPriceSeries, genSparkline } from '../data.js'
 
 // ═══════════════════════════════════════════════════════════
@@ -803,23 +804,8 @@ export default function Globe() {
       {/* Fixed top ticker */}
       <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} />
 
-      {/* ── NAV — all links wired ── */}
-      <nav style={S.nav}>
-        <div style={S.logo}>
-          <div style={S.logoDot}>◉</div>
-          WealthSphere
-        </div>
-        <ul style={S.navLinks}>
-          <li><span style={S.navLink} onClick={() => navigate('/profile')}>Portfolio</span></li>
-          <li><span style={S.navLink} onClick={() => navigate('/profile')}>Analytics</span></li>
-          <li><span style={S.navLink} onClick={() => navigate('/profile')}>Insights</span></li>
-          <li><span style={S.navLink} onClick={() => navigate('/survey')}>About</span></li>
-        </ul>
-        <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-          <button style={S.btnGhost}  onClick={() => navigate('/profile')}>Sign In</button>
-          <button style={S.btnPrimary} onClick={() => navigate('/survey')}>Get Started</button>
-        </div>
-      </nav>
+      {/* ── NAV ── */}
+      <Navbar />
 
       {/* ── DOM star layer (CSS, complements WebGL) ── */}
       <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0 }} aria-hidden>
@@ -1032,40 +1018,6 @@ const STARS = Array.from({ length: 110 }, () => ({
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
 const S = {
-  nav: {
-    position:'fixed', top:36, left:0, right:0, zIndex:101,
-    display:'flex', alignItems:'center', justifyContent:'space-between',
-    padding:'16px 48px',
-    background:'linear-gradient(180deg,rgba(8,12,20,0.96) 0%,rgba(8,12,20,0.25) 100%)',
-    backdropFilter:'blur(14px)', borderBottom:'1px solid rgba(255,255,255,0.05)',
-  },
-  logo: {
-    fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.25rem', letterSpacing:'0.05em',
-    background:'linear-gradient(135deg,var(--gold-light),var(--gold))',
-    WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
-    display:'flex', alignItems:'center', gap:10,
-  },
-  logoDot: {
-    width:28, height:28, borderRadius:'50%',
-    background:'linear-gradient(135deg,var(--gold),var(--teal))',
-    display:'flex', alignItems:'center', justifyContent:'center',
-    fontSize:'0.9rem', WebkitTextFillColor:'initial', color:'#fff',
-    boxShadow:'0 0 16px rgba(201,168,76,0.4)', flexShrink:0,
-  },
-  navLinks: { display:'flex', gap:32, listStyle:'none' },
-  navLink:  { color:'var(--text-dim)', fontSize:'0.88rem', cursor:'pointer', transition:'color 0.2s',
-               onMouseEnter:'this.style.color="var(--text)"' },
-  btnGhost: {
-    background:'transparent', border:'1px solid var(--border)',
-    color:'var(--text-dim)', padding:'8px 20px', borderRadius:8,
-    fontFamily:'var(--font-body)', fontSize:'0.85rem', cursor:'pointer', transition:'all 0.2s',
-  },
-  btnPrimary: {
-    background:'linear-gradient(135deg,var(--gold),#b8922e)',
-    border:'none', color:'#0d1220', padding:'9px 22px', borderRadius:8,
-    fontFamily:'var(--font-body)', fontSize:'0.85rem', fontWeight:600,
-    cursor:'pointer', boxShadow:'0 4px 20px rgba(201,168,76,0.25)',
-  },
   hero: {
     minHeight:'100vh', display:'flex', flexDirection:'column',
     alignItems:'center', justifyContent:'center',

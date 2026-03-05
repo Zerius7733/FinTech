@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Sidebar from '../components/Sidebar.jsx'
+import TickerBar from '../components/TickerBar.jsx'
+import Navbar from '../components/Navbar.jsx'
 import { MOCK_USER, MOCK_BENCHMARK } from '../data.js'
 
 // ── small chart helpers ───────────────────────────────────────────────────────
@@ -93,13 +94,28 @@ export default function Profile() {
   ]
 
   return (
-    <div style={{ display:'flex', minHeight:'100vh' }}>
-      <Sidebar />
-      <main style={{ marginLeft:72, flex:1, padding:'40px 48px', maxWidth:1400 }}>
+    <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
 
-        {/* Topbar */}
+      {/* Fixed top ticker */}
+      <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} />
+
+      {/* Shared navbar */}
+      <Navbar />
+
+      <main style={{ paddingTop:110, paddingBottom:60, paddingLeft:48, paddingRight:48, maxWidth:1400, margin:'0 auto' }}>
+
+        {/* Page header */}
         <div style={s.topbar}>
-          <div style={s.pageTitle}>My Profile</div>
+          <div>
+            <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--teal)', textTransform:'uppercase', letterSpacing:'0.2em', marginBottom:8, display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>
+              Personal Finance
+              <div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>
+            </div>
+            <div style={s.pageTitle}>
+              My <span style={{ background:'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Portfolio</span>
+            </div>
+          </div>
           <div style={{ display:'flex', gap:14, alignItems:'center' }}>
             <div style={s.badgePill}>
               <div style={{ width:7, height:7, borderRadius:'50%', background:'var(--green)', boxShadow:'0 0 6px var(--green)' }} />
@@ -266,8 +282,8 @@ export default function Profile() {
 }
 
 const s = {
-  topbar: { display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:36 },
-  pageTitle: { fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.55rem' },
+  topbar: { display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:36, flexWrap:'wrap', gap:16 },
+  pageTitle: { fontFamily:'var(--font-display)', fontWeight:800, fontSize:'clamp(1.8rem,3vw,2.6rem)', lineHeight:1.1, marginBottom:6 },
   badgePill: {
     background:'var(--surface)', border:'1px solid var(--border)',
     borderRadius:24, padding:'7px 14px',
