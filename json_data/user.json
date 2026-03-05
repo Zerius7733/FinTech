@@ -1,0 +1,267 @@
+{
+  "u001": {
+    "name": "Alice Tan",
+    "cash_balance": 14800.25,
+    "liability": 6600.5,
+    "portfolio": [
+      {
+        "symbol": "AAPL",
+        "qty": 12,
+        "avg_price": 182.4,
+        "market_value": 3150.24,
+        "current_price": 262.52
+      },
+      {
+        "symbol": "MSFT",
+        "qty": 6,
+        "avg_price": 410.2,
+        "market_value": 2431.2,
+        "current_price": 405.2
+      }
+    ],
+    "portfolio_value": 5581.44,
+    "total_balance": 20381.69,
+    "net_worth": 13781.19
+  },
+  "u002": {
+    "name": "Brandon Lim",
+    "cash_balance": 9200.1,
+    "liability": 6400.75,
+    "portfolio": [
+      {
+        "symbol": "TSLA",
+        "qty": 4,
+        "avg_price": 228.5,
+        "market_value": 1623.76,
+        "current_price": 405.94
+      },
+      {
+        "symbol": "NVDA",
+        "qty": 3,
+        "avg_price": 870.0,
+        "market_value": 549.12,
+        "current_price": 183.04
+      }
+    ],
+    "portfolio_value": 2172.88,
+    "total_balance": 11372.98,
+    "net_worth": 4972.23
+  },
+  "u003": {
+    "name": "Cheryl Ng",
+    "cash_balance": 17650.0,
+    "liability": 9000.2,
+    "portfolio": [
+      {
+        "symbol": "QQQ",
+        "qty": 8,
+        "avg_price": 445.1,
+        "market_value": 4886.0,
+        "current_price": 610.75
+      },
+      {
+        "symbol": "AMZN",
+        "qty": 5,
+        "avg_price": 182.0,
+        "market_value": 1084.1,
+        "current_price": 216.82
+      }
+    ],
+    "portfolio_value": 5970.1,
+    "total_balance": 23620.1,
+    "net_worth": 14619.9
+  },
+  "u004": {
+    "name": "Daniel Koh",
+    "cash_balance": 8200.6,
+    "liability": 7350.4,
+    "portfolio": [
+      {
+        "symbol": "META",
+        "qty": 4,
+        "avg_price": 495.0,
+        "market_value": 2670.92,
+        "current_price": 667.73
+      },
+      {
+        "symbol": "GOOGL",
+        "qty": 7,
+        "avg_price": 152.3,
+        "market_value": 2121.91,
+        "current_price": 303.13
+      }
+    ],
+    "portfolio_value": 4792.83,
+    "total_balance": 12993.43,
+    "net_worth": 5643.03
+  },
+  "u005": {
+    "name": "Ethan Lee",
+    "cash_balance": 25100.3,
+    "liability": 12600.25,
+    "portfolio": [
+      {
+        "symbol": "SPY",
+        "qty": 10,
+        "avg_price": 520.4,
+        "market_value": 6851.3,
+        "current_price": 685.13
+      },
+      {
+        "symbol": "AVGO",
+        "qty": 2,
+        "avg_price": 1320.0,
+        "market_value": 635.06,
+        "current_price": 317.53
+      }
+    ],
+    "portfolio_value": 7486.36,
+    "total_balance": 32586.66,
+    "net_worth": 19986.41
+  },
+  "u006": {
+    "name": "Farah Aziz",
+    "cash_balance": 11340.0,
+    "liability": 8490.1,
+    "portfolio": [
+      {
+        "symbol": "NFLX",
+        "qty": 3,
+        "avg_price": 640.0,
+        "market_value": 295.98,
+        "current_price": 98.66
+      },
+      {
+        "symbol": "AMD",
+        "qty": 10,
+        "avg_price": 165.3,
+        "market_value": 2020.7,
+        "current_price": 202.07
+      }
+    ],
+    "portfolio_value": 2316.68,
+    "total_balance": 13656.68,
+    "net_worth": 5166.58
+  },
+  "u007": {
+    "name": "Grace Wong",
+    "cash_balance": 6400.9,
+    "liability": 3350.75,
+    "portfolio": [
+      {
+        "symbol": "INTC",
+        "qty": 20,
+        "avg_price": 41.2,
+        "market_value": 911.6,
+        "current_price": 45.58
+      },
+      {
+        "symbol": "BAC",
+        "qty": 25,
+        "avg_price": 34.5,
+        "market_value": 1257.5,
+        "current_price": 50.3
+      }
+    ],
+    "portfolio_value": 2169.1,
+    "total_balance": 8570.0,
+    "net_worth": 5219.25
+  },
+  "u008": {
+    "name": "Hafiz Rahman",
+    "cash_balance": 12950.75,
+    "liability": 9150.5,
+    "portfolio": [
+      {
+        "symbol": "JPM",
+        "qty": 9,
+        "avg_price": 191.0,
+        "market_value": 2694.51,
+        "current_price": 299.39
+      },
+      {
+        "symbol": "V",
+        "qty": 4,
+        "avg_price": 275.4,
+        "market_value": 1281.88,
+        "current_price": 320.47
+      }
+    ],
+    "portfolio_value": 3976.39,
+    "total_balance": 16927.14,
+    "net_worth": 7776.64
+  },
+  "u009": {
+    "name": "Isabella Goh",
+    "cash_balance": 5050.25,
+    "liability": 2940.25,
+    "portfolio": [
+      {
+        "symbol": "KO",
+        "qty": 14,
+        "avg_price": 61.2,
+        "market_value": 1093.4,
+        "current_price": 78.1
+      },
+      {
+        "symbol": "PEP",
+        "qty": 6,
+        "avg_price": 171.3,
+        "market_value": 983.52,
+        "current_price": 163.92
+      }
+    ],
+    "portfolio_value": 2076.92,
+    "total_balance": 7127.17,
+    "net_worth": 4186.92
+  },
+  "u010": {
+    "name": "Jason Teo",
+    "cash_balance": 14320.45,
+    "liability": 7700.0,
+    "portfolio": [
+      {
+        "symbol": "BABA",
+        "qty": 15,
+        "avg_price": 86.2,
+        "market_value": 1999.05,
+        "current_price": 133.27
+      },
+      {
+        "symbol": "PDD",
+        "qty": 5,
+        "avg_price": 148.5,
+        "market_value": 505.95,
+        "current_price": 101.19
+      }
+    ],
+    "portfolio_value": 2505.0,
+    "total_balance": 16825.45,
+    "net_worth": 9125.45
+  },
+  "_meta": {
+    "updated_at_utc": "2026-03-05T07:21:35.299895+00:00",
+    "symbols_updated": [
+      "AAPL",
+      "AMD",
+      "AMZN",
+      "AVGO",
+      "BABA",
+      "BAC",
+      "GOOGL",
+      "INTC",
+      "JPM",
+      "KO",
+      "META",
+      "MSFT",
+      "NFLX",
+      "NVDA",
+      "PDD",
+      "PEP",
+      "QQQ",
+      "SPY",
+      "TSLA",
+      "V"
+    ]
+  }
+}
