@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Any, Dict
 
@@ -26,6 +27,32 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
 @app.get("/health")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/users")
+def get_users() -> Dict[str, Any]:
+    try:
+        with open(JSON_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        users = {k: v for k, v in data.items() if not k.startswith("_")}
+        return {"status": "ok", "count": len(users), "users": users}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"read users failed: {exc}") from exc
+
+
+@app.get("/users/{user_id}")
+def get_user_by_id(user_id: str) -> Dict[str, Any]:
+    try:
+        with open(JSON_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        return {"status": "ok", "user_id": user_id, "user": user}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"read user failed: {exc}") from exc
 
 
 @app.get("/update/assets")
