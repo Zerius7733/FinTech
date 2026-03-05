@@ -1,0 +1,30 @@
+{
+  "imp_79a09d6ec15b4990": {
+    "status": "pending",
+    "user_id": "u001",
+    "created_at": "2026-03-05T17:53:15.715649+00:00",
+    "parsed": {
+      "platform_name": "CoinMarketCap",
+      "detected_asset_classes": [
+        "cryptos"
+      ],
+      "holdings": [
+        {
+          "asset_class": "cryptos",
+          "symbol": "ETH-USD",
+          "name": "Ethereum",
+          "qty": 2.0,
+          "avg_price": 2078.15,
+          "current_price": 2059.02,
+          "market_value": 4118.05,
+          "confidence": 0.9
+        }
+      ],
+      "needs_review": false,
+      "notes": "Only one holding visible, Ethereum crypto with full details.",
+      "warnings": [],
+      "image_sha256": "da1688a962b74048d30355134526b73ed7d8b651e606ca8888ea63732bd1ed8e",
+      "model": "gpt-4.1-mini"
+    }
+  }
+}

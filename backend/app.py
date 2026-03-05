@@ -2,12 +2,16 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from pydantic import AliasChoices, BaseModel, Field
 
 from backend.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
 from backend.commodity_price_retriever import fetch_commodity_price
 from backend.crypto_price_retriever import fetch_crypto_price
+from backend.services.screenshot_importer import create_pending_import
+from backend.services.screenshot_importer import DEFAULT_VISION_MODEL
+from backend.services.screenshot_importer import parse_screenshot_with_llm
+from backend.services.screenshot_importer import confirm_import
 from backend.services.recommendation import generate_gpt_recommendations
 from backend.services.recommendation import generate_user_recommendations
 from backend.services.wealth_wellness.engine import calculate_user_wellness
@@ -29,6 +33,7 @@ app = FastAPI(
         {"name": "Health", "description": "API health and readiness endpoints."},
         {"name": "Users", "description": "User retrieval endpoints."},
         {"name": "Recommendations", "description": "Personalized recommendation endpoints."},
+        {"name": "Imports", "description": "Screenshot import and portfolio merge endpoints."},
         {"name": "Updates", "description": "Endpoints that run data update jobs."},
         {"name": "Market", "description": "Live market quote retrieval endpoints."},
         {"name": "Portfolio", "description": "User portfolio information endpoints."},
@@ -82,6 +87,28 @@ class UserRiskUpdateRequest(BaseModel):
     risk_profile: str = Field(
         validation_alias=AliasChoices("risk_profile", "risk_appetite", "risk_appetitie")
     )
+
+
+class ScreenshotParseRequest(BaseModel):
+    image_base64: str
+    model: str = DEFAULT_VISION_MODEL
+    page_text: str | None = None
+
+
+class ScreenshotHolding(BaseModel):
+    asset_class: str
+    symbol: str
+    qty: float | None = None
+    avg_price: float | None = None
+    current_price: float | None = None
+    market_value: float | None = None
+    name: str | None = None
+    confidence: float | None = None
+
+
+class ScreenshotConfirmRequest(BaseModel):
+    import_id: str
+    holdings: list[ScreenshotHolding]
 
 
 def _iter_portfolio_positions(user: Dict[str, Any]):
@@ -236,6 +263,104 @@ def get_user_recommendations_gpt(
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"gpt recommendation failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/imports/screenshot/parse",
+    tags=["Imports"],
+    summary="Parse screenshot into holdings (stocks/cryptos/commodities)",
+)
+def parse_screenshot_import(user_id: str, payload: ScreenshotParseRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        if not isinstance(users.get(user_id), dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        parsed = parse_screenshot_with_llm(
+            payload.image_base64,
+            model=payload.model,
+            page_text=payload.page_text,
+        )
+        pending = create_pending_import(user_id=user_id, parsed=parsed)
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "import_id": pending["import_id"],
+            "parsed": pending["parsed"],
+            "next_step": "Call /users/{user_id}/imports/screenshot/confirm with this import_id",
+        }
+    except HTTPException:
+        raise
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"screenshot parse failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/imports/screenshot/confirm",
+    tags=["Imports"],
+    summary="Confirm parsed screenshot holdings and merge into user portfolio",
+)
+async def confirm_screenshot_import(user_id: str, request: Request) -> Dict[str, Any]:
+    try:
+        body = await request.json()
+        if not isinstance(body, dict):
+            raise HTTPException(status_code=400, detail="request body must be a JSON object")
+
+        import_id = body.get("import_id")
+        holdings = body.get("holdings")
+        if not isinstance(import_id, str) or not import_id.strip():
+            raise HTTPException(status_code=400, detail="import_id is required")
+        if not isinstance(holdings, list):
+            raise HTTPException(status_code=400, detail="holdings must be an array")
+
+        users = _read_users_data()
+        if not isinstance(users.get(user_id), dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        override_holdings = holdings
+        if len(override_holdings) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="holdings array is empty; please provide at least one valid row",
+            )
+        result = confirm_import(
+            import_id=import_id.strip(),
+            user_id=user_id,
+            users_data=users,
+            override_holdings=override_holdings,
+        )
+        _write_users_data(users)
+        diagnostics = {
+            "received_holdings_count": len(override_holdings) if override_holdings is not None else None,
+            "received_holdings_preview": (override_holdings or [])[:3],
+            "raw_body_preview": {k: body.get(k) for k in ("import_id", "holdings")},
+        }
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "import_id": result["import_id"],
+            "import_status": result["status"],
+            "merged_count": result["merged_count"],
+            "skipped": result["skipped"],
+            "portfolio_value": result["portfolio_value"],
+            "total_balance": result["total_balance"],
+            "net_worth": result["net_worth"],
+            "portfolio": result["portfolio"],
+            "diagnostics": diagnostics,
+        }
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        preview = []
+        if isinstance(locals().get("holdings"), list):
+            preview = locals()["holdings"][:3]
+        raise HTTPException(status_code=400, detail=f"{exc}; raw_holdings_preview={preview}") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"screenshot confirm failed: {exc}") from exc
 
 
 @app.post(

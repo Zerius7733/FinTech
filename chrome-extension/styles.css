@@ -1,0 +1,140 @@
+body {
+  font-family: Arial, sans-serif;
+  width: 430px;
+  margin: 0;
+  padding: 10px;
+  background: #f5f7fb;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0 0 6px;
+}
+
+label {
+  font-size: 12px;
+  color: #222;
+}
+
+input,
+button,
+select {
+  font-size: 13px;
+  padding: 8px;
+  border: 1px solid #c8d1e0;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.row.between {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+button {
+  cursor: pointer;
+  background: #1f6feb;
+  color: white;
+  border: none;
+}
+
+button:hover {
+  background: #165ec4;
+}
+
+#addRowBtn {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+#status {
+  font-size: 12px;
+  margin: 0;
+}
+
+#preview {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border: 1px solid #d0d8e6;
+  border-radius: 6px;
+  background: white;
+}
+
+.holdings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #d9e1ef;
+  border-radius: 6px;
+  padding: 8px;
+  background: #fff;
+}
+
+.holding-card {
+  border: 1px solid #e4e9f3;
+  border-radius: 6px;
+  padding: 6px;
+  background: #f9fbff;
+}
+
+.holding-row {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 0.9fr auto;
+  gap: 6px;
+}
+
+.holding-row.second {
+  margin-top: 6px;
+  grid-template-columns: 1fr 1fr 1fr 0.8fr;
+}
+
+.holding-row input,
+.holding-row select {
+  padding: 6px;
+  font-size: 12px;
+}
+
+.holding-row .qty {
+  width: 100%;
+}
+
+.remove-btn {
+  background: #d92f2f;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.remove-btn:hover {
+  background: #b92323;
+}
+
+.muted {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.warnings-box {
+  border: 1px solid #f0c36d;
+  background: #fff8e1;
+  color: #7a4f00;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 12px;
+  display: none;
+  white-space: pre-wrap;
+}
