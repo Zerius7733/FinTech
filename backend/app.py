@@ -5,26 +5,14 @@ from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import AliasChoices, BaseModel, Field
 
-from backend.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
-from backend.commodity_price_retriever import fetch_commodity_price
-from backend.crypto_price_retriever import fetch_crypto_price
-from backend.services.auth_registry import RegisterConflictError
-from backend.services.auth_registry import RegisterValidationError
-from backend.services.portfolio_selector import get_positions_by_asset_class
-from backend.services.auth_registry import register_login_user
-from backend.services.recommendation import generate_gpt_recommendations
-from backend.services.recommendation import generate_user_recommendations
-from backend.services.wealth_wellness.engine import calculate_user_wellness
-from backend.services.wealth_wellness.engine import update_wellness_file
-from backend.stock_price_updater import fetch_latest_prices
-from backend.stock_price_updater import update_stock_prices_file
-from backend.users_assets_update import update_assets_file
+import backend.services.api_deps as api
 
 
 BASE_DIR = Path(__file__).resolve().parent
 JSON_PATH = BASE_DIR / "json_data" / "user.json"
 CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
+ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
 
 app = FastAPI(
@@ -94,26 +82,79 @@ class RegisterRequest(BaseModel):
     password: str
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class AssetResolveResponse(BaseModel):
+    query: str
+    symbol: str
+    name: str
+    category: str
+    source: str
+
+
 @app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get(
+    "/api/assets/resolve",
+    tags=["Market"],
+    summary="Resolve a symbol to stock, crypto, commodity, or unknown",
+    response_model=AssetResolveResponse,
+)
+async def resolve_asset_category(
+    q: str = Query(..., description="Symbol or alias to resolve, e.g. AAPL, BTC, XAU"),
+) -> AssetResolveResponse:
+    result = await api.resolve_asset(q)
+    return AssetResolveResponse(**result)
+
+
 @app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
 def register_user(payload: RegisterRequest) -> Dict[str, Any]:
     try:
-        result = register_login_user(
+        result = api.register_login_user(
+            login_csv_path=LOGIN_CSV_PATH,
+            username=payload.username,
+            password=payload.password,
+        )
+        api.add_default_user_profile(
+            json_path=JSON_PATH,
+            user_id=result["user_id"],
+            name=result["username"],
+        )
+        api.add_default_assets_row(
+            csv_path=ASSETS_CSV_PATH,
+            user_id=result["user_id"],
+            name=result["username"],
+        )
+        return {"status": "ok", "username": result["username"]}
+    except api.RegisterValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except api.RegisterConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
+
+
+@app.post("/auth/login", tags=["Users"], summary="Login with username and password")
+def login_user(payload: LoginRequest) -> Dict[str, Any]:
+    try:
+        result = api.authenticate_login_user(
             login_csv_path=LOGIN_CSV_PATH,
             username=payload.username,
             password=payload.password,
         )
         return {"status": "ok", "username": result["username"]}
-    except RegisterValidationError as exc:
+    except api.LoginValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except RegisterConflictError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except api.LoginAuthError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
+        raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
 
 
 @app.get("/users", tags=["Users"], summary="Get all users")
@@ -180,7 +221,7 @@ def get_user_recommendations(
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-        result = generate_user_recommendations(user, limit=limit)
+        result = api.generate_user_recommendations(user, limit=limit)
         return {"status": "ok", "user_id": user_id, **result}
     except HTTPException:
         raise
@@ -204,8 +245,8 @@ def get_user_recommendations_gpt(
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-        rule_based = generate_user_recommendations(user, limit=limit)
-        gpt_output = generate_gpt_recommendations(
+        rule_based = api.generate_user_recommendations(user, limit=limit)
+        gpt_output = api.generate_gpt_recommendations(
             user_id=user_id,
             user=user,
             rule_based=rule_based,
@@ -240,7 +281,7 @@ def update_user_risk_and_recalibrate(payload: UserRiskUpdateRequest) -> Dict[str
             raise HTTPException(status_code=404, detail=f"user_id '{payload.user_id}' not found")
 
         user["risk_profile"] = _normalize_risk_profile(payload.risk_profile)
-        wellness_result = calculate_user_wellness(user)
+        wellness_result = api.calculate_user_wellness(user)
         user["wellness_metrics"] = wellness_result["wellness_metrics"]
         user["financial_wellness_score"] = wellness_result["financial_wellness_score"]
         user["financial_stress_index"] = wellness_result["financial_stress_index"]
@@ -280,11 +321,11 @@ def get_market_quote(
         ticker = parsed["ticker"]
 
         if asset_type == "STOCK":
-            price = fetch_latest_prices([ticker])[ticker]
+            price = api.fetch_latest_prices([ticker])[ticker]
             return {"status": "ok", "asset_type": asset_type, "symbol": ticker, "price": price}
 
         if asset_type == "CRYPTO":
-            crypto_quote = fetch_crypto_price(ticker)
+            crypto_quote = api.fetch_crypto_price(ticker)
             return {
                 "status": "ok",
                 "asset_type": asset_type,
@@ -292,7 +333,7 @@ def get_market_quote(
                 "price": crypto_quote["price"],
             }
 
-        commodity_quote = fetch_commodity_price(ticker)
+        commodity_quote = api.fetch_commodity_price(ticker)
         return {
             "status": "ok",
             "asset_type": asset_type,
@@ -335,10 +376,10 @@ def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, An
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-        bucket, positions = get_positions_by_asset_class(
+        bucket, positions = api.get_positions_by_asset_class(
             user=user,
             asset_class=asset_class,
-            commodity_alias_symbols=COMMODITY_ALIAS_TO_SYMBOL.values(),
+            commodity_alias_symbols=api.COMMODITY_ALIAS_TO_SYMBOL.values(),
             common_commodity_etfs=COMMON_COMMODITY_ETFS,
         )
 
@@ -361,7 +402,7 @@ def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, An
 def update_assets() -> Dict[str, Any]:
     try:
         print("[api] /update/assets called")
-        result = update_assets_file(str(JSON_PATH), str(CSV_PATH))
+        result = api.update_assets_file(str(JSON_PATH), str(CSV_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"assets update failed: {exc}") from exc
@@ -371,7 +412,7 @@ def update_assets() -> Dict[str, Any]:
 def update_prices() -> Dict[str, Any]:
     try:
         print("[api] /update/prices called")
-        result = update_stock_prices_file(str(JSON_PATH))
+        result = api.update_stock_prices_file(str(JSON_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"price update failed: {exc}") from exc
@@ -381,7 +422,7 @@ def update_prices() -> Dict[str, Any]:
 def update_wellness() -> Dict[str, Any]:
     try:
         print("[api] /update/wellness called")
-        result = update_wellness_file(str(JSON_PATH))
+        result = api.update_wellness_file(str(JSON_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"wellness update failed: {exc}") from exc
@@ -391,12 +432,13 @@ def update_wellness() -> Dict[str, Any]:
 def update_all() -> Dict[str, Any]:
     try:
         print("[api] /update/all called")
-        update_assets_file(str(JSON_PATH), str(CSV_PATH))
-        update_stock_prices_file(str(JSON_PATH))
-        result = update_wellness_file(str(JSON_PATH))
+        api.update_assets_file(str(JSON_PATH), str(CSV_PATH))
+        api.update_stock_prices_file(str(JSON_PATH))
+        result = api.update_wellness_file(str(JSON_PATH))
         print("[api] /update/all completed")
         summary = _safe_summary(result)
         summary["pipeline"] = ["assets", "prices", "wellness"]
         return summary
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"full update failed: {exc}") from exc
+
