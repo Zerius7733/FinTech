@@ -43,21 +43,23 @@
     "income": 5000.0,
     "estate": 500000.0,
     "wellness_metrics": {
-      "liquidity_months": 3.0,
-      "liquidity_score": 50.0,
-      "diversification_hhi": 0.5083,
-      "diversification_score": 98.34,
-      "debt_income_ratio": 7.9167,
+      "liquidity_months": 3.32,
+      "liquidity_score": 55.34,
+      "diversification_hhi": 0.363,
+      "diversification_score": 84.94,
+      "debt_income_ratio": 12.9167,
       "debt_income_score": 0.0
     },
     "risk_profile": "High",
-    "financial_wellness_score": 59.17,
-    "financial_stress_index": 60.33
+    "financial_wellness_score": 53.54,
+    "financial_stress_index": 60.88,
+    "mortgage": 300000.0
   },
   "u002": {
     "name": "Brandon Lim",
     "cash_balance": 6.4,
     "liability": 6400.75,
+    "mortgage": 0.0,
     "portfolio": {
       "stocks": [
         {
@@ -98,16 +100,16 @@
     "income": 4000.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 2.0,
-      "liquidity_score": 33.33,
-      "diversification_hhi": 0.6223,
-      "diversification_score": 75.54,
-      "debt_income_ratio": 0.1067,
+      "liquidity_months": 0.0,
+      "liquidity_score": 0.03,
+      "diversification_hhi": 0.302,
+      "diversification_score": 93.07,
+      "debt_income_ratio": 0.1333,
       "debt_income_score": 100.0
     },
     "risk_profile": "Low",
-    "financial_wellness_score": 63.0,
-    "financial_stress_index": 31.56
+    "financial_wellness_score": 48.98,
+    "financial_stress_index": 41.37
   },
   "u003": {
     "name": "Cheryl Ng",
@@ -153,16 +155,17 @@
     "income": 3000.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 2.0,
-      "liquidity_score": 33.33,
-      "diversification_hhi": 0.6223,
-      "diversification_score": 75.54,
-      "debt_income_ratio": 0.1067,
+      "liquidity_months": 3.0,
+      "liquidity_score": 50.0,
+      "diversification_hhi": 0.3139,
+      "diversification_score": 91.48,
+      "debt_income_ratio": 0.25,
       "debt_income_score": 100.0
     },
     "risk_profile": "High",
-    "financial_wellness_score": 74.44,
-    "financial_stress_index": 31.56
+    "financial_wellness_score": 85.74,
+    "financial_stress_index": 21.7,
+    "mortgage": 0.0
   },
   "u004": {
     "name": "Daniel Koh",
@@ -217,7 +220,8 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 72.92,
-    "financial_stress_index": 30.19
+    "financial_stress_index": 30.19,
+    "mortgage": 0.0
   },
   "u005": {
     "name": "Ethan Lee",
@@ -272,7 +276,8 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 72.88,
-    "financial_stress_index": 27.14
+    "financial_stress_index": 27.14,
+    "mortgage": 0.0
   },
   "u006": {
     "name": "Farah Aziz",
@@ -327,7 +332,8 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 69.17,
-    "financial_stress_index": 32.25
+    "financial_stress_index": 32.25,
+    "mortgage": 0.0
   },
   "u007": {
     "name": "Grace Wong",
@@ -382,7 +388,8 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 62.51,
-    "financial_stress_index": 39.72
+    "financial_stress_index": 39.72,
+    "mortgage": 0.0
   },
   "u008": {
     "name": "Hafiz Rahman",
@@ -437,7 +444,8 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 70.82,
-    "financial_stress_index": 31.23
+    "financial_stress_index": 31.23,
+    "mortgage": 0.0
   },
   "u009": {
     "name": "Isabella Goh",
@@ -492,7 +500,8 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 60.97,
-    "financial_stress_index": 40.35
+    "financial_stress_index": 40.35,
+    "mortgage": 0.0
   },
   "u010": {
     "name": "Jason Teo",
@@ -547,6 +556,7 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 65.15,
-    "financial_stress_index": 35.54
+    "financial_stress_index": 35.54,
+    "mortgage": 0.0
   }
 }

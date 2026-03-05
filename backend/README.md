@@ -75,9 +75,11 @@ This backend computes user-level financial metrics from `backend/json_data/user.
 
 ### 5) Debt-Income Ratio
 
-- Formula: `debt_income_ratio = liability / (income * 12)`
+- Formula:
+  - `total_debt = liability + mortgage`
+  - `debt_income_ratio = total_debt / (income * 12)`
 - What it means:
-  - Compares outstanding liabilities to one year of income capacity.
+  - Compares total debt obligations (including mortgage) to one year of income capacity.
   - A ratio of `1.0` means debt equals one year of income.
 - Why it matters:
   - High ratios reduce financial flexibility and increase repayment stress.
@@ -86,14 +88,14 @@ This backend computes user-level financial metrics from `backend/json_data/user.
   - `< 1`: healthy debt load
   - `1-3`: moderate pressure
   - `> 3`: elevated risk
-  - `>= 5`: severe burden in this model
+  - `>= 8`: severe burden in this model
 - Direction: Lower is better.
 
 ### 6) Debt-Income Score (0-100)
 
 - Rule:
   - ratio `<= 1.0` -> `100`
-  - ratio `>= 5.0` -> `0`
+  - ratio `>= 8.0` -> `0`
   - otherwise linear between 100 and 0
 - What it means:
   - This converts debt burden into a comparable score for composite models.
