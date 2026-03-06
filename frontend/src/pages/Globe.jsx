@@ -887,7 +887,7 @@ export default function Globe() {
 
       // Layer 1 — momentum spin-to-stop
       if (!isDragRef.current) {
-        globe.rotation.y += velY
+        globe.rotation.y += 0.0008005 + velY
         globe.rotation.x += velX
         velY *= 0.91
         velX *= 0.91
