@@ -24,6 +24,7 @@ JSON_PATH = BASE_DIR / "json_data" / "user.json"
 CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
 ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
+STOCK_LISTINGS_CACHE_PATH = BASE_DIR / "json_data" / "stock_listings_cache.json"
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
 
 app = FastAPI(
@@ -851,10 +852,33 @@ def update_assets() -> Dict[str, Any]:
 def update_prices() -> Dict[str, Any]:
     try:
         print("[api] /update/prices called")
+        # Backward-compatible alias: portfolio prices only.
         result = api.update_stock_prices_file(str(JSON_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"price update failed: {exc}") from exc
+
+
+@app.get("/update/prices/portfolio", tags=["Updates"], summary="Update portfolio stock prices")
+def update_portfolio_prices() -> Dict[str, Any]:
+    try:
+        print("[api] /update/prices/portfolio called")
+        result = api.update_stock_prices_file(str(JSON_PATH))
+        return _safe_summary(result)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"portfolio price update failed: {exc}") from exc
+
+
+@app.get("/update/prices/listings", tags=["Updates"], summary="Update stock listings cache prices")
+def update_listing_cache_prices() -> Dict[str, Any]:
+    try:
+        print("[api] /update/prices/listings called")
+        result = api.update_stock_listings_cache_prices_file(str(STOCK_LISTINGS_CACHE_PATH))
+        symbols = result.get("symbols", {}) if isinstance(result, dict) else {}
+        count = len(symbols) if isinstance(symbols, dict) else 0
+        return {"status": "ok", "updated_symbols": count}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"listing cache price update failed: {exc}") from exc
 
 
 @app.get("/update/wellness", tags=["Updates"], summary="Update wellness metrics")

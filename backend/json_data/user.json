@@ -10,15 +10,15 @@
           "symbol": "AAPL",
           "qty": 12.0,
           "avg_price": 182.4,
-          "market_value": 3131.88,
-          "current_price": 260.99
+          "market_value": 3123.48,
+          "current_price": 260.29
         },
         {
           "symbol": "MSFT",
           "qty": 6.0,
           "avg_price": 410.2,
-          "market_value": 2442.66,
-          "current_price": 407.11
+          "market_value": 2464.08,
+          "current_price": 410.68
         }
       ],
       "cryptos": [
@@ -26,47 +26,47 @@
           "symbol": "BTC-USD",
           "qty": 0.01,
           "avg_price": 45000.0,
-          "current_price": 71481.0078,
-          "market_value": 714.81
+          "current_price": 70734.0078,
+          "market_value": 707.34
         },
         {
           "symbol": "ETH-USD",
           "qty": 2.0,
           "avg_price": 2078.15,
-          "current_price": 2067.59,
+          "current_price": 2075.2961,
           "name": "Ethereum",
-          "market_value": 4135.18
+          "market_value": 4150.59
         },
         {
           "symbol": "DOGE-USD",
           "qty": 23456.0,
           "avg_price": 0.09314,
-          "current_price": 0.09336,
+          "current_price": 0.0936,
           "name": "Dogecoin",
-          "market_value": 2189.85
+          "market_value": 2195.48
         },
         {
           "symbol": "BCH-USD",
           "qty": 3.0,
           "avg_price": 457.81,
-          "current_price": 457.16,
+          "current_price": 457.6256,
           "name": "Bitcoin Cash",
-          "market_value": 1371.48
+          "market_value": 1372.88
         },
         {
           "symbol": "BNB-USD",
           "qty": 2.0,
           "avg_price": 648.09,
-          "current_price": 647.98,
+          "current_price": 645.1313,
           "name": "BNB",
-          "market_value": 1295.96
+          "market_value": 1290.26
         }
       ],
       "commodities": []
     },
-    "portfolio_value": 15281.82,
-    "total_balance": 31882.32,
-    "net_worth": -443117.68,
+    "portfolio_value": 15304.11,
+    "total_balance": 31904.61,
+    "net_worth": -443095.39,
     "income": 5000.0,
     "mortgage": 300000.0,
     "estate": 500000.0,
@@ -94,14 +94,14 @@
           "qty": 0.0,
           "avg_price": 228.5,
           "market_value": 0.0,
-          "current_price": 406.0699
+          "current_price": 405.55
         },
         {
           "symbol": "NVDA",
           "qty": 0.0,
           "avg_price": 870.0,
           "market_value": 0.0,
-          "current_price": 183.94
+          "current_price": 183.34
         }
       ],
       "cryptos": [
@@ -109,23 +109,23 @@
           "symbol": "BTC-USD",
           "qty": 4.0,
           "avg_price": 2000.0,
-          "current_price": 70825.72,
-          "market_value": 283302.88,
+          "current_price": 70734.0078,
+          "market_value": 282936.03,
           "name": "Bitcoin"
         },
         {
           "symbol": "ETH-USD",
           "qty": 4.0,
           "avg_price": 2078.15,
-          "current_price": 2064.9,
-          "market_value": 8259.6,
+          "current_price": 2075.2961,
+          "market_value": 8301.18,
           "name": "Ethereum"
         },
         {
           "symbol": "XLM-USD",
           "qty": 0.0,
           "avg_price": 0.155,
-          "current_price": 0.1552,
+          "current_price": 0.1578,
           "name": "Stellar",
           "market_value": 0.0
         }
@@ -135,21 +135,21 @@
           "symbol": "GC=F",
           "qty": 0.0,
           "avg_price": 2180.0,
-          "current_price": 5096.5,
+          "current_price": 5126.2998,
           "market_value": 0.0
         },
         {
           "symbol": "SI=F",
           "qty": 0.0,
           "avg_price": 24.5,
-          "current_price": 82.005,
+          "current_price": 84.25,
           "market_value": 0.0
         }
       ]
     },
-    "portfolio_value": 291562.48,
-    "total_balance": 291568.88,
-    "net_worth": 285168.13,
+    "portfolio_value": 291237.21,
+    "total_balance": 291243.61,
+    "net_worth": 284842.86,
     "income": 4000.0,
     "mortgage": 0.0,
     "estate": 0.0,
@@ -176,15 +176,15 @@
           "symbol": "TSLA",
           "qty": 4,
           "avg_price": 228.5,
-          "market_value": 1624.28,
-          "current_price": 406.0699
+          "market_value": 1622.2,
+          "current_price": 405.55
         },
         {
           "symbol": "NVDA",
           "qty": 3,
           "avg_price": 870.0,
-          "market_value": 551.82,
-          "current_price": 183.94
+          "market_value": 550.02,
+          "current_price": 183.34
         }
       ],
       "cryptos": [
@@ -192,15 +192,15 @@
           "symbol": "BTC-USD",
           "qty": 0.03,
           "avg_price": 45000.0,
-          "current_price": 71481.0078,
-          "market_value": 2144.43
+          "current_price": 70734.0078,
+          "market_value": 2122.02
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.18,
           "avg_price": 2500.0,
-          "current_price": 2082.3552,
-          "market_value": 374.82
+          "current_price": 2075.2961,
+          "market_value": 373.55
         }
       ],
       "commodities": [
@@ -208,21 +208,21 @@
           "symbol": "GC=F",
           "qty": 0.35,
           "avg_price": 2200.0,
-          "current_price": 5096.5,
-          "market_value": 1783.77
+          "current_price": 5126.2998,
+          "market_value": 1794.2
         },
         {
           "symbol": "SI=F",
           "qty": 10.0,
           "avg_price": 24.8,
-          "current_price": 82.005,
-          "market_value": 820.05
+          "current_price": 84.25,
+          "market_value": 842.5
         }
       ]
     },
-    "portfolio_value": 7299.17,
-    "total_balance": 16299.37,
-    "net_worth": 7299.17,
+    "portfolio_value": 7304.49,
+    "total_balance": 16304.69,
+    "net_worth": 7304.49,
     "income": 3000.0,
     "mortgage": 0.0,
     "estate": 0.0,
@@ -249,15 +249,15 @@
           "symbol": "META",
           "qty": 4,
           "avg_price": 495.0,
-          "market_value": 2645.6,
-          "current_price": 661.4
+          "market_value": 2642.28,
+          "current_price": 660.57
         },
         {
           "symbol": "GOOGL",
           "qty": 7,
           "avg_price": 152.3,
-          "market_value": 2101.82,
-          "current_price": 300.2594
+          "market_value": 2106.16,
+          "current_price": 300.88
         }
       ],
       "cryptos": [
@@ -265,21 +265,21 @@
           "symbol": "BTC-USD",
           "qty": 0.04,
           "avg_price": 45000.0,
-          "current_price": 71481.0078,
-          "market_value": 2859.24
+          "current_price": 70734.0078,
+          "market_value": 2829.36
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.19,
           "avg_price": 2500.0,
-          "current_price": 2082.3552,
-          "market_value": 395.65
+          "current_price": 2075.2961,
+          "market_value": 394.31
         }
       ]
     },
-    "portfolio_value": 8002.31,
-    "total_balance": 15352.71,
-    "net_worth": 8002.31,
+    "portfolio_value": 7972.11,
+    "total_balance": 15322.51,
+    "net_worth": 7972.11,
     "income": 4500.0,
     "mortgage": 0.0,
     "estate": 0.0,
@@ -306,15 +306,15 @@
           "symbol": "SPY",
           "qty": 10,
           "avg_price": 520.4,
-          "market_value": 6821.6,
-          "current_price": 682.16
+          "market_value": 6813.1,
+          "current_price": 681.31
         },
         {
           "symbol": "AVGO",
           "qty": 2,
           "avg_price": 1320.0,
-          "market_value": 666.51,
-          "current_price": 333.2575
+          "market_value": 665.54,
+          "current_price": 332.77
         }
       ],
       "cryptos": [
@@ -322,21 +322,21 @@
           "symbol": "BTC-USD",
           "qty": 0.05,
           "avg_price": 45000.0,
-          "current_price": 71481.0078,
-          "market_value": 3574.05
+          "current_price": 70734.0078,
+          "market_value": 3536.7
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.2,
           "avg_price": 2500.0,
-          "current_price": 2082.3552,
-          "market_value": 416.47
+          "current_price": 2075.2961,
+          "market_value": 415.06
         }
       ]
     },
-    "portfolio_value": 11478.63,
-    "total_balance": 24078.88,
-    "net_worth": 11478.63,
+    "portfolio_value": 11430.4,
+    "total_balance": 24030.65,
+    "net_worth": 11430.4,
     "income": 4600.0,
     "mortgage": 0.0,
     "estate": 0.0,
@@ -363,15 +363,15 @@
           "symbol": "NFLX",
           "qty": 3,
           "avg_price": 640.0,
-          "market_value": 296.7,
-          "current_price": 98.9
+          "market_value": 297.51,
+          "current_price": 99.17
         },
         {
           "symbol": "AMD",
           "qty": 10,
           "avg_price": 165.3,
-          "market_value": 2023.95,
-          "current_price": 202.395
+          "market_value": 1994.5,
+          "current_price": 199.45
         }
       ],
       "cryptos": [
@@ -379,21 +379,21 @@
           "symbol": "BTC-USD",
           "qty": 0.06,
           "avg_price": 45000.0,
-          "current_price": 71481.0078,
-          "market_value": 4288.86
+          "current_price": 70734.0078,
+          "market_value": 4244.04
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.21,
           "avg_price": 2500.0,
-          "current_price": 2082.3552,
-          "market_value": 437.29
+          "current_price": 2075.2961,
+          "market_value": 435.81
         }
       ]
     },
-    "portfolio_value": 7046.8,
-    "total_balance": 15536.9,
-    "net_worth": 7046.8,
+    "portfolio_value": 6971.86,
+    "total_balance": 15461.96,
+    "net_worth": 6971.86,
     "income": 4750.0,
     "mortgage": 0.0,
     "estate": 0.0,
@@ -420,15 +420,15 @@
           "symbol": "INTC",
           "qty": 20,
           "avg_price": 41.2,
-          "market_value": 918.9,
-          "current_price": 45.945
+          "market_value": 919.0,
+          "current_price": 45.95
         },
         {
           "symbol": "BAC",
           "qty": 25,
           "avg_price": 34.5,
-          "market_value": 1242.75,
-          "current_price": 49.71
+          "market_value": 1245.25,
+          "current_price": 49.81
         }
       ],
       "cryptos": [
@@ -436,21 +436,21 @@
           "symbol": "BTC-USD",
           "qty": 0.07,
           "avg_price": 45000.0,
-          "current_price": 71481.0078,
-          "market_value": 5003.67
+          "current_price": 70734.0078,
+          "market_value": 4951.38
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.22,
           "avg_price": 2500.0,
-          "current_price": 2082.3552,
-          "market_value": 458.12
+          "current_price": 2075.2961,
+          "market_value": 456.57
         }
       ]
     },
-    "portfolio_value": 7623.44,
-    "total_balance": 10974.19,
-    "net_worth": 7623.44,
+    "portfolio_value": 7572.2,
+    "total_balance": 10922.95,
+    "net_worth": 7572.2,
     "income": 4800.0,
     "mortgage": 0.0,
     "estate": 0.0,
@@ -477,15 +477,15 @@
           "symbol": "JPM",
           "qty": 9,
           "avg_price": 191.0,
-          "market_value": 2661.88,
-          "current_price": 295.765
+          "market_value": 2641.95,
+          "current_price": 293.55
         },
         {
           "symbol": "V",
           "qty": 4,
           "avg_price": 275.4,
-          "market_value": 1263.9,
-          "current_price": 315.975
+          "market_value": 1279.2,
+          "current_price": 319.8
         }
       ],
       "cryptos": [
@@ -493,21 +493,21 @@
           "symbol": "BTC-USD",
           "qty": 0.08,
           "avg_price": 45000.0,
-          "current_price": 71481.0078,
-          "market_value": 5718.48
+          "current_price": 70734.0078,
+          "market_value": 5658.72
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.23,
           "avg_price": 2500.0,
-          "current_price": 2082.3552,
-          "market_value": 478.94
+          "current_price": 2075.2961,
+          "market_value": 477.32
         }
       ]
     },
-    "portfolio_value": 10123.2,
-    "total_balance": 19273.7,
-    "net_worth": 10123.2,
+    "portfolio_value": 10057.19,
+    "total_balance": 19207.69,
+    "net_worth": 10057.19,
     "income": 5200.0,
     "mortgage": 0.0,
     "estate": 0.0,
@@ -534,15 +534,15 @@
           "symbol": "KO",
           "qty": 14,
           "avg_price": 61.2,
-          "market_value": 1082.83,
-          "current_price": 77.345
+          "market_value": 1078.42,
+          "current_price": 77.03
         },
         {
           "symbol": "PEP",
           "qty": 6,
           "avg_price": 171.3,
-          "market_value": 977.22,
-          "current_price": 162.87
+          "market_value": 964.2,
+          "current_price": 160.7
         }
       ],
       "cryptos": [
@@ -550,21 +550,21 @@
           "symbol": "BTC-USD",
           "qty": 0.09,
           "avg_price": 45000.0,
-          "current_price": 71481.0078,
-          "market_value": 6433.29
+          "current_price": 70734.0078,
+          "market_value": 6366.06
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.24,
           "avg_price": 2500.0,
-          "current_price": 2082.3552,
-          "market_value": 499.77
+          "current_price": 2075.2961,
+          "market_value": 498.07
         }
       ]
     },
-    "portfolio_value": 8993.11,
-    "total_balance": 11933.36,
-    "net_worth": 8993.11,
+    "portfolio_value": 8906.75,
+    "total_balance": 11847.0,
+    "net_worth": 8906.75,
     "income": 3500.0,
     "mortgage": 0.0,
     "estate": 0.0,
@@ -591,15 +591,15 @@
           "symbol": "BABA",
           "qty": 15,
           "avg_price": 86.2,
-          "market_value": 1954.95,
-          "current_price": 130.33
+          "market_value": 1955.25,
+          "current_price": 130.35
         },
         {
           "symbol": "PDD",
           "qty": 5,
           "avg_price": 148.5,
-          "market_value": 502.18,
-          "current_price": 100.435
+          "market_value": 503.7,
+          "current_price": 100.74
         }
       ],
       "cryptos": [
@@ -607,21 +607,21 @@
           "symbol": "BTC-USD",
           "qty": 0.1,
           "avg_price": 45000.0,
-          "current_price": 71481.0078,
-          "market_value": 7148.1
+          "current_price": 70734.0078,
+          "market_value": 7073.4
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.25,
           "avg_price": 2500.0,
-          "current_price": 2082.3552,
-          "market_value": 520.59
+          "current_price": 2075.2961,
+          "market_value": 518.82
         }
       ]
     },
-    "portfolio_value": 10125.82,
-    "total_balance": 17825.82,
-    "net_worth": 10125.82,
+    "portfolio_value": 10051.17,
+    "total_balance": 17751.17,
+    "net_worth": 10051.17,
     "income": 4900.0,
     "mortgage": 0.0,
     "estate": 0.0,
