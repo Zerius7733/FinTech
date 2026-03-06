@@ -14,6 +14,9 @@ from backend.services.screenshot_importer import parse_screenshot_with_llm
 from backend.services.screenshot_importer import confirm_import
 from backend.services.insights_service import InsightError
 from backend.services.insights_service import build_insights
+from backend.services.retirement import build_retirement_plan
+from backend.services.user_profile_registry import normalize_users_data
+from backend.services.user_profile_registry import rewrite_user_profiles_with_order
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -35,8 +38,11 @@ app = FastAPI(
         {"name": "Updates", "description": "Endpoints that run data update jobs."},
         {"name": "Market", "description": "Live market quote retrieval endpoints."},
         {"name": "Portfolio", "description": "User portfolio information endpoints."},
+        {"name": "Retirement", "description": "Retirement planning and target allocation endpoints."},
     ],
 )
+
+rewrite_user_profiles_with_order(JSON_PATH)
 
 
 def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
@@ -49,12 +55,13 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
 
 def _read_users_data() -> Dict[str, Any]:
     with open(JSON_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    return normalize_users_data(data)
 
 
 def _write_users_data(data: Dict[str, Any]) -> None:
     with open(JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+        json.dump(normalize_users_data(data), f, indent=2)
 
 
 def _parse_market_query(query: str) -> Dict[str, str]:
@@ -85,6 +92,17 @@ class UserRiskUpdateRequest(BaseModel):
     risk_profile: str = Field(
         validation_alias=AliasChoices("risk_profile", "risk_appetite", "risk_appetitie")
     )
+
+
+class UserAgeUpdateRequest(BaseModel):
+    user_id: str
+    age: int = Field(..., ge=18, le=100)
+
+
+class RetirementPlanRequest(BaseModel):
+    retirement_age: int = Field(..., ge=19, le=100)
+    monthly_expenses: float = Field(..., ge=0)
+    essential_monthly_expenses: float = Field(..., ge=0)
 
 class RegisterRequest(BaseModel):
     username: str
@@ -332,6 +350,33 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read user failed: {exc}") from exc
+
+
+@app.post(
+    "/users/age",
+    tags=["Users"],
+    summary="Update user age",
+)
+def update_user_age(payload: UserAgeUpdateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(payload.user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{payload.user_id}' not found")
+
+        user["age"] = int(payload.age)
+        users[payload.user_id] = user
+        _write_users_data(users)
+        return {
+            "status": "ok",
+            "user_id": payload.user_id,
+            "age": user["age"],
+            "user": user,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"age update failed: {exc}") from exc
 
 
 @app.get(
@@ -608,6 +653,33 @@ def update_user_risk_and_recalibrate(payload: UserRiskUpdateRequest) -> Dict[str
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"risk update failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/retirement",
+    tags=["Retirement"],
+    summary="Build a retirement plan using current profile, portfolio, and target retirement age",
+)
+def build_user_retirement_plan(user_id: str, payload: RetirementPlanRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        plan = build_retirement_plan(
+            user=user,
+            retirement_age=payload.retirement_age,
+            monthly_expenses=payload.monthly_expenses,
+            essential_monthly_expenses=payload.essential_monthly_expenses,
+        )
+        return {"status": "ok", "user_id": user_id, **plan}
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"retirement plan failed: {exc}") from exc
 
 
 @app.get(

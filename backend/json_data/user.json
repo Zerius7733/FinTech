@@ -1,6 +1,7 @@
 {
   "u001": {
     "name": "Alice Tan",
+    "age": 33,
     "cash_balance": 16600.5,
     "liability": 475000.0,
     "portfolio": {
@@ -67,6 +68,7 @@
     "total_balance": 31882.32,
     "net_worth": -443117.68,
     "income": 5000.0,
+    "mortgage": 300000.0,
     "estate": 500000.0,
     "wellness_metrics": {
       "liquidity_months": 3.32,
@@ -78,14 +80,13 @@
     },
     "risk_profile": "High",
     "financial_wellness_score": 53.89,
-    "financial_stress_index": 60.4,
-    "mortgage": 300000.0
+    "financial_stress_index": 60.4
   },
   "u002": {
     "name": "Brandon Lim",
+    "age": 26,
     "cash_balance": 6.4,
     "liability": 6400.75,
-    "mortgage": 0.0,
     "portfolio": {
       "stocks": [
         {
@@ -150,6 +151,7 @@
     "total_balance": 291568.88,
     "net_worth": 285168.13,
     "income": 4000.0,
+    "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 0.0,
@@ -165,6 +167,7 @@
   },
   "u003": {
     "name": "Cheryl Ng",
+    "age": 28,
     "cash_balance": 9000.2,
     "liability": 9000.2,
     "portfolio": {
@@ -221,6 +224,7 @@
     "total_balance": 16299.37,
     "net_worth": 7299.17,
     "income": 3000.0,
+    "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 3.0,
@@ -232,11 +236,11 @@
     },
     "risk_profile": "High",
     "financial_wellness_score": 85.74,
-    "financial_stress_index": 21.7,
-    "mortgage": 0.0
+    "financial_stress_index": 21.7
   },
   "u004": {
     "name": "Daniel Koh",
+    "age": 23,
     "cash_balance": 7350.4,
     "liability": 7350.4,
     "portfolio": {
@@ -277,6 +281,7 @@
     "total_balance": 15352.71,
     "net_worth": 8002.31,
     "income": 4500.0,
+    "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.63,
@@ -288,11 +293,11 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 72.92,
-    "financial_stress_index": 30.19,
-    "mortgage": 0.0
+    "financial_stress_index": 30.19
   },
   "u005": {
     "name": "Ethan Lee",
+    "age": 35,
     "cash_balance": 12600.25,
     "liability": 12600.25,
     "portfolio": {
@@ -333,6 +338,7 @@
     "total_balance": 24078.88,
     "net_worth": 11478.63,
     "income": 4600.0,
+    "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 2.74,
@@ -344,11 +350,11 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 72.88,
-    "financial_stress_index": 27.14,
-    "mortgage": 0.0
+    "financial_stress_index": 27.14
   },
   "u006": {
     "name": "Farah Aziz",
+    "age": 37,
     "cash_balance": 8490.1,
     "liability": 8490.1,
     "portfolio": {
@@ -389,6 +395,7 @@
     "total_balance": 15536.9,
     "net_worth": 7046.8,
     "income": 4750.0,
+    "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.79,
@@ -400,11 +407,11 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 69.17,
-    "financial_stress_index": 32.25,
-    "mortgage": 0.0
+    "financial_stress_index": 32.25
   },
   "u007": {
     "name": "Grace Wong",
+    "age": 55,
     "cash_balance": 3350.75,
     "liability": 3350.75,
     "portfolio": {
@@ -445,6 +452,7 @@
     "total_balance": 10974.19,
     "net_worth": 7623.44,
     "income": 4800.0,
+    "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 0.7,
@@ -456,11 +464,11 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 62.51,
-    "financial_stress_index": 39.72,
-    "mortgage": 0.0
+    "financial_stress_index": 39.72
   },
   "u008": {
     "name": "Hafiz Rahman",
+    "age": 36,
     "cash_balance": 9150.5,
     "liability": 9150.5,
     "portfolio": {
@@ -501,6 +509,7 @@
     "total_balance": 19273.7,
     "net_worth": 10123.2,
     "income": 5200.0,
+    "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.76,
@@ -512,11 +521,11 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 70.82,
-    "financial_stress_index": 31.23,
-    "mortgage": 0.0
+    "financial_stress_index": 31.23
   },
   "u009": {
     "name": "Isabella Goh",
+    "age": 29,
     "cash_balance": 2940.25,
     "liability": 2940.25,
     "portfolio": {
@@ -557,6 +566,7 @@
     "total_balance": 11933.36,
     "net_worth": 8993.11,
     "income": 3500.0,
+    "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 0.84,
@@ -568,11 +578,11 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 60.97,
-    "financial_stress_index": 40.35,
-    "mortgage": 0.0
+    "financial_stress_index": 40.35
   },
   "u010": {
     "name": "Jason Teo",
+    "age": 21,
     "cash_balance": 7700.0,
     "liability": 7700.0,
     "portfolio": {
@@ -613,6 +623,7 @@
     "total_balance": 17825.82,
     "net_worth": 10125.82,
     "income": 4900.0,
+    "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.57,
@@ -624,7 +635,6 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 65.15,
-    "financial_stress_index": 35.54,
-    "mortgage": 0.0
+    "financial_stress_index": 35.54
   }
 }

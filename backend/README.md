@@ -171,6 +171,68 @@ This backend computes user-level financial metrics from `backend/json_data/user.
 - GPT-wrapped:
   - `GET /users/{user_id}/recommendations/gpt?limit=3&model=gpt-4.1-mini`
 
+## User Profile Inputs
+
+Set a user's age:
+
+- `POST /users/age`
+- Body:
+
+```json
+{
+  "user_id": "u001",
+  "age": 30
+}
+```
+
+## Retirement Planning
+
+Build a retirement plan using the stored user age and current portfolio, while passing monthly spending inputs per request:
+
+- `POST /users/{user_id}/retirement`
+- Body:
+
+```json
+{
+  "retirement_age": 60,
+  "monthly_expenses": 3200,
+  "essential_monthly_expenses": 2200
+}
+```
+
+Input meanings:
+
+- `monthly_expenses`
+  - The user's estimated total monthly spending across normal life.
+  - This should include rent or mortgage, bills, groceries, transport, insurance, debt payments, and usual discretionary spending.
+  - The retirement planner uses this as the main lifestyle-spend anchor when estimating the retirement fund target.
+
+- `essential_monthly_expenses`
+  - The user's minimum monthly cost to stay afloat.
+  - This should include only survival and fixed necessities such as housing, utilities, basic food, insurance, minimum debt obligations, and other non-optional bills.
+  - The retirement planner uses this to size the recommended cash reserve and to keep the allocation from becoming too aggressive when the user needs a larger safety buffer.
+
+Why these inputs are on the retirement request instead of stored in the user profile:
+
+- They are planning assumptions, not stable identity fields.
+- They may change often depending on scenario:
+  - current lifestyle
+  - post-retirement downsizing
+  - different housing assumptions
+  - conservative vs aggressive planning runs
+- Passing them per request lets the frontend run multiple retirement scenarios for the same user without mutating saved profile data.
+
+Response includes:
+
+- current age and years to retirement
+- current investable assets
+- monthly and essential monthly expense inputs
+- essential cash reserve target
+- target retirement fund
+- required annual and monthly contribution
+- projected retirement value
+- recommended vehicle mix with target weights and amounts
+
 ## OpenAI Token Setup
 
 Put your token in either:
