@@ -8,7 +8,7 @@ import Navbar from '../components/Navbar.jsx'
 //  /api/* → http://localhost:8000  (see vite.config.js)
 //  In production, point this to your deployed backend URL.
 // ═══════════════════════════════════════════════════════════
-const API_BASE     = ''            // e.g. 'https://api.yoursite.com' in prod
+const API_BASE     = 'http://127.0.0.1:8000' // Vite dev proxy will forward /api/* to backend
 const PAGE_SIZE    = 100
 const CACHE_TTL_MS = 60_000  // 60 s client-side cache per page
 
@@ -21,8 +21,9 @@ const CACHE_TTL_MS = 60_000  // 60 s client-side cache per page
 //      circulating_supply, ath, ath_change_percentage }
 // ═══════════════════════════════════════════════════════════
 async function fetchCryptoPage(page) {
+  // Use the correct backend endpoint for crypto listings
   const res = await fetch(
-    `${API_BASE}/api/crypto?page=${page}&per_page=${PAGE_SIZE}`,
+    `${API_BASE}/api/market/cryptos?page=${page}&per_page=${PAGE_SIZE}`,
     { headers: { 'Accept': 'application/json' } }
   )
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
