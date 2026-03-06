@@ -1,5 +1,6 @@
 from backend.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
 from backend.commodity_price_retriever import fetch_commodity_price
+from backend.coingecko_market_retriever import fetch_coingecko_coin_listings
 from backend.crypto_price_retriever import fetch_crypto_price
 from backend.services.asset_resolver import resolve_asset
 from backend.services.assets_registry import add_default_assets_row
@@ -29,6 +30,7 @@ __all__ = [
     "add_default_user_profile",
     "authenticate_login_user",
     "calculate_user_wellness",
+    "fetch_coingecko_coin_listings",
     "fetch_commodity_price",
     "fetch_crypto_price",
     "fetch_latest_prices",

@@ -119,6 +119,21 @@ class InsightsResponse(BaseModel):
     citations: list[Dict[str, Any]]
     warnings: list[str]
 
+class CoinListingResponse(BaseModel):
+    id: str
+    name: str
+    symbol: str
+    image: str | None = None
+    market_cap_rank: float | int | None = None
+    current_price: float | int | None = None
+    market_cap: float | int | None = None
+    total_volume: float | int | None = None
+    price_change_percentage_24h: float | int | None = None
+    price_change_percentage_7d: float | int | None = None
+    circulating_supply: float | int | None = None
+    ath: float | int | None = None
+    ath_change_percentage: float | int | None = None
+
 class ScreenshotParseRequest(BaseModel):
     image_base64: str
     model: str = DEFAULT_VISION_MODEL
@@ -233,6 +248,22 @@ async def get_asset_insights(
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"insights failed: {exc}") from exc
+
+@app.get(
+    "/api/market/cryptos",
+    tags=["Market"],
+    summary="Get CoinGecko crypto listings in normalized format",
+    response_model=list[CoinListingResponse],
+)
+def get_crypto_listings(
+    page: int = Query(1, ge=1, description="CoinGecko page number"),
+    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
+) -> list[CoinListingResponse]:
+    try:
+        rows = api.fetch_coingecko_coin_listings(page=page, per_page=per_page)
+        return [CoinListingResponse(**row) for row in rows]
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"coingecko fetch failed: {exc}") from exc
 
 
 @app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
