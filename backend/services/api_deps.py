@@ -28,7 +28,18 @@ from backend.stock_market_retriever_nasdaq import rebuild_stock_listings_cache_f
 from backend.stock_price_updater import update_stock_listings_cache_prices_file
 from backend.stock_price_updater import update_stock_prices_file
 from backend.users_assets_update import update_assets_file
-
+from backend.services.insights_service import build_insights
+from backend.services.compatibility import evaluate_compatibility
+from backend.services.compatibility import synthesize_compatibility_with_llm
+from backend.services.screenshot_importer import create_pending_import
+from backend.services.screenshot_importer import DEFAULT_VISION_MODEL
+from backend.services.screenshot_importer import parse_screenshot_with_llm
+from backend.services.screenshot_importer import confirm_import
+from backend.services.insights_service import InsightError
+from backend.services.insights_service import build_insights
+from backend.services.retirement import build_retirement_plan
+from backend.services.user_profile_registry import normalize_users_data
+from backend.services.user_profile_registry import rewrite_user_profiles_with_order
 __all__ = [
     "COMMODITY_ALIAS_TO_SYMBOL",
     "LoginAuthError",
@@ -60,4 +71,5 @@ __all__ = [
     "update_assets_file",
     "update_stock_prices_file",
     "update_wellness_file",
+    "build_insights",
 ]

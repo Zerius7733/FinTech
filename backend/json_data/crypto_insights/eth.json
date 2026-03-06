@@ -1,0 +1,195 @@
+{
+  "type": "crypto",
+  "symbol": "ETH",
+  "updated_at": "2026-03-06T17:11:43.589190+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "crypto",
+      "symbol": "ETH",
+      "name": "ETH",
+      "period": {
+        "months": 3,
+        "start": "2025-12-06",
+        "end": "2026-03-06"
+      },
+      "metrics": {
+        "start_price": 3040.2078,
+        "end_price": 1974.1379,
+        "return_pct": -35.0657,
+        "volatility_annualized": 0.629596,
+        "max_drawdown_pct": -45.698,
+        "avg_daily_volume": 24031859280.2747,
+        "volume_change_pct": 4.4605
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-06",
+          "move_pct": 13.2682,
+          "close": 2063.387,
+          "volume": 64998454203.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-25",
+          "move_pct": 10.883,
+          "close": 2054.6279,
+          "volume": 27717195805.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-05",
+          "move_pct": -15.0138,
+          "close": 1821.6831,
+          "volume": 60381662655.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-31",
+          "move_pct": -9.5206,
+          "close": 2445.0918,
+          "volume": 47569532203.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": 13.2682,
+          "close": 2063.387,
+          "volume": 64998454203.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-02-05",
+          "move_pct": -15.0138,
+          "close": 1821.6831,
+          "volume": 60381662655.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-06",
+          "headline": "Ethereum (ETH) Daily Market Analysis 13 February 2026 | CoinStats AI",
+          "source": "",
+          "url": "https://coinstats.app/ai/a/latest-news-for-ethereum?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Ethereum spot ETFs recorded a $157 million net inflow on February 25, 2026. | KuCoin",
+          "source": "",
+          "url": "https://www.kucoin.com/news/flash/ethereum-spot-etfs-recorded-157m-net-inflow-on-feb-25-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Crypto Slides 6% as Fear Index Hits 11",
+          "source": "",
+          "url": "https://coin360.com/news/crypto-weekly-update-feb22-feb28-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Ethereum is Predicted to Reach $2,685.26 By Feb 06, 2026 | CoinCodex",
+          "source": "",
+          "url": "https://coincodex.com/article/81073/ethereum-prediction-february-01-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Ethereum Falls to $2,000 But New Price Prediction Targets $7,500 by End-2026",
+          "source": "",
+          "url": "https://www.financemagnates.com/trending/ethereum-falls-to-2000-but-new-price-prediction-targets-7500-by-end-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Goldman Sachs Reports $2.36B Crypto Exposure in Latest SEC Filing",
+          "source": "",
+          "url": "https://coinedition.com/goldman-sachs-reports-2-36b-crypto-exposure-in-latest-sec-filing/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "SEC probes Ethereum Foundation over ETH security status",
+          "source": "",
+          "url": "https://coingeek.com/sec-investigating-ethereum-foundation-in-bid-to-declare-eth-a-security/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Ethereum co-founder sued for breach of contract - CoinGeek",
+          "source": "",
+          "url": "https://coingeek.com/ethereum-co-founder-sued-for-breach-of-contract/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Vitalik Buterin Sold Over 8,800 ETH in February 2026 as Ethereum Price Falls",
+          "source": "",
+          "url": "https://www.ainvest.com/news/vitalik-buterin-sold-8-800-eth-february-2026-ethereum-price-falls-2602/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Bitcoin, Ethereum and Solana rally as analysts flag pause in \u201810 a.m. dump\u2019 after Jane Street lawsuit | The Block",
+          "source": "",
+          "url": "https://www.theblock.co/post/391353/bitcoin-ethereum-solana-rally-analysts-flag-pause-dump-jane-street-lawsuit?utm_source=openai"
+        },
+        {
+          "date": "2026-02-25",
+          "headline": "Ethereum Spot ETFs Record $157M Net Inflow on February 25, 2026 | KuCoin",
+          "source": "",
+          "url": "https://www.kucoin.com/news/flash/ethereum-spot-etfs-see-157m-net-inflow-on-feb-25-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-25",
+          "headline": "Bit Digital Inc. Reports Monthly Ethereum Treasury and Staking Metrics for February 2026",
+          "source": "",
+          "url": "https://www.prnewswire.com/news-releases/bit-digital-inc-reports-monthly-ethereum-treasury-and-staking-metrics-for-february-2026-302705323.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-25",
+          "headline": "Ethereum Price Prediction \u2013 ETH Price Estimated to Reach $2,268.50 By Mar 03, 2026 | CoinCodex",
+          "source": "",
+          "url": "https://coincodex.com/article/82298/ethereum-prediction-february-26-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-25",
+          "headline": "Ethereum price on February 25? Trading Odds & Predictions | Polymarket",
+          "source": "",
+          "url": "https://polymarket.com/event/ethereum-price-on-february-25/will-the-price-of-ethereum-be-between-1600-1700-on-february-25?utm_source=openai"
+        },
+        {
+          "date": "2026-02-25",
+          "headline": "Ethereum above ___ on February 25? Trading Odds & Predictions | Polymarket",
+          "source": "",
+          "url": "https://polymarket.com/event/ethereum-above-on-february-25/ethereum-above-1600-on-february-25?utm_source=openai"
+        }
+      ],
+      "narrative": "Ethereum started the period at a price of 3040.2078 and ended at 1974.1379, reflecting a negative return of -35.0657%. The asset experienced significant volatility with an annualized volatility of 0.629596 and a maximum drawdown of -45.698%. Among the largest daily moves, the biggest upward session occurred on 2026-02-06, with a 13.2682% gain closing at 2063.387 and accompanied by very high volume of 64998454203, which was also tagged as a high volume day. This rally coincided with multiple news items including Ethereum daily market analysis and price predictions, as well as reports of a pause in a recurring market dump after a lawsuit, suggesting some positive market sentiment around that date [1][10]. Conversely, the largest down day was on 2026-02-05, with a -15.0138% drop closing at 1821.6831 and similarly high volume of 60381662655, also tagged as a high volume day. This sharp decline occurred amid headlines about SEC probes into Ethereum's security status and notable sales of ETH by a co-founder, which may have contributed to negative sentiment [7][9]. Another notable down day was on 2026-01-31 with a -9.5206% move. Average daily volume increased by 4.4605% to approximately 24 billion, indicating heightened trading activity during this period. Additionally, on 2026-02-25, Ethereum saw a 10.883% gain closing at 2054.6279 with volume of 27717195805, coinciding with reports of $157 million net inflows into Ethereum spot ETFs, which may have supported the price increase [2]. Overall, the period was marked by large price swings and elevated volumes, influenced by regulatory developments, market inflows, and notable trading activity.",
+      "tldr": [
+        "Period return: -35.07% with annualized volatility 0.630.",
+        "Largest up day: 2026-02-06 (13.27%), largest down day: 2026-02-05 (-15.01%).",
+        "Highest volume spike was on 2026-02-06 with volume 64,998,454,203."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-35.07%) with peak drawdown of -45.70%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://coinstats.app/ai/a/latest-news-for-ethereum?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.kucoin.com/news/flash/ethereum-spot-etfs-recorded-157m-net-inflow-on-feb-25-2026?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://coingeek.com/sec-investigating-ethereum-foundation-in-bid-to-declare-eth-a-security/?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://www.ainvest.com/news/vitalik-buterin-sold-8-800-eth-february-2026-ethereum-price-falls-2602/?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://www.theblock.co/post/391353/bitcoin-ethereum-solana-rally-analysts-flag-pause-dump-jane-street-lawsuit?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

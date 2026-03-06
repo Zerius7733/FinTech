@@ -1,23 +1,13 @@
-import asyncio
+import asyncio,os
 import json
+from dotenv import load_dotenv
 from pathlib import Path
 from typing import Any, Dict
-
 from fastapi import FastAPI, HTTPException, Query, Request
 from pydantic import AliasChoices, BaseModel, Field
-
 import backend.services.api_deps as api
-from backend.services.compatibility import evaluate_compatibility
-from backend.services.compatibility import synthesize_compatibility_with_llm
-from backend.services.screenshot_importer import create_pending_import
-from backend.services.screenshot_importer import DEFAULT_VISION_MODEL
-from backend.services.screenshot_importer import parse_screenshot_with_llm
-from backend.services.screenshot_importer import confirm_import
-from backend.services.insights_service import InsightError
-from backend.services.insights_service import build_insights
-from backend.services.retirement import build_retirement_plan
-from backend.services.user_profile_registry import normalize_users_data
-from backend.services.user_profile_registry import rewrite_user_profiles_with_order
+
+load_dotenv()
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -45,7 +35,7 @@ app = FastAPI(
     ],
 )
 
-rewrite_user_profiles_with_order(USER_JSON_PATH)
+api.rewrite_user_profiles_with_order(USER_JSON_PATH)
 
 
 async def _run_stock_market_refresh() -> None:
@@ -81,8 +71,8 @@ async def _run_commodity_market_refresh() -> None:
 
 
 async def _market_refresh_loop() -> None:
-    await _run_stock_market_refresh()
-    await _run_commodity_market_refresh()
+    #await _run_stock_market_refresh()
+    #await _run_commodity_market_refresh()
     while True:
         await asyncio.sleep(STOCK_MARKET_REFRESH_INTERVAL_SECONDS)
         await _run_stock_market_refresh()
@@ -117,12 +107,12 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
 def _read_users_data() -> Dict[str, Any]:
     with open(USER_JSON_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
-    return normalize_users_data(data)
+    return api.normalize_users_data(data)
 
 
 def _write_users_data(data: Dict[str, Any]) -> None:
     with open(USER_JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(normalize_users_data(data), f, indent=2)
+        json.dump(api.normalize_users_data(data), f, indent=2)
 
 
 def _parse_market_query(query: str) -> Dict[str, str]:
@@ -226,7 +216,7 @@ class StockListingResponse(BaseModel):
 
 class ScreenshotParseRequest(BaseModel):
     image_base64: str
-    model: str = DEFAULT_VISION_MODEL
+    model: str = api.DEFAULT_VISION_MODEL
     page_text: str | None = None
 
 
@@ -248,7 +238,7 @@ class ScreenshotConfirmRequest(BaseModel):
 
 class ScreenshotParseRequest(BaseModel):
     image_base64: str
-    model: str = DEFAULT_VISION_MODEL
+    model: str = api.DEFAULT_VISION_MODEL
     page_text: str | None = None
 
 
@@ -332,10 +322,16 @@ async def get_asset_insights(
     months: int = Query(3, ge=1, le=24, description="Historical window in months"),
 ) -> InsightsResponse:
     try:
-        result = await build_insights(asset_type=type, symbol=symbol, months=months)
+        result = await api.build_insights(asset_type=type, symbol=symbol, months=months)
         return InsightsResponse(**result)
-    except InsightError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except api.InsightError as exc:
+        detail = str(exc)
+        if detail == "price data not found":
+            detail = (
+                f"price data not found for type='{type}', symbol='{symbol}', months={months}. "
+                "Check the type/symbol pair, e.g. stock:AAPL, crypto:BTC, commodity:GOLD."
+            )
+        raise HTTPException(status_code=exc.status_code, detail=detail) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"insights failed: {exc}") from exc
 
@@ -543,13 +539,13 @@ async def get_user_target_compatibility(
         resolved = await api.resolve_asset(resolve_query)
         resolved_category = str(resolved.get("category", "unknown")).lower()
 
-        result = evaluate_compatibility(
+        result = api.evaluate_compatibility(
             user=user,
             target_type=target_type,
             symbol=symbol,
             resolved_category=resolved_category,
         )
-        llm = synthesize_compatibility_with_llm(
+        llm = api.synthesize_compatibility_with_llm(
             user_id=user_id,
             user=user,
             compatibility=result,
@@ -649,12 +645,12 @@ def parse_screenshot_import(user_id: str, payload: ScreenshotParseRequest) -> Di
         if not isinstance(users.get(user_id), dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-        parsed = parse_screenshot_with_llm(
+        parsed = api.parse_screenshot_with_llm(
             payload.image_base64,
             model=payload.model,
             page_text=payload.page_text,
         )
-        pending = create_pending_import(user_id=user_id, parsed=parsed)
+        pending = api.create_pending_import(user_id=user_id, parsed=parsed)
         return {
             "status": "ok",
             "user_id": user_id,
@@ -700,7 +696,7 @@ async def confirm_screenshot_import(user_id: str, request: Request) -> Dict[str,
                 status_code=400,
                 detail="holdings array is empty; please provide at least one valid row",
             )
-        result = confirm_import(
+        result = api.confirm_import(
             import_id=import_id.strip(),
             user_id=user_id,
             users_data=users,
@@ -784,7 +780,7 @@ def build_user_retirement_plan(user_id: str, payload: RetirementPlanRequest) -> 
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-        plan = build_retirement_plan(
+        plan = api.build_retirement_plan(
             user=user,
             retirement_age=payload.retirement_age,
             monthly_expenses=payload.monthly_expenses,

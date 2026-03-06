@@ -1,0 +1,191 @@
+{
+  "type": "commodity",
+  "symbol": "XAU",
+  "updated_at": "2026-03-06T17:24:09.858278+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "commodity",
+      "symbol": "XAU",
+      "name": "Gold",
+      "period": {
+        "months": 3,
+        "start": "2025-12-06",
+        "end": "2026-03-06"
+      },
+      "metrics": {
+        "start_price": 4187.2002,
+        "end_price": 5147.6001,
+        "return_pct": 22.9366,
+        "volatility_annualized": 0.373527,
+        "max_drawdown_pct": -13.0848,
+        "avg_daily_volume": 5208.7705,
+        "volume_change_pct": 611.7536
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-03",
+          "move_pct": 6.0833,
+          "close": 4903.7002,
+          "volume": 1213.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-28",
+          "move_pct": 4.3643,
+          "close": 5301.6001,
+          "volume": 112054.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-30",
+          "move_pct": -11.3662,
+          "close": 4713.8999,
+          "volume": 8374.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2025-12-29",
+          "move_pct": -4.5042,
+          "close": 4325.1001,
+          "volume": 2044.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-03-06",
+          "move_pct": 1.6248,
+          "close": 5147.6001,
+          "volume": 117865.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-01-28",
+          "move_pct": 4.3643,
+          "close": 5301.6001,
+          "volume": 112054.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-03",
+          "headline": "Current price of gold: February 3, 2026 | Fortune",
+          "source": "",
+          "url": "https://fortune.com/article/current-price-of-gold-02-03-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold ($XAU) Commodity Forecast",
+          "source": "",
+          "url": "https://www.morpher.com/insights/market/commodity/XAU?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold tumbles to three-week low on Fed chair nomination",
+          "source": "",
+          "url": "https://www.tmgm.com/en/analysis/market-news/article/gold-price-forecast-xau-usd-falls-below-4-800-as-warsh-pick-eases-fed-independence-concerns-202602012345?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold.com Sets Fiscal Second Quarter Earnings Call for Thursday, February 5th at 4:30 p.m. ET :: Gold.com, Inc. (GOLD)",
+          "source": "",
+          "url": "https://ir.gold.com/news-events/press-releases/detail/214/gold-com-sets-fiscal-second-quarter-earnings-call-for-thursday-february-5th-at-4-30-p-m-et?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold (XAU/USD) Price Forecast and Analysis for Today, Tomorrow, Next Week, and 30 Days | LiteFinance",
+          "source": "",
+          "url": "https://www.litefinance.org/blog/analysts-opinions/gold-price-prediction-forecast/daily-and-weekly/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold Price Forecast 2026: XAU/USD Targets $6,300\u2013$6,750 as Safe-Haven Demand Surges",
+          "source": "",
+          "url": "https://www.tradingnews.com/news/gold-price-forecast-xau-usd-hovers-5170-usd-jpmorgan-flags-6300-usd?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold Price Forecast - Gold at $4,3K Fed Cut Lifts XAU/USD Target to $4,356\u2013$4,900",
+          "source": "",
+          "url": "https://www.tradingnews.com/news/gold-price-forecast-gold-around-4300-usd-silver-spike?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "COT Report: GOLD with COT Chart (Futures Only) - Tradingster",
+          "source": "",
+          "url": "https://www.tradingster.com/cot/futures/disagg/088691?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Federal Court Sanctions Nevada Metals Trader for Spoofing in Gold and Silver Markets | CFTC",
+          "source": "",
+          "url": "https://www.cftc.gov/PressRoom/PressReleases/8891-24?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Federal Court Orders California-Based Precious Metals Company, CEO, Senior Salesperson to Pay Over $56 Million for Fraud in Connection with Precious Metals Sales | CFTC",
+          "source": "",
+          "url": "https://www.cftc.gov/PressRoom/PressReleases/8898-24?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Federal Court Orders Precious Metals Dealer, its CEO and President to Pay $49M for Fraudulent Misappropriation Scheme | CFTC",
+          "source": "",
+          "url": "https://www.cftc.gov/PressRoom/PressReleases/9001-24?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Attorney General James Sues Precious Metals Company and Owner for Defrauding Seniors Out of $68 Million",
+          "source": "",
+          "url": "https://ag.ny.gov/press-release/2022/attorney-general-james-sues-precious-metals-company-and-owner-defrauding-seniors?utm_source=openai"
+        },
+        {
+          "date": "2026-01-28",
+          "headline": "Gold Close By Day In January 2026 | StatMuse Money",
+          "source": "",
+          "url": "https://www.statmuse.com/money/ask/gold-close-by-day-in-january-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-01-28",
+          "headline": "January 2026: Gold Surges, Emerging Markets Tech Leads and the US Dollar Eases | Chase",
+          "source": "",
+          "url": "https://www.chase.com/personal/investments/learning-and-insights/article/january-2026-gold-surges-emerging-market-tech-leads-and-the-us-dollar-eases?utm_source=openai"
+        },
+        {
+          "date": "2026-01-28",
+          "headline": "News item",
+          "source": "",
+          "url": "https://investor.wedbush.com/wedbush/article/marketminute-2026-1-7-precious-metals-retreat-gold-and-silver-slide-as-dollar-resurgence-and-index-rebalancing-trigger-massive-profit-booking?utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 4187.2002 to an ending price of 5147.6001, the asset experienced a total return of 22.9366% over the observed period. The annualized volatility was relatively high at 0.373527, reflecting notable price fluctuations, while the maximum drawdown reached -13.0848%, indicating a significant peak-to-trough decline during the timeframe. The largest upward session occurred on 2026-02-03, with a 6.0833% gain closing at 4903.7002, coinciding with multiple news items on that date including reports on gold price forecasts and market analysis [1][2]. Conversely, the largest downward session was on 2026-01-30, with an 11.3662% drop closing at 4713.8999, shortly after a high-volume day on 2026-01-28 when the price surged 4.3643% to 5301.6001 amid news of gold surging and easing US dollar concerns [3][4]. Volume dynamics were notable, with an average daily volume of 5208.7705 and a substantial volume increase of 611.7536%, highlighted by high-volume days such as 2026-03-06 with 117865.0 in volume and a 1.6248% price increase. The price movements and volume spikes appear to coincide with various market forecasts, regulatory news, and earnings announcements, though direct causality cannot be definitively established.",
+      "tldr": [
+        "Period return: 22.94% with annualized volatility 0.374.",
+        "Largest up day: 2026-02-03 (6.08%), largest down day: 2026-01-30 (-11.37%).",
+        "Highest volume spike was on 2026-03-06 with volume 117,865."
+      ],
+      "conclusion": "Over this period, the asset ended higher (22.94%) with peak drawdown of -13.08%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://fortune.com/article/current-price-of-gold-02-03-2026/?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.morpher.com/insights/market/commodity/XAU?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.statmuse.com/money/ask/gold-close-by-day-in-january-2026?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://www.chase.com/personal/investments/learning-and-insights/article/january-2026-gold-surges-emerging-market-tech-leads-and-the-us-dollar-eases?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}
