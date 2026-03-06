@@ -64,16 +64,34 @@ async def _run_stock_market_refresh() -> None:
         print(f"[api] stock market refresh failed: {exc}")
 
 
-async def _stock_market_refresh_loop() -> None:
+async def _run_commodity_market_refresh() -> None:
+    try:
+        result = await asyncio.to_thread(api.refresh_commodity_market_data)
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        print(
+            "[api] commodity market refresh complete:",
+            {
+                "source": meta.get("source"),
+                "ranked_count": meta.get("ranked_count"),
+                "failed_count": meta.get("failed_count"),
+            },
+        )
+    except Exception as exc:
+        print(f"[api] commodity market refresh failed: {exc}")
+
+
+async def _market_refresh_loop() -> None:
     await _run_stock_market_refresh()
+    await _run_commodity_market_refresh()
     while True:
         await asyncio.sleep(STOCK_MARKET_REFRESH_INTERVAL_SECONDS)
         await _run_stock_market_refresh()
+        await _run_commodity_market_refresh()
 
 
 @app.on_event("startup")
 async def startup_stock_market_refresh() -> None:
-    app.state.stock_market_refresh_task = asyncio.create_task(_stock_market_refresh_loop())
+    app.state.stock_market_refresh_task = asyncio.create_task(_market_refresh_loop())
 
 
 @app.on_event("shutdown")
@@ -358,6 +376,29 @@ def get_stock_listings(
     except Exception as exc:
         print(f"[api] stock fetch failed: {exc}")
         raise HTTPException(status_code=502, detail=f"stock fetch failed: {exc}") from exc
+
+
+@app.get(
+    "/api/market/commodities",
+    tags=["Market"],
+    summary="Get commodity listings in normalized format",
+    response_model=list[CoinListingResponse],
+)
+def get_commodity_listings(
+    page: int = Query(1, ge=1, description="Commodity page number"),
+    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
+) -> list[CoinListingResponse]:
+    try:
+        rows = api.get_precomputed_commodity_rankings(
+            page=page,
+            per_page=per_page,
+        )
+        return [CoinListingResponse(**row) for row in rows]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        print(f"[api] commodity fetch failed: {exc}")
+        raise HTTPException(status_code=502, detail=f"commodity fetch failed: {exc}") from exc
 
 
 @app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
@@ -914,6 +955,27 @@ def refresh_stock_market_rankings() -> Dict[str, Any]:
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"stock market refresh failed: {exc}") from exc
+
+
+@app.get(
+    "/update/market/commodities",
+    tags=["Updates"],
+    summary="Ingest commodity market snapshot and rebuild precomputed commodity rankings",
+)
+def refresh_commodity_market_rankings() -> Dict[str, Any]:
+    try:
+        print("[api] /update/market/commodities called")
+        result = api.refresh_commodity_market_data()
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        return {
+            "status": "ok",
+            "source": meta.get("source"),
+            "built_at_epoch": meta.get("built_at_epoch"),
+            "ranked_count": meta.get("ranked_count"),
+            "failed_count": meta.get("failed_count"),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"commodity market refresh failed: {exc}") from exc
 
 
 @app.get(
