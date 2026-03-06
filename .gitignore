@@ -1,6 +1,6 @@
 /.env
 venv
 __pycache__/
+node_modules
+env
 frontend/node_modules/
-backend/json_data/stock_market_rankings.json
-backend/json_data/stock_market_snapshot.json

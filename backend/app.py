@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import AliasChoices, BaseModel, Field
 import backend.services.api_deps as api
 
@@ -33,6 +34,14 @@ app = FastAPI(
         {"name": "Portfolio", "description": "User portfolio information endpoints."},
         {"name": "Retirement", "description": "Retirement planning and target allocation endpoints."},
     ],
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 api.rewrite_user_profiles_with_order(USER_JSON_PATH)
@@ -159,34 +168,10 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
 
-
 class LoginRequest(BaseModel):
     username: str
     password: str
 
-
-class AssetResolveResponse(BaseModel):
-    query: str
-    symbol: str
-    name: str
-    category: str
-    source: str
-
-
-class InsightsResponse(BaseModel):
-    type: str
-    symbol: str
-    name: str
-    period: Dict[str, Any]
-    metrics: Dict[str, Any]
-    notable_moves: list[Dict[str, Any]]
-    drivers: list[Dict[str, Any]]
-    narrative: str
-    tldr: list[str]
-    conclusion: str
-    disclaimer: str
-    citations: list[Dict[str, Any]]
-    warnings: list[str]
 
 class CoinListingResponse(BaseModel):
     id: str
@@ -292,9 +277,27 @@ class InsightsResponse(BaseModel):
     warnings: list[str]
 
 
+
 @app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/auth/login", tags=["Users"], summary="Authenticate a user")
+def login(payload: LoginRequest) -> Dict[str, Any]:
+    try:
+        result = api.authenticate_login_user(
+            login_csv_path=LOGIN_CSV_PATH,
+            username=payload.username,
+            password=payload.password,
+        )
+        return {"status": "ok", **result}
+    except api.LoginValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except api.LoginNotFoundError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
 
 
 @app.get(
@@ -422,23 +425,6 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
-
-
-@app.post("/auth/login", tags=["Users"], summary="Authenticate a user")
-def login(payload: LoginRequest) -> Dict[str, Any]:
-    try:
-        result = api.authenticate_login_user(
-            login_csv_path=LOGIN_CSV_PATH,
-            username=payload.username,
-            password=payload.password,
-        )
-        return {"status": "ok", **result}
-    except api.LoginValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except api.LoginNotFoundError as exc:
-        raise HTTPException(status_code=401, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
 
 
 @app.get("/users", tags=["Users"], summary="Get all users")
