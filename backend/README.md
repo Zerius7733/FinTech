@@ -269,6 +269,34 @@ Automatic refresh behavior:
 - when the backend process starts, it runs one stock market refresh immediately
 - while the backend stays live, it runs the stock market refresh again every 30 minutes
 
+## Commodity Market Pipeline
+
+The commodity endpoint uses the same stored-ranking pattern as stocks:
+
+- Provider: `yfinance`
+- Ingestion service: `backend/services/commodity_market_pipeline.py`
+- Stored snapshot: `backend/json_data/commodity_market_snapshot.json`
+- Precomputed rankings: `backend/json_data/commodity_market_rankings.json`
+- Frontend API: `GET /api/market/commodities`
+
+Endpoints:
+
+- `GET /update/market/commodities`
+  - Fetches the configured commodity contracts from `yfinance`
+  - Writes a raw commodity snapshot file
+  - Rebuilds the precomputed commodity ranking file
+
+- `GET /api/market/commodities?page=1&per_page=50`
+  - Reads from the precomputed rankings file
+  - If the rankings file is missing or stale, it triggers a refresh before serving
+
+Commodities do not have market cap in the same way stocks do, so the ranking is based on `total_volume`.
+
+Automatic refresh behavior:
+
+- when the backend process starts, it runs one commodity market refresh immediately
+- while the backend stays live, it runs the commodity market refresh again every 30 minutes
+
 Legacy cache endpoints still exist, but they are not the primary stock listing path anymore.
 
 ## OpenAI Token Setup

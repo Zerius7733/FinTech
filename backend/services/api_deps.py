@@ -2,6 +2,8 @@ from backend.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
 from backend.commodity_price_retriever import fetch_commodity_price
 from backend.coingecko_market_retriever import fetch_coingecko_coin_listings
 from backend.crypto_price_retriever import fetch_crypto_price
+from backend.services.commodity_market_pipeline import get_precomputed_commodity_rankings
+from backend.services.commodity_market_pipeline import refresh_commodity_market_data
 from backend.services.asset_resolver import resolve_asset
 from backend.services.stock_market_pipeline import get_precomputed_stock_rankings
 from backend.services.stock_market_pipeline import refresh_stock_market_data
@@ -48,8 +50,10 @@ __all__ = [
     "update_stock_listings_cache_prices_file",
     "generate_gpt_recommendations",
     "generate_user_recommendations",
+    "get_precomputed_commodity_rankings",
     "get_positions_by_asset_class",
     "get_precomputed_stock_rankings",
+    "refresh_commodity_market_data",
     "register_login_user",
     "resolve_asset",
     "refresh_stock_market_data",

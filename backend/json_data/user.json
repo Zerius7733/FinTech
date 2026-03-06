@@ -73,19 +73,19 @@
     "wellness_metrics": {
       "liquidity_months": 3.32,
       "liquidity_score": 55.34,
-      "diversification_hhi": 0.363,
-      "diversification_score": 84.94,
+      "diversification_hhi": 0.179,
+      "diversification_score": 95.78,
       "debt_income_ratio": 7.9167,
       "debt_income_score": 1.19
     },
     "risk_profile": "High",
-    "financial_wellness_score": 53.89,
-    "financial_stress_index": 60.4
+    "financial_wellness_score": 59.31,
+    "financial_stress_index": 58.23
   },
   "u002": {
     "name": "Brandon Lim",
     "age": 26,
-    "cash_balance": 6.4,
+    "cash_balance": 6004,
     "liability": 6400.75,
     "portfolio": {
       "stocks": [
@@ -154,16 +154,16 @@
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 0.0,
-      "liquidity_score": 0.03,
-      "diversification_hhi": 0.302,
-      "diversification_score": 93.07,
+      "liquidity_months": 1.5,
+      "liquidity_score": 25.02,
+      "diversification_hhi": 0.9446,
+      "diversification_score": 11.08,
       "debt_income_ratio": 0.1333,
       "debt_income_score": 100.0
     },
     "risk_profile": "High",
-    "financial_wellness_score": 76.54,
-    "financial_stress_index": 41.37
+    "financial_wellness_score": 40.54,
+    "financial_stress_index": 47.78
   },
   "u003": {
     "name": "Cheryl Ng",
@@ -229,14 +229,14 @@
     "wellness_metrics": {
       "liquidity_months": 3.0,
       "liquidity_score": 50.0,
-      "diversification_hhi": 0.3139,
-      "diversification_score": 91.48,
+      "diversification_hhi": 0.3477,
+      "diversification_score": 86.97,
       "debt_income_ratio": 0.25,
       "debt_income_score": 100.0
     },
     "risk_profile": "High",
-    "financial_wellness_score": 85.74,
-    "financial_stress_index": 21.7
+    "financial_wellness_score": 83.48,
+    "financial_stress_index": 22.61
   },
   "u004": {
     "name": "Daniel Koh",
@@ -286,14 +286,14 @@
     "wellness_metrics": {
       "liquidity_months": 1.63,
       "liquidity_score": 27.22,
-      "diversification_hhi": 0.2903,
-      "diversification_score": 94.63,
+      "diversification_hhi": 0.3081,
+      "diversification_score": 92.26,
       "debt_income_ratio": 0.1361,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 72.92,
-    "financial_stress_index": 30.19
+    "financial_wellness_score": 72.2,
+    "financial_stress_index": 30.66
   },
   "u005": {
     "name": "Ethan Lee",
@@ -343,14 +343,14 @@
     "wellness_metrics": {
       "liquidity_months": 2.74,
       "liquidity_score": 45.65,
-      "diversification_hhi": 0.4523,
-      "diversification_score": 73.02,
+      "diversification_hhi": 0.4557,
+      "diversification_score": 72.57,
       "debt_income_ratio": 0.2283,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 72.88,
-    "financial_stress_index": 27.14
+    "financial_wellness_score": 72.75,
+    "financial_stress_index": 27.23
   },
   "u006": {
     "name": "Farah Aziz",
@@ -400,14 +400,14 @@
     "wellness_metrics": {
       "liquidity_months": 1.79,
       "liquidity_score": 29.79,
-      "diversification_hhi": 0.4064,
-      "diversification_score": 79.15,
+      "diversification_hhi": 0.4581,
+      "diversification_score": 72.25,
       "debt_income_ratio": 0.1489,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 69.17,
-    "financial_stress_index": 32.25
+    "financial_wellness_score": 67.1,
+    "financial_stress_index": 33.63
   },
   "u007": {
     "name": "Grace Wong",
@@ -457,14 +457,14 @@
     "wellness_metrics": {
       "liquidity_months": 0.7,
       "liquidity_score": 11.63,
-      "diversification_hhi": 0.4141,
-      "diversification_score": 78.12,
+      "diversification_hhi": 0.473,
+      "diversification_score": 70.27,
       "debt_income_ratio": 0.0582,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 62.51,
-    "financial_stress_index": 39.72
+    "financial_wellness_score": 60.15,
+    "financial_stress_index": 41.29
   },
   "u008": {
     "name": "Hafiz Rahman",
@@ -514,14 +514,14 @@
     "wellness_metrics": {
       "liquidity_months": 1.76,
       "liquidity_score": 29.33,
-      "diversification_hhi": 0.3612,
-      "diversification_score": 85.17,
+      "diversification_hhi": 0.404,
+      "diversification_score": 79.46,
       "debt_income_ratio": 0.1466,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 70.82,
-    "financial_stress_index": 31.23
+    "financial_wellness_score": 69.1,
+    "financial_stress_index": 32.38
   },
   "u009": {
     "name": "Isabella Goh",
@@ -571,14 +571,14 @@
     "wellness_metrics": {
       "liquidity_months": 0.84,
       "liquidity_score": 14.0,
-      "diversification_hhi": 0.4731,
-      "diversification_score": 70.25,
+      "diversification_hhi": 0.5404,
+      "diversification_score": 61.28,
       "debt_income_ratio": 0.07,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 60.97,
-    "financial_stress_index": 40.35
+    "financial_wellness_score": 58.28,
+    "financial_stress_index": 42.14
   },
   "u010": {
     "name": "Jason Teo",
@@ -589,14 +589,14 @@
       "stocks": [
         {
           "symbol": "BABA",
-          "qty": 15,
+          "qty": 15.0,
           "avg_price": 86.2,
           "market_value": 1955.25,
           "current_price": 130.35
         },
         {
           "symbol": "PDD",
-          "qty": 5,
+          "qty": 5.0,
           "avg_price": 148.5,
           "market_value": 503.7,
           "current_price": 100.74
@@ -612,29 +612,55 @@
         },
         {
           "symbol": "ETH-USD",
-          "qty": 0.25,
-          "avg_price": 2500.0,
-          "current_price": 2075.2961,
-          "market_value": 518.82
+          "qty": 7.25,
+          "avg_price": 2092.696552,
+          "current_price": 1993.19,
+          "market_value": 14450.63,
+          "name": "Ethereum"
+        },
+        {
+          "symbol": "DOGE-USD",
+          "qty": 70368.0,
+          "avg_price": 0.09314,
+          "current_price": 0.09048,
+          "name": "Dogecoin",
+          "market_value": 6366.9
+        },
+        {
+          "symbol": "BCH-USD",
+          "qty": 9.0,
+          "avg_price": 457.81,
+          "current_price": 443.61,
+          "name": "Bitcoin Cash",
+          "market_value": 3992.49
+        },
+        {
+          "symbol": "BNB-USD",
+          "qty": 6.0,
+          "avg_price": 648.09,
+          "current_price": 629.26,
+          "name": "BNB",
+          "market_value": 3775.56
         }
-      ]
+      ],
+      "commodities": []
     },
-    "portfolio_value": 10051.17,
-    "total_balance": 17751.17,
-    "net_worth": 10051.17,
+    "portfolio_value": 38117.93,
+    "total_balance": 45817.93,
+    "net_worth": 38117.93,
     "income": 4900.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.57,
       "liquidity_score": 26.19,
-      "diversification_hhi": 0.4755,
-      "diversification_score": 69.93,
+      "diversification_hhi": 0.2296,
+      "diversification_score": 89.88,
       "debt_income_ratio": 0.131,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 65.15,
-    "financial_stress_index": 35.54
+    "financial_wellness_score": 71.13,
+    "financial_stress_index": 31.55
   }
 }

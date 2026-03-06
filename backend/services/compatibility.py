@@ -382,7 +382,7 @@ def evaluate_compatibility(
         },
         "warnings": warnings,
         "guardrails": {
-            "disclaimer": "CMC-style guardrail: AI can make mistakes. Please DYOR. Not financial advice.",
+            "disclaimer": "AI can make mistakes. Please DYOR. Not financial advice.",
             "blocked_by_stress": blocked,
         },
         "user_friendly": _build_user_friendly_view(
