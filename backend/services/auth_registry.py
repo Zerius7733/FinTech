@@ -11,6 +11,14 @@ class RegisterConflictError(Exception):
     pass
 
 
+class LoginValidationError(Exception):
+    pass
+
+
+class LoginAuthError(Exception):
+    pass
+
+
 def _load_login_rows(login_csv_path: Path) -> list[Dict[str, str]]:
     if not login_csv_path.exists():
         return []
@@ -77,19 +85,7 @@ def register_login_user(
     return {"user_id": final_user_id, "username": normalized_username}
 
 
-class LoginValidationError(Exception):
-    pass
-
-
-class LoginNotFoundError(Exception):
-    pass
-
-
-def login_user(
-    login_csv_path: Path,
-    username: str,
-    password: str,
-) -> Dict[str, str]:
+def authenticate_login_user(login_csv_path: Path, username: str, password: str) -> Dict[str, str]:
     normalized_username = (username or "").strip()
     normalized_password = (password or "").strip()
 
@@ -99,10 +95,23 @@ def login_user(
         raise LoginValidationError("password is required")
 
     rows = _load_login_rows(login_csv_path)
+    if not rows:
+        raise LoginAuthError("invalid username or password")
+
+    target_row = None
     for row in rows:
         if (row.get("username") or "").strip().lower() == normalized_username.lower():
-            if (row.get("password") or "").strip() == normalized_password:
-                return {"user_id": row["user_id"], "username": row["username"]}
-            raise LoginNotFoundError("incorrect password")
+            target_row = row
+            break
 
-    raise LoginNotFoundError(f"username '{normalized_username}' not found")
+    if target_row is None:
+        raise LoginAuthError("invalid username or password")
+
+    stored_password = (target_row.get("password") or "").strip()
+    if stored_password != normalized_password:
+        raise LoginAuthError("invalid username or password")
+
+    return {
+        "user_id": (target_row.get("user_id") or "").strip(),
+        "username": (target_row.get("username") or "").strip(),
+    }

@@ -183,6 +183,83 @@ Put your token in either:
 
 The GPT client also checks `backend/.env` for backward compatibility.
 
+## News Provider Setup
+
+The insights pipeline searches recent news before sending results to the local Ollama model.
+Ollama summarizes; it does not fetch the news itself.
+
+Current provider order:
+
+- Query search: `NewsAPI` if `NEWSAPI_KEY` is set, then `Marketaux` if `MARKETAUX_API_KEY` is set, then `GDELT`, then Google News RSS
+- Symbol fallback: `NewsAPI` if configured, then `Alpha Vantage` if `ALPHAVANTAGE_API_KEY` is set, then `Marketaux` if `MARKETAUX_API_KEY` is set, then `FMP` if `FMP_API_KEY` is set, then `GDELT`, then Google News RSS, then `yfinance`
+
+Optional keys:
+
+1. `NEWSAPI_KEY`
+   - Enables article search via NewsAPI for recent query-based lookups.
+2. `ALPHAVANTAGE_API_KEY`
+   - Enables market-news lookup by ticker symbol.
+3. `MARKETAUX_API_KEY`
+   - Enables finance-focused article search and symbol filtering.
+4. `FMP_API_KEY`
+   - Enables Financial Modeling Prep stock news and press-release fallback.
+
+Free no-key sources already enabled:
+
+- `GDELT`
+- Google News RSS
+- `yfinance` news fallback for stocks
+
+Example `.env` additions:
+
+```env
+NEWSAPI_KEY=your_newsapi_key
+ALPHAVANTAGE_API_KEY=your_alpha_vantage_key
+MARKETAUX_API_KEY=your_marketaux_key
+FMP_API_KEY=your_fmp_key
+```
+
+## Screenshot Import (No Login, user_id only)
+
+Parse screenshot into candidate holdings:
+
+- `POST /users/{user_id}/imports/screenshot/parse`
+- Body:
+  - `image_base64`: image data URL or raw base64
+  - `model` (optional): default `gpt-4.1-mini`
+
+Confirm and merge holdings into user portfolio:
+
+- `POST /users/{user_id}/imports/screenshot/confirm`
+- Body:
+  - `import_id` (from parse response)
+  - `holdings` (optional override array for user-edited values)
+
+`confirm` merges by `asset_class + symbol` and adds quantities (e.g., existing `3 SPY` + imported `10 SPY` => `13 SPY`).
+
+## Compatibility Endpoint
+
+Evaluate a target asset against the user's full profile:
+
+- `GET /users/{user_id}/compatibility?target_type=stock|crypto|commodity&symbol=...`
+
+Response includes:
+
+- `compatibility_score` and `rating`
+- factor scores:
+  - `risk_fit` (user risk vs asset risk)
+  - `liquidity_fit` (user buffer vs asset volatility)
+  - `concentration_impact` (whether adding target may worsen concentration)
+  - `stress_guardrail` (penalty/block if stress is elevated)
+- `already_in_portfolio` and `existing_position`
+- guardrail disclaimer:
+  - `CMC-style guardrail: AI can make mistakes. Please DYOR. Not financial advice.`
+
+Import records are stored in `backend/json_data/screenshot_imports.json` as a temporary confirmation queue:
+
+- `pending` imports auto-expire after 24 hours
+- `confirmed` imports are deleted immediately after successful confirm/merge
+
 ## Commodity Support
 
 You can now query commodity prices via:

@@ -2,33 +2,26 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import AliasChoices, BaseModel, Field
 
-from backend.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
-from backend.commodity_price_retriever import fetch_commodity_price
-from backend.crypto_price_retriever import fetch_crypto_price
-from backend.services.auth_registry import RegisterConflictError
-from backend.services.auth_registry import RegisterValidationError
-from backend.services.auth_registry import LoginValidationError
-from backend.services.auth_registry import LoginNotFoundError
-from backend.services.portfolio_selector import get_positions_by_asset_class
-from backend.services.auth_registry import register_login_user
-from backend.services.auth_registry import login_user
-from backend.services.recommendation import generate_gpt_recommendations
-from backend.services.recommendation import generate_user_recommendations
-from backend.services.wealth_wellness.engine import calculate_user_wellness
-from backend.services.wealth_wellness.engine import update_wellness_file
-from backend.stock_price_updater import fetch_latest_prices
-from backend.stock_price_updater import update_stock_prices_file
-from backend.users_assets_update import update_assets_file
+import backend.services.api_deps as api
+from backend.services.compatibility import evaluate_compatibility
+from backend.services.compatibility import synthesize_compatibility_with_llm
+from backend.services.screenshot_importer import create_pending_import
+from backend.services.screenshot_importer import DEFAULT_VISION_MODEL
+from backend.services.screenshot_importer import parse_screenshot_with_llm
+from backend.services.screenshot_importer import confirm_import
+from backend.services.insights_service import InsightError
+from backend.services.insights_service import build_insights
 
 
 BASE_DIR = Path(__file__).resolve().parent
 JSON_PATH = BASE_DIR / "json_data" / "user.json"
 CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
+ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
 
 app = FastAPI(
@@ -38,6 +31,8 @@ app = FastAPI(
         {"name": "Health", "description": "API health and readiness endpoints."},
         {"name": "Users", "description": "User retrieval endpoints."},
         {"name": "Recommendations", "description": "Personalized recommendation endpoints."},
+        {"name": "Compatibility", "description": "User profile compatibility endpoints."},
+        {"name": "Imports", "description": "Screenshot import and portfolio merge endpoints."},
         {"name": "Updates", "description": "Endpoints that run data update jobs."},
         {"name": "Market", "description": "Live market quote retrieval endpoints."},
         {"name": "Portfolio", "description": "User portfolio information endpoints."},
@@ -100,16 +95,136 @@ class UserRiskUpdateRequest(BaseModel):
         validation_alias=AliasChoices("risk_profile", "risk_appetite", "risk_appetitie")
     )
 
-
 class RegisterRequest(BaseModel):
     username: str
     password: str
-    user_id: str | None = None
 
 
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+
+class AssetResolveResponse(BaseModel):
+    query: str
+    symbol: str
+    name: str
+    category: str
+    source: str
+
+
+class InsightsResponse(BaseModel):
+    type: str
+    symbol: str
+    name: str
+    period: Dict[str, Any]
+    metrics: Dict[str, Any]
+    notable_moves: list[Dict[str, Any]]
+    drivers: list[Dict[str, Any]]
+    narrative: str
+    tldr: list[str]
+    conclusion: str
+    disclaimer: str
+    citations: list[Dict[str, Any]]
+    warnings: list[str]
+
+class CoinListingResponse(BaseModel):
+    id: str
+    name: str
+    symbol: str
+    image: str | None = None
+    market_cap_rank: float | int | None = None
+    current_price: float | int | None = None
+    market_cap: float | int | None = None
+    total_volume: float | int | None = None
+    price_change_percentage_24h: float | int | None = None
+    price_change_percentage_7d: float | int | None = None
+    circulating_supply: float | int | None = None
+    ath: float | int | None = None
+    ath_change_percentage: float | int | None = None
+
+class ScreenshotParseRequest(BaseModel):
+    image_base64: str
+    model: str = DEFAULT_VISION_MODEL
+    page_text: str | None = None
+
+
+class ScreenshotHolding(BaseModel):
+    asset_class: str
+    symbol: str
+    qty: float | None = None
+    avg_price: float | None = None
+    current_price: float | None = None
+    market_value: float | None = None
+    name: str | None = None
+    confidence: float | None = None
+
+
+class ScreenshotConfirmRequest(BaseModel):
+    import_id: str
+    holdings: list[ScreenshotHolding]
+
+
+class ScreenshotParseRequest(BaseModel):
+    image_base64: str
+    model: str = DEFAULT_VISION_MODEL
+    page_text: str | None = None
+
+
+class ScreenshotHolding(BaseModel):
+    asset_class: str
+    symbol: str
+    qty: float | None = None
+    avg_price: float | None = None
+    current_price: float | None = None
+    market_value: float | None = None
+    name: str | None = None
+    confidence: float | None = None
+
+
+class ScreenshotConfirmRequest(BaseModel):
+    import_id: str
+    holdings: list[ScreenshotHolding]
+
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class AssetResolveResponse(BaseModel):
+    query: str
+    symbol: str
+    name: str
+    category: str
+    source: str
+
+
+class InsightsResponse(BaseModel):
+    type: str
+    symbol: str
+    name: str
+    period: Dict[str, Any]
+    metrics: Dict[str, Any]
+    notable_moves: list[Dict[str, Any]]
+    drivers: list[Dict[str, Any]]
+    narrative: str
+    tldr: list[str]
+    conclusion: str
+    disclaimer: str
+    citations: list[Dict[str, Any]]
+    warnings: list[str]
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
 
 
 @app.get("/health", tags=["Health"], summary="API health check")
@@ -134,22 +249,97 @@ def login(payload: LoginRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
 
 
+@app.get(
+    "/api/assets/resolve",
+    tags=["Market"],
+    summary="Resolve a symbol to stock, crypto, commodity, or unknown",
+    response_model=AssetResolveResponse,
+)
+async def resolve_asset_category(
+    q: str = Query(..., description="Symbol or alias to resolve, e.g. AAPL, BTC, XAU"),
+) -> AssetResolveResponse:
+    result = await api.resolve_asset(q)
+    return AssetResolveResponse(**result)
+
+
+@app.get(
+    "/api/insights",
+    tags=["Market"],
+    summary="Get historical analytics + grounded narrative for a symbol",
+    response_model=InsightsResponse,
+)
+async def get_asset_insights(
+    type: str = Query(..., description="One of: stock, crypto, commodity"),
+    symbol: str = Query(..., description="Ticker/symbol to analyze"),
+    months: int = Query(3, ge=1, le=24, description="Historical window in months"),
+) -> InsightsResponse:
+    try:
+        result = await build_insights(asset_type=type, symbol=symbol, months=months)
+        return InsightsResponse(**result)
+    except InsightError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"insights failed: {exc}") from exc
+
+@app.get(
+    "/api/market/cryptos",
+    tags=["Market"],
+    summary="Get CoinGecko crypto listings in normalized format",
+    response_model=list[CoinListingResponse],
+)
+def get_crypto_listings(
+    page: int = Query(1, ge=1, description="CoinGecko page number"),
+    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
+) -> list[CoinListingResponse]:
+    try:
+        rows = api.fetch_coingecko_coin_listings(page=page, per_page=per_page)
+        return [CoinListingResponse(**row) for row in rows]
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"coingecko fetch failed: {exc}") from exc
+
+
 @app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
 def register_user(payload: RegisterRequest) -> Dict[str, Any]:
     try:
-        result = register_login_user(
+        result = api.register_login_user(
             login_csv_path=LOGIN_CSV_PATH,
             username=payload.username,
             password=payload.password,
-            user_id=payload.user_id,
         )
-        return {"status": "ok", **result}
-    except RegisterValidationError as exc:
+        api.add_default_user_profile(
+            json_path=JSON_PATH,
+            user_id=result["user_id"],
+            name=result["username"],
+        )
+        api.add_default_assets_row(
+            csv_path=ASSETS_CSV_PATH,
+            user_id=result["user_id"],
+            name=result["username"],
+        )
+        return {"status": "ok", "username": result["username"]}
+    except api.RegisterValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except RegisterConflictError as exc:
+    except api.RegisterConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
+
+
+@app.post("/auth/login", tags=["Users"], summary="Login with username and password")
+def login_user(payload: LoginRequest) -> Dict[str, Any]:
+    try:
+        result = api.authenticate_login_user(
+            login_csv_path=LOGIN_CSV_PATH,
+            username=payload.username,
+            password=payload.password,
+        )
+        return {"status": "ok", "username": result["username"]}
+    except api.LoginValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except api.LoginAuthError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
 
 
 @app.get("/users", tags=["Users"], summary="Get all users")
@@ -202,6 +392,61 @@ def get_user_wellness_by_id(user_id: str) -> Dict[str, Any]:
 
 
 @app.get(
+    "/users/{user_id}/compatibility",
+    tags=["Compatibility"],
+    summary="Evaluate compatibility between user profile and target asset",
+)
+async def get_user_target_compatibility(
+    user_id: str,
+    target_type: str = Query(..., description="stock | crypto | commodity"),
+    symbol: str = Query(..., description="Target symbol, e.g. SPY, BTC, GC=F"),
+    model: str = Query("gpt-4.1-mini", description="OpenAI model for synthesis"),
+) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        symbol_query = (symbol or "").strip().upper()
+        resolve_query = symbol_query[:-4] if symbol_query.endswith("-USD") else symbol_query
+        resolved = await api.resolve_asset(resolve_query)
+        resolved_category = str(resolved.get("category", "unknown")).lower()
+
+        result = evaluate_compatibility(
+            user=user,
+            target_type=target_type,
+            symbol=symbol,
+            resolved_category=resolved_category,
+        )
+        llm = synthesize_compatibility_with_llm(
+            user_id=user_id,
+            user=user,
+            compatibility=result,
+            model=model,
+        )
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "risk_profile": user.get("risk_profile"),
+            "financial_wellness_score": user.get("financial_wellness_score"),
+            "financial_stress_index": user.get("financial_stress_index"),
+            "resolved_asset": resolved,
+            "llm_model": llm.get("model"),
+            "llm_synthesis": llm.get("synthesis"),
+            **result,
+        }
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=f"compatibility synthesis failed: {exc}") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"compatibility check failed: {exc}") from exc
+
+
+@app.get(
     "/users/{user_id}/recommendations",
     tags=["Recommendations"],
     summary="Get rule-based recommendations by user ID",
@@ -216,7 +461,7 @@ def get_user_recommendations(
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-        result = generate_user_recommendations(user, limit=limit)
+        result = api.generate_user_recommendations(user, limit=limit)
         return {"status": "ok", "user_id": user_id, **result}
     except HTTPException:
         raise
@@ -240,8 +485,8 @@ def get_user_recommendations_gpt(
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-        rule_based = generate_user_recommendations(user, limit=limit)
-        gpt_output = generate_gpt_recommendations(
+        rule_based = api.generate_user_recommendations(user, limit=limit)
+        gpt_output = api.generate_gpt_recommendations(
             user_id=user_id,
             user=user,
             rule_based=rule_based,
@@ -264,6 +509,104 @@ def get_user_recommendations_gpt(
 
 
 @app.post(
+    "/users/{user_id}/imports/screenshot/parse",
+    tags=["Imports"],
+    summary="Parse screenshot into holdings (stocks/cryptos/commodities)",
+)
+def parse_screenshot_import(user_id: str, payload: ScreenshotParseRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        if not isinstance(users.get(user_id), dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        parsed = parse_screenshot_with_llm(
+            payload.image_base64,
+            model=payload.model,
+            page_text=payload.page_text,
+        )
+        pending = create_pending_import(user_id=user_id, parsed=parsed)
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "import_id": pending["import_id"],
+            "parsed": pending["parsed"],
+            "next_step": "Call /users/{user_id}/imports/screenshot/confirm with this import_id",
+        }
+    except HTTPException:
+        raise
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"screenshot parse failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/imports/screenshot/confirm",
+    tags=["Imports"],
+    summary="Confirm parsed screenshot holdings and merge into user portfolio",
+)
+async def confirm_screenshot_import(user_id: str, request: Request) -> Dict[str, Any]:
+    try:
+        body = await request.json()
+        if not isinstance(body, dict):
+            raise HTTPException(status_code=400, detail="request body must be a JSON object")
+
+        import_id = body.get("import_id")
+        holdings = body.get("holdings")
+        if not isinstance(import_id, str) or not import_id.strip():
+            raise HTTPException(status_code=400, detail="import_id is required")
+        if not isinstance(holdings, list):
+            raise HTTPException(status_code=400, detail="holdings must be an array")
+
+        users = _read_users_data()
+        if not isinstance(users.get(user_id), dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        override_holdings = holdings
+        if len(override_holdings) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="holdings array is empty; please provide at least one valid row",
+            )
+        result = confirm_import(
+            import_id=import_id.strip(),
+            user_id=user_id,
+            users_data=users,
+            override_holdings=override_holdings,
+        )
+        _write_users_data(users)
+        diagnostics = {
+            "received_holdings_count": len(override_holdings) if override_holdings is not None else None,
+            "received_holdings_preview": (override_holdings or [])[:3],
+            "raw_body_preview": {k: body.get(k) for k in ("import_id", "holdings")},
+        }
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "import_id": result["import_id"],
+            "import_status": result["status"],
+            "merged_count": result["merged_count"],
+            "skipped": result["skipped"],
+            "portfolio_value": result["portfolio_value"],
+            "total_balance": result["total_balance"],
+            "net_worth": result["net_worth"],
+            "portfolio": result["portfolio"],
+            "diagnostics": diagnostics,
+        }
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        preview = []
+        if isinstance(locals().get("holdings"), list):
+            preview = locals()["holdings"][:3]
+        raise HTTPException(status_code=400, detail=f"{exc}; raw_holdings_preview={preview}") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"screenshot confirm failed: {exc}") from exc
+
+
+@app.post(
     "/users/risk",
     tags=["Users"],
     summary="Update user risk appetite and recalibrate scores",
@@ -276,7 +619,7 @@ def update_user_risk_and_recalibrate(payload: UserRiskUpdateRequest) -> Dict[str
             raise HTTPException(status_code=404, detail=f"user_id '{payload.user_id}' not found")
 
         user["risk_profile"] = _normalize_risk_profile(payload.risk_profile)
-        wellness_result = calculate_user_wellness(user)
+        wellness_result = api.calculate_user_wellness(user)
         user["wellness_metrics"] = wellness_result["wellness_metrics"]
         user["financial_wellness_score"] = wellness_result["financial_wellness_score"]
         user["financial_stress_index"] = wellness_result["financial_stress_index"]
@@ -316,11 +659,11 @@ def get_market_quote(
         ticker = parsed["ticker"]
 
         if asset_type == "STOCK":
-            price = fetch_latest_prices([ticker])[ticker]
+            price = api.fetch_latest_prices([ticker])[ticker]
             return {"status": "ok", "asset_type": asset_type, "symbol": ticker, "price": price}
 
         if asset_type == "CRYPTO":
-            crypto_quote = fetch_crypto_price(ticker)
+            crypto_quote = api.fetch_crypto_price(ticker)
             return {
                 "status": "ok",
                 "asset_type": asset_type,
@@ -328,7 +671,7 @@ def get_market_quote(
                 "price": crypto_quote["price"],
             }
 
-        commodity_quote = fetch_commodity_price(ticker)
+        commodity_quote = api.fetch_commodity_price(ticker)
         return {
             "status": "ok",
             "asset_type": asset_type,
@@ -371,10 +714,10 @@ def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, An
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-        bucket, positions = get_positions_by_asset_class(
+        bucket, positions = api.get_positions_by_asset_class(
             user=user,
             asset_class=asset_class,
-            commodity_alias_symbols=COMMODITY_ALIAS_TO_SYMBOL.values(),
+            commodity_alias_symbols=api.COMMODITY_ALIAS_TO_SYMBOL.values(),
             common_commodity_etfs=COMMON_COMMODITY_ETFS,
         )
 
@@ -397,7 +740,7 @@ def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, An
 def update_assets() -> Dict[str, Any]:
     try:
         print("[api] /update/assets called")
-        result = update_assets_file(str(JSON_PATH), str(CSV_PATH))
+        result = api.update_assets_file(str(JSON_PATH), str(CSV_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"assets update failed: {exc}") from exc
@@ -407,7 +750,7 @@ def update_assets() -> Dict[str, Any]:
 def update_prices() -> Dict[str, Any]:
     try:
         print("[api] /update/prices called")
-        result = update_stock_prices_file(str(JSON_PATH))
+        result = api.update_stock_prices_file(str(JSON_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"price update failed: {exc}") from exc
@@ -417,7 +760,7 @@ def update_prices() -> Dict[str, Any]:
 def update_wellness() -> Dict[str, Any]:
     try:
         print("[api] /update/wellness called")
-        result = update_wellness_file(str(JSON_PATH))
+        result = api.update_wellness_file(str(JSON_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"wellness update failed: {exc}") from exc
@@ -427,9 +770,9 @@ def update_wellness() -> Dict[str, Any]:
 def update_all() -> Dict[str, Any]:
     try:
         print("[api] /update/all called")
-        update_assets_file(str(JSON_PATH), str(CSV_PATH))
-        update_stock_prices_file(str(JSON_PATH))
-        result = update_wellness_file(str(JSON_PATH))
+        api.update_assets_file(str(JSON_PATH), str(CSV_PATH))
+        api.update_stock_prices_file(str(JSON_PATH))
+        result = api.update_wellness_file(str(JSON_PATH))
         print("[api] /update/all completed")
         summary = _safe_summary(result)
         summary["pipeline"] = ["assets", "prices", "wellness"]
