@@ -17,6 +17,7 @@ from backend.services.user_profile_registry import add_default_user_profile
 from backend.services.wealth_wellness.engine import calculate_user_wellness
 from backend.services.wealth_wellness.engine import update_wellness_file
 from backend.stock_price_updater import fetch_latest_prices
+from backend.stock_market_retriever import fetch_stock_listings
 from backend.stock_price_updater import update_stock_prices_file
 from backend.users_assets_update import update_assets_file
 
@@ -34,6 +35,7 @@ __all__ = [
     "fetch_commodity_price",
     "fetch_crypto_price",
     "fetch_latest_prices",
+    "fetch_stock_listings",
     "generate_gpt_recommendations",
     "generate_user_recommendations",
     "get_positions_by_asset_class",

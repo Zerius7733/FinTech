@@ -152,6 +152,17 @@ class CoinListingResponse(BaseModel):
     ath: float | int | None = None
     ath_change_percentage: float | int | None = None
 
+class StockListingResponse(BaseModel):
+    id: str
+    name: str
+    symbol: str
+    current_price: float | int | None = None
+    market_cap: float | int | None = None
+    total_volume: float | int | None = None
+    price_change_percentage_24h: float | int | None = None
+    ath: float | int | None = None
+
+
 class ScreenshotParseRequest(BaseModel):
     image_base64: str
     model: str = DEFAULT_VISION_MODEL
@@ -282,6 +293,56 @@ def get_crypto_listings(
         return [CoinListingResponse(**row) for row in rows]
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"coingecko fetch failed: {exc}") from exc
+
+@app.get(
+    "/api/market/stocks",
+    tags=["Market"],
+    summary="Get stock listings in normalized format",
+    response_model=list[StockListingResponse],
+)
+def get_stock_listings(
+    symbols: str | None = Query(
+        None,
+        description="Optional comma-separated symbols, e.g. AAPL,MSFT,NVDA",
+    ),
+    page: int = Query(1, ge=1, description="Page number when symbols is not provided"),
+    per_page: int = Query(
+        100,
+        ge=1,
+        le=500,
+        description="Items per page when symbols is not provided (max 500)",
+    ),
+    all: bool = Query(
+        False,
+        description="When true, uses symbols_file_path (or default nasdaqlisted.txt) for full symbol universe",
+    ),
+    symbols_file_path: str | None = Query(
+        None,
+        description="Optional local symbols file path (.txt with Symbol|... or .csv with symbol/ticker column)",
+    ),
+    symbols_csv_path: str | None = Query(
+        None,
+        description="Deprecated alias for symbols_file_path (CSV only)",
+    ),
+) -> list[CoinListingResponse]:
+    try:
+        parsed_symbols = None
+        if symbols is not None and symbols.strip():
+            parsed_symbols = [s.strip().upper() for s in symbols.split(",") if s.strip()]
+        effective_symbols_file = symbols_file_path or symbols_csv_path
+        rows = api.fetch_stock_listings(
+            symbols=parsed_symbols,
+            page=page,
+            per_page=per_page,
+            all_listings=all,
+            symbols_file_path=effective_symbols_file,
+        )
+        return [CoinListingResponse(**row) for row in rows]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        print(f"[api] stock fetch failed: {exc}")
+        raise HTTPException(status_code=502, detail="stock fetch failed") from exc
 
 
 @app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
