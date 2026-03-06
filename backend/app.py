@@ -373,18 +373,18 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
 
 
-@app.post("/auth/login", tags=["Users"], summary="Login with username and password")
-def login_user(payload: LoginRequest) -> Dict[str, Any]:
+@app.post("/auth/login", tags=["Users"], summary="Authenticate a user")
+def login(payload: LoginRequest) -> Dict[str, Any]:
     try:
         result = api.authenticate_login_user(
             login_csv_path=LOGIN_CSV_PATH,
             username=payload.username,
             password=payload.password,
         )
-        return {"status": "ok", "username": result["username"]}
+        return {"status": "ok", **result}
     except api.LoginValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except api.LoginAuthError as exc:
+    except api.LoginNotFoundError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
