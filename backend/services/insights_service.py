@@ -30,18 +30,19 @@ COMMODITY_TICKER_MAP: Dict[str, Tuple[str, str]] = {
     "NG": ("NG=F", "Natural Gas"),
 }
 
-OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
+OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
+OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
-def _openrouter_news_model() -> str:
+def _openai_news_model() -> str:
     _load_env_once()
-    return os.getenv("OPENROUTER_NEWS_MODEL", "perplexity/sonar").strip() or "perplexity/sonar"
+    return os.getenv("OPENAI_NEWS_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
 
 
-def _openrouter_narrative_model() -> str:
+def _openai_narrative_model() -> str:
     _load_env_once()
-    return os.getenv("OPENROUTER_NARRATIVE_MODEL", "openai/gpt-4o-mini").strip() or "openai/gpt-4o-mini"
+    return os.getenv("OPENAI_NARRATIVE_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
 
 
 def _groq_narrative_model() -> str:
@@ -660,67 +661,46 @@ async def _openai_web_search_news(client: httpx.AsyncClient, query: str) -> List
         return cached.get("results", [])
 
     _load_env_once()
-    openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
-    if not openrouter_api_key:
+    openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not openai_api_key:
         NEWS_CACHE.set(query, {"results": []})
         return []
 
-    system_prompt = (
-        "You are a market news retriever. Return only JSON object with key 'results'. "
-        "results must be an array of up to 5 objects with keys: headline, source, url, published_at. "
-        "Use only real web sources. If unavailable, return {\"results\": []}."
-    )
     payload = {
-        "model": _openrouter_news_model(),
+        "model": _openai_news_model(),
         "temperature": 0.0,
-        "response_format": {"type": "json_object"},
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Query: {query}"},
+        "input": [
+            {
+                "role": "user",
+                "content": (
+                    "Use web search to find recent relevant news for this query:\n"
+                    f"{query}\n"
+                    "Return results via the tool."
+                ),
+            }
         ],
+        "tools": [{"type": "web_search", "search_context_size": "low"}],
+        "include": ["web_search_call.results", "web_search_call.action.sources"],
     }
 
     resp_json = await _request_json(
         client,
         "POST",
-        OPENROUTER_CHAT_URL,
+        OPENAI_RESPONSES_URL,
         json_payload=payload,
         headers={
-            "Authorization": f"Bearer {openrouter_api_key}",
+            "Authorization": f"Bearer {openai_api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "http://localhost:8000"),
-            "X-Title": os.getenv("OPENROUTER_APP_NAME", "FinTech Insights API"),
         },
         timeout=20.0,
         max_retries=1,
     )
     if os.getenv("NEWS_DEBUG", "").strip() == "1":
-        Path("openrouter_news_debug.json").write_text(
+        Path("openai_news_debug.json").write_text(
             json.dumps(resp_json, indent=2)[:300000],
             encoding="utf-8"
         )
-
-    text = _chat_completion_extract_text(resp_json)
-    parsed = _extract_json_object(text)
-    results_raw = parsed.get("results", []) if isinstance(parsed, dict) else []
-    results: List[Dict[str, Any]] = []
-    if isinstance(results_raw, list):
-        for row in results_raw[:10]:
-            if not isinstance(row, dict):
-                continue
-            title = str(row.get("headline", "")).strip()
-            url = str(row.get("url", "")).strip()
-            source = str(row.get("source", "")).strip()
-            published = str(row.get("published_at", "")).strip()
-            if title and url:
-                results.append(
-                    {
-                        "headline": title,
-                        "source": source,
-                        "url": url,
-                        "published_at": published,
-                    }
-                )
+    results = _extract_openai_web_results(resp_json)[:10]
 
     NEWS_CACHE.set(query, {"results": results})
     return results
@@ -803,9 +783,9 @@ async def _generate_narrative_with_llm(
     It must cite only provided drivers by URL and must pass validate_text().
     """
     _load_env_once()
-    openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+    openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
     groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
-    if not openrouter_api_key and not groq_api_key:
+    if not openai_api_key and not groq_api_key:
         if not drivers:
             return "No major news items retrieved in this window. Narrative based on metrics only.", []
         return "Narrative unavailable because no LLM provider key is set.", []
@@ -834,16 +814,11 @@ async def _generate_narrative_with_llm(
         *,
         provider: str,
     ) -> Dict[str, Any]:
-        if provider == "openrouter":
-            endpoint = OPENROUTER_CHAT_URL
-            key = openrouter_api_key
-            model = _openrouter_narrative_model()
-            headers = {
-                "Authorization": f"Bearer {key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "http://localhost:8000"),
-                "X-Title": os.getenv("OPENROUTER_APP_NAME", "FinTech Insights API"),
-            }
+        if provider == "openai":
+            endpoint = OPENAI_CHAT_URL
+            key = openai_api_key
+            model = _openai_narrative_model()
+            headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
         else:
             endpoint = GROQ_CHAT_URL
             key = groq_api_key
@@ -885,8 +860,8 @@ async def _generate_narrative_with_llm(
 
     try:
         providers = []
-        if openrouter_api_key:
-            providers.append("openrouter")
+        if openai_api_key:
+            providers.append("openai")
         if groq_api_key:
             providers.append("groq")
 

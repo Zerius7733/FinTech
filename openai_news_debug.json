@@ -1,0 +1,172 @@
+{
+  "id": "resp_06d6e62f07bbc9320069a9e919184081a3adbc6d0e085af08a",
+  "object": "response",
+  "created_at": 1772742937,
+  "status": "completed",
+  "background": false,
+  "billing": {
+    "payer": "developer"
+  },
+  "completed_at": 1772742942,
+  "error": null,
+  "frequency_penalty": 0.0,
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "model": "gpt-4.1-mini-2025-04-14",
+  "output": [
+    {
+      "id": "ws_06d6e62f07bbc9320069a9e91a392481a39ab5ed857dcc4155",
+      "type": "web_search_call",
+      "status": "completed",
+      "action": {
+        "type": "search",
+        "queries": [
+          "AAPL Apple Inc. guidance 2024-06-11"
+        ],
+        "query": "AAPL Apple Inc. guidance 2024-06-11",
+        "sources": [
+          {
+            "type": "url",
+            "url": "https://www.investing.com/news/company-news/apples-stock-price-target-raised-on-ai-growth-prospects-93CH-3521489?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://www.investing.com/news/transcripts/earnings-call-transcript-apple-q4-2024-misses-forecasts-services-shine-93CH-3839891?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://www.investing.com/news/company-news/apples-shares-target-raised-by-rosenblatt-on-june-quarter-optimism-93CH-3420043?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://www.nasdaq.com/articles/apple-q4-earnings-beat-estimates-services-drive-top-line-growth?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://www.nasdaq.com/articles/heres-what-expect-apples-next-earnings-report?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://www.gurufocus.com/news/2810693/analyst-raises-apple-aapl-price-target-expects-strong-quarterly-results-aapl-stock-news?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://www.forbes.com/sites/dereksaul/2024/08/01/apple-reports-record-june-earnings-despite-worst-iphone-sales-in-years/?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://www.macrumors.com/2024/05/02/apple-2q-2024-earnings/?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://www.morningstar.com/stocks/apple-earnings-our-valuation-rises-reflect-stronger-long-term-growth-less-an-ai-impact?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://www.morningstar.com/stocks/apple-earnings-iphone-growth-forecasts-drive-change-fair-value?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://www.thestreet.com/investing/morgan-stanley-resets-apple-stock-forecast-ahead-of-earnings/?utm_source=openai"
+          },
+          {
+            "type": "url",
+            "url": "https://247wallst.com/investing/2025/10/30/live-will-apple-surge-higher-after-earnings/?utm_source=openai"
+          },
+          {
+            "type": "api",
+            "name": "oai-finance"
+          }
+        ]
+      }
+    },
+    {
+      "id": "msg_06d6e62f07bbc9320069a9e91b697081a3a35666c37fa091fb",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [
+            {
+              "type": "url_citation",
+              "end_index": 484,
+              "start_index": 355,
+              "title": "Apple Q4 Earnings Beat Estimates, Services Drive Top-Line Growth | Nasdaq",
+              "url": "https://www.nasdaq.com/articles/apple-q4-earnings-beat-estimates-services-drive-top-line-growth?utm_source=openai"
+            },
+            {
+              "type": "url_citation",
+              "end_index": 811,
+              "start_index": 687,
+              "title": "Live: Will Apple Surge Higher After Q4 Earnings Tonight? - 24/7 Wall St.",
+              "url": "https://247wallst.com/investing/2025/10/30/live-will-apple-surge-higher-after-earnings/?utm_source=openai"
+            },
+            {
+              "type": "url_citation",
+              "end_index": 1253,
+              "start_index": 1104,
+              "title": "Apple's stock price target raised on AI growth prospects By Investing.com",
+              "url": "https://www.investing.com/news/company-news/apples-stock-price-target-raised-on-ai-growth-prospects-93CH-3521489?utm_source=openai"
+            }
+          ],
+          "logprobs": [],
+          "text": "As of March 5, 2026, Apple Inc. (AAPL) has not yet released its earnings guidance for the fiscal quarter ending June 11, 2026. Typically, Apple provides such guidance during its earnings calls, which occur after the conclusion of each fiscal quarter. The most recent earnings call was on October 30, 2025, where Apple reported its Q4 fiscal 2025 results. ([nasdaq.com](https://www.nasdaq.com/articles/apple-q4-earnings-beat-estimates-services-drive-top-line-growth?utm_source=openai))\n\nIn that call, Apple projected mid- to high-single-digit revenue growth for the upcoming quarter, with a gross margin between 46% and 47%, reflecting approximately $1.1 billion in tariff-related costs. ([247wallst.com](https://247wallst.com/investing/2025/10/30/live-will-apple-surge-higher-after-earnings/?utm_source=openai))\n\nAnalysts have raised their price targets for AAPL, citing optimism about the company's growth prospects, particularly in artificial intelligence. For instance, CFRA increased its price target to $260, up from $240, maintaining a Buy rating, based on expectations of strong AI-driven growth. ([investing.com](https://www.investing.com/news/company-news/apples-stock-price-target-raised-on-ai-growth-prospects-93CH-3521489?utm_source=openai))\n\nGiven that the fiscal quarter ending June 11, 2026, has not yet concluded, Apple has not provided specific guidance for that period. The next earnings call, which will include guidance for the quarter ending June 11, 2026, is expected to take place in late April or early May 2026.\n\n## Stock market information for Apple Inc (AAPL)\n- Apple Inc is a equity in the USA market.\n- The price is 259.02 USD currently with a change of -3.50 USD (-0.01%) from the previous close.\n- The latest open price was 260.78 USD and the intraday volume is 29240954.\n- The intraday high is 263.55 USD and the intraday low is 257.25 USD.\n- The latest trade time is Thursday, March 5, 12:20:13 PST.\n "
+        }
+      ],
+      "role": "assistant"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0.0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "prompt_cache_retention": null,
+  "reasoning": {
+    "effort": null,
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "store": true,
+  "temperature": 0.0,
+  "text": {
+    "format": {
+      "type": "text"
+    },
+    "verbosity": "medium"
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "web_search",
+      "filters": null,
+      "search_context_size": "low",
+      "user_location": {
+        "type": "approximate",
+        "city": null,
+        "country": "US",
+        "region": null,
+        "timezone": null
+      }
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1.0,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 8174,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 504,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 8678
+  },
+  "user": null,
+  "metadata": {}
+}
