@@ -1,16 +1,23 @@
 /users/{user_id}/recommendations/gpt -> for portfolio side
  - input user_id (string)
+
 /users/{user_id}/compatibility -> for stocks compatibility score based on portfolio metrics 
  - input user_id , type(stock etc.) , symbol (string)
+
 /api/insights -> insights on certain symbol
  - input type,symbol (string)
+
 /api/market/stocks -> stock listings (if we still using it later)
  - no input (has default values page 1 and 50 listings)
+
 /api/market/cryptos -> crypto
  - no input (has default values page 1 and 50 listings)
+
 /api/market/commodities -> commodities
  - no input (has default values page 1 and 50 listings)
+
 /users/{user_id}/retirement -> new pop up / new page for retirement ,
  - input user_id , "retirement_age" : int , "monthly_expenses" : int , "essential_monthly_expenses" : int 
+ 
 /users/risk -> update risk profile
  - input user_id, risk_profile(string)
