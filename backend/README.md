@@ -233,6 +233,44 @@ Response includes:
 - projected retirement value
 - recommended vehicle mix with target weights and amounts
 
+## Stock Market Pipeline
+
+The stock endpoint now follows this pipeline:
+
+- market data provider
+- ingestion service
+- stored snapshot / rankings files
+- precomputed rankings
+- frontend API
+
+Current implementation:
+
+- Provider: `yfinance`
+- Ingestion service: `backend/services/stock_market_pipeline.py`
+- Universe file: `backend/knowledge_base/stocks_symbols/large_cap_us.txt`
+- Stored snapshot: `backend/json_data/stock_market_snapshot.json`
+- Precomputed rankings: `backend/json_data/stock_market_rankings.json`
+- Frontend API: `GET /api/market/stocks`
+
+Endpoints:
+
+- `GET /update/market/stocks`
+  - Fetches the stock universe from `yfinance`
+  - Writes a raw market snapshot file
+  - Rebuilds the precomputed market-cap ranking file
+  - This same refresh also runs automatically when the server starts
+
+- `GET /api/market/stocks?page=1&per_page=50`
+  - Reads from the precomputed rankings file
+  - If the rankings file is missing or stale, it triggers a refresh before serving
+
+Automatic refresh behavior:
+
+- when the backend process starts, it runs one stock market refresh immediately
+- while the backend stays live, it runs the stock market refresh again every 30 minutes
+
+Legacy cache endpoints still exist, but they are not the primary stock listing path anymore.
+
 ## OpenAI Token Setup
 
 Put your token in either:

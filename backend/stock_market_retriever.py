@@ -1,5 +1,6 @@
 import csv
 import json
+import time
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -22,6 +23,8 @@ DEFAULT_SYMBOLS_TXT_PATH = (
     Path(__file__).resolve().parent / "knowledge_base" / "stocks_symbols" / "nasdaqlisted.txt"
 )
 STOCK_CACHE_PATH = Path(__file__).resolve().parent / "json_data" / "stock_listings_cache.json"
+MAX_PROVIDER_ATTEMPTS = 3
+YFINANCE_FETCH_MULTIPLIER = 4
 
 
 def _log(msg: str) -> None:
@@ -232,6 +235,103 @@ def _fetch_listings_from_yfinance(symbols: List[str]) -> List[Dict[str, Any]]:
     if cache_changed:
         _save_cache(cache)
     return _rank_by_market_cap(rows)
+
+
+def _fetch_single_listing_with_retries(symbol: str, cache: Dict[str, Dict[str, Any]]) -> Dict[str, Any] | None:
+    cached = cache.get(symbol, {})
+    for attempt in range(MAX_PROVIDER_ATTEMPTS):
+        try:
+            ticker = yf.Ticker(symbol)
+            info = ticker.info or {}
+            fast_info = getattr(ticker, "fast_info", {}) or {}
+
+            price = _extract_price(info, fast_info)
+            market_cap = _extract_market_cap(info, fast_info)
+            volume = _extract_volume(info, fast_info)
+            change_24h = _extract_change_percent(info, price)
+            ath = _safe_float(info.get("fiftyTwoWeekHigh"))
+            name = str(info.get("longName") or info.get("shortName") or cached.get("name") or symbol)
+
+            market_cap = _pick(market_cap, cached.get("market_cap"))
+            volume = _pick(volume, cached.get("total_volume"))
+            change_24h = _pick(change_24h, cached.get("price_change_percentage_24h"))
+            ath = _pick(ath, cached.get("ath"))
+            price = _pick(price, cached.get("current_price"))
+
+            if market_cap is None:
+                raise RuntimeError(f"{symbol} missing market cap")
+
+            return {
+                "id": symbol.lower(),
+                "name": name,
+                "symbol": symbol,
+                "image": None,
+                "market_cap_rank": None,
+                "current_price": price,
+                "market_cap": market_cap,
+                "total_volume": volume,
+                "price_change_percentage_24h": change_24h,
+                "price_change_percentage_7d": None,
+                "circulating_supply": None,
+                "ath": ath,
+                "ath_change_percentage": None,
+            }
+        except Exception:
+            if attempt < MAX_PROVIDER_ATTEMPTS - 1:
+                time.sleep(0.25 * (attempt + 1))
+    return None
+
+
+def fetch_top_stock_listings_from_yfinance(
+    page: int = 1,
+    per_page: int = 100,
+    symbols_file_path: str | None = None,
+) -> List[Dict[str, Any]]:
+    normalized_page = max(1, int(page))
+    normalized_per_page = max(1, min(500, int(per_page)))
+    target_count = normalized_page * normalized_per_page
+    fetch_count = max(target_count * YFINANCE_FETCH_MULTIPLIER, normalized_per_page)
+
+    universe_path = symbols_file_path or str(DEFAULT_SYMBOLS_TXT_PATH)
+    base_symbols = _load_symbols_from_file(universe_path)
+    if not base_symbols:
+        raise ValueError("stock symbol universe is empty")
+
+    candidate_symbols = base_symbols[:fetch_count]
+    cache = _load_cache()
+    rows: List[Dict[str, Any]] = []
+    cache_changed = False
+
+    for symbol in candidate_symbols:
+        row = _fetch_single_listing_with_retries(symbol, cache)
+        if row is None:
+            continue
+        rows.append(row)
+
+        successful = {}
+        for key in ("name", "current_price", "market_cap", "total_volume", "price_change_percentage_24h", "ath"):
+            if row.get(key) is not None:
+                successful[key] = row[key]
+        if successful:
+            merged = dict(cache.get(symbol, {}))
+            merged.update(successful)
+            if merged != cache.get(symbol, {}):
+                cache[symbol] = merged
+                cache_changed = True
+
+    if len(rows) < target_count:
+        raise RuntimeError(f"Unable to assemble top {target_count} stocks from yfinance.")
+
+    if cache_changed:
+        _save_cache(cache)
+
+    ranked = _rank_by_market_cap(rows)
+    start = (normalized_page - 1) * normalized_per_page
+    end = start + normalized_per_page
+    page_rows = ranked[start:end]
+    if len(page_rows) < normalized_per_page:
+        raise RuntimeError(f"Unable to assemble top {target_count} stocks from yfinance.")
+    return page_rows
 
 
 def fetch_stock_listings(

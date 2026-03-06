@@ -1,3 +1,4 @@
+import asyncio
 import json
 from pathlib import Path
 from typing import Any, Dict
@@ -26,6 +27,7 @@ LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
 ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 STOCK_LISTINGS_CACHE_PATH = BASE_DIR / "json_data" / "stock_listings_cache.json"
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
+STOCK_MARKET_REFRESH_INTERVAL_SECONDS = 30 * 60
 
 app = FastAPI(
     title="FinTech Wellness API",
@@ -44,6 +46,46 @@ app = FastAPI(
 )
 
 rewrite_user_profiles_with_order(USER_JSON_PATH)
+
+
+async def _run_stock_market_refresh() -> None:
+    try:
+        result = await asyncio.to_thread(api.refresh_stock_market_data)
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        print(
+            "[api] stock market refresh complete:",
+            {
+                "source": meta.get("source"),
+                "ranked_count": meta.get("ranked_count"),
+                "failed_count": meta.get("failed_count"),
+            },
+        )
+    except Exception as exc:
+        print(f"[api] stock market refresh failed: {exc}")
+
+
+async def _stock_market_refresh_loop() -> None:
+    await _run_stock_market_refresh()
+    while True:
+        await asyncio.sleep(STOCK_MARKET_REFRESH_INTERVAL_SECONDS)
+        await _run_stock_market_refresh()
+
+
+@app.on_event("startup")
+async def startup_stock_market_refresh() -> None:
+    app.state.stock_market_refresh_task = asyncio.create_task(_stock_market_refresh_loop())
+
+
+@app.on_event("shutdown")
+async def shutdown_stock_market_refresh() -> None:
+    task = getattr(app.state, "stock_market_refresh_task", None)
+    if task is None:
+        return
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
 
 
 def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
@@ -283,15 +325,15 @@ async def get_asset_insights(
     "/api/market/cryptos",
     tags=["Market"],
     summary="Get CoinGecko crypto listings in normalized format",
-    response_model=list[CoinListingResponse],
+    response_model=list[StockListingResponse],
 )
 def get_crypto_listings(
     page: int = Query(1, ge=1, description="CoinGecko page number"),
     per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
-) -> list[CoinListingResponse]:
+) -> list[StockListingResponse]:
     try:
         rows = api.fetch_coingecko_coin_listings(page=page, per_page=per_page)
-        return [CoinListingResponse(**row) for row in rows]
+        return [StockListingResponse(**row) for row in rows]
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"coingecko fetch failed: {exc}") from exc
 
@@ -302,48 +344,20 @@ def get_crypto_listings(
     response_model=list[StockListingResponse],
 )
 def get_stock_listings(
-    symbols: str | None = Query(
-        None,
-        description="Optional comma-separated symbols, e.g. AAPL,MSFT,NVDA",
-    ),
-    page: int = Query(1, ge=1, description="Page number when symbols is not provided"),
-    per_page: int = Query(
-        100,
-        ge=1,
-        le=500,
-        description="Items per page when symbols is not provided (max 500)",
-    ),
-    all: bool = Query(
-        False,
-        description="When true, uses symbols_file_path (or default nasdaqlisted.txt) for full symbol universe",
-    ),
-    symbols_file_path: str | None = Query(
-        None,
-        description="Optional local symbols file path (.txt with Symbol|... or .csv with symbol/ticker column)",
-    ),
-    symbols_csv_path: str | None = Query(
-        None,
-        description="Deprecated alias for symbols_file_path (CSV only)",
-    ),
-) -> list[CoinListingResponse]:
+    page: int = Query(1, ge=1, description="Stock page number"),
+    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
+) -> list[StockListingResponse]:
     try:
-        parsed_symbols = None
-        if symbols is not None and symbols.strip():
-            parsed_symbols = [s.strip().upper() for s in symbols.split(",") if s.strip()]
-        effective_symbols_file = symbols_file_path or symbols_csv_path
-        rows = api.fetch_stock_listings(
-            symbols=parsed_symbols,
+        rows = api.get_precomputed_stock_rankings(
             page=page,
             per_page=per_page,
-            all_listings=all,
-            symbols_file_path=effective_symbols_file,
         )
-        return [CoinListingResponse(**row) for row in rows]
+        return [StockListingResponse(**row) for row in rows]
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         print(f"[api] stock fetch failed: {exc}")
-        raise HTTPException(status_code=502, detail="stock fetch failed") from exc
+        raise HTTPException(status_code=502, detail=f"stock fetch failed: {exc}") from exc
 
 
 @app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
@@ -879,6 +893,49 @@ def update_listing_cache_prices() -> Dict[str, Any]:
         return {"status": "ok", "updated_symbols": count}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"listing cache price update failed: {exc}") from exc
+
+
+@app.get(
+    "/update/market/stocks",
+    tags=["Updates"],
+    summary="Ingest stock market snapshot and rebuild precomputed stock rankings",
+)
+def refresh_stock_market_rankings() -> Dict[str, Any]:
+    try:
+        print("[api] /update/market/stocks called")
+        result = api.refresh_stock_market_data()
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        return {
+            "status": "ok",
+            "source": meta.get("source"),
+            "built_at_epoch": meta.get("built_at_epoch"),
+            "ranked_count": meta.get("ranked_count"),
+            "failed_count": meta.get("failed_count"),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"stock market refresh failed: {exc}") from exc
+
+
+@app.get(
+    "/update/cache/listings/rebuild",
+    tags=["Updates"],
+    summary="Rebuild stock listings cache from Nasdaq screener universe",
+)
+def rebuild_listing_cache() -> Dict[str, Any]:
+    try:
+        print("[api] /update/cache/listings/rebuild called")
+        result = api.rebuild_stock_listings_cache_from_nasdaq(str(STOCK_LISTINGS_CACHE_PATH))
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        symbols = result.get("symbols", {}) if isinstance(result, dict) else {}
+        count = len(symbols) if isinstance(symbols, dict) else 0
+        return {
+            "status": "ok",
+            "rebuilt_symbols": count,
+            "source": meta.get("source"),
+            "rebuilt_at_epoch": meta.get("rebuilt_at_epoch"),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"listing cache rebuild failed: {exc}") from exc
 
 
 @app.get("/update/wellness", tags=["Updates"], summary="Update wellness metrics")
