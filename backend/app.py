@@ -99,34 +99,10 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
 
-
 class LoginRequest(BaseModel):
     username: str
     password: str
 
-
-class AssetResolveResponse(BaseModel):
-    query: str
-    symbol: str
-    name: str
-    category: str
-    source: str
-
-
-class InsightsResponse(BaseModel):
-    type: str
-    symbol: str
-    name: str
-    period: Dict[str, Any]
-    metrics: Dict[str, Any]
-    notable_moves: list[Dict[str, Any]]
-    drivers: list[Dict[str, Any]]
-    narrative: str
-    tldr: list[str]
-    conclusion: str
-    disclaimer: str
-    citations: list[Dict[str, Any]]
-    warnings: list[str]
 
 class CoinListingResponse(BaseModel):
     id: str
@@ -165,36 +141,6 @@ class ScreenshotConfirmRequest(BaseModel):
     holdings: list[ScreenshotHolding]
 
 
-class ScreenshotParseRequest(BaseModel):
-    image_base64: str
-    model: str = DEFAULT_VISION_MODEL
-    page_text: str | None = None
-
-
-class ScreenshotHolding(BaseModel):
-    asset_class: str
-    symbol: str
-    qty: float | None = None
-    avg_price: float | None = None
-    current_price: float | None = None
-    market_value: float | None = None
-    name: str | None = None
-    confidence: float | None = None
-
-
-class ScreenshotConfirmRequest(BaseModel):
-    import_id: str
-    holdings: list[ScreenshotHolding]
-
-
-class RegisterRequest(BaseModel):
-    username: str
-    password: str
-
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
 
 
 class AssetResolveResponse(BaseModel):
@@ -221,17 +167,12 @@ class InsightsResponse(BaseModel):
     warnings: list[str]
 
 
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
 
 @app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
 
-
+'''
 @app.post("/auth/login", tags=["Users"], summary="Authenticate a user")
 def login(payload: LoginRequest) -> Dict[str, Any]:
     try:
@@ -247,7 +188,7 @@ def login(payload: LoginRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
-
+'''
 
 @app.get(
     "/api/assets/resolve",
