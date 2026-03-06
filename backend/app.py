@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import AliasChoices, BaseModel, Field
 
 from backend.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
@@ -10,8 +11,11 @@ from backend.commodity_price_retriever import fetch_commodity_price
 from backend.crypto_price_retriever import fetch_crypto_price
 from backend.services.auth_registry import RegisterConflictError
 from backend.services.auth_registry import RegisterValidationError
+from backend.services.auth_registry import LoginValidationError
+from backend.services.auth_registry import LoginNotFoundError
 from backend.services.portfolio_selector import get_positions_by_asset_class
 from backend.services.auth_registry import register_login_user
+from backend.services.auth_registry import login_user
 from backend.services.recommendation import generate_gpt_recommendations
 from backend.services.recommendation import generate_user_recommendations
 from backend.services.wealth_wellness.engine import calculate_user_wellness
@@ -38,6 +42,14 @@ app = FastAPI(
         {"name": "Market", "description": "Live market quote retrieval endpoints."},
         {"name": "Portfolio", "description": "User portfolio information endpoints."},
     ],
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -95,9 +107,31 @@ class RegisterRequest(BaseModel):
     user_id: str | None = None
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 @app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/auth/login", tags=["Users"], summary="Authenticate a user")
+def login(payload: LoginRequest) -> Dict[str, Any]:
+    try:
+        result = login_user(
+            login_csv_path=LOGIN_CSV_PATH,
+            username=payload.username,
+            password=payload.password,
+        )
+        return {"status": "ok", **result}
+    except LoginValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except LoginNotFoundError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
 
 
 @app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")

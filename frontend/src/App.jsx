@@ -4,11 +4,13 @@ import Survey  from './pages/Survey.jsx'
 import Profile from './pages/Profile.jsx'
 import Settings from './pages/Settings.jsx'
 import Crypto  from './pages/Crypto.jsx'
+import Login   from './pages/Login.jsx'
 
 export default function App() {
   return (
     <Routes>
       <Route path="/"         element={<Globe />} />
+      <Route path="/login"    element={<Login />} />
       <Route path="/survey"   element={<Survey />} />
       <Route path="/profile"  element={<Profile />} />
       <Route path="/settings" element={<Settings />} />

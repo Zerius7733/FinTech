@@ -1,10 +1,59 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
-import { MOCK_USER, MOCK_BENCHMARK } from '../data.js'
 
-// ── small chart helpers ───────────────────────────────────────────────────────
+const API = 'http://localhost:8000'
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+function fmt$(n) {
+  if (n == null) return '—'
+  return new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:2 }).format(n)
+}
+function fmtPct(n) { return n == null ? '—' : `${n >= 0 ? '+' : ''}${n.toFixed(2)}%` }
+function initials(name) {
+  if (!name) return '??'
+  return name.trim().split(/\s+/).map(w => w[0].toUpperCase()).slice(0,2).join('')
+}
+function gainPct(current, avg) {
+  if (!avg || !current) return null
+  return ((current - avg) / avg) * 100
+}
+
+function FutureTag() {
+  return (
+    <span style={{ background:'rgba(96,165,250,0.1)', color:'var(--blue)', fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, border:'1px solid rgba(96,165,250,0.2)', marginLeft:6 }}>
+      Future Upgrade
+    </span>
+  )
+}
+
+function FutureBar({ label }) {
+  return (
+    <div style={{ marginBottom:12 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'var(--text-faint)', marginBottom:4 }}>
+        <span>{label} <FutureTag /></span>
+        <span style={{ fontFamily:'var(--font-mono)' }}>—</span>
+      </div>
+      <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
+        <div style={{ height:'100%', width:'40%', background:'rgba(96,165,250,0.25)', borderRadius:3 }} />
+      </div>
+    </div>
+  )
+}
+
+function LoadingPulse() {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+      {[100, 85, 92, 70].map((w, i) => (
+        <div key={i} style={{ height:14, width:`${w}%`, background:'var(--surface2)', borderRadius:6 }} />
+      ))}
+    </div>
+  )
+}
+
+// ── small chart helper ────────────────────────────────────────────────────────
 function WellnessRing({ score }) {
   const r = 42, circ = 2 * Math.PI * r
   return (
@@ -23,83 +72,91 @@ function WellnessRing({ score }) {
           strokeDashoffset={circ * (1 - score / 100)} />
       </svg>
       <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.6rem', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>{score}</span>
+        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.6rem', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>{Math.round(score)}</span>
         <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.58rem', color:'var(--text-faint)', textTransform:'uppercase' }}>/ 100</span>
       </div>
     </div>
   )
 }
 
-function CompareBar({ label, youVal, youPct, peerVal, peerPct }) {
-  const barRef = useRef(null)
-  useEffect(() => {
-    setTimeout(() => {
-      if (barRef.current) {
-        barRef.current.querySelectorAll('[data-w]').forEach(el => {
-          el.style.width = el.dataset.w
-        })
-      }
-    }, 200)
-  }, [])
-  return (
-    <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:16 }} ref={barRef}>
-      <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.67rem', color:'var(--text-dim)', width:110, flexShrink:0, textTransform:'uppercase', letterSpacing:'0.05em' }}>{label}</div>
-      <div style={{ flex:1, position:'relative', height:28 }}>
-        <div style={{ position:'absolute', top:'50%', transform:'translateY(-50%)', width:'100%', height:8, background:'var(--surface2)', borderRadius:4 }} />
-        <div data-w={`${youPct}%`} style={{ position:'absolute', top:'50%', transform:'translateY(-50%)', width:'0%', height:8, borderRadius:4, background:'linear-gradient(90deg,var(--gold),var(--gold-light))', boxShadow:'0 0 8px rgba(201,168,76,0.4)', transition:'width 1s cubic-bezier(0.4,0,0.2,1)' }} />
-        <div data-w={`${peerPct}%`} style={{ position:'absolute', top:'50%', transform:'translateY(-50%)', width:'0%', height:4, borderRadius:2, background:'rgba(45,212,191,0.5)', transition:'width 1s 0.2s cubic-bezier(0.4,0,0.2,1)' }} />
-      </div>
-      <div style={{ textAlign:'right', minWidth:90 }}>
-        <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:'var(--gold)' }}>{youVal}</div>
-        <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'rgba(45,212,191,0.7)' }}>{peerVal} median</div>
-      </div>
-    </div>
-  )
-}
+// CompareBar removed — Peer Benchmarking is a Future Upgrade
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function Profile() {
-  const navigate  = useNavigate()
-  const user      = MOCK_USER
-  const benchmark = MOCK_BENCHMARK
+  const navigate = useNavigate()
+  const { user: authUser } = useAuth()
 
-  const WELLNESS = [
-    { label:'Diversification',      val:81, color:'var(--green)' },
-    { label:'Liquidity',            val:68, color:'var(--gold)' },
-    { label:'Behavioural Resilience',val:74, color:'var(--teal)' },
-    { label:'Currency Exposure',    val:55, color:'var(--orange)' },
-    { label:'Volatility Buffer',    val:70, color:'var(--blue)' },
+  const [profile,   setProfile]   = useState(null)
+  const [portfolio, setPortfolio] = useState(null)
+  const [loading,   setLoading]   = useState(true)
+  const [error,     setError]     = useState('')
+
+  // Best practice: fetch on mount, keyed to user_id.
+  // useEffect with [authUser?.user_id] means it re-fetches if the logged-in
+  // account changes (e.g. sign out → sign in as someone else).
+  // A cleanup flag prevents stale setState calls if the component unmounts
+  // before the request finishes (e.g. user navigates away quickly).
+  useEffect(() => {
+    if (!authUser?.user_id) { setLoading(false); return }
+    let cancelled = false
+    async function fetchAll() {
+      setLoading(true); setError('')
+      try {
+        const [profRes, portRes] = await Promise.all([
+          fetch(`${API}/users/${authUser.user_id}`),
+          fetch(`${API}/portfolio/${authUser.user_id}`),
+        ])
+        if (cancelled) return
+        if (profRes.ok)  { const d = await profRes.json();  setProfile(d.user) }
+        if (portRes.ok)  { const d = await portRes.json();  setPortfolio(d.portfolio) }
+      } catch { if (!cancelled) setError('Could not reach the server. Is the backend running?') }
+      finally  { if (!cancelled) setLoading(false) }
+    }
+    fetchAll()
+    return () => { cancelled = true }
+  }, [authUser?.user_id])
+
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const stocks  = portfolio?.stocks  ?? []
+  const cryptos = portfolio?.cryptos ?? []
+  const allHoldings = [
+    ...stocks.map(h  => ({ ...h, type:'Stock' })),
+    ...cryptos.map(h => ({ ...h, type:'Crypto' })),
+  ]
+  const stocksValue   = stocks.reduce((s,h)  => s + (h.market_value ?? 0), 0)
+  const cryptosValue  = cryptos.reduce((s,h) => s + (h.market_value ?? 0), 0)
+  const portfolioValue = stocksValue + cryptosValue
+  const totalAUM      = portfolioValue + (profile?.cash_balance ?? 0)
+  const positionCount = stocks.length + cryptos.length
+
+  const wellness      = profile?.wellness_metrics ?? {}
+  const wellnessScore = profile?.financial_wellness_score ?? 0
+  const stressIndex   = profile?.financial_stress_index   ?? null
+
+  const COMPOSITION_REAL = [
+    portfolioValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / portfolioValue * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
+    portfolioValue > 0 && { icon:'₿',  name:'Digital Assets',    pct:Math.round(cryptosValue / portfolioValue * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
+  ].filter(Boolean)
+  const COMPOSITION_FUTURE = [
+    { icon:'🏠', name:'Real Estate',  color:'var(--gold)' },
+    { icon:'🏛️', name:'Fixed Income', color:'var(--purple)' },
+    { icon:'🪙', name:'Commodities',  color:'#fbbf24' },
   ]
 
-  const COMPOSITION = [
-    { icon:'📈', name:'Equities',      pct:48, aum:'$325K', color:'var(--blue)' },
-    { icon:'🏠', name:'Real Estate',   pct:30, aum:'$203K', color:'var(--gold)' },
-    { icon:'₿',  name:'Digital Assets',pct:12, aum:'$81K',  color:'var(--teal)' },
-    { icon:'🏛️', name:'Fixed Income',  pct:6,  aum:'$41K',  color:'var(--purple)' },
-    { icon:'🪙', name:'Commodities',   pct:4,  aum:'$27K',  color:'#fbbf24' },
-  ]
-
-  const ACTIVITY = [
-    { dot:'var(--green)',  title:'Bought 15 shares NVDA',         meta:'US Equity · $875.25/share · 2 days ago',      badge:'+$13,128', badgeColor:'var(--green)' },
-    { dot:'var(--teal)',   title:'Risk profile updated',          meta:'Aggressive → Balanced · 1 week ago',          badge:'Settings',  badgeColor:'var(--teal)' },
-    { dot:'var(--blue)',   title:'Sold 0.12 BTC',                 meta:'Digital Assets · $67,420/BTC · 2 weeks ago',  badge:'−$8,090',  badgeColor:'var(--blue)' },
-    { dot:'var(--gold)',   title:'Wellness score milestone',      meta:'Score crossed 70 for the first time · 3 weeks ago', badge:'🏆 Achievement', badgeColor:'var(--gold)' },
-    { dot:'var(--purple)', title:'Ascendas REIT dividend received',meta:'SG Real Estate · SGD 452 · 1 month ago',    badge:'Income',    badgeColor:'var(--purple)' },
-  ]
-
-  const INSIGHTS = [
-    { icon:'📈', bg:'rgba(52,211,153,0.1)',  title:'Above-average growth trajectory', body:'Your YTD return of +18.4% exceeds 76% of your peer cohort. Your tech-heavy US equity position has been the primary driver.', tag:'Positive Signal', tagColor:'var(--green)', tagBg:'rgba(52,211,153,0.1)' },
-    { icon:'⚠️', bg:'rgba(251,191,36,0.1)', title:'Currency concentration risk',      body:'68% of your portfolio is USD-denominated. SGD appreciation could erode returns. Consider hedging or adding SGD-native assets.', tag:'Action Suggested', tagColor:'#fbbf24', tagBg:'rgba(251,191,36,0.1)' },
-    { icon:'🎯', bg:'rgba(96,165,250,0.1)',  title:'On track for 3–5yr horizon',      body:'At current growth rate, your wealth goal projection is on track. Increasing contributions by 8% would accelerate by 14 months.', tag:'Goal Tracking', tagColor:'var(--blue)', tagBg:'rgba(96,165,250,0.1)' },
-  ]
+  if (!authUser) {
+    return (
+      <div style={{ minHeight:'100vh', background:'var(--bg)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ textAlign:'center' }}>
+          <p style={{ color:'var(--text-dim)', marginBottom:16 }}>Sign in to view your portfolio.</p>
+          <button style={{ background:'var(--gold)', border:'none', borderRadius:8, padding:'10px 24px', fontWeight:700, cursor:'pointer', color:'#0d0d0d' }} onClick={() => navigate('/login')}>Sign In</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
-
-      {/* Fixed top ticker */}
       <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} />
-
-      {/* Shared navbar */}
       <Navbar />
 
       <main style={{ paddingTop:110, paddingBottom:60, paddingLeft:48, paddingRight:48, maxWidth:1400, margin:'0 auto' }}>
@@ -108,53 +165,59 @@ export default function Profile() {
         <div style={s.topbar}>
           <div>
             <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--teal)', textTransform:'uppercase', letterSpacing:'0.2em', marginBottom:8, display:'flex', alignItems:'center', gap:10 }}>
-              <div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>
-              Personal Finance
-              <div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>
+              <div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>Personal Finance<div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>
             </div>
-            <div style={s.pageTitle}>
-              My <span style={{ background:'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Portfolio</span>
-            </div>
+            <div style={s.pageTitle}>My <span style={{ background:'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Portfolio</span></div>
           </div>
           <div style={{ display:'flex', gap:14, alignItems:'center' }}>
             <div style={s.badgePill}>
-              <div style={{ width:7, height:7, borderRadius:'50%', background:'var(--green)', boxShadow:'0 0 6px var(--green)' }} />
-              Data live · SGX 09:42
+              <div style={{ width:7, height:7, borderRadius:'50%', background: loading ? 'var(--text-faint)' : 'var(--green)', boxShadow: loading ? 'none' : '0 0 6px var(--green)' }} />
+              {loading ? 'Loading…' : 'Live Data · Backend'}
             </div>
-            <div style={{ ...s.badgePill, borderColor:'rgba(201,168,76,0.25)', color:'var(--gold)' }}>
-              Wellness {user.wellnessScore}/100
-            </div>
+            {!loading && profile && <div style={{ ...s.badgePill, borderColor:'rgba(201,168,76,0.25)', color:'var(--gold)' }}>Wellness {Math.round(wellnessScore)}/100</div>}
+            {!loading && stressIndex != null && <div style={{ ...s.badgePill, borderColor:'rgba(248,113,113,0.25)', color:'var(--red)' }}>Stress {Math.round(stressIndex)}</div>}
           </div>
         </div>
+
+        {error && (
+          <div style={{ background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.2)', borderRadius:12, padding:'14px 20px', color:'var(--red)', marginBottom:24, fontFamily:'var(--font-mono)', fontSize:'0.82rem' }}>{error}</div>
+        )}
 
         {/* Hero card */}
         <div style={s.heroCard}>
           <div style={s.avatarWrap}>
-            <div style={s.avatar}>{user.initials}</div>
+            <div style={s.avatar}>{profile ? initials(profile.name) : initials(authUser.username)}</div>
             <div style={s.avatarRing} />
           </div>
           <div style={{ flex:1 }}>
-            <div style={s.userName}>{user.name}</div>
+            <div style={s.userName}>{profile?.name ?? authUser.username}</div>
             <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:12 }}>
-              {[['var(--teal)',user.investorType],['var(--gold)',`Age: ${user.ageGroup}`],['var(--purple)',user.country],['var(--green)',`Member since ${user.memberSince}`]].map(([c,t]) => (
+              {[['var(--teal)','Individual Investor'],['var(--gold)', profile?.risk_profile ? `Risk: ${profile.risk_profile}` : 'Risk: —'],['var(--purple)',`ID: ${authUser.user_id}`]].map(([c,t]) => (
                 <span key={t} style={{ display:'flex', alignItems:'center', gap:6, fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' }}>
-                  <div style={{ width:6, height:6, borderRadius:'50%', background:c }} />{t}
+                  <div style={{ width:6, height:6, borderRadius:'50%', background:c }}/>{t}
                 </span>
               ))}
             </div>
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-              {[['gold','⚖️ Balanced (0.7)'],['teal',`${user.horizon} Horizon`],['','Wealth Growth'],['','14 Positions']].map(([type, label]) => (
-                <span key={label} style={{ background:'var(--surface2)', border:`1px solid ${type === 'gold' ? 'rgba(201,168,76,0.3)' : type === 'teal' ? 'rgba(45,212,191,0.3)' : 'var(--border)'}`, borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color: type === 'gold' ? 'var(--gold)' : type === 'teal' ? 'var(--teal)' : 'var(--text-dim)' }}>{label}</span>
-              ))}
+              {profile?.risk_profile && <span style={{ background:'var(--surface2)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--gold)' }}>⚖️ {profile.risk_profile} Risk</span>}
+              <span style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--text-dim)' }}>{positionCount} Position{positionCount !== 1 ? 's' : ''}</span>
             </div>
           </div>
-          <div style={{ display:'flex', gap:28 }}>
-            {[['$677K','Total AUM','var(--gold)'],['+18.4%','YTD Return','var(--green)']].map(([v,l,c]) => (
+          <div style={{ display:'flex', gap:28, flexWrap:'wrap' }}>
+            {[
+              [loading ? '…' : fmt$(totalAUM),                               'Total AUM',       'var(--gold)'],
+              [loading ? '…' : fmt$(profile?.portfolio_value ?? portfolioValue),'Portfolio Value','var(--green)'],
+              [loading ? '…' : fmt$(profile?.cash_balance),                   'Cash Balance',   'var(--teal)'],
+            ].map(([v,l,c]) => (
               <div key={l} style={{ textAlign:'right' }}>
-                <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.4rem', color:c }}>{v}</div>
+                <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.15rem', color:c }}>{v}</div>
                 <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{l}</div>
               </div>
             ))}
+            <div style={{ textAlign:'right', opacity:0.45 }}>
+              <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.15rem', color:'var(--text-faint)' }}>—</div>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.08em', display:'flex', alignItems:'center', gap:4 }}>YTD Return<FutureTag /></div>
+            </div>
           </div>
         </div>
 
@@ -162,118 +225,147 @@ export default function Profile() {
         <div style={s.twoCol}>
           <div style={s.card}>
             <div style={s.secLabel}>Financial Wellness Score</div>
-            <div style={{ display:'flex', alignItems:'center', gap:24 }}>
-              <WellnessRing score={user.wellnessScore} />
-              <div style={{ flex:1 }}>
-                {WELLNESS.map(w => (
-                  <div key={w.label} style={{ marginBottom:12 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:4 }}>
-                      <span>{w.label}</span>
-                      <span style={{ fontFamily:'var(--font-mono)', color:'var(--text)' }}>{w.val}</span>
+            {loading ? <LoadingPulse /> : (
+              <div style={{ display:'flex', alignItems:'center', gap:24 }}>
+                <WellnessRing score={wellnessScore} />
+                <div style={{ flex:1 }}>
+                  {[
+                    { label:'Diversification', val:wellness.diversification_score, color:'var(--green)' },
+                    { label:'Liquidity',        val:wellness.liquidity_score,       color:'var(--gold)' },
+                    { label:'Debt / Income',    val:wellness.debt_income_score,     color:'var(--orange)' },
+                  ].map(w => (
+                    <div key={w.label} style={{ marginBottom:12 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:4 }}>
+                        <span>{w.label}</span>
+                        <span style={{ fontFamily:'var(--font-mono)', color:'var(--text)' }}>{w.val != null ? Math.round(w.val) : '—'}</span>
+                      </div>
+                      <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
+                        <div style={{ height:'100%', width:`${Math.min(w.val ?? 0, 100)}%`, background:w.color, borderRadius:3 }} />
+                      </div>
                     </div>
-                    <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${w.val}%`, background:w.color, borderRadius:3 }} />
+                  ))}
+                  <FutureBar label="Behavioural Resilience" />
+                  <FutureBar label="Currency Exposure" />
+                  <FutureBar label="Volatility Buffer" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={s.card}>
+            <div style={s.secLabel}>Portfolio Composition</div>
+            {loading ? <LoadingPulse /> : (
+              <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                {COMPOSITION_REAL.map(c => (
+                  <div key={c.name} style={{ display:'flex', alignItems:'center', gap:12 }}>
+                    <div style={{ width:36, height:36, borderRadius:10, background:`${c.color}20`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>{c.icon}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:500, fontSize:'0.87rem', marginBottom:4 }}>{c.name}</div>
+                      <div style={{ height:4, background:'var(--surface2)', borderRadius:2, overflow:'hidden' }}>
+                        <div style={{ height:'100%', width:`${c.pct}%`, background:c.color, borderRadius:2 }} />
+                      </div>
+                    </div>
+                    <div style={{ textAlign:'right' }}>
+                      <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem' }}>{c.pct}%</div>
+                      <div style={{ fontSize:'0.7rem', color:'var(--text-faint)' }}>{c.val}</div>
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
-
-          <div style={s.card}>
-            <div style={s.secLabel}>Portfolio Composition <span style={{ color:'var(--teal)', cursor:'pointer', fontSize:'0.7rem' }} onClick={() => navigate('/')}>View Globe →</span></div>
-            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-              {COMPOSITION.map(c => (
-                <div key={c.name} style={{ display:'flex', alignItems:'center', gap:12 }}>
-                  <div style={{ width:36, height:36, borderRadius:10, background:`${c.color}20`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>{c.icon}</div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:500, fontSize:'0.87rem', marginBottom:4 }}>{c.name}</div>
-                    <div style={{ height:4, background:'var(--surface2)', borderRadius:2, overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${c.pct}%`, background:c.color, borderRadius:2 }} />
+                {COMPOSITION_FUTURE.map(c => (
+                  <div key={c.name} style={{ display:'flex', alignItems:'center', gap:12, opacity:0.4 }}>
+                    <div style={{ width:36, height:36, borderRadius:10, background:`${c.color}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>{c.icon}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:500, fontSize:'0.87rem', marginBottom:4, display:'flex', alignItems:'center' }}>{c.name}<FutureTag /></div>
+                      <div style={{ height:4, background:'var(--surface2)', borderRadius:2 }} />
                     </div>
+                    <div style={{ textAlign:'right' }}><div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:'var(--text-faint)' }}>—</div></div>
                   </div>
-                  <div style={{ textAlign:'right' }}>
-                    <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem' }}>{c.pct}%</div>
-                    <div style={{ fontSize:'0.7rem', color:'var(--text-faint)' }}>{c.aum}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Row 2: Peer Benchmarking */}
+        {/* Holdings Table */}
         <div style={{ ...s.card, marginBottom:24 }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-            <div style={s.secLabel}>Peer Age Benchmarking</div>
-            <div style={{ fontSize:'0.7rem', color:'var(--text-faint)', fontFamily:'var(--font-mono)' }}>{benchmark.source}</div>
-          </div>
-          <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-            <div style={{ background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:24, padding:'6px 14px', fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--gold)' }}>
-              📊 Age Group: {benchmark.ageGroup}
+          <div style={s.secLabel}>Live Holdings</div>
+          {loading ? <LoadingPulse /> : allHoldings.length === 0 ? (
+            <p style={{ color:'var(--text-faint)', fontSize:'0.85rem' }}>No holdings found for this account.</p>
+          ) : (
+            <div style={{ overflowX:'auto' }}>
+              <table style={{ width:'100%', borderCollapse:'collapse', fontFamily:'var(--font-mono)', fontSize:'0.8rem' }}>
+                <thead>
+                  <tr style={{ color:'var(--text-faint)', textTransform:'uppercase', fontSize:'0.65rem', letterSpacing:'0.08em' }}>
+                    {['Symbol','Type','Qty','Avg Cost','Current Price','Market Value','Gain / Loss'].map((h,i) => (
+                      <th key={h} style={{ textAlign: i===0 ? 'left' : 'right', padding:'8px 12px', borderBottom:'1px solid var(--border)', fontWeight:500 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {allHoldings.map((h,i) => {
+                    const gain = gainPct(h.current_price, h.avg_price)
+                    const gainColor = gain == null ? 'var(--text-faint)' : gain >= 0 ? 'var(--green)' : 'var(--red)'
+                    return (
+                      <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)' }}
+                        onMouseEnter={e => e.currentTarget.style.background='var(--surface2)'}
+                        onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                        <td style={{ padding:'12px 12px', color:'var(--text)', fontWeight:600 }}>{h.symbol}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right' }}>
+                          <span style={{ background: h.type==='Stock' ? 'rgba(96,165,250,0.1)' : 'rgba(45,212,191,0.1)', color: h.type==='Stock' ? 'var(--blue)' : 'var(--teal)', padding:'2px 8px', borderRadius:6, fontSize:'0.65rem' }}>{h.type}</span>
+                        </td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--text-dim)' }}>{h.qty}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--text-dim)' }}>{fmt$(h.avg_price)}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--text)' }}>{fmt$(h.current_price)}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--gold)', fontWeight:600 }}>{fmt$(h.market_value)}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:gainColor, fontWeight:600 }}>{gain != null ? fmtPct(gain) : '—'}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr style={{ borderTop:'1px solid var(--border)' }}>
+                    <td colSpan={5} style={{ padding:'12px 12px', color:'var(--text-faint)', fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>Total Portfolio Value</td>
+                    <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--gold)', fontWeight:700, fontSize:'0.9rem' }}>{fmt$(portfolioValue)}</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </table>
             </div>
-            <div style={{ fontSize:'0.82rem', color:'var(--text-dim)' }}>
-              Comparing against <strong style={{ color:'var(--text)' }}>{benchmark.sampleSize.toLocaleString()} investors</strong> in your cohort.
-            </div>
-          </div>
-          <div style={{ display:'flex', gap:20, marginBottom:20 }}>
-            {[{c:'linear-gradient(90deg,var(--gold),var(--gold-light))',l:'You'},{c:'rgba(45,212,191,0.5)',l:'Peer Median'}].map(x => (
-              <div key={x.l} style={{ display:'flex', alignItems:'center', gap:8, fontSize:'0.75rem', color:'var(--text-dim)' }}>
-                <div style={{ width:28, height:4, borderRadius:2, background:x.c }} />{x.l}
-              </div>
-            ))}
-          </div>
-          <CompareBar label="Total AUM"      youVal="$677K"    youPct={68} peerVal="~$420K"   peerPct={42} />
-          <CompareBar label="YTD Return"     youVal="+18.4%"   youPct={72} peerVal="+14.8%"  peerPct={58} />
-          <CompareBar label="Diversification"youVal="81 / 100" youPct={81} peerVal="60 / 100" peerPct={60} />
-          <CompareBar label="Asset Classes"  youVal="6 classes"youPct={60} peerVal="3"        peerPct={30} />
-          <CompareBar label="Digital Alloc." youVal="12%"      youPct={36} peerVal="6%"       peerPct={18} />
+          )}
+        </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginTop:20 }}>
-            {[
-              { n:'84th', l:'Percentile — AUM',     c:'var(--green)',  ctx:'Top 16% in your age group' },
-              { n:'76th', l:'Percentile — Returns', c:'var(--teal)',   ctx:'+3.6% above median YTD' },
-              { n:'91st', l:'Percentile — Diversity',c:'var(--gold)', ctx:'Top 9% by asset breadth' },
-            ].map(p => (
-              <div key={p.n} style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:14, padding:'16px 14px', textAlign:'center', position:'relative', overflow:'hidden' }}>
-                <div style={{ position:'absolute', bottom:0, left:0, right:0, height:3, background:p.c }} />
-                <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.7rem', color:p.c, marginBottom:2 }}>{p.n}</div>
-                <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{p.l}</div>
-                <div style={{ fontSize:'0.74rem', color:'var(--text-dim)', marginTop:5 }}>{p.ctx}</div>
-              </div>
-            ))}
+        {/* Peer Benchmarking — Future Upgrade overlay */}
+        <div style={{ ...s.card, marginBottom:24, position:'relative', overflow:'hidden' }}>
+          <div style={{ position:'absolute', inset:0, background:'rgba(8,12,20,0.75)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, borderRadius:18 }}>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontSize:'2rem', marginBottom:8 }}>📊</div>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.8rem', color:'var(--blue)', marginBottom:6 }}>Peer Age Benchmarking</div>
+              <FutureTag />
+            </div>
+          </div>
+          <div style={{ opacity:0.1, pointerEvents:'none' }}>
+            <div style={s.secLabel}>Peer Age Benchmarking</div>
+            <div style={{ height:160, background:'var(--surface2)', borderRadius:10 }} />
           </div>
         </div>
 
-        {/* Row 3: Insights + Activity */}
+        {/* Insights + Activity — Future Upgrade */}
         <div style={s.twoCol}>
-          <div style={s.card}>
-            <div style={s.secLabel}>Personalised Insights</div>
-            {INSIGHTS.map(ins => (
-              <div key={ins.title} style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:14, padding:'16px 18px', marginBottom:12, display:'flex', gap:14, cursor:'pointer', transition:'border-color 0.2s' }}>
-                <div style={{ width:40, height:40, borderRadius:10, background:ins.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.1rem', flexShrink:0 }}>{ins.icon}</div>
-                <div>
-                  <div style={{ fontWeight:600, fontSize:'0.88rem', marginBottom:3 }}>{ins.title}</div>
-                  <div style={{ fontSize:'0.77rem', color:'var(--text-dim)', lineHeight:1.55, marginBottom:8 }}>{ins.body}</div>
-                  <span style={{ background:ins.tagBg, color:ins.tagColor, fontFamily:'var(--font-mono)', fontSize:'0.65rem', padding:'3px 10px', borderRadius:8 }}>{ins.tag}</span>
+          {[{ icon:'💡', label:'Personalised Insights' }, { icon:'🕒', label:'Recent Activity' }].map(item => (
+            <div key={item.label} style={{ ...s.card, position:'relative', overflow:'hidden' }}>
+              <div style={{ position:'absolute', inset:0, background:'rgba(8,12,20,0.75)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, borderRadius:18 }}>
+                <div style={{ textAlign:'center' }}>
+                  <div style={{ fontSize:'1.8rem', marginBottom:6 }}>{item.icon}</div>
+                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:'var(--blue)', marginBottom:6 }}>{item.label}</div>
+                  <FutureTag />
                 </div>
               </div>
-            ))}
-          </div>
-
-          <div style={s.card}>
-            <div style={s.secLabel}>Recent Activity</div>
-            {ACTIVITY.map(a => (
-              <div key={a.title} style={{ display:'flex', alignItems:'center', gap:14, padding:'13px 0', borderBottom:'1px solid var(--border)' }}>
-                <div style={{ width:9, height:9, borderRadius:'50%', background:a.dot, flexShrink:0 }} />
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:'0.85rem', fontWeight:500, marginBottom:2 }}>{a.title}</div>
-                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.67rem', color:'var(--text-faint)' }}>{a.meta}</div>
-                </div>
-                <div style={{ background:`${a.badgeColor}18`, color:a.badgeColor, fontFamily:'var(--font-mono)', fontSize:'0.68rem', padding:'4px 10px', borderRadius:10, flexShrink:0 }}>{a.badge}</div>
+              <div style={{ opacity:0.1, pointerEvents:'none' }}>
+                <div style={s.secLabel}>{item.label}</div>
+                <div style={{ height:140, background:'var(--surface2)', borderRadius:10 }} />
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
       </main>
@@ -293,7 +385,7 @@ const s = {
   heroCard: {
     background:'var(--surface)', border:'1px solid var(--border)',
     borderRadius:22, padding:'32px 36px', marginBottom:28,
-    display:'flex', alignItems:'center', gap:28, position:'relative', overflow:'hidden',
+    display:'flex', alignItems:'center', gap:28, position:'relative', overflow:'hidden', flexWrap:'wrap',
   },
   avatarWrap: { position:'relative', flexShrink:0 },
   avatar: {

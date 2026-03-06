@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const NAV_LINKS = [
   { label: 'Globe',      path: '/' },
@@ -10,6 +11,12 @@ const NAV_LINKS = [
 export default function Navbar() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const { user, logout } = useAuth()
+
+  function handleSignOut() {
+    logout()
+    navigate('/')
+  }
 
   return (
     <nav style={S.nav}>
@@ -43,22 +50,45 @@ export default function Navbar() {
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-        <button
-          style={S.btnGhost}
-          onClick={() => navigate('/profile')}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'var(--text)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-dim)' }}
-        >
-          Sign In
-        </button>
-        <button
-          style={S.btnPrimary}
-          onClick={() => navigate('/survey')}
-          onMouseEnter={e => { e.currentTarget.style.opacity = '0.88' }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
-        >
-          Get Started
-        </button>
+        {user ? (
+          <>
+            <button
+              style={S.btnGold}
+              onClick={() => navigate('/profile')}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+            >
+              My Portfolio
+            </button>
+            <button
+              style={S.btnGhost}
+              onClick={handleSignOut}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'var(--text)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-dim)' }}
+            >
+              Sign Out
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              style={S.btnGhost}
+              onClick={() => navigate('/login')}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'var(--text)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-dim)' }}
+            >
+              Sign In
+            </button>
+            <button
+              style={S.btnPrimary}
+              onClick={() => navigate('/survey')}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '0.88' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+            >
+              Get Started
+            </button>
+          </>
+        )}
       </div>
     </nav>
   )
@@ -121,6 +151,19 @@ const S = {
   linkActive: {
     color: 'var(--gold)',
     borderBottom: '1.5px solid var(--gold)',
+  },
+  btnGold: {
+    background: 'linear-gradient(135deg, var(--gold), #b8922e)',
+    border: '1px solid transparent',
+    color: '#0d1220',
+    padding: '8px 20px',
+    borderRadius: 8,
+    fontFamily: 'var(--font-body)',
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 0 18px rgba(201,168,76,0.35)',
+    transition: 'opacity 0.18s',
   },
   btnGhost: {
     background: 'transparent',

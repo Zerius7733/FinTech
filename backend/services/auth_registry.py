@@ -75,3 +75,34 @@ def register_login_user(
         )
 
     return {"user_id": final_user_id, "username": normalized_username}
+
+
+class LoginValidationError(Exception):
+    pass
+
+
+class LoginNotFoundError(Exception):
+    pass
+
+
+def login_user(
+    login_csv_path: Path,
+    username: str,
+    password: str,
+) -> Dict[str, str]:
+    normalized_username = (username or "").strip()
+    normalized_password = (password or "").strip()
+
+    if not normalized_username:
+        raise LoginValidationError("username is required")
+    if not normalized_password:
+        raise LoginValidationError("password is required")
+
+    rows = _load_login_rows(login_csv_path)
+    for row in rows:
+        if (row.get("username") or "").strip().lower() == normalized_username.lower():
+            if (row.get("password") or "").strip() == normalized_password:
+                return {"user_id": row["user_id"], "username": row["username"]}
+            raise LoginNotFoundError("incorrect password")
+
+    raise LoginNotFoundError(f"username '{normalized_username}' not found")
