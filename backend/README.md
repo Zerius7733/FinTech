@@ -183,6 +183,42 @@ Put your token in either:
 
 The GPT client also checks `backend/.env` for backward compatibility.
 
+## News Provider Setup
+
+The insights pipeline searches recent news before sending results to the local Ollama model.
+Ollama summarizes; it does not fetch the news itself.
+
+Current provider order:
+
+- Query search: `NewsAPI` if `NEWSAPI_KEY` is set, then `Marketaux` if `MARKETAUX_API_KEY` is set, then `GDELT`, then Google News RSS
+- Symbol fallback: `NewsAPI` if configured, then `Alpha Vantage` if `ALPHAVANTAGE_API_KEY` is set, then `Marketaux` if `MARKETAUX_API_KEY` is set, then `FMP` if `FMP_API_KEY` is set, then `GDELT`, then Google News RSS, then `yfinance`
+
+Optional keys:
+
+1. `NEWSAPI_KEY`
+   - Enables article search via NewsAPI for recent query-based lookups.
+2. `ALPHAVANTAGE_API_KEY`
+   - Enables market-news lookup by ticker symbol.
+3. `MARKETAUX_API_KEY`
+   - Enables finance-focused article search and symbol filtering.
+4. `FMP_API_KEY`
+   - Enables Financial Modeling Prep stock news and press-release fallback.
+
+Free no-key sources already enabled:
+
+- `GDELT`
+- Google News RSS
+- `yfinance` news fallback for stocks
+
+Example `.env` additions:
+
+```env
+NEWSAPI_KEY=your_newsapi_key
+ALPHAVANTAGE_API_KEY=your_alpha_vantage_key
+MARKETAUX_API_KEY=your_marketaux_key
+FMP_API_KEY=your_fmp_key
+```
+
 ## Screenshot Import (No Login, user_id only)
 
 Parse screenshot into candidate holdings:

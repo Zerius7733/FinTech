@@ -4,13 +4,10 @@ import math
 import os
 import re
 import time
-import email.utils
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import quote_plus
 
 import httpx
 import numpy as np
@@ -18,6 +15,8 @@ import pandas as pd
 import yfinance as yf
 
 from backend.services.guardrails.no_advice import validate_text
+from backend.services.news_provider import NewsProvider
+from backend.services.news_provider import build_default_news_provider
 # ----------------------------
 # Config / Maps
 # ----------------------------
@@ -66,8 +65,7 @@ class TTLCache:
         self._store[key] = (time.time() + self.ttl_seconds, payload)
 
 
-INSIGHTS_CACHE = TTLCache(ttl_seconds=600)
-NEWS_CACHE = TTLCache(ttl_seconds=1800)
+INSIGHTS_CACHE = TTLCache(ttl_seconds=90 * 24 * 60 * 60)
 _ENV_LOADED = False
 
 
@@ -453,8 +451,6 @@ def _build_tldr_and_conclusion(
 
 def _news_queries(asset_type: str, symbol: str, name: str, move_date: str) -> List[str]:
     dt = date.fromisoformat(move_date)
-    start = (dt - timedelta(days=3)).isoformat()
-    end = (dt + timedelta(days=3)).isoformat()
 
     keywords = [
         "earnings",
@@ -475,8 +471,8 @@ def _news_queries(asset_type: str, symbol: str, name: str, move_date: str) -> Li
     if asset_type == "commodity":
         base = f"{symbol} {name} commodity".strip()
 
-    # Keep queries short; date window helps recency.
-    return [f"{base} {kw} around {dt.isoformat()}" for kw in keywords[:4]]
+    # Provider-side date filters work better than natural-language "around <date>".
+    return [base] + [f"{base} {kw}" for kw in keywords[:4]]
 
 
 def _extract_json_object(text: str) -> Dict[str, Any]:
@@ -623,109 +619,8 @@ def _extract_openai_web_results(resp_json: Dict[str, Any]) -> List[Dict[str, Any
     return results
 
 
-def _fetch_yfinance_news(symbol: str, max_items: int = 10) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
-    try:
-        ticker = yf.Ticker(symbol)
-        items = ticker.news or []
-    except Exception:
-        return out
-
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        title = str(item.get("title", "")).strip()
-        url = str(item.get("link", "")).strip()
-        source = str(item.get("publisher", "")).strip()
-        ts = item.get("providerPublishTime")
-        published = ""
-        if isinstance(ts, (int, float)) and ts > 0:
-            published = datetime.fromtimestamp(float(ts), tz=timezone.utc).date().isoformat()
-        if title and url:
-            out.append(
-                {
-                    "headline": title,
-                    "source": source,
-                    "url": url,
-                    "published_at": published,
-                }
-            )
-        if len(out) >= max_items:
-            break
-    return out
-
-async def _openai_web_search_news(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
-    cached = NEWS_CACHE.get(query)
-    if cached is not None:
-        return cached.get("results", [])
-
-    rss_url = (
-        "https://news.google.com/rss/search?"
-        f"q={quote_plus(query + ' when:1d')}&hl=en-US&gl=US&ceid=US:en"
-    )
-    results: List[Dict[str, Any]] = []
-    recent_fallback: List[Dict[str, Any]] = []
-    today = _now_utc_date()
-
-    try:
-        response = await client.get(rss_url, timeout=10.0)
-        if response.status_code >= 400:
-            NEWS_CACHE.set(query, {"results": []})
-            return []
-
-        root = ET.fromstring(response.text)
-        for item in root.findall(".//item"):
-            title = (item.findtext("title") or "").strip()
-            url = (item.findtext("link") or "").strip()
-            source = (item.findtext("source") or "").strip()
-            pub_raw = (item.findtext("pubDate") or "").strip()
-            if not title or not url:
-                continue
-
-            published_at = ""
-            try:
-                dt = email.utils.parsedate_to_datetime(pub_raw)
-                if dt is not None:
-                    if dt.tzinfo is None:
-                        dt = dt.replace(tzinfo=timezone.utc)
-                    dt_utc = dt.astimezone(timezone.utc)
-                    published_at = dt_utc.date().isoformat()
-                    # prioritize current-day news; keep recent as fallback
-                    if dt_utc.date() != today:
-                        if 0 <= (today - dt_utc.date()).days <= 7:
-                            recent_fallback.append(
-                                {
-                                    "headline": title,
-                                    "source": source,
-                                    "url": url,
-                                    "published_at": published_at,
-                                }
-                            )
-                        continue
-            except Exception:
-                continue
-
-            results.append(
-                {
-                    "headline": title,
-                    "source": source,
-                    "url": url,
-                    "published_at": published_at,
-                }
-            )
-            if len(results) >= 10:
-                break
-    except Exception:
-        results = []
-
-    if not results and recent_fallback:
-        results = recent_fallback[:10]
-
-    NEWS_CACHE.set(query, {"results": results})
-    return results
-
 async def _build_drivers(
-    client: httpx.AsyncClient,
+    news_provider: NewsProvider,
     asset_type: str,
     symbol: str,
     name: str,
@@ -736,24 +631,32 @@ async def _build_drivers(
 
     for move in notable_moves:
         move_date = move["date"]
+        move_dt = date.fromisoformat(move_date)
+        window_start = (move_dt - timedelta(days=3)).isoformat()
+        window_end = (move_dt + timedelta(days=3)).isoformat()
         queries = _news_queries(asset_type, symbol, name, move_date)
 
         for query in queries:
-            results = await _openai_web_search_news(client, query)
+            results = await news_provider.search(
+                query,
+                max_items=6,
+                published_after=window_start,
+                published_before=window_end,
+            )
             for row in results:
-                url = str(row.get("url", "")).strip()
+                url = row.url.strip()
                 if not url or url in urls_seen:
                     continue
                 urls_seen.add(url)
 
-                published = str(row.get("published_at", "")).strip()
+                published = row.published_at.strip()
                 date_value = published[:10] if published else move_date
 
                 drivers.append(
                     {
                         "date": date_value,
-                        "headline": str(row.get("headline", "")).strip(),
-                        "source": str(row.get("source", "")).strip(),
+                        "headline": row.headline.strip(),
+                        "source": row.source.strip(),
                         "url": url,
                     }
                 )
@@ -764,20 +667,49 @@ async def _build_drivers(
     if drivers:
         return drivers
 
-    if asset_type == "stock":
-        fallback = _fetch_yfinance_news(symbol=symbol, max_items=10)
-        for row in fallback:
-            url = str(row.get("url", "")).strip()
+    # Current-news fallback queries (not tied to historical move dates).
+    generic_queries = [
+        f"{symbol} {name} latest news",
+        f"{symbol} latest news",
+        f"{name} stock market news" if asset_type == "stock" else f"{name} crypto market news",
+    ]
+    for query in generic_queries:
+        results = await news_provider.search(query, max_items=8)
+        for row in results:
+            url = row.url.strip()
             if not url or url in urls_seen:
                 continue
             urls_seen.add(url)
-            published = str(row.get("published_at", "")).strip()
+            published = row.published_at.strip()
             date_value = published[:10] if published else _now_utc_date().isoformat()
             drivers.append(
                 {
                     "date": date_value,
-                    "headline": str(row.get("headline", "")).strip(),
-                    "source": str(row.get("source", "")).strip(),
+                    "headline": row.headline.strip(),
+                    "source": row.source.strip(),
+                    "url": url,
+                }
+            )
+            if len(drivers) >= 15:
+                return drivers
+
+    if drivers:
+        return drivers
+
+    if asset_type == "stock":
+        fallback = await news_provider.latest_for_symbol(symbol=symbol, max_items=10)
+        for row in fallback:
+            url = row.url.strip()
+            if not url or url in urls_seen:
+                continue
+            urls_seen.add(url)
+            published = row.published_at.strip()
+            date_value = published[:10] if published else _now_utc_date().isoformat()
+            drivers.append(
+                {
+                    "date": date_value,
+                    "headline": row.headline.strip(),
+                    "source": row.source.strip(),
                     "url": url,
                 }
             )
@@ -795,7 +727,7 @@ async def _generate_narrative_with_llm(
     notable_moves: List[Dict[str, Any]],
     drivers: List[Dict[str, Any]],
     *,
-    timeout_seconds: float = 20.0,
+    timeout_seconds: float = 90.0,
 ) -> Tuple[str, List[Dict[str, Any]]]:
     """
     Uses local Ollama chat API to produce a grounded narrative.
@@ -849,7 +781,13 @@ async def _generate_narrative_with_llm(
                 text = content.strip()
         if not text:
             text = _chat_completion_extract_text(resp_json)
-        return _extract_json_object(text)
+        parsed = _extract_json_object(text)
+        if parsed:
+            return parsed
+        # Fallback: if model returned plain text instead of JSON, still use it.
+        if text:
+            return {"narrative": text}
+        return {}
 
     def _metrics_only_fallback() -> str:
         return (
@@ -860,13 +798,46 @@ async def _generate_narrative_with_llm(
             "No major news items were retrieved in this window."
         )
 
+    def _deterministic_narrative_fallback() -> Tuple[str, List[Dict[str, Any]]]:
+        move_bits: List[str] = []
+        for move in notable_moves[:4]:
+            move_bits.append(
+                f"{move.get('date')} ({float(move.get('move_pct', 0.0)):.2f}%, {move.get('tag', 'move').replace('_', ' ')})"
+            )
+
+        top_drivers = drivers[:3]
+        citations: List[Dict[str, Any]] = []
+        driver_bits: List[str] = []
+        for idx, driver in enumerate(top_drivers, start=1):
+            url = str(driver.get("url", "")).strip()
+            if url:
+                citations.append({"id": idx, "url": url})
+            driver_bits.append(
+                f"{driver.get('date', '')}: {str(driver.get('headline', '')).strip()} [{idx}]"
+            )
+
+        narrative_parts = [
+            (
+                f"Over the selected period, price moved from {metrics.get('start_price', 0)} to "
+                f"{metrics.get('end_price', 0)} ({metrics.get('return_pct', 0)}%), with annualized volatility "
+                f"of {metrics.get('volatility_annualized', 0)} and maximum drawdown of {metrics.get('max_drawdown_pct', 0)}%."
+            )
+        ]
+        if move_bits:
+            narrative_parts.append("Notable sessions included " + "; ".join(move_bits) + ".")
+        if driver_bits:
+            narrative_parts.append("Retrieved market-related coverage included " + "; ".join(driver_bits) + ".")
+        else:
+            narrative_parts.append("News retrieval returned limited coverage for the selected window.")
+        return " ".join(narrative_parts), citations
+
     try:
         parsed = await _call_model(system_base)
         narrative = str(parsed.get("narrative", "")).strip()
         if not narrative:
             if not drivers:
                 return _metrics_only_fallback(), []
-            return "Unable to generate narrative without violating no-advice constraints.", []
+            return _deterministic_narrative_fallback()
 
         ok, _reasons = validate_text(narrative)
         if not ok:
@@ -876,7 +847,7 @@ async def _generate_narrative_with_llm(
             narrative = str(parsed.get("narrative", "")).strip()
             ok, _reasons = validate_text(narrative)
             if not ok or not narrative:
-                return "Unable to generate narrative without violating no-advice constraints.", []
+                return _deterministic_narrative_fallback()
 
         selected_urls = parsed.get("selected_driver_urls", [])
         if not isinstance(selected_urls, list):
@@ -898,13 +869,15 @@ async def _generate_narrative_with_llm(
     except InsightError:
         if not drivers:
             return _metrics_only_fallback(), []
-        return "Narrative generation unavailable. Returning computed metrics and retrieved drivers only.", []
+        return _deterministic_narrative_fallback()
     except httpx.TimeoutException:
-        return "Narrative generation timed out. Returning computed metrics and retrieved drivers only.", []
+        if not drivers:
+            return _metrics_only_fallback(), []
+        return _deterministic_narrative_fallback()
     except Exception:
         if not drivers:
             return _metrics_only_fallback(), []
-        return "Unable to generate narrative without violating no-advice constraints.", []
+        return _deterministic_narrative_fallback()
 
 
 # ----------------------------
@@ -927,6 +900,7 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
     start, end = _period_window(months)
 
     async with httpx.AsyncClient() as client:
+        news_provider = build_default_news_provider(client)
         # Price series
         if atype == "stock":
             price_series = await asyncio.to_thread(_fetch_stock_history, sym, start, end)
@@ -939,7 +913,7 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
         metrics = _compute_metrics(frame)
         notable_moves = _build_notable_moves(frame)
 
-        drivers = await _build_drivers(client, atype, price_series.symbol, price_series.name, notable_moves)
+        drivers = await _build_drivers(news_provider, atype, price_series.symbol, price_series.name, notable_moves)
 
         # Narrative via Ollama (grounded in metrics + drivers)
         narrative, citations = await _generate_narrative_with_llm(client, metrics, notable_moves, drivers)
