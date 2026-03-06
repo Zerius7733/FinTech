@@ -696,7 +696,7 @@ async def _openai_web_search_news(client: httpx.AsyncClient, query: str) -> List
         max_retries=1,
     )
     if os.getenv("NEWS_DEBUG", "").strip() == "1":
-        Path("openai_news_debug.json").write_text(
+        Path("json_data/openai_news_debug.json").write_text(
             json.dumps(resp_json, indent=2)[:300000],
             encoding="utf-8"
         )
