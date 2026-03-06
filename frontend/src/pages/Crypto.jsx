@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import TickerBar from '../components/TickerBar.jsx'
+// import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
 
 // ═══════════════════════════════════════════════════════════
@@ -339,7 +339,6 @@ export default function Crypto() {
   // ═══════════════════════════════════════════════════════
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)', display:'flex', flexDirection:'column' }}>
-      <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} />
       <Navbar />
       {/* ── MAIN CONTENT ── */}
       <main style={{ flex:1, paddingTop:100, paddingBottom:40 }}>

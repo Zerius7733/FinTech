@@ -156,7 +156,7 @@ export default function Profile() {
 
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
-      <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} />
+      {/* <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} /> */}
       <Navbar />
 
       <main style={{ paddingTop:110, paddingBottom:60, paddingLeft:48, paddingRight:48, maxWidth:1400, margin:'0 auto' }}>

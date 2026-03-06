@@ -928,7 +928,7 @@ export default function Globe() {
     <div style={{ minHeight:'100vh', background:'var(--bg)', overflowX:'hidden', position:'relative' }}>
 
       {/* Fixed top ticker */}
-      <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} />
+      {/* <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} /> */}
 
       {/* ── NAV ── */}
       <Navbar />
@@ -1164,7 +1164,7 @@ export default function Globe() {
       {/* ══════════════════════════════════════════════════ */}
       {/* BOTTOM TICKER                                     */}
       {/* ══════════════════════════════════════════════════ */}
-      <TickerBar />
+      {/* <TickerBar /> */}
 
       {/* ══════════════════════════════════════════════════ */}
       {/* FEATURES SECTION                                  */}
@@ -1245,7 +1245,7 @@ export default function Globe() {
       </section>
 
       {/* ── Second ticker + Footer ── */}
-      <TickerBar />
+      {/* <TickerBar /> */}
       <footer style={{ padding:'40px 48px', display:'flex', alignItems:'center', justifyContent:'space-between', borderTop:'1px solid var(--border)', color:'var(--text-faint)', fontSize:'0.8rem' }}>
         <div style={{ fontFamily:'var(--font-display)', fontWeight:700, color:'var(--gold)', fontSize:'1rem' }}>WealthSphere</div>
         <div>© 2025 WealthSphere · Schroders Hackathon Prototype</div>

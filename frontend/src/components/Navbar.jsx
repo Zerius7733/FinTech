@@ -5,7 +5,6 @@ const NAV_LINKS = [
   { label: 'Globe',      path: '/' },
   { label: 'Portfolio',  path: '/profile' },
   { label: 'Markets',    path: '/crypto' },
-  { label: 'Onboarding', path: '/survey' },
 ]
 
 export default function Navbar() {
@@ -97,7 +96,7 @@ export default function Navbar() {
 const S = {
   nav: {
     position: 'fixed',
-    top: 36,                  // sits below the TickerBar (height ≈ 36px)
+    top: 0, // fixed to top of viewport
     left: 0, right: 0,
     zIndex: 101,
     display: 'flex',
