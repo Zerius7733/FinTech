@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import * as THREE from 'three'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { MOCK_NODES, genPriceSeries, genSparkline } from '../data.js'
+
+const API = 'http://localhost:8000'
 
 // ═══════════════════════════════════════════════════════════
 // HELPERS
@@ -479,6 +482,7 @@ const GLOBE_ZONES = [
 
 export default function Globe() {
   const navigate    = useNavigate()
+  const { user: authUser } = useAuth()
   const canvasRef   = useRef(null)
   const globeRef    = useRef(null)   // THREE globe mesh
   const nodeObjsRef = useRef([])
@@ -504,6 +508,16 @@ export default function Globe() {
   const riskLevel = RISK_DEFS.find(r => riskPct >= r.min && riskPct <= r.max) || RISK_DEFS[1]
   const riskTrackRef  = useRef(null)
   const riskDragRef   = useRef(false)
+
+  // Wellness score for logged-in hero
+  const [userProfile, setUserProfile] = useState(null)
+  useEffect(() => {
+    if (!authUser?.user_id) return
+    fetch(`${API}/users/${authUser.user_id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setUserProfile(d.user))
+      .catch(() => {})
+  }, [authUser?.user_id])
 
   // Animated counters
   useEffect(() => {
@@ -938,25 +952,100 @@ export default function Globe() {
 
         {/* Hero text */}
         <div style={S.heroText}>
-          <div style={S.eyebrow}>
-            <div style={S.eyeLine} /> Wealth Wellness Hub <div style={S.eyeLine} />
-          </div>
-          <h1 style={S.heroTitle}>
-            One globe.<br />Every asset.<br />
-            <em style={{ fontStyle:'normal', background:'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
-              Zero guesswork.
-            </em>
-          </h1>
-          <p style={S.heroSub}>
-            A living, breathing globe that visualises every asset you own — equities, digital, real estate — unified into one actionable financial health score.
-          </p>
-          <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
-            <button style={S.btnCta}     onClick={() => navigate('/survey')}>Start Your Journey</button>
-            <button style={S.btnOutline} onClick={() => navigate('/profile')}>View Portfolio</button>
-          </div>
-          <p style={{ marginTop:10, fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-faint)' }}>
-            ↓ Hover any glowing marker · Click to fly in
-          </p>
+          {authUser ? (
+            /* ── LOGGED-IN HERO ── */
+            <>
+              <div style={S.eyebrow}>
+                <div style={S.eyeLine} /> Financial Wellness <div style={S.eyeLine} />
+              </div>
+              <h1 style={{ ...S.heroTitle, marginBottom: 10 }}>
+                Welcome back,{' '}
+                <em style={{ fontStyle:'normal', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+                  {userProfile?.name?.split(' ')[0] ?? authUser.username}
+                </em>
+                <span style={{ display:'block', fontFamily:'var(--font-mono)', fontSize:'0.75rem', fontWeight:400, color:'var(--text-faint)', letterSpacing:'0.15em', textTransform:'uppercase', marginTop:6 }}>
+                  Financial Wellness Score
+                </span>
+              </h1>
+
+              {/* Score badge */}
+              {(() => {
+                const score = userProfile?.financial_wellness_score ?? null
+                const stress = userProfile?.financial_stress_index ?? null
+                const status = score == null ? null
+                  : score >= 75 ? { label:'Excellent', color:'var(--green)',  glow:'rgba(52,211,153,0.35)' }
+                  : score >= 55 ? { label:'On Track',  color:'var(--gold)',   glow:'rgba(201,168,76,0.35)' }
+                  : score >= 35 ? { label:'Needs Work', color:'var(--orange)', glow:'rgba(251,146,60,0.35)' }
+                  :               { label:'At Risk',    color:'var(--red)',    glow:'rgba(248,113,113,0.35)' }
+                return (
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:20, marginBottom:18 }}>
+                    {/* Big score ring */}
+                    <div style={{ position:'relative', width:96, height:96, flexShrink:0 }}>
+                      <svg viewBox="0 0 96 96" width={96} height={96} style={{ transform:'rotate(-90deg)' }}>
+                        <circle cx={48} cy={48} r={38} fill="none" stroke="var(--surface2)" strokeWidth={8} />
+                        <circle cx={48} cy={48} r={38} fill="none"
+                          stroke={status?.color ?? 'var(--gold)'} strokeWidth={8}
+                          strokeLinecap="round"
+                          strokeDasharray={2 * Math.PI * 38}
+                          strokeDashoffset={2 * Math.PI * 38 * (1 - (score ?? 0) / 100)}
+                          style={{ filter:`drop-shadow(0 0 6px ${status?.glow ?? 'rgba(201,168,76,0.4)'})`, transition:'stroke-dashoffset 1s ease' }}
+                        />
+                      </svg>
+                      <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+                        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.5rem', color: status?.color ?? 'var(--gold)' }}>
+                          {score != null ? Math.round(score) : '—'}
+                        </span>
+                        <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.52rem', color:'var(--text-faint)', textTransform:'uppercase' }}>/ 100</span>
+                      </div>
+                    </div>
+                    {/* Status label + breakdown */}
+                    <div style={{ textAlign:'left' }}>
+                      {status && (
+                        <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:`${status.color}18`, border:`1px solid ${status.color}44`, borderRadius:20, padding:'4px 12px', marginBottom:8 }}>
+                          <div style={{ width:6, height:6, borderRadius:'50%', background:status.color, boxShadow:`0 0 6px ${status.color}` }} />
+                          <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:status.color, fontWeight:600 }}>{status.label}</span>
+                        </div>
+                      )}
+                      <p style={{ fontFamily:'var(--font-body)', fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.5, margin:0 }}>
+                        {score != null
+                          ? `Your portfolio is ${status?.label === 'Excellent' ? 'performing strongly' : status?.label === 'On Track' ? 'on a healthy trajectory' : 'showing areas to improve'}.`
+                          : 'Loading your financial data…'}
+                        {stress != null && (
+                          <span style={{ display:'block', marginTop:4, color:'var(--text-faint)', fontSize:'0.74rem' }}>
+                            Stress Index: <span style={{ color: stress > 70 ? 'var(--red)' : stress > 45 ? 'var(--orange)' : 'var(--green)', fontWeight:600 }}>{Math.round(stress)}</span> / 100
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })()}
+
+            </>
+          ) : (
+            /* ── LOGGED-OUT HERO ── */
+            <>
+              <div style={S.eyebrow}>
+                <div style={S.eyeLine} /> Wealth Wellness Hub <div style={S.eyeLine} />
+              </div>
+              <h1 style={S.heroTitle}>
+                One globe.<br />Every asset.<br />
+                <em style={{ fontStyle:'normal', background:'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+                  Zero guesswork.
+                </em>
+              </h1>
+              <p style={S.heroSub}>
+                A living, breathing globe that visualises every asset you own — equities, digital, real estate — unified into one actionable financial health score.
+              </p>
+              <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
+                <button style={S.btnCta}     onClick={() => navigate('/survey')}>Start Your Journey</button>
+                <button style={S.btnOutline} onClick={() => navigate('/profile')}>View Portfolio</button>
+              </div>
+              <p style={{ marginTop:10, fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-faint)' }}>
+                ↓ Hover any glowing marker · Click to fly in
+              </p>
+            </>
+          )}
         </div>
 
         {/* ── Globe container — Layers 0-3 ── */}
