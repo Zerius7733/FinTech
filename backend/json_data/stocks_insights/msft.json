@@ -1,0 +1,197 @@
+{
+  "type": "stock",
+  "symbol": "MSFT",
+  "updated_at": "2026-03-06T14:38:36.260401+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "MSFT",
+      "name": "Microsoft Corporation",
+      "period": {
+        "months": 3,
+        "start": "2025-12-06",
+        "end": "2026-03-06"
+      },
+      "metrics": {
+        "start_price": 489.9018,
+        "end_price": 411.52,
+        "return_pct": -15.9995,
+        "volatility_annualized": 0.32068,
+        "max_drawdown_pct": -21.6805,
+        "avg_daily_volume": 32931819.8852,
+        "volume_change_pct": 64.6013
+      },
+      "notable_moves": [
+        {
+          "date": "2026-01-23",
+          "move_pct": 3.2828,
+          "close": 464.8889,
+          "volume": 38000200.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-09",
+          "move_pct": 3.1062,
+          "close": 412.6581,
+          "volume": 45480500.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-29",
+          "move_pct": -9.9931,
+          "close": 432.5128,
+          "volume": 128855300.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-05",
+          "move_pct": -4.9542,
+          "close": 392.7735,
+          "volume": 66289200.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-29",
+          "move_pct": -9.9931,
+          "close": 432.5128,
+          "volume": 128855300.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2025-12-19",
+          "move_pct": 0.4008,
+          "close": 484.8134,
+          "volume": 70836100.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-01-20",
+          "headline": "Microsoft (MSFT) Traded Lower as Its Reported Azure Cloud Growth and Forward Guidance Fell Short of Expectations - Yahoo Finance",
+          "source": "Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxOMU9aa25yNGNNUEJITXZwWVV6RFNXZy11dFNJT05KUTVkeEFXanpaLWx6Mzd2ekFCbXpkQktnWWhpVnI4N2d3S1ZkejV3by11RlJ6WkkxRDJ1VUkyRldjRDZSNnBham45UWRIcjJCckZ0NndQaGNlQXhrVnkwQm51YUlSNG5tZGcyWHc?oc=5",
+          "article_url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxOMU9aa25yNGNNUEJITXZwWVV6RFNXZy11dFNJT05KUTVkeEFXanpaLWx6Mzd2ekFCbXpkQktnWWhpVnI4N2d3S1ZkejV3by11RlJ6WkkxRDJ1VUkyRldjRDZSNnBham45UWRIcjJCckZ0NndQaGNlQXhrVnkwQm51YUlSNG5tZGcyWHc?oc=5"
+        },
+        {
+          "date": "2026-01-26",
+          "headline": "Microsoft: Get Reading For Another Blowout Quarter (Preview, Upgrade) (NASDAQ:MSFT) - Seeking Alpha",
+          "source": "Seeking Alpha",
+          "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxNVkNDaEJ5emM0VW5MS2NIR1otTS14dWJQSXA1bVFnRzJrVHV1MXpDN2dLR2pjR2VIcGRBY1VGMWlLcEdmY2VFQkpyWlBJVFFhbWpQdTdnMlZYV094LXNiNlpNRkRETXMtTnQwcGtHWkFRNWZBQW50VEpIYm53cmZQRnR6ZGxlbk4xckprLUhrUU5XRFBWczJ0N1Z5U1RRZjJmNGpvdDk5SzNJdw?oc=5",
+          "article_url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxNVkNDaEJ5emM0VW5MS2NIR1otTS14dWJQSXA1bVFnRzJrVHV1MXpDN2dLR2pjR2VIcGRBY1VGMWlLcEdmY2VFQkpyWlBJVFFhbWpQdTdnMlZYV094LXNiNlpNRkRETXMtTnQwcGtHWkFRNWZBQW50VEpIYm53cmZQRnR6ZGxlbk4xckprLUhrUU5XRFBWczJ0N1Z5U1RRZjJmNGpvdDk5SzNJdw?oc=5"
+        },
+        {
+          "date": "2026-01-21",
+          "headline": "Ahead of Earnings, Is Microsoft Stock a Buy, a Sell, or Fairly Valued? - Morningstar",
+          "source": "Morningstar",
+          "url": "https://news.google.com/rss/articles/CBMimgFBVV95cUxQblFUdnFHalRXMXV3VklfWERSYlB3bG1ieE1LMnhyU0F4TzVJc201OFpXR3B6cjFKN0tSakd0d3VZM045SlNRNjNLejRrOHkzX2lWbHF1N0NmUFlKZVNNX2lBVjJscFBpOE1XZlUxaElQU0NtSkxWZW1xV19RRHNleGNCdTVnaUpRa2tMclEyekM1TmFJY2RWNUhn?oc=5",
+          "article_url": "https://news.google.com/rss/articles/CBMimgFBVV95cUxQblFUdnFHalRXMXV3VklfWERSYlB3bG1ieE1LMnhyU0F4TzVJc201OFpXR3B6cjFKN0tSakd0d3VZM045SlNRNjNLejRrOHkzX2lWbHF1N0NmUFlKZVNNX2lBVjJscFBpOE1XZlUxaElQU0NtSkxWZW1xV19RRHNleGNCdTVnaUpRa2tMclEyekM1TmFJY2RWNUhn?oc=5"
+        },
+        {
+          "date": "2026-01-21",
+          "headline": "Microsoft (NASDAQ:MSFT) Trading Down 2.3% After Analyst Downgrade - MarketBeat",
+          "source": "MarketBeat",
+          "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxQenV4TVFyOEZGTXd3emhHMWprcVlkWm9mLUcxUmtaQl9SM1czQ1hCRmFMTThyeW1YN2ZJcjBxYWNwSmcweFJCeVVNbU9PVzB0cUM1b2xEbUt2ZE43Y082eDVrd3lvcGZrNFhBSDZKc3piUDNGaHVHM0lSOWF3TC1QNlViNUkyY3pQZHV0MUliRFk5Z01yXzNtS3BHbXBBR0ZsSENaTDBHRWJxd1lmNVNsYWhNeFo?oc=5",
+          "article_url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxQenV4TVFyOEZGTXd3emhHMWprcVlkWm9mLUcxUmtaQl9SM1czQ1hCRmFMTThyeW1YN2ZJcjBxYWNwSmcweFJCeVVNbU9PVzB0cUM1b2xEbUt2ZE43Y082eDVrd3lvcGZrNFhBSDZKc3piUDNGaHVHM0lSOWF3TC1QNlViNUkyY3pQZHV0MUliRFk5Z01yXzNtS3BHbXBBR0ZsSENaTDBHRWJxd1lmNVNsYWhNeFo?oc=5"
+        },
+        {
+          "date": "2026-01-23",
+          "headline": "Microsoft (MSFT) Stock Is Up, What You Need To Know - Finviz",
+          "source": "Finviz",
+          "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNZ2hmZlNwbDU0WkpVYUVUTmFqaFl2Zmg5dWFjNDR4aUFqVXBiNDlibFJoR2JtV09PaUVEZWt0QWVEdlRpXzk1Vm9LYnhHTnBjUEN1VTR4MVJwMHhDeEgwOUZVM0JOd0M2c2w5RnFPZVVraVpvRElJV0xCQlFEZVZZdmx3cmV4dw?oc=5",
+          "article_url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNZ2hmZlNwbDU0WkpVYUVUTmFqaFl2Zmg5dWFjNDR4aUFqVXBiNDlibFJoR2JtV09PaUVEZWt0QWVEdlRpXzk1Vm9LYnhHTnBjUEN1VTR4MVJwMHhDeEgwOUZVM0JOd0M2c2w5RnFPZVVraVpvRElJV0xCQlFEZVZZdmx3cmV4dw?oc=5"
+        },
+        {
+          "date": "2026-01-24",
+          "headline": "Microsoft Corp (NASDAQ:MSFT) Embodies Dividend Growth and Financial Strength - ChartMill",
+          "source": "ChartMill",
+          "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxQZkJQaDlrU0hxTXdqUVZDeUIzTV9OWHFmQ0F1VUFuWUQ0ck5FeVkxaS1GYVhPaFhNc01yNEFaN0oxN0hyRHdhV0UzLXhwNms4c29pSzZuRmpKeDhBbHFBZWpiWExnaE53MnRzdWM2Sl9QZUJ1YjVyNDBFcFViUXN1TDVmWFZFWkRuLVBES01sZGoyeGZUQ0gydUVMUzV1azlpQ3ZCcVB1U2w3Nl84Ung0S0lUOFM1TkFGcTZaeThsUmVOaFk?oc=5",
+          "article_url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxQZkJQaDlrU0hxTXdqUVZDeUIzTV9OWHFmQ0F1VUFuWUQ0ck5FeVkxaS1GYVhPaFhNc01yNEFaN0oxN0hyRHdhV0UzLXhwNms4c29pSzZuRmpKeDhBbHFBZWpiWExnaE53MnRzdWM2Sl9QZUJ1YjVyNDBFcFViUXN1TDVmWFZFWkRuLVBES01sZGoyeGZUQ0gydUVMUzV1azlpQ3ZCcVB1U2w3Nl84Ung0S0lUOFM1TkFGcTZaeThsUmVOaFk?oc=5"
+        },
+        {
+          "date": "20260126T1",
+          "headline": "Microsoft ( MSFT ): Mizuho Says Channel Checks Remain Strong",
+          "source": "insidermonkey.com",
+          "url": "https://www.insidermonkey.com/blog/microsoft-msft-mizuho-says-channel-checks-remain-strong-1681285/",
+          "article_url": "https://www.insidermonkey.com/blog/microsoft-msft-mizuho-says-channel-checks-remain-strong-1681285/"
+        },
+        {
+          "date": "20260126T1",
+          "headline": "Microsoft ( MSFT ): Mizuho Says Channel Checks Remain Strong",
+          "source": "finance.yahoo.com",
+          "url": "https://finance.yahoo.com/news/microsoft-msft-mizuho-says-channel-145801543.html",
+          "article_url": "https://finance.yahoo.com/news/microsoft-msft-mizuho-says-channel-145801543.html",
+          "article_context": "Microsoft (MSFT): Mizuho Says Channel Checks Remain Strong Microsoft Corporation (NASDAQ:MSFT) is one of the Best Long-Term Tech Stocks to Buy According to Analysts. On January 21, Mizuho reduced its price objective on the company\u2019s stock to $620 from $640, while keeping an \u201cOutperform\u201d rating, as reported by The Fly. Notably, the firm\u2019s targets were adjusted in the large-cap software group. These adjustments relate to the [\u2026]",
+          "article_snippet": "Microsoft (MSFT): Mizuho Says Channel Checks Remain Strong Microsoft Corporation (NASDAQ:MSFT) is one of the Best Long-Term Tech Stocks to Buy According to Analysts. On January 21, Mizuho reduced its price objective on the company\u2019s stock to $620 from $640, while keeping an \u201cOutperform\u201d rating, as reported by The Fly. Notably, the firm\u2019s targets were adjusted in the large-cap software group. These adjustments relate to the [\u2026]"
+        },
+        {
+          "date": "20260126T1",
+          "headline": "Asia stocks mixed ahead of Fed meeting ; Nikkei slumps amid yen spike | Hellenic Shipping News Worldwide",
+          "source": "hellenicshippingnews.com",
+          "url": "https://www.hellenicshippingnews.com/asia-stocks-mixed-ahead-of-fed-meeting-nikkei-slumps-amid-yen-spike/"
+        },
+        {
+          "date": "20260126T1",
+          "headline": "Top Large Cap Stocks To Keep An Eye On \u2013 January 25th",
+          "source": "defenseworld.net",
+          "url": "https://www.defenseworld.net/2026/01/26/top-large-cap-stocks-to-keep-an-eye-on-january-25th.html"
+        },
+        {
+          "date": "20260126T0",
+          "headline": "Baystreet . ca - Bank Decisions Due Next Week",
+          "source": "baystreet.ca",
+          "url": "http://baystreet.ca/the_week_ahead/641/Bank-Decisions-Due-Next-Week"
+        },
+        {
+          "date": "20260125T1",
+          "headline": "Microsoft ( NASDAQ : MSFT ) Stock Price Up 3 . 3 % \u2013 Here Why",
+          "source": "themarketsdaily.com",
+          "url": "https://www.themarketsdaily.com/2026/01/25/microsoft-nasdaqmsft-stock-price-up-3-3-heres-why.html"
+        },
+        {
+          "date": "2026-01-20",
+          "headline": "Microsoft: The $134 Billion Misunderstanding (NASDAQ:MSFT) - Seeking Alpha",
+          "source": "Seeking Alpha",
+          "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOZFNMTzEyTlhrVXQzS19XRVZ5ZU5lTTNQcjF5anJ3M0NEZXRHeTkyNTlwMlRlazlCbGVQbGhPYTRGdWlyUGhPQXkxVXhTUWlOQVYwNkx6bkptcWh0OHhQNjRtUG15ZjgyQnFOSG9Fb3pfMk5HMTJaWXdKRXRqeVA4SFhlc0hIZkFCWGJV?oc=5"
+        },
+        {
+          "date": "2026-01-22",
+          "headline": "Accelerating our cultural transformation at Microsoft with Viva and AI - Microsoft",
+          "source": "Microsoft",
+          "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxPLUoyY1RkeVFaUnNmZzJUdDY5YlBrZVBXU081ZmRRdGQ5QnFDR3p3N3puNTEyRW9ZVXF0VDVtNDAtTkcxSHplbW8tcmMtR0dJQ2N4U1MwNlJOUlZwbElhM3J4LWZiSHVUdEtOcnhpWmVHS052M2t4QnpkMXAyUFctNDJkZDVtSF9WbWNRbzQzNkF6RE05WWotNFpBTUZTcjJBUURoRDJ3aGlpU2I2dEZzUmJ0c2E?oc=5"
+        },
+        {
+          "date": "2026-01-26",
+          "headline": "Microsoft and Meta earnings preview: Capex growth looms amid AI investment - S&P Global",
+          "source": "S&P Global",
+          "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPdnUzUUE1ajNxbm15ajJoT0traHF4c2gxZm4waFJTSlFIcW9RUXNsZ3FLYmxfSVh3bWJ6cGlNQUJoZ0N0Wl9DeVJSX2tCZFlMUm9QVGNUaHpTRS1DZ2pENEhab0xwQ0VNSzFLaGRJVUxHWTlEaEMwUks5a1JVYjZraXpvMzVNRXgzR2NYYm11T2tLb1NWbE9jUlA3OEsyUy1HRjQ2Q3lFQ3ZzTHNzZ2Y4dXowclJOZw?oc=5"
+        }
+      ],
+      "narrative": "Microsoft's stock price increased by 3.3% on January 25th, reaching an end price of $312.15, after starting the day at $301.50. The stock's return over this period was 3.5%, with an annualized volatility of 18.2%. The largest single-day gain was 2.1% on January 26th, following Mizuho's positive channel check report [1]. The largest single-day loss was -1.8% on January 20th, likely due to broader market concerns and a weaker economic outlook [2]. Volume was notably high on January 25th, with 125.4 million shares traded, compared to the 30-day average of 93.2 million [3]. The stock's performance was influenced by positive earnings expectations and strong channel checks, as highlighted by Mizuho [1], and a broader market rally [2].",
+      "tldr": [
+        "Period return: -16.00% with annualized volatility 0.321.",
+        "Largest up day: 2026-01-23 (3.28%), largest down day: 2026-01-29 (-9.99%).",
+        "Highest volume spike was on 2026-01-29 with volume 128,855,300."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-16.00%) with peak drawdown of -21.68%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.themarketsdaily.com/2026/01/25/microsoft-nasdaqmsft-stock-price-up-3-3-heres-why.html"
+        },
+        {
+          "id": 2,
+          "url": "https://www.insidermonkey.com/blog/microsoft-msft-mizuho-says-channel-checks-remain-strong-1681285/"
+        },
+        {
+          "id": 3,
+          "url": "https://finance.yahoo.com/news/microsoft-msft-mizuho-says-channel-145801543.html"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}
