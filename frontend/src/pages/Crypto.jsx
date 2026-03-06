@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import TickerBar from '../components/TickerBar.jsx'
+import Navbar from '../components/Navbar.jsx'
 
 // ═══════════════════════════════════════════════════════════
 //  CONFIG
@@ -261,7 +261,6 @@ function SortHeader({ label, field, sort, onSort, right }) {
 //  MAIN PAGE
 // ═══════════════════════════════════════════════════════════
 export default function Crypto() {
-  const navigate   = useNavigate()
   const [page,     setPage]    = useState(1)
   const [coins,    setCoins]   = useState([])
   const [loading,  setLoading] = useState(true)
@@ -339,28 +338,8 @@ export default function Crypto() {
   // ═══════════════════════════════════════════════════════
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)', display:'flex', flexDirection:'column' }}>
-
-      {/* Top ticker */}
       <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} />
-
-      {/* ── NAV ── */}
-      <nav style={NS.nav}>
-        <div style={NS.logo} onClick={() => navigate('/')}>
-          <div style={NS.logoDot}>◉</div>
-          WealthSphere
-        </div>
-        <ul style={NS.links}>
-          <li><span style={NS.link} onClick={() => navigate('/')}>Globe</span></li>
-          <li><span style={NS.link} onClick={() => navigate('/profile')}>Portfolio</span></li>
-          <li><span style={{ ...NS.link, ...NS.linkActive }}>Markets</span></li>
-          <li><span style={NS.link} onClick={() => navigate('/survey')}>Onboarding</span></li>
-        </ul>
-        <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-          <button style={NS.btnGhost}  onClick={() => navigate('/profile')}>Sign In</button>
-          <button style={NS.btnPrimary} onClick={() => navigate('/survey')}>Get Started</button>
-        </div>
-      </nav>
-
+      <Navbar />
       {/* ── MAIN CONTENT ── */}
       <main style={{ flex:1, paddingTop:100, paddingBottom:40 }}>
 
@@ -442,7 +421,18 @@ export default function Crypto() {
                   <br/><br/>
                   Make sure your backend is running at <code style={{ color:'var(--teal)' }}>{API_BASE}</code> and returning an array of coin objects.
                 </div>
-                <button onClick={() => load(page)} style={{ ...NS.btnPrimary, padding:'10px 28px', fontFamily:'var(--font-display)' }}>
+                <button onClick={() => load(page)} style={{
+                  background: 'linear-gradient(135deg,var(--gold),#b8922e)',
+                  border: 'none',
+                  color: '#0d1220',
+                  padding: '10px 28px',
+                  borderRadius: 8,
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 20px rgba(201,168,76,0.25)'
+                }}>
                   Retry
                 </button>
               </div>
@@ -467,7 +457,17 @@ export default function Crypto() {
                 <div style={{ fontSize:'2rem' }}>🔍</div>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:700 }}>No results for "{search}"</div>
                 <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.75rem', color:'var(--text-faint)' }}>Try searching on a different page</div>
-                <button onClick={() => setSearch('')} style={{ ...NS.btnGhost, marginTop:4 }}>Clear search</button>
+                <button onClick={() => setSearch('')} style={{
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-dim)',
+                  padding: '8px 20px',
+                  borderRadius: 8,
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  marginTop: 4
+                }}>Clear search</button>
               </div>
             )}
           </div>
@@ -576,34 +576,7 @@ export default function Crypto() {
   )
 }
 
-// ── Style constants ────────────────────────────────────────
-const NS = {
-  nav: {
-    position:'fixed', top:36, left:0, right:0, zIndex:101,
-    display:'flex', alignItems:'center', justifyContent:'space-between',
-    padding:'14px 48px',
-    background:'rgba(8,12,20,0.96)', backdropFilter:'blur(14px)',
-    borderBottom:'1px solid rgba(255,255,255,0.06)',
-  },
-  logo: {
-    fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.2rem',
-    background:'linear-gradient(135deg,var(--gold-light),var(--gold))',
-    WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
-    display:'flex', alignItems:'center', gap:10, cursor:'pointer',
-  },
-  logoDot: {
-    width:26, height:26, borderRadius:'50%',
-    background:'linear-gradient(135deg,var(--gold),var(--teal))',
-    display:'flex', alignItems:'center', justifyContent:'center',
-    fontSize:'0.85rem', WebkitTextFillColor:'initial', color:'#fff',
-    flexShrink:0, boxShadow:'0 0 14px rgba(201,168,76,0.4)',
-  },
-  links: { display:'flex', gap:32, listStyle:'none' },
-  link:  { color:'var(--text-dim)', fontSize:'0.88rem', cursor:'pointer', transition:'color 0.2s' },
-  linkActive: { color:'var(--gold)', borderBottom:'1px solid var(--gold)', paddingBottom:2 },
-  btnGhost:  { background:'transparent', border:'1px solid var(--border)', color:'var(--text-dim)', padding:'8px 20px', borderRadius:8, fontFamily:'var(--font-body)', fontSize:'0.85rem', cursor:'pointer' },
-  btnPrimary: { background:'linear-gradient(135deg,var(--gold),#b8922e)', border:'none', color:'#0d1220', padding:'9px 22px', borderRadius:8, fontFamily:'var(--font-body)', fontSize:'0.85rem', fontWeight:600, cursor:'pointer' },
-}
+
 
 const PS = {
   header: {
