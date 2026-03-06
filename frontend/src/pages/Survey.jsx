@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RiskSlider from '../components/RiskSlider.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 // Paste your OpenAI API key here. In production, proxy this through your backend.
@@ -131,6 +132,7 @@ const es = {
 
 // ─── STEP 5 COMPONENT ─────────────────────────────────────────────────────────
 function PortfolioImportStep({ onBack, onComplete }) {
+  const { user } = useAuth();
   const [phase,    setPhase]    = useState('upload')
   const [preview,  setPreview]  = useState(null)
   const [fileData, setFileData] = useState(null)
@@ -148,24 +150,50 @@ function PortfolioImportStep({ onBack, onComplete }) {
 
   const onDrop = useCallback(e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }, [])
 
+  // Parse image using backend endpoint
   const parse = async () => {
-    if (!fileData) return
-    setPhase('parsing'); setError(null)
+    if (!fileData) return setError('No file selected');
+    if (!user?.user_id) return setError('User not logged in');
+    setPhase('parsing'); setError(null);
     try {
-      const result = await extractPortfolioFromImage(fileData.base64, fileData.mimeType)
-      setHoldings(result.length > 0 ? result : [{ ...EMPTY_HOLDING }])
-      setPhase('review')
+      const res = await fetch(`/api/users/${user.user_id}/imports/screenshot/parse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_base64: fileData.base64,
+          model: 'gpt-4o',
+          page_text: null,
+        })
+      });
+      if (!res.ok) throw new Error(`Parse failed: ${res.status}`);
+      const data = await res.json();
+      if (!Array.isArray(data.holdings)) throw new Error('No holdings found');
+      setHoldings(data.holdings);
+      setPhase('review');
     } catch (e) {
-      setError(e.message === 'NO_KEY'
-        ? 'OpenAI API key not set. Open Survey.jsx and set OPENAI_API_KEY at the top of the file.'
-        : `Extraction failed: ${e.message}`)
-      setPhase('upload')
+      setError(e.message || 'Parse error');
+      setPhase('upload');
     }
   }
 
-  const updateHolding = (i, key, val) => setHoldings(prev => prev.map((h, idx) => idx===i ? { ...h, [key]:val } : h))
-  const deleteHolding = (i)          => setHoldings(prev => prev.filter((_,idx) => idx!==i))
-  const addHolding    = ()           => setHoldings(prev => [...prev, { ...EMPTY_HOLDING }])
+  // Confirm holdings using backend endpoint
+  const confirm = async () => {
+    if (!user?.user_id) return setError('User not logged in');
+    setError(null);
+    try {
+      const res = await fetch(`/api/users/${user.user_id}/imports/screenshot/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          holdings,
+        })
+      });
+      if (!res.ok) throw new Error(`Confirm failed: ${res.status}`);
+      onComplete(holdings);
+    } catch (e) {
+      setError(e.message || 'Confirm error');
+    }
+  }
 
   // ── Upload ──────────────────────────────────────────────
   if (phase === 'upload') return (
@@ -295,11 +323,13 @@ function PortfolioImportStep({ onBack, onComplete }) {
         ))}
       </div>
 
+      <button onClick={confirm}>Confirm & Launch ✦</button>
+
       <div style={{ display:'flex', justifyContent:'space-between', paddingTop:24, borderTop:'1px solid var(--border)' }}>
         <button style={cs.btnBack} onClick={() => setPhase('upload')}>← Re-upload</button>
         <div style={{ display:'flex', gap:12 }}>
           <button style={{ ...cs.btnBack, color:'var(--text-faint)' }} onClick={() => onComplete([])}>Skip import</button>
-          <button style={{ ...cs.btnNext, background:'linear-gradient(135deg,var(--green),#059669)', boxShadow:'0 4px 20px rgba(52,211,153,0.3)' }} onClick={() => onComplete(holdings)}>
+          <button style={{ ...cs.btnNext, background:'linear-gradient(135deg,var(--green),#059669)', boxShadow:'0 4px 20px rgba(52,211,153,0.3)' }} onClick={confirm}>
             Confirm & Launch ✦
           </button>
         </div>
@@ -457,7 +487,6 @@ export default function Survey() {
             <div style={cs.eyebrow}>Step 4 of 5</div>
             <h1 style={cs.heading}>Define your <em style={{ fontStyle:'normal', color:'var(--gold)' }}>goals</em></h1>
             <p style={cs.subtext}>What are you ultimately building toward?</p>
-            <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.67rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:14 }}>Primary Goals</div>
             <div style={cs.goalGrid}>
               {GOALS.map(g => {
                 const sel = selectedGoals.has(g.title)
@@ -472,7 +501,7 @@ export default function Survey() {
                 )
               })}
             </div>
-            <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.67rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:12 }}>Investment Horizon</div>
+            <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.67rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:14 }}>Primary Goals</div>
             <div style={cs.horizonRow}>
               {HORIZONS.map(h => (
                 <div key={h.num} style={{ ...cs.horizonBtn, ...(horizon===h.num?cs.horizonActive:{}) }} onClick={() => setHorizon(h.num)}>

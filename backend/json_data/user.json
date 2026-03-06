@@ -71,14 +71,14 @@
     "wellness_metrics": {
       "liquidity_months": 3.32,
       "liquidity_score": 55.34,
-      "diversification_hhi": 0.363,
-      "diversification_score": 84.94,
+      "diversification_hhi": 0.1787,
+      "diversification_score": 95.81,
       "debt_income_ratio": 7.9167,
       "debt_income_score": 1.19
     },
-    "risk_profile": "High",
-    "financial_wellness_score": 53.89,
-    "financial_stress_index": 60.4,
+    "risk_profile": "Moderate",
+    "financial_wellness_score": 48.53,
+    "financial_stress_index": 58.23,
     "mortgage": 300000.0
   },
   "u002": {

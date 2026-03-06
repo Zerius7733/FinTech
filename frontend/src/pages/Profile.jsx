@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import TickerBar from '../components/TickerBar.jsx'
@@ -53,6 +53,19 @@ function LoadingPulse() {
   )
 }
 
+// Inline spinner used in buttons
+function Spinner({ size = 16, color = 'var(--teal)' }) {
+  return (
+    <div style={{
+      width:size, height:size,
+      border:`2px solid rgba(255,255,255,0.12)`,
+      borderTopColor:color, borderRadius:'50%',
+      animation:'profileSpin 0.7s linear infinite',
+      flexShrink:0,
+    }} />
+  )
+}
+
 // ── small chart helper ────────────────────────────────────────────────────────
 function WellnessRing({ score }) {
   const r = 42, circ = 2 * Math.PI * r
@@ -79,7 +92,57 @@ function WellnessRing({ score }) {
   )
 }
 
-// CompareBar removed — Peer Benchmarking is a Future Upgrade
+// ── Risk option definitions ───────────────────────────────────────────────────
+const RISK_OPTIONS = [
+  { key:'Low', label:'Low', icon:'🛡️', desc:'Capital preservation. Low volatility, steady income.',       color:'#34d399', glow:'rgba(52,211,153,0.35)'  },
+  { key:'Medium',     label:'Medium',     icon:'⚖️', desc:'Mix of growth and stability. Moderate risk tolerance.',      color:'#c9a84c', glow:'rgba(201,168,76,0.35)'  },
+  { key:'High',   label:'High',   icon:'🚀', desc:'Maximum growth. High volatility accepted for high returns.', color:'#f87171', glow:'rgba(248,113,113,0.35)' },
+]
+
+// ── Rec card shared between sections 2 & 3 ───────────────────────────────────
+const REC_ICON  = { buy:'📈', sell:'📉', hold:'⏸', rebalance:'🔄', warning:'⚠️' }
+const REC_COLOR = { buy:'var(--green)', sell:'var(--red)', hold:'var(--gold)', rebalance:'var(--teal)', warning:'#fbbf24' }
+
+function RecCard({ rec, i, tint = false }) {
+  const type  = rec.type?.toLowerCase()
+  const color = REC_COLOR[type] ?? (tint ? 'var(--teal)' : 'var(--text-dim)')
+  const icon  = REC_ICON[type]  ?? (tint ? '🤖' : '💡')
+  return (
+    <div style={{
+      background: tint ? 'rgba(45,212,191,0.04)' : 'var(--surface2)',
+      border: `1px solid ${tint ? 'rgba(45,212,191,0.14)' : 'var(--border)'}`,
+      borderRadius:12, padding:'16px 18px', display:'flex', gap:14, alignItems:'flex-start',
+      animation:'profileFadeUp 0.3s ease',
+    }}>
+      <div style={{ width:38, height:38, borderRadius:10, background:`${color}18`, border:`1px solid ${color}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>
+        {icon}
+      </div>
+      <div style={{ flex:1 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5, flexWrap:'wrap' }}>
+          <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.88rem' }}>
+            {rec.title ?? rec.symbol ?? rec.asset ?? `Recommendation ${i + 1}`}
+          </span>
+          {rec.type && (
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', padding:'2px 8px', borderRadius:6, background:`${color}18`, color, border:`1px solid ${color}30`, textTransform:'uppercase', letterSpacing:'0.07em' }}>
+              {rec.type}
+            </span>
+          )}
+          {rec.priority && (
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:'rgba(255,255,255,0.05)', color:'var(--text-faint)', border:'1px solid var(--border)' }}>
+              {rec.priority}
+            </span>
+          )}
+        </div>
+        <div style={{ fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.65 }}>
+          {rec.message ?? rec.description ?? rec.reason ?? rec.body ?? JSON.stringify(rec)}
+        </div>
+        {rec.symbol && rec.title && (
+          <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--teal)', marginTop:6 }}>{rec.symbol}</div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function Profile() {
@@ -91,11 +154,18 @@ export default function Profile() {
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState('')
 
-  // Best practice: fetch on mount, keyed to user_id.
-  // useEffect with [authUser?.user_id] means it re-fetches if the logged-in
-  // account changes (e.g. sign out → sign in as someone else).
-  // A cleanup flag prevents stale setState calls if the component unmounts
-  // before the request finishes (e.g. user navigates away quickly).
+  // ── Section 1: Risk profile update state ─────────────────────────────────
+  const [selectedRisk, setSelectedRisk] = useState('')
+  const [riskSaving,   setRiskSaving]   = useState(false)
+  const [riskSaved,    setRiskSaved]    = useState(false)
+  const [riskError,    setRiskError]    = useState('')
+
+  // ── GPT recommendations state ─────────────────────────────────────────────
+  const [gptRecs,    setGptRecs]    = useState(null)
+  const [gptLoading, setGptLoading] = useState(false)
+  const [gptError,   setGptError]   = useState('')
+
+  // ── Initial data fetch ────────────────────────────────────────────────────
   useEffect(() => {
     if (!authUser?.user_id) { setLoading(false); return }
     let cancelled = false
@@ -107,8 +177,13 @@ export default function Profile() {
           fetch(`${API}/portfolio/${authUser.user_id}`),
         ])
         if (cancelled) return
-        if (profRes.ok)  { const d = await profRes.json();  setProfile(d.user) }
-        if (portRes.ok)  { const d = await portRes.json();  setPortfolio(d.portfolio) }
+        if (profRes.ok) {
+          const d = await profRes.json()
+          setProfile(d.user)
+          // Pre-select the user's current risk profile in the UI
+          if (d.user?.risk_profile) setSelectedRisk(d.user.risk_profile.toLowerCase())
+        }
+        if (portRes.ok) { const d = await portRes.json(); setPortfolio(d.portfolio) }
       } catch { if (!cancelled) setError('Could not reach the server. Is the backend running?') }
       finally  { if (!cancelled) setLoading(false) }
     }
@@ -116,32 +191,69 @@ export default function Profile() {
     return () => { cancelled = true }
   }, [authUser?.user_id])
 
-  // ── Derived ───────────────────────────────────────────────────────────────
-  const stocks  = portfolio?.stocks  ?? []
-  const cryptos = portfolio?.cryptos ?? []
-  const allHoldings = [
-    ...stocks.map(h  => ({ ...h, type:'Stock' })),
-    ...cryptos.map(h => ({ ...h, type:'Crypto' })),
-  ]
-  const stocksValue   = stocks.reduce((s,h)  => s + (h.market_value ?? 0), 0)
-  const cryptosValue  = cryptos.reduce((s,h) => s + (h.market_value ?? 0), 0)
-  const portfolioValue = stocksValue + cryptosValue
-  const totalAUM      = portfolioValue + (profile?.cash_balance ?? 0)
-  const positionCount = stocks.length + cryptos.length
+  // ── Section 1: PATCH /users/risk ─────────────────────────────────────────
+  const saveRiskProfile = useCallback(async () => {
+    if (!selectedRisk || !authUser?.user_id) return
+    setRiskSaving(true); setRiskError(''); setRiskSaved(false)
+    try {
+      const res = await fetch(`${API}/users/risk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: authUser.user_id, risk_profile: selectedRisk }),
+      })
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.detail ?? `HTTP ${res.status}`) }
+      // Optimistically update hero card without a re-fetch
+      setProfile(prev => prev ? { ...prev, risk_profile: selectedRisk } : prev)
+      setRiskSaved(true)
+      setTimeout(() => setRiskSaved(false), 3500)
+    } catch (e) { setRiskError(e.message) }
+    finally     { setRiskSaving(false) }
+  }, [selectedRisk, authUser?.user_id])
 
-  const wellness      = profile?.wellness_metrics ?? {}
-  const wellnessScore = profile?.financial_wellness_score ?? 0
-  const stressIndex   = profile?.financial_stress_index   ?? null
+  // ── GET /users/:id/recommendations/gpt?limit=3&model=gpt-4.1-mini ───────────
+  const fetchGptRecs = useCallback(async () => {
+    if (!authUser?.user_id) return
+    setGptLoading(true); setGptError(''); setGptRecs(null)
+    try {
+      const res = await fetch(`${API}/users/${authUser.user_id}/recommendations/gpt?limit=3&model=gpt-4.1-mini`)
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.detail ?? `HTTP ${res.status}`) }
+      setGptRecs(await res.json())
+    } catch (e) { setGptError(e.message) }
+    finally     { setGptLoading(false) }
+  }, [authUser?.user_id])
+
+  // ── Derived values ────────────────────────────────────────────────────────
+  const stocks         = portfolio?.stocks  ?? []
+  const cryptos        = portfolio?.cryptos ?? []
+  const allHoldings    = [...stocks.map(h => ({ ...h, type:'Stock' })), ...cryptos.map(h => ({ ...h, type:'Crypto' }))]
+  const stocksValue    = stocks.reduce((s,h)  => s + (h.market_value ?? 0), 0)
+  const cryptosValue   = cryptos.reduce((s,h) => s + (h.market_value ?? 0), 0)
+  const portfolioValue = stocksValue + cryptosValue
+  const totalAUM       = portfolioValue + (profile?.cash_balance ?? 0)
+  const positionCount  = stocks.length + cryptos.length
+  const wellness       = profile?.wellness_metrics ?? {}
+  const wellnessScore  = profile?.financial_wellness_score ?? 0
+  const stressIndex    = profile?.financial_stress_index   ?? null
 
   const COMPOSITION_REAL = [
     portfolioValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / portfolioValue * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
     portfolioValue > 0 && { icon:'₿',  name:'Digital Assets',    pct:Math.round(cryptosValue / portfolioValue * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
   ].filter(Boolean)
   const COMPOSITION_FUTURE = [
-    { icon:'🏠', name:'Real Estate',  color:'var(--gold)' },
+    { icon:'🏠', name:'Real Estate',  color:'var(--gold)'   },
     { icon:'🏛️', name:'Fixed Income', color:'var(--purple)' },
-    { icon:'🪙', name:'Commodities',  color:'#fbbf24' },
+    { icon:'🪙', name:'Commodities',  color:'#fbbf24'       },
   ]
+
+  // Normalise GPT response — could be string, { message }, { recommendations: [] }, etc.
+  const gptArray = gptRecs && Array.isArray(gptRecs.recommendations) ? gptRecs.recommendations : null
+  const gptText  = gptRecs && !gptArray
+    ? (typeof gptRecs === 'string' ? gptRecs
+        : gptRecs.message ?? gptRecs.recommendation ?? gptRecs.content ?? JSON.stringify(gptRecs, null, 2))
+    : null
+
+  // Is current selection different from what's saved?
+  const riskChanged = selectedRisk && selectedRisk !== (profile?.risk_profile ?? '').toLowerCase()
 
   if (!authUser) {
     return (
@@ -158,6 +270,14 @@ export default function Profile() {
     <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
       {/* <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} /> */}
       <Navbar />
+
+      {/* Keyframes injected once */}
+      <style>{`
+        @keyframes profileSpin    { to { transform: rotate(360deg) } }
+        @keyframes profileFadeUp  { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes profilePulse   { 0%,100% { opacity:0.4 } 50% { opacity:1 } }
+        @keyframes spinSlow       { to { transform: rotate(360deg) } }
+      `}</style>
 
       <main style={{ paddingTop:110, paddingBottom:60, paddingLeft:48, paddingRight:48, maxWidth:1400, margin:'0 auto' }}>
 
@@ -334,6 +454,163 @@ export default function Profile() {
           )}
         </div>
 
+        {/* ══════════════════════════════════════════════════════════════════
+            SECTION 1 — Risk Profile Update
+            PATCH /users/risk  { user_id, risk_profile }
+        ══════════════════════════════════════════════════════════════════ */}
+        <div style={{ ...s.card, marginBottom:24 }}>
+          <div style={s.secLabel}>
+            Risk Profile
+            {profile?.risk_profile && (
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--gold)', background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.25)', borderRadius:8, padding:'2px 10px' }}>
+                Saved: {profile.risk_profile}
+              </span>
+            )}
+          </div>
+
+          <p style={{ fontSize:'0.83rem', color:'var(--text-dim)', lineHeight:1.65, marginBottom:20 }}>
+            Your risk profile shapes every recommendation and wellness calculation. Select the tolerance level that best matches your investment approach, then save to update the backend.
+          </p>
+
+          {/* Three option cards */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:22 }}>
+            {RISK_OPTIONS.map(opt => {
+              const active = selectedRisk === opt.key
+              return (
+                <div
+                  key={opt.key}
+                  onClick={() => { setSelectedRisk(opt.key); setRiskSaved(false); setRiskError('') }}
+                  style={{
+                    border:      active ? `1.5px solid ${opt.glow}` : '1.5px solid var(--border)',
+                    background:  active ? `${opt.color}12` : 'var(--surface2)',
+                    borderRadius:14, padding:'18px 16px', cursor:'pointer',
+                    transition:'all 0.2s', position:'relative',
+                  }}
+                >
+                  {/* Selected dot */}
+                  <div style={{ position:'absolute', top:12, right:12, width:10, height:10, borderRadius:'50%', background: active ? opt.color : 'var(--border)', boxShadow: active ? `0 0 8px ${opt.color}` : 'none', transition:'all 0.2s' }} />
+                  <div style={{ fontSize:'1.6rem', marginBottom:10 }}>{opt.icon}</div>
+                  <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.92rem', marginBottom:4, color: active ? opt.color : 'var(--text)' }}>{opt.label}</div>
+                  <div style={{ fontSize:'0.76rem', color:'var(--text-dim)', lineHeight:1.55 }}>{opt.desc}</div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Save row */}
+          <div style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
+            <button
+              onClick={saveRiskProfile}
+              disabled={riskSaving || !riskChanged}
+              style={{
+                ...s.btnGold,
+                opacity: (riskSaving || !riskChanged) ? 0.4 : 1,
+                cursor:  (riskSaving || !riskChanged) ? 'not-allowed' : 'pointer',
+                display:'flex', alignItems:'center', gap:8,
+              }}
+            >
+              {riskSaving
+                ? <><Spinner size={14} color="#080c14" /> Saving…</>
+                : riskSaved ? '✓ Saved' : 'Update Risk Profile'}
+            </button>
+            {riskSaved && (
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.74rem', color:'var(--green)', animation:'profileFadeUp 0.3s ease' }}>
+                Risk profile updated successfully
+              </span>
+            )}
+            {riskError && (
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.74rem', color:'var(--red)' }}>⚠ {riskError}</span>
+            )}
+          </div>
+
+          {/* Live payload preview */}
+          {/* <div style={{ marginTop:16, background:'rgba(255,255,255,0.03)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 14px', fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--text-faint)' }}>
+            <span style={{ color:'var(--teal)' }}>POST</span>{' '}/users/risk
+            {' → { '}
+            <span style={{ color:'var(--text-dim)' }}>"user_id"</span>: "<span style={{ color:'var(--teal)' }}>{authUser.user_id}</span>",{' '}
+            <span style={{ color:'var(--text-dim)' }}>"risk_profile"</span>: "<span style={{ color:'var(--gold)' }}>{selectedRisk || '…'}</span>"
+            {' }'}
+          </div> */}
+        </div>
+        {/* ══════════════════════════════════════════════════════════════════
+            GPT Recommendations
+            POST /users/:id/recommendations/gpt
+        ══════════════════════════════════════════════════════════════════ */}
+        <div style={{ ...s.card, marginBottom:24 }}>
+          <div style={s.secLabel}>
+            <span style={{ display:'flex', alignItems:'center', gap:8 }}>
+              AI-Powered Recommendations
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:'rgba(45,212,191,0.1)', color:'var(--teal)', border:'1px solid rgba(45,212,191,0.25)' }}>GPT</span>
+            </span>
+            <button
+              onClick={fetchGptRecs}
+              disabled={gptLoading}
+              style={{ ...s.btnTeal, display:'flex', alignItems:'center', gap:6, opacity: gptLoading ? 0.6 : 1 }}
+            >
+              {gptLoading
+                ? <><Spinner size={12} color="#080c14" /> Generating…</>
+                : gptRecs ? '↻ Regenerate' : '✦ Generate with GPT'}
+            </button>
+          </div>
+
+          <p style={{ fontSize:'0.83rem', color:'var(--text-dim)', lineHeight:1.65, marginBottom:20 }}>
+            Sends your full portfolio context — holdings, risk profile, wellness score — to GPT for personalised investment guidance.
+          </p>
+
+          {gptError && <div style={s.errBox}>⚠ {gptError}</div>}
+
+          {/* Thinking state */}
+          {gptLoading && (
+            <div style={{ background:'rgba(45,212,191,0.04)', border:'1px solid rgba(45,212,191,0.14)', borderRadius:14, padding:'24px 20px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+                <Spinner size={18} color="var(--teal)" />
+                <span style={{ fontFamily:'var(--font-display)', fontWeight:600, fontSize:'0.9rem', color:'var(--teal)' }}>GPT is analysing your portfolio…</span>
+              </div>
+              <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
+                {['Reading holdings and risk profile…','Evaluating portfolio composition…','Generating personalised recommendations…'].map((t,i) => (
+                  <div key={t} style={{ display:'flex', alignItems:'center', gap:8, animation:`profilePulse 1.5s ease-in-out ${i*0.4}s infinite` }}>
+                    <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--teal)', flexShrink:0 }} />
+                    <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' }}>{t}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Empty / prompt state */}
+          {!gptLoading && !gptError && gptRecs === null && (
+            <div style={{ textAlign:'center', padding:'36px 20px' }}>
+              <div style={{ fontSize:'2.2rem', marginBottom:12 }}>✦</div>
+              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem', marginBottom:8 }}>GPT-Powered Portfolio Analysis</div>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.76rem', color:'var(--text-faint)', maxWidth:380, margin:'0 auto', lineHeight:1.7 }}>
+                Hit "Generate with GPT" for a personalised AI analysis based on your current holdings and risk profile.
+              </div>
+            </div>
+          )}
+
+          {/* Result — structured array */}
+          {!gptLoading && gptArray && (
+            <div style={{ display:'flex', flexDirection:'column', gap:12, animation:'profileFadeUp 0.4s ease' }}>
+              {gptArray.map((rec, i) => <RecCard key={i} rec={rec} i={i} tint />)}
+            </div>
+          )}
+
+          {/* Result — free-text / markdown */}
+          {!gptLoading && gptText && (
+            <div style={{ animation:'profileFadeUp 0.4s ease' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14, padding:'10px 14px', background:'rgba(45,212,191,0.05)', border:'1px solid rgba(45,212,191,0.15)', borderRadius:10 }}>
+                <span>🤖</span>
+                <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:'var(--teal)' }}>
+                  GPT Analysis · {authUser.user_id} · {new Date().toLocaleTimeString()}
+                </span>
+              </div>
+              <div style={{ fontSize:'0.86rem', color:'var(--text-dim)', lineHeight:1.85, whiteSpace:'pre-wrap', background:'var(--surface2)', borderRadius:12, padding:'18px 20px', border:'1px solid var(--border)' }}>
+                {gptText}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Peer Benchmarking — Future Upgrade overlay */}
         <div style={{ ...s.card, marginBottom:24, position:'relative', overflow:'hidden' }}>
           <div style={{ position:'absolute', inset:0, background:'rgba(8,12,20,0.75)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, borderRadius:18 }}>
@@ -374,7 +651,7 @@ export default function Profile() {
 }
 
 const s = {
-  topbar: { display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:36, flexWrap:'wrap', gap:16 },
+  topbar:    { display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:36, flexWrap:'wrap', gap:16 },
   pageTitle: { fontFamily:'var(--font-display)', fontWeight:800, fontSize:'clamp(1.8rem,3vw,2.6rem)', lineHeight:1.1, marginBottom:6 },
   badgePill: {
     background:'var(--surface)', border:'1px solid var(--border)',
@@ -400,13 +677,30 @@ const s = {
     border:'1.5px dashed rgba(201,168,76,0.4)',
     animation:'spinSlow 20s linear infinite', pointerEvents:'none',
   },
-  userName: { fontFamily:'var(--font-display)', fontSize:'1.45rem', fontWeight:800, marginBottom:6 },
-  twoCol: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:22, marginBottom:22 },
-  card: { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, padding:24 },
-  secLabel: {
+  userName:  { fontFamily:'var(--font-display)', fontSize:'1.45rem', fontWeight:800, marginBottom:6 },
+  twoCol:    { display:'grid', gridTemplateColumns:'1fr 1fr', gap:22, marginBottom:22 },
+  card:      { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, padding:24 },
+  secLabel:  {
     fontFamily:'var(--font-mono)', fontSize:'0.67rem',
     color:'var(--text-faint)', textTransform:'uppercase',
     letterSpacing:'0.13em', marginBottom:16,
     display:'flex', justifyContent:'space-between', alignItems:'center',
+  },
+  errBox: {
+    background:'rgba(248,113,113,0.07)', border:'1px solid rgba(248,113,113,0.2)',
+    borderRadius:10, padding:'11px 15px', color:'var(--red)',
+    fontFamily:'var(--font-mono)', fontSize:'0.76rem', marginBottom:16,
+  },
+  btnGold: {
+    background:'linear-gradient(135deg,var(--gold),#b8922e)',
+    border:'none', color:'#080c14', padding:'10px 22px', borderRadius:10,
+    fontFamily:'var(--font-display)', fontSize:'0.84rem', fontWeight:700,
+    boxShadow:'0 4px 16px rgba(201,168,76,0.22)', cursor:'pointer', transition:'opacity 0.2s',
+  },
+  btnTeal: {
+    background:'linear-gradient(135deg,var(--teal),#0e9f84)',
+    border:'none', color:'#080c14', padding:'8px 18px', borderRadius:8,
+    fontFamily:'var(--font-display)', fontSize:'0.78rem', fontWeight:700,
+    boxShadow:'0 4px 14px rgba(45,212,191,0.22)', cursor:'pointer', transition:'opacity 0.2s',
   },
 }
