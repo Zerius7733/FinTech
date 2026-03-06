@@ -1,4 +1,5 @@
 import asyncio
+import html
 import json
 import math
 import os
@@ -8,6 +9,9 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import parse_qs, urlparse, unquote
+from urllib.parse import quote_plus
+import xml.etree.ElementTree as ET
 
 import httpx
 import numpy as np
@@ -64,9 +68,20 @@ class TTLCache:
     def set(self, key: str, payload: Dict[str, Any]) -> None:
         self._store[key] = (time.time() + self.ttl_seconds, payload)
 
+    def delete(self, key: str) -> None:
+        self._store.pop(key, None)
+
 
 INSIGHTS_CACHE = TTLCache(ttl_seconds=90 * 24 * 60 * 60)
 _ENV_LOADED = False
+
+
+INSIGHTS_DISK_DIR_MAP: Dict[str, str] = {
+    "stock": "stocks_insights",
+    "crypto": "crypto_insights",
+    "commodity": "commodities_insights",
+}
+INSIGHTS_DISK_TTL_SECONDS = 7 * 24 * 60 * 60
 
 
 # ----------------------------
@@ -131,6 +146,84 @@ def _load_env_once() -> None:
 
 def _now_utc_date() -> date:
     return datetime.now(timezone.utc).date()
+
+
+def _now_utc_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _insight_disk_cache_path(asset_type: str, symbol: str) -> Path:
+    folder = INSIGHTS_DISK_DIR_MAP.get(asset_type, f"{asset_type}_insights")
+    base = Path(__file__).resolve().parents[1] / "json_data" / folder
+    return base / f"{symbol.lower()}.json"
+
+
+def _is_disk_cache_fresh(path: Path, ttl_seconds: int = INSIGHTS_DISK_TTL_SECONDS) -> bool:
+    if not path.exists():
+        return False
+    try:
+        age_seconds = time.time() - path.stat().st_mtime
+        return age_seconds <= ttl_seconds
+    except Exception:
+        return False
+
+
+def _load_disk_cached_insight(asset_type: str, symbol: str, months: int) -> Optional[Dict[str, Any]]:
+    path = _insight_disk_cache_path(asset_type, symbol)
+    if not path.exists():
+        return None
+    # Treat stale files as cache-miss so they can be recomputed/refreshed.
+    if not _is_disk_cache_fresh(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        if not isinstance(payload, dict):
+            return None
+        by_months = payload.get("insights_by_months")
+        if not isinstance(by_months, dict):
+            return None
+        key = str(months)
+        cached = by_months.get(key)
+        if isinstance(cached, dict):
+            return cached
+        return None
+    except Exception:
+        return None
+
+
+def _save_disk_cached_insight(asset_type: str, symbol: str, months: int, result: Dict[str, Any]) -> None:
+    path = _insight_disk_cache_path(asset_type, symbol)
+    # Respect file TTL: only write if missing or stale (>7 days).
+    if path.exists() and _is_disk_cache_fresh(path):
+        return
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    payload: Dict[str, Any] = {
+        "type": asset_type,
+        "symbol": symbol.upper(),
+        "updated_at": _now_utc_iso(),
+        "insights_by_months": {},
+    }
+    if path.exists():
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+            if isinstance(existing, dict):
+                payload.update(existing)
+                if not isinstance(payload.get("insights_by_months"), dict):
+                    payload["insights_by_months"] = {}
+        except Exception:
+            pass
+
+    payload["type"] = asset_type
+    payload["symbol"] = symbol.upper()
+    payload["updated_at"] = _now_utc_iso()
+    payload["insights_by_months"][str(months)] = result
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
 
 
 def _period_window(months: int) -> Tuple[date, date]:
@@ -619,6 +712,291 @@ def _extract_openai_web_results(resp_json: Dict[str, Any]) -> List[Dict[str, Any
     return results
 
 
+def _clean_text(value: str) -> str:
+    text = html.unescape(value or "")
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _extract_article_snippet_from_html(raw_html: str) -> str:
+    if not raw_html:
+        return ""
+
+    body = re.sub(r"(?is)<script.*?>.*?</script>", " ", raw_html)
+    body = re.sub(r"(?is)<style.*?>.*?</style>", " ", body)
+
+    meta_patterns = [
+        r"(?is)<meta[^>]+property=[\"']og:description[\"'][^>]+content=[\"'](.*?)[\"']",
+        r"(?is)<meta[^>]+name=[\"']description[\"'][^>]+content=[\"'](.*?)[\"']",
+    ]
+    for pattern in meta_patterns:
+        found = re.search(pattern, body)
+        if found:
+            desc = _clean_text(found.group(1))
+            if len(desc) >= 40:
+                return desc[:700]
+
+    paragraphs = re.findall(r"(?is)<p[^>]*>(.*?)</p>", body)
+    extracted: List[str] = []
+    for para in paragraphs:
+        txt = re.sub(r"(?is)<[^>]+>", " ", para)
+        txt = _clean_text(txt)
+        if len(txt) >= 40:
+            extracted.append(txt)
+        if len(extracted) >= 3:
+            break
+
+    if not extracted:
+        return ""
+    return " ".join(extracted)[:900]
+
+
+def _extract_article_context_from_html(raw_html: str) -> str:
+    if not raw_html:
+        return ""
+
+    body = re.sub(r"(?is)<script.*?>.*?</script>", " ", raw_html)
+    body = re.sub(r"(?is)<style.*?>.*?</style>", " ", body)
+
+    parts: List[str] = []
+
+    # Title
+    title_match = re.search(r"(?is)<title[^>]*>(.*?)</title>", body)
+    if title_match:
+        t = _clean_text(re.sub(r"(?is)<[^>]+>", " ", title_match.group(1)))
+        if len(t) >= 20:
+            parts.append(t)
+
+    # Description
+    for pattern in (
+        r"(?is)<meta[^>]+property=[\"']og:description[\"'][^>]+content=[\"'](.*?)[\"']",
+        r"(?is)<meta[^>]+name=[\"']description[\"'][^>]+content=[\"'](.*?)[\"']",
+    ):
+        found = re.search(pattern, body)
+        if found:
+            desc = _clean_text(found.group(1))
+            if len(desc) >= 40:
+                parts.append(desc)
+                break
+
+    # JSON-LD article body
+    ld_blocks = re.findall(r"(?is)<script[^>]+type=[\"']application/ld\\+json[\"'][^>]*>(.*?)</script>", raw_html)
+    for block in ld_blocks[:3]:
+        try:
+            payload = json.loads(block)
+        except Exception:
+            continue
+        candidates = payload if isinstance(payload, list) else [payload]
+        for item in candidates:
+            if not isinstance(item, dict):
+                continue
+            article_body = item.get("articleBody")
+            if isinstance(article_body, str):
+                txt = _clean_text(article_body)
+                if len(txt) >= 120:
+                    parts.append(txt[:1400])
+                    break
+        if any(len(p) >= 120 for p in parts):
+            break
+
+    # Fallback paragraph extraction
+    if not any(len(p) >= 120 for p in parts):
+        paragraphs = re.findall(r"(?is)<p[^>]*>(.*?)</p>", body)
+        extracted: List[str] = []
+        for para in paragraphs:
+            txt = re.sub(r"(?is)<[^>]+>", " ", para)
+            txt = _clean_text(txt)
+            if len(txt) >= 60:
+                extracted.append(txt)
+            if len(extracted) >= 6:
+                break
+        if extracted:
+            parts.append(" ".join(extracted))
+
+    context = _clean_text(" ".join(parts))
+    return context[:1800]
+
+
+def _is_low_value_snippet(snippet: str) -> bool:
+    text = (snippet or "").strip().lower()
+    if not text:
+        return True
+    low_value_markers = [
+        "comprehensive, up-to-date news coverage, aggregated from sources all over the world by google news",
+        "aggregated from sources all over the world by google news",
+        "google news",
+    ]
+    if any(marker in text for marker in low_value_markers):
+        # Keep if it still appears content-rich; otherwise discard.
+        return len(text) < 220
+    return False
+
+
+def _headline_inference(headline: str) -> str:
+    h = (headline or "").lower()
+    rules = [
+        (("earnings", "quarter", "q1", "q2", "q3", "q4"), "earnings-driven sentiment"),
+        (("forecast", "guidance", "outlook"), "forward-guidance repricing"),
+        (("analyst", "price target", "upgrade", "downgrade"), "analyst expectation changes"),
+        (("ai", "chip", "robotaxi"), "AI/technology narrative repricing"),
+        (("lawsuit", "sec", "investigation", "regulatory"), "legal/regulatory uncertainty"),
+        (("cost", "margin", "profitability"), "cost or margin concerns"),
+    ]
+    for keywords, label in rules:
+        if any(k in h for k in keywords):
+            return label
+    return "headline-driven sentiment shifts"
+
+
+def _extract_url_from_google_news_link(url: str) -> str | None:
+    parsed = urlparse(url)
+    if "news.google.com" not in (parsed.netloc or "").lower():
+        return None
+    query = parse_qs(parsed.query or "")
+    for key in ("url", "q", "u"):
+        vals = query.get(key, [])
+        if vals:
+            candidate = unquote(str(vals[0])).strip()
+            if candidate.lower().startswith(("http://", "https://")) and "news.google.com" not in candidate:
+                return candidate
+    return None
+
+
+async def _resolve_article_url(client: httpx.AsyncClient, url: str) -> str:
+    direct = _extract_url_from_google_news_link(url)
+    if direct:
+        return direct
+    try:
+        resp = await client.get(
+            url,
+            timeout=8.0,
+            follow_redirects=True,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        final_url = str(resp.url)
+        if final_url and "news.google.com" not in final_url:
+            return final_url
+
+        # Try to recover publisher URL from HTML payload.
+        txt = resp.text or ""
+        patterns = [
+            r"https?://(?!news\\.google\\.com)[^\"'\\s<>]+",
+            r"url=(https?%3A%2F%2F[^\"'\\s<>]+)",
+        ]
+        for pattern in patterns:
+            m = re.search(pattern, txt, flags=re.IGNORECASE)
+            if not m:
+                continue
+            candidate = m.group(1)
+            candidate = unquote(candidate).strip()
+            if candidate.lower().startswith(("http://", "https://")) and "news.google.com" not in candidate:
+                return candidate
+    except Exception:
+        pass
+    return url
+
+
+def _extract_first_href_from_html_fragment(fragment: str) -> str:
+    if not fragment:
+        return ""
+    matches = re.findall(r'href=[\"\'](https?://[^\"\']+)[\"\']', fragment, flags=re.IGNORECASE)
+    for candidate in matches:
+        host = (urlparse(candidate).netloc or "").lower()
+        if "news.google.com" in host:
+            continue
+        return candidate.strip()
+    return ""
+
+
+async def _resolve_google_news_url_via_rss_search(
+    client: httpx.AsyncClient,
+    *,
+    headline: str,
+    source: str = "",
+) -> str:
+    query = " ".join([headline.strip(), source.strip()]).strip() or headline.strip()
+    if not query:
+        return ""
+    rss_url = (
+        "https://news.google.com/rss/search?"
+        f"q={quote_plus(query)}&hl=en-US&gl=US&ceid=US:en"
+    )
+    try:
+        resp = await client.get(
+            rss_url,
+            timeout=8.0,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        if resp.status_code >= 400:
+            return ""
+        root = ET.fromstring(resp.text)
+        items = root.findall(".//item")
+        if not items:
+            return ""
+        for item in items[:5]:
+            description_html = (item.findtext("description") or "").strip()
+            url = _extract_first_href_from_html_fragment(description_html)
+            if url:
+                return url
+        return ""
+    except Exception:
+        return ""
+
+
+async def _enrich_drivers_with_article_snippets(
+    client: httpx.AsyncClient,
+    drivers: List[Dict[str, Any]],
+    *,
+    max_articles: int = 8,
+) -> List[Dict[str, Any]]:
+    if not drivers:
+        return drivers
+
+    out: List[Dict[str, Any]] = []
+    seen_urls = set()
+    processed = 0
+
+    for driver in drivers:
+        row = dict(driver)
+        url = str(row.get("url", "")).strip()
+        if (
+            url
+            and processed < max_articles
+            and url not in seen_urls
+            and url.lower().startswith(("http://", "https://"))
+        ):
+            seen_urls.add(url)
+            processed += 1
+            try:
+                article_url = await _resolve_article_url(client, url)
+                if "news.google.com" in (urlparse(article_url).netloc or "").lower():
+                    recovered = await _resolve_google_news_url_via_rss_search(
+                        client,
+                        headline=str(row.get("headline", "")),
+                        source=str(row.get("source", "")),
+                    )
+                    if recovered:
+                        article_url = recovered
+                row["article_url"] = article_url
+                resp = await client.get(
+                    article_url,
+                    timeout=8.0,
+                    follow_redirects=True,
+                    headers={"User-Agent": "Mozilla/5.0"},
+                )
+                ctype = str(resp.headers.get("content-type", "")).lower()
+                if resp.status_code < 400 and ("text/html" in ctype or "<html" in resp.text[:300].lower()):
+                    context = _extract_article_context_from_html(resp.text)
+                    if context and not _is_low_value_snippet(context):
+                        row["article_context"] = context
+                        row["article_snippet"] = context[:700]
+            except Exception:
+                pass
+
+        out.append(row)
+
+    return out
+
+
 async def _build_drivers(
     news_provider: NewsProvider,
     asset_type: str,
@@ -739,7 +1117,9 @@ async def _generate_narrative_with_llm(
         "Use ONLY the provided metrics, notable_moves, and drivers. "
         "Do not provide investment advice or recommendations.\n"
         "Forbidden words/phrases: buy, sell, hold, should, recommend, opportunity, undervalued, overvalued, target price.\n"
-        "Write neutral descriptive language only."
+        "Write neutral descriptive language only. "
+        "If causality is uncertain, use cautious phrasing like 'coincided with' or 'may have contributed'. "
+        "When article_context or article_snippet is present in drivers, prioritize its key points over headline-only inference."
     )
 
     user_payload = {
@@ -749,7 +1129,17 @@ async def _generate_narrative_with_llm(
         "task": (
             "Return STRICT JSON only with keys: "
             "narrative (string), selected_driver_urls (array of urls you used, subset of drivers), citation_map (object id->url). "
-            "Narrative should be concise (5-10 sentences), mention notable dates/moves, and cite with [1], [2] etc that map to citation_map."
+            "Narrative must be one detailed paragraph (~7-10 sentences) in this style: "
+            "performance summary -> volatility/drawdown -> largest up/down sessions -> volume context -> news/key drivers with citations. "
+            "Use the EXACT numeric values from metrics/notable_moves (do not create new prices, dates, or percentages). "
+            "It must include: start_price, end_price, return_pct, volatility_annualized, max_drawdown_pct, "
+            "largest_up_day, largest_down_day, and at least one high_volume_day if available. "
+            "Tie each largest_up_day and largest_down_day to at least one nearby driver headline by date when possible, "
+            "and cite with [1], [2] etc that map to citation_map. "
+            "Summarize article key points from article_context (or article_snippet) when available. "
+            "If article context is missing, infer likely catalysts directly from headline wording and state clearly that it is inference. "
+            "If evidence is weak, state uncertainty instead of inferring specifics. "
+            "Do not invent facts not present in metrics/notable_moves/drivers."
         ),
     }
 
@@ -799,37 +1189,162 @@ async def _generate_narrative_with_llm(
         )
 
     def _deterministic_narrative_fallback() -> Tuple[str, List[Dict[str, Any]]]:
-        move_bits: List[str] = []
-        for move in notable_moves[:4]:
-            move_bits.append(
-                f"{move.get('date')} ({float(move.get('move_pct', 0.0)):.2f}%, {move.get('tag', 'move').replace('_', ' ')})"
-            )
+        up_moves = [m for m in notable_moves if m.get("tag") == "largest_up_day"][:2]
+        down_moves = [m for m in notable_moves if m.get("tag") == "largest_down_day"][:2]
+        high_vol = [m for m in notable_moves if m.get("tag") == "high_volume_day"][:2]
 
-        top_drivers = drivers[:3]
         citations: List[Dict[str, Any]] = []
-        driver_bits: List[str] = []
-        for idx, driver in enumerate(top_drivers, start=1):
-            url = str(driver.get("url", "")).strip()
-            if url:
-                citations.append({"id": idx, "url": url})
-            driver_bits.append(
-                f"{driver.get('date', '')}: {str(driver.get('headline', '')).strip()} [{idx}]"
-            )
+        citation_by_url: Dict[str, int] = {}
 
-        narrative_parts = [
+        def _best_driver_url(driver: Dict[str, Any]) -> str:
+            article_url = str(driver.get("article_url", "")).strip()
+            if article_url:
+                return article_url
+            return str(driver.get("url", "")).strip()
+
+        def _cite_driver(driver: Dict[str, Any]) -> str:
+            url = _best_driver_url(driver)
+            if not url:
+                return ""
+            if url in citation_by_url:
+                return f"[{citation_by_url[url]}]"
+            idx = len(citations) + 1
+            citation_by_url[url] = idx
+            citations.append({"id": idx, "url": url})
+            return f"[{idx}]"
+
+        def _parse_driver_date(value: str) -> Optional[date]:
+            try:
+                return date.fromisoformat(value)
+            except Exception:
+                return None
+
+        def _drivers_near(move_date: str, limit: int = 2) -> List[Dict[str, Any]]:
+            move_dt = _parse_driver_date(move_date)
+            if move_dt is None:
+                return []
+            scored: List[Tuple[int, Dict[str, Any]]] = []
+            for d in drivers:
+                d_date = _parse_driver_date(str(d.get("date", "")))
+                if d_date is None:
+                    continue
+                gap = abs((d_date - move_dt).days)
+                if gap <= 3:
+                    scored.append((gap, d))
+            scored.sort(key=lambda x: x[0])
+            return [row for _, row in scored[:limit]]
+
+        start_price = float(metrics.get("start_price", 0.0))
+        end_price = float(metrics.get("end_price", 0.0))
+        ret = float(metrics.get("return_pct", 0.0))
+        vol = float(metrics.get("volatility_annualized", 0.0)) * 100.0
+        mdd = float(metrics.get("max_drawdown_pct", 0.0))
+
+        parts: List[str] = [
             (
-                f"Over the selected period, price moved from {metrics.get('start_price', 0)} to "
-                f"{metrics.get('end_price', 0)} ({metrics.get('return_pct', 0)}%), with annualized volatility "
-                f"of {metrics.get('volatility_annualized', 0)} and maximum drawdown of {metrics.get('max_drawdown_pct', 0)}%."
+                f"Over the analyzed period, price moved {ret:.2f}% from {start_price:.2f} to {end_price:.2f}, "
+                f"with annualized volatility around {vol:.1f}% and maximum drawdown near {abs(mdd):.2f}%."
             )
         ]
-        if move_bits:
-            narrative_parts.append("Notable sessions included " + "; ".join(move_bits) + ".")
-        if driver_bits:
-            narrative_parts.append("Retrieved market-related coverage included " + "; ".join(driver_bits) + ".")
+
+        if up_moves:
+            top_up = up_moves[0]
+            up_near = _drivers_near(str(top_up.get("date", "")), limit=1)
+            up_context = ""
+            if up_near:
+                d = up_near[0]
+                ref = _cite_driver(d)
+                inferred = _headline_inference(str(d.get("headline", "")))
+                up_context = (
+                    f" This may have coincided with {d.get('headline', 'related coverage')} "
+                    f"on {d.get('date', '')} {ref}, suggesting {inferred}."
+                )
+            parts.append(
+                "The strongest up session was "
+                f"{top_up.get('date')} ({float(top_up.get('move_pct', 0.0)):.2f}%), "
+                f"closing at {float(top_up.get('close', 0.0)):.2f}."
+                + up_context
+            )
+            if len(up_moves) > 1:
+                nxt = up_moves[1]
+                nxt_near = _drivers_near(str(nxt.get("date", "")), limit=1)
+                nxt_context = ""
+                if nxt_near:
+                    d2 = nxt_near[0]
+                    ref2 = _cite_driver(d2)
+                    inferred2 = _headline_inference(str(d2.get("headline", "")))
+                    nxt_context = (
+                        f" It may have been influenced by {d2.get('headline', 'related news')} "
+                        f"({d2.get('date', '')}) {ref2}, implying {inferred2}."
+                    )
+                parts.append(
+                    "Another notable gain occurred on "
+                    f"{nxt.get('date')} ({float(nxt.get('move_pct', 0.0)):.2f}%)."
+                    + nxt_context
+                )
+
+        if down_moves:
+            top_down = down_moves[0]
+            down_near = _drivers_near(str(top_down.get("date", "")), limit=1)
+            down_context = ""
+            if down_near:
+                dd = down_near[0]
+                dref = _cite_driver(dd)
+                inferred_down = _headline_inference(str(dd.get("headline", "")))
+                down_context = (
+                    f" This may have coincided with {dd.get('headline', 'related coverage')} "
+                    f"on {dd.get('date', '')} {dref}, suggesting {inferred_down}."
+                )
+            if len(down_moves) > 1:
+                second_down = down_moves[1]
+                second_near = _drivers_near(str(second_down.get("date", "")), limit=1)
+                second_context = ""
+                if second_near:
+                    sd = second_near[0]
+                    sref = _cite_driver(sd)
+                    inferred_second = _headline_inference(str(sd.get("headline", "")))
+                    second_context = (
+                        f" This may align with {sd.get('headline', 'related news')} "
+                        f"({sd.get('date', '')}) {sref}, implying {inferred_second}."
+                    )
+                parts.append(
+                    "The sharpest decline was "
+                    f"{top_down.get('date')} ({float(top_down.get('move_pct', 0.0)):.2f}%), "
+                    "with additional downside seen on "
+                    f"{second_down.get('date')} ({float(second_down.get('move_pct', 0.0)):.2f})."
+                    + down_context
+                    + second_context
+                )
+            else:
+                parts.append(
+                    "The sharpest decline was "
+                    f"{top_down.get('date')} ({float(top_down.get('move_pct', 0.0)):.2f})."
+                    + down_context
+                )
+
+        if high_vol:
+            hv_dates = ", ".join(str(m.get("date", "")) for m in high_vol if m.get("date"))
+            parts.append(
+                f"High-volume activity was concentrated on {hv_dates}, indicating elevated trading interest."
+            )
+
+        if drivers:
+            top_drivers = drivers[:4]
+            driver_bits: List[str] = []
+            for d in top_drivers:
+                ref = _cite_driver(d)
+                if not ref:
+                    continue
+                driver_bits.append(f"{d.get('date', '')}: {d.get('headline', '')} {ref}")
+            parts.append(
+                "News flow during key windows included "
+                + "; ".join(driver_bits[:4])
+                + ", which may have contributed to short-term sentiment shifts."
+            )
         else:
-            narrative_parts.append("News retrieval returned limited coverage for the selected window.")
-        return " ".join(narrative_parts), citations
+            parts.append("News retrieval returned limited coverage for the selected window.")
+
+        return " ".join(parts), citations
 
     try:
         parsed = await _call_model(system_base)
@@ -895,7 +1410,16 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
     cache_key = f"{atype}:{sym}:{months}"
     cached = INSIGHTS_CACHE.get(cache_key)
     if cached is not None:
-        return cached
+        # If disk cache was deleted or became stale, do not keep serving stale in-memory payload.
+        disk_path = _insight_disk_cache_path(atype, sym)
+        if _is_disk_cache_fresh(disk_path):
+            return cached
+        INSIGHTS_CACHE.delete(cache_key)
+
+    disk_cached = _load_disk_cached_insight(atype, sym, months)
+    if disk_cached is not None:
+        INSIGHTS_CACHE.set(cache_key, disk_cached)
+        return disk_cached
 
     start, end = _period_window(months)
 
@@ -914,6 +1438,7 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
         notable_moves = _build_notable_moves(frame)
 
         drivers = await _build_drivers(news_provider, atype, price_series.symbol, price_series.name, notable_moves)
+        drivers = await _enrich_drivers_with_article_snippets(client, drivers)
 
         # Narrative via Ollama (grounded in metrics + drivers)
         narrative, citations = await _generate_narrative_with_llm(client, metrics, notable_moves, drivers)
@@ -943,4 +1468,5 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
     }
 
     INSIGHTS_CACHE.set(cache_key, result)
+    _save_disk_cached_insight(atype, sym, months, result)
     return result

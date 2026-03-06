@@ -20,7 +20,7 @@ from backend.services.user_profile_registry import rewrite_user_profiles_with_or
 
 
 BASE_DIR = Path(__file__).resolve().parent
-JSON_PATH = BASE_DIR / "json_data" / "user.json"
+USER_JSON_PATH = BASE_DIR / "json_data" / "user.json"
 CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
 ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
@@ -43,7 +43,7 @@ app = FastAPI(
     ],
 )
 
-rewrite_user_profiles_with_order(JSON_PATH)
+rewrite_user_profiles_with_order(USER_JSON_PATH)
 
 
 def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
@@ -55,13 +55,13 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _read_users_data() -> Dict[str, Any]:
-    with open(JSON_PATH, "r", encoding="utf-8") as f:
+    with open(USER_JSON_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
     return normalize_users_data(data)
 
 
 def _write_users_data(data: Dict[str, Any]) -> None:
-    with open(JSON_PATH, "w", encoding="utf-8") as f:
+    with open(USER_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(normalize_users_data(data), f, indent=2)
 
 
@@ -355,7 +355,7 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
             password=payload.password,
         )
         api.add_default_user_profile(
-            json_path=JSON_PATH,
+            USER_JSON_PATH=USER_JSON_PATH,
             user_id=result["user_id"],
             name=result["username"],
         )
@@ -842,7 +842,7 @@ def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, An
 def update_assets() -> Dict[str, Any]:
     try:
         print("[api] /update/assets called")
-        result = api.update_assets_file(str(JSON_PATH), str(CSV_PATH))
+        result = api.update_assets_file(str(USER_JSON_PATH), str(CSV_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"assets update failed: {exc}") from exc
@@ -853,7 +853,7 @@ def update_prices() -> Dict[str, Any]:
     try:
         print("[api] /update/prices called")
         # Backward-compatible alias: portfolio prices only.
-        result = api.update_stock_prices_file(str(JSON_PATH))
+        result = api.update_stock_prices_file(str(USER_JSON_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"price update failed: {exc}") from exc
@@ -863,7 +863,7 @@ def update_prices() -> Dict[str, Any]:
 def update_portfolio_prices() -> Dict[str, Any]:
     try:
         print("[api] /update/prices/portfolio called")
-        result = api.update_stock_prices_file(str(JSON_PATH))
+        result = api.update_stock_prices_file(str(USER_JSON_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"portfolio price update failed: {exc}") from exc
@@ -885,7 +885,7 @@ def update_listing_cache_prices() -> Dict[str, Any]:
 def update_wellness() -> Dict[str, Any]:
     try:
         print("[api] /update/wellness called")
-        result = api.update_wellness_file(str(JSON_PATH))
+        result = api.update_wellness_file(str(USER_JSON_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"wellness update failed: {exc}") from exc
@@ -895,9 +895,9 @@ def update_wellness() -> Dict[str, Any]:
 def update_all() -> Dict[str, Any]:
     try:
         print("[api] /update/all called")
-        api.update_assets_file(str(JSON_PATH), str(CSV_PATH))
-        api.update_stock_prices_file(str(JSON_PATH))
-        result = api.update_wellness_file(str(JSON_PATH))
+        api.update_assets_file(str(USER_JSON_PATH), str(CSV_PATH))
+        api.update_stock_prices_file(str(USER_JSON_PATH))
+        result = api.update_wellness_file(str(USER_JSON_PATH))
         print("[api] /update/all completed")
         summary = _safe_summary(result)
         summary["pipeline"] = ["assets", "prices", "wellness"]
