@@ -10,15 +10,15 @@
           "symbol": "AAPL",
           "qty": 12.0,
           "avg_price": 182.4,
-          "market_value": 3123.48,
-          "current_price": 260.29
+          "market_value": 3072.42,
+          "current_price": 256.035
         },
         {
           "symbol": "MSFT",
           "qty": 6.0,
           "avg_price": 410.2,
-          "market_value": 2464.08,
-          "current_price": 410.68
+          "market_value": 2460.0,
+          "current_price": 410.0
         }
       ],
       "cryptos": [
@@ -26,66 +26,67 @@
           "symbol": "BTC-USD",
           "qty": 0.01,
           "avg_price": 45000.0,
-          "current_price": 70734.0078,
-          "market_value": 707.34
+          "current_price": 68347.9297,
+          "market_value": 683.48
         },
         {
           "symbol": "ETH-USD",
           "qty": 2.0,
           "avg_price": 2078.15,
-          "current_price": 2075.2961,
+          "current_price": 1978.5734,
           "name": "Ethereum",
-          "market_value": 4150.59
+          "market_value": 3957.15
         },
         {
           "symbol": "DOGE-USD",
           "qty": 23456.0,
           "avg_price": 0.09314,
-          "current_price": 0.0936,
+          "current_price": 0.0907,
           "name": "Dogecoin",
-          "market_value": 2195.48
+          "market_value": 2127.46
         },
         {
           "symbol": "BCH-USD",
           "qty": 3.0,
           "avg_price": 457.81,
-          "current_price": 457.6256,
+          "current_price": 450.0366,
           "name": "Bitcoin Cash",
-          "market_value": 1372.88
+          "market_value": 1350.11
         },
         {
           "symbol": "BNB-USD",
           "qty": 2.0,
           "avg_price": 648.09,
-          "current_price": 645.1313,
+          "current_price": 631.4469,
           "name": "BNB",
-          "market_value": 1290.26
+          "market_value": 1262.89
         }
       ],
       "commodities": []
     },
-    "portfolio_value": 15304.11,
-    "total_balance": 31904.61,
-    "net_worth": -443095.39,
+    "portfolio_value": 14913.51,
+    "total_balance": 31514.01,
+    "net_worth": -443485.99,
     "income": 5000.0,
     "mortgage": 300000.0,
     "estate": 500000.0,
     "wellness_metrics": {
       "liquidity_months": 3.32,
       "liquidity_score": 55.34,
-      "diversification_hhi": 0.179,
-      "diversification_score": 95.78,
+      "diversification_hhi": 0.1779,
+      "diversification_score": 95.91,
       "debt_income_ratio": 7.9167,
       "debt_income_score": 1.19
     },
     "risk_profile": "High",
-    "financial_wellness_score": 59.31,
-    "financial_stress_index": 58.23
+    "financial_wellness_score": 59.38,
+    "financial_stress_index": 58.21,
+    "expenses": 0.0
   },
   "u002": {
     "name": "Brandon Lim",
     "age": 26,
-    "cash_balance": 6004,
+    "cash_balance": 6400.75,
     "liability": 6400.75,
     "portfolio": {
       "stocks": [
@@ -94,38 +95,22 @@
           "qty": 0.0,
           "avg_price": 228.5,
           "market_value": 0.0,
-          "current_price": 405.55
+          "current_price": 399.29
         },
         {
           "symbol": "NVDA",
           "qty": 0.0,
           "avg_price": 870.0,
           "market_value": 0.0,
-          "current_price": 183.34
+          "current_price": 181.085
         }
       ],
       "cryptos": [
         {
-          "symbol": "BTC-USD",
-          "qty": 4.0,
-          "avg_price": 2000.0,
-          "current_price": 70734.0078,
-          "market_value": 282936.03,
-          "name": "Bitcoin"
-        },
-        {
-          "symbol": "ETH-USD",
-          "qty": 4.0,
-          "avg_price": 2078.15,
-          "current_price": 2075.2961,
-          "market_value": 8301.18,
-          "name": "Ethereum"
-        },
-        {
           "symbol": "XLM-USD",
           "qty": 0.0,
           "avg_price": 0.155,
-          "current_price": 0.1578,
+          "current_price": 0.1522,
           "name": "Stellar",
           "market_value": 0.0
         }
@@ -135,35 +120,36 @@
           "symbol": "GC=F",
           "qty": 0.0,
           "avg_price": 2180.0,
-          "current_price": 5126.2998,
+          "current_price": 5165.2002,
           "market_value": 0.0
         },
         {
           "symbol": "SI=F",
           "qty": 0.0,
           "avg_price": 24.5,
-          "current_price": 84.25,
+          "current_price": 84.49,
           "market_value": 0.0
         }
       ]
     },
-    "portfolio_value": 291237.21,
-    "total_balance": 291243.61,
-    "net_worth": 284842.86,
+    "portfolio_value": 0.0,
+    "total_balance": 6400.75,
+    "net_worth": 0.0,
     "income": 4000.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 1.5,
-      "liquidity_score": 25.02,
-      "diversification_hhi": 0.9446,
-      "diversification_score": 11.08,
+      "liquidity_months": 1.6,
+      "liquidity_score": 26.67,
+      "diversification_hhi": 0.0,
+      "diversification_score": 0.0,
       "debt_income_ratio": 0.1333,
       "debt_income_score": 100.0
     },
     "risk_profile": "High",
-    "financial_wellness_score": 40.54,
-    "financial_stress_index": 47.78
+    "financial_wellness_score": 35.33,
+    "financial_stress_index": 49.33,
+    "expenses": 0.0
   },
   "u003": {
     "name": "Cheryl Ng",
@@ -176,15 +162,15 @@
           "symbol": "TSLA",
           "qty": 4,
           "avg_price": 228.5,
-          "market_value": 1622.2,
-          "current_price": 405.55
+          "market_value": 1597.16,
+          "current_price": 399.29
         },
         {
           "symbol": "NVDA",
           "qty": 3,
           "avg_price": 870.0,
-          "market_value": 550.02,
-          "current_price": 183.34
+          "market_value": 543.25,
+          "current_price": 181.085
         }
       ],
       "cryptos": [
@@ -192,15 +178,15 @@
           "symbol": "BTC-USD",
           "qty": 0.03,
           "avg_price": 45000.0,
-          "current_price": 70734.0078,
-          "market_value": 2122.02
+          "current_price": 68347.9297,
+          "market_value": 2050.44
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.18,
           "avg_price": 2500.0,
-          "current_price": 2075.2961,
-          "market_value": 373.55
+          "current_price": 1978.5734,
+          "market_value": 356.14
         }
       ],
       "commodities": [
@@ -208,35 +194,36 @@
           "symbol": "GC=F",
           "qty": 0.35,
           "avg_price": 2200.0,
-          "current_price": 5126.2998,
-          "market_value": 1794.2
+          "current_price": 5165.2002,
+          "market_value": 1807.82
         },
         {
           "symbol": "SI=F",
           "qty": 10.0,
           "avg_price": 24.8,
-          "current_price": 84.25,
-          "market_value": 842.5
+          "current_price": 84.49,
+          "market_value": 844.9
         }
       ]
     },
-    "portfolio_value": 7304.49,
-    "total_balance": 16304.69,
-    "net_worth": 7304.49,
+    "portfolio_value": 7199.71,
+    "total_balance": 16199.91,
+    "net_worth": 7199.71,
     "income": 3000.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 3.0,
       "liquidity_score": 50.0,
-      "diversification_hhi": 0.3477,
-      "diversification_score": 86.97,
+      "diversification_hhi": 0.3471,
+      "diversification_score": 87.05,
       "debt_income_ratio": 0.25,
       "debt_income_score": 100.0
     },
     "risk_profile": "High",
-    "financial_wellness_score": 83.48,
-    "financial_stress_index": 22.61
+    "financial_wellness_score": 83.53,
+    "financial_stress_index": 22.59,
+    "expenses": 0.0
   },
   "u004": {
     "name": "Daniel Koh",
@@ -249,15 +236,15 @@
           "symbol": "META",
           "qty": 4,
           "avg_price": 495.0,
-          "market_value": 2642.28,
-          "current_price": 660.57
+          "market_value": 2582.16,
+          "current_price": 645.54
         },
         {
           "symbol": "GOOGL",
           "qty": 7,
           "avg_price": 152.3,
-          "market_value": 2106.16,
-          "current_price": 300.88
+          "market_value": 2094.26,
+          "current_price": 299.18
         }
       ],
       "cryptos": [
@@ -265,35 +252,36 @@
           "symbol": "BTC-USD",
           "qty": 0.04,
           "avg_price": 45000.0,
-          "current_price": 70734.0078,
-          "market_value": 2829.36
+          "current_price": 68347.9297,
+          "market_value": 2733.92
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.19,
           "avg_price": 2500.0,
-          "current_price": 2075.2961,
-          "market_value": 394.31
+          "current_price": 1978.5734,
+          "market_value": 375.93
         }
       ]
     },
-    "portfolio_value": 7972.11,
-    "total_balance": 15322.51,
-    "net_worth": 7972.11,
+    "portfolio_value": 7786.27,
+    "total_balance": 15136.67,
+    "net_worth": 7786.27,
     "income": 4500.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.63,
       "liquidity_score": 27.22,
-      "diversification_hhi": 0.3081,
-      "diversification_score": 92.26,
+      "diversification_hhi": 0.3079,
+      "diversification_score": 92.27,
       "debt_income_ratio": 0.1361,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 72.2,
-    "financial_stress_index": 30.66
+    "financial_wellness_score": 72.21,
+    "financial_stress_index": 30.66,
+    "expenses": 0.0
   },
   "u005": {
     "name": "Ethan Lee",
@@ -306,15 +294,15 @@
           "symbol": "SPY",
           "qty": 10,
           "avg_price": 520.4,
-          "market_value": 6813.1,
-          "current_price": 681.31
+          "market_value": 6741.85,
+          "current_price": 674.185
         },
         {
           "symbol": "AVGO",
           "qty": 2,
           "avg_price": 1320.0,
-          "market_value": 665.54,
-          "current_price": 332.77
+          "market_value": 680.0,
+          "current_price": 340.0
         }
       ],
       "cryptos": [
@@ -322,35 +310,36 @@
           "symbol": "BTC-USD",
           "qty": 0.05,
           "avg_price": 45000.0,
-          "current_price": 70734.0078,
-          "market_value": 3536.7
+          "current_price": 68347.9297,
+          "market_value": 3417.4
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.2,
           "avg_price": 2500.0,
-          "current_price": 2075.2961,
-          "market_value": 415.06
+          "current_price": 1978.5734,
+          "market_value": 395.71
         }
       ]
     },
-    "portfolio_value": 11430.4,
-    "total_balance": 24030.65,
-    "net_worth": 11430.4,
+    "portfolio_value": 11234.96,
+    "total_balance": 23835.21,
+    "net_worth": 11234.96,
     "income": 4600.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 2.74,
       "liquidity_score": 45.65,
-      "diversification_hhi": 0.4557,
-      "diversification_score": 72.57,
+      "diversification_hhi": 0.4575,
+      "diversification_score": 72.33,
       "debt_income_ratio": 0.2283,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 72.75,
-    "financial_stress_index": 27.23
+    "financial_wellness_score": 72.68,
+    "financial_stress_index": 27.27,
+    "expenses": 0.0
   },
   "u006": {
     "name": "Farah Aziz",
@@ -363,15 +352,15 @@
           "symbol": "NFLX",
           "qty": 3,
           "avg_price": 640.0,
-          "market_value": 297.51,
-          "current_price": 99.17
+          "market_value": 295.61,
+          "current_price": 98.5382
         },
         {
           "symbol": "AMD",
           "qty": 10,
           "avg_price": 165.3,
-          "market_value": 1994.5,
-          "current_price": 199.45
+          "market_value": 1971.35,
+          "current_price": 197.135
         }
       ],
       "cryptos": [
@@ -379,35 +368,36 @@
           "symbol": "BTC-USD",
           "qty": 0.06,
           "avg_price": 45000.0,
-          "current_price": 70734.0078,
-          "market_value": 4244.04
+          "current_price": 68347.9297,
+          "market_value": 4100.88
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.21,
           "avg_price": 2500.0,
-          "current_price": 2075.2961,
-          "market_value": 435.81
+          "current_price": 1978.5734,
+          "market_value": 415.5
         }
       ]
     },
-    "portfolio_value": 6971.86,
-    "total_balance": 15461.96,
-    "net_worth": 6971.86,
+    "portfolio_value": 6783.34,
+    "total_balance": 15273.44,
+    "net_worth": 6783.34,
     "income": 4750.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.79,
       "liquidity_score": 29.79,
-      "diversification_hhi": 0.4581,
-      "diversification_score": 72.25,
+      "diversification_hhi": 0.4556,
+      "diversification_score": 72.59,
       "debt_income_ratio": 0.1489,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 67.1,
-    "financial_stress_index": 33.63
+    "financial_wellness_score": 67.2,
+    "financial_stress_index": 33.57,
+    "expenses": 0.0
   },
   "u007": {
     "name": "Grace Wong",
@@ -420,15 +410,15 @@
           "symbol": "INTC",
           "qty": 20,
           "avg_price": 41.2,
-          "market_value": 919.0,
-          "current_price": 45.95
+          "market_value": 894.3,
+          "current_price": 44.715
         },
         {
           "symbol": "BAC",
           "qty": 25,
           "avg_price": 34.5,
-          "market_value": 1245.25,
-          "current_price": 49.81
+          "market_value": 1203.12,
+          "current_price": 48.125
         }
       ],
       "cryptos": [
@@ -436,21 +426,21 @@
           "symbol": "BTC-USD",
           "qty": 0.07,
           "avg_price": 45000.0,
-          "current_price": 70734.0078,
-          "market_value": 4951.38
+          "current_price": 68347.9297,
+          "market_value": 4784.36
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.22,
           "avg_price": 2500.0,
-          "current_price": 2075.2961,
-          "market_value": 456.57
+          "current_price": 1978.5734,
+          "market_value": 435.29
         }
       ]
     },
-    "portfolio_value": 7572.2,
-    "total_balance": 10922.95,
-    "net_worth": 7572.2,
+    "portfolio_value": 7317.07,
+    "total_balance": 10667.82,
+    "net_worth": 7317.07,
     "income": 4800.0,
     "mortgage": 0.0,
     "estate": 0.0,
@@ -458,13 +448,14 @@
       "liquidity_months": 0.7,
       "liquidity_score": 11.63,
       "diversification_hhi": 0.473,
-      "diversification_score": 70.27,
+      "diversification_score": 70.26,
       "debt_income_ratio": 0.0582,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 60.15,
-    "financial_stress_index": 41.29
+    "financial_stress_index": 41.3,
+    "expenses": 0.0
   },
   "u008": {
     "name": "Hafiz Rahman",
@@ -477,15 +468,15 @@
           "symbol": "JPM",
           "qty": 9,
           "avg_price": 191.0,
-          "market_value": 2641.95,
-          "current_price": 293.55
+          "market_value": 2582.28,
+          "current_price": 286.92
         },
         {
           "symbol": "V",
           "qty": 4,
           "avg_price": 275.4,
-          "market_value": 1279.2,
-          "current_price": 319.8
+          "market_value": 1253.8,
+          "current_price": 313.45
         }
       ],
       "cryptos": [
@@ -493,35 +484,36 @@
           "symbol": "BTC-USD",
           "qty": 0.08,
           "avg_price": 45000.0,
-          "current_price": 70734.0078,
-          "market_value": 5658.72
+          "current_price": 68347.9297,
+          "market_value": 5467.83
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.23,
           "avg_price": 2500.0,
-          "current_price": 2075.2961,
-          "market_value": 477.32
+          "current_price": 1978.5734,
+          "market_value": 455.07
         }
       ]
     },
-    "portfolio_value": 10057.19,
-    "total_balance": 19207.69,
-    "net_worth": 10057.19,
+    "portfolio_value": 9758.98,
+    "total_balance": 18909.48,
+    "net_worth": 9758.98,
     "income": 5200.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.76,
       "liquidity_score": 29.33,
-      "diversification_hhi": 0.404,
-      "diversification_score": 79.46,
+      "diversification_hhi": 0.4026,
+      "diversification_score": 79.65,
       "debt_income_ratio": 0.1466,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 69.1,
-    "financial_stress_index": 32.38
+    "financial_wellness_score": 69.16,
+    "financial_stress_index": 32.34,
+    "expenses": 0.0
   },
   "u009": {
     "name": "Isabella Goh",
@@ -534,15 +526,15 @@
           "symbol": "KO",
           "qty": 14,
           "avg_price": 61.2,
-          "market_value": 1078.42,
-          "current_price": 77.03
+          "market_value": 1075.9,
+          "current_price": 76.85
         },
         {
           "symbol": "PEP",
           "qty": 6,
           "avg_price": 171.3,
-          "market_value": 964.2,
-          "current_price": 160.7
+          "market_value": 946.59,
+          "current_price": 157.765
         }
       ],
       "cryptos": [
@@ -550,35 +542,36 @@
           "symbol": "BTC-USD",
           "qty": 0.09,
           "avg_price": 45000.0,
-          "current_price": 70734.0078,
-          "market_value": 6366.06
+          "current_price": 68347.9297,
+          "market_value": 6151.31
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.24,
           "avg_price": 2500.0,
-          "current_price": 2075.2961,
-          "market_value": 498.07
+          "current_price": 1978.5734,
+          "market_value": 474.86
         }
       ]
     },
-    "portfolio_value": 8906.75,
-    "total_balance": 11847.0,
-    "net_worth": 8906.75,
+    "portfolio_value": 8648.66,
+    "total_balance": 11588.91,
+    "net_worth": 8648.66,
     "income": 3500.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 0.84,
       "liquidity_score": 14.0,
-      "diversification_hhi": 0.5404,
-      "diversification_score": 61.28,
+      "diversification_hhi": 0.5363,
+      "diversification_score": 61.82,
       "debt_income_ratio": 0.07,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 58.28,
-    "financial_stress_index": 42.14
+    "financial_wellness_score": 58.45,
+    "financial_stress_index": 42.04,
+    "expenses": 0.0
   },
   "u010": {
     "name": "Jason Teo",
@@ -591,15 +584,15 @@
           "symbol": "BABA",
           "qty": 15.0,
           "avg_price": 86.2,
-          "market_value": 1955.25,
-          "current_price": 130.35
+          "market_value": 1979.85,
+          "current_price": 131.99
         },
         {
           "symbol": "PDD",
           "qty": 5.0,
           "avg_price": 148.5,
-          "market_value": 503.7,
-          "current_price": 100.74
+          "market_value": 509.15,
+          "current_price": 101.83
         }
       ],
       "cryptos": [
@@ -607,60 +600,61 @@
           "symbol": "BTC-USD",
           "qty": 0.1,
           "avg_price": 45000.0,
-          "current_price": 70734.0078,
-          "market_value": 7073.4
+          "current_price": 68347.9297,
+          "market_value": 6834.79
         },
         {
           "symbol": "ETH-USD",
           "qty": 7.25,
           "avg_price": 2092.696552,
-          "current_price": 1993.19,
-          "market_value": 14450.63,
+          "current_price": 1978.5734,
+          "market_value": 14344.66,
           "name": "Ethereum"
         },
         {
           "symbol": "DOGE-USD",
           "qty": 70368.0,
           "avg_price": 0.09314,
-          "current_price": 0.09048,
+          "current_price": 0.0907,
           "name": "Dogecoin",
-          "market_value": 6366.9
+          "market_value": 6382.38
         },
         {
           "symbol": "BCH-USD",
           "qty": 9.0,
           "avg_price": 457.81,
-          "current_price": 443.61,
+          "current_price": 450.0366,
           "name": "Bitcoin Cash",
-          "market_value": 3992.49
+          "market_value": 4050.33
         },
         {
           "symbol": "BNB-USD",
           "qty": 6.0,
           "avg_price": 648.09,
-          "current_price": 629.26,
+          "current_price": 631.4469,
           "name": "BNB",
-          "market_value": 3775.56
+          "market_value": 3788.68
         }
       ],
       "commodities": []
     },
-    "portfolio_value": 38117.93,
-    "total_balance": 45817.93,
-    "net_worth": 38117.93,
+    "portfolio_value": 37889.84,
+    "total_balance": 45589.84,
+    "net_worth": 37889.84,
     "income": 4900.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.57,
       "liquidity_score": 26.19,
-      "diversification_hhi": 0.2296,
-      "diversification_score": 89.88,
+      "diversification_hhi": 0.2286,
+      "diversification_score": 90.0,
       "debt_income_ratio": 0.131,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 71.13,
-    "financial_stress_index": 31.55
+    "financial_wellness_score": 71.17,
+    "financial_stress_index": 31.52,
+    "expenses": 0.0
   }
 }

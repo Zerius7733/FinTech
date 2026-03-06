@@ -233,6 +233,57 @@ Response includes:
 - projected retirement value
 - recommended vehicle mix with target weights and amounts
 
+## Portfolio Impact
+
+Get a deterministic impact readout for a user:
+
+- `GET /users/{user_id}/impact?horizon_years=5`
+
+What it returns:
+
+- `latent_growth_potential`
+  - Forward-looking scenario estimate of how much additional value the portfolio could capture over the chosen horizon if the current mix moved closer to the app's profile-based recommended allocation.
+
+- `estimated_growth_per_year`
+  - Annualized version of the latent growth estimate over the chosen horizon.
+
+Why this is framed as an estimate:
+
+- `latent_growth_potential` is a scenario calculation using asset-class return assumptions, not a guaranteed result.
+- The endpoint is intended to support product messaging like:
+  - detected latent growth
+  - portfolio may be under-positioned
+  - current mix vs recommended mix
+
+How the recommended mix is determined:
+
+- The endpoint uses the user's stored `risk_profile`:
+  - `Low`
+  - `Moderate`
+  - `High`
+
+- Each profile maps to a fixed base allocation:
+  - `Low`: `30% equities`, `50% bonds`, `18% cash`, `2% commodities`, `0% crypto`
+  - `Moderate`: `50% equities`, `25% bonds`, `15% cash`, `5% commodities`, `5% crypto`
+  - `High`: `55% equities`, `10% bonds`, `10% cash`, `5% commodities`, `20% crypto`
+
+- The base allocation is then adjusted using `financial_stress_index`:
+  - higher stress increases cash
+  - higher stress reduces equity and crypto exposure
+
+- The endpoint compares:
+  - the user's current mix
+  - the app's recommended mix
+
+- It projects using fixed asset-class return assumptions:
+  - `equities`: `8%`
+  - `bonds`: `4%`
+  - `cash`: `2%`
+  - `commodities`: `5%`
+  - `crypto`: `12%`
+
+So the recommendation is currently based on suitability rules and wellness posture, not market timing or stock-picking forecasts.
+
 ## Stock Market Pipeline
 
 The stock endpoint now follows this pipeline:

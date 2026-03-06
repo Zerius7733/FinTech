@@ -15,6 +15,7 @@ from backend.services.auth_registry import RegisterValidationError
 from backend.services.auth_registry import authenticate_login_user
 from backend.services.auth_registry import register_login_user
 from backend.services.portfolio_selector import get_positions_by_asset_class
+from backend.services.portfolio_impact import build_portfolio_impact
 from backend.services.recommendation import generate_gpt_recommendations
 from backend.services.recommendation import generate_user_recommendations
 from backend.services.user_profile_registry import add_default_user_profile
@@ -61,6 +62,7 @@ __all__ = [
     "update_stock_listings_cache_prices_file",
     "generate_gpt_recommendations",
     "generate_user_recommendations",
+    "build_portfolio_impact",
     "get_precomputed_commodity_rankings",
     "get_positions_by_asset_class",
     "get_precomputed_stock_rankings",

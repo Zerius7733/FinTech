@@ -518,6 +518,31 @@ def get_user_wellness_by_id(user_id: str) -> Dict[str, Any]:
 
 
 @app.get(
+    "/users/{user_id}/impact",
+    tags=["Users"],
+    summary="Get estimated portfolio impact and missed-opportunity metrics by user ID",
+)
+def get_user_portfolio_impact(
+    user_id: str,
+    horizon_years: int = Query(5, ge=1, le=10, description="Scenario horizon in years"),
+) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        result = api.build_portfolio_impact(user, horizon_years=horizon_years)
+        return {"status": "ok", "user_id": user_id, **result}
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"impact calculation failed: {exc}") from exc
+
+
+@app.get(
     "/users/{user_id}/compatibility",
     tags=["Compatibility"],
     summary="Evaluate compatibility between user profile and target asset",
@@ -576,6 +601,7 @@ async def get_user_target_compatibility(
     "/users/{user_id}/recommendations",
     tags=["Recommendations"],
     summary="Get rule-based recommendations by user ID",
+    include_in_schema=False,
 )
 def get_user_recommendations(
     user_id: str,

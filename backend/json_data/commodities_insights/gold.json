@@ -1,0 +1,199 @@
+{
+  "type": "commodity",
+  "symbol": "GOLD",
+  "updated_at": "2026-03-06T18:38:10.302140+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "commodity",
+      "symbol": "GOLD",
+      "name": "Gold",
+      "period": {
+        "months": 3,
+        "start": "2025-12-06",
+        "end": "2026-03-06"
+      },
+      "metrics": {
+        "start_price": 4187.2002,
+        "end_price": 5157.7002,
+        "return_pct": 23.1778,
+        "volatility_annualized": 0.373835,
+        "max_drawdown_pct": -13.0848,
+        "avg_daily_volume": 5356.8852,
+        "volume_change_pct": 660.4441
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-03",
+          "move_pct": 6.0833,
+          "close": 4903.7002,
+          "volume": 1213.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-28",
+          "move_pct": 4.3643,
+          "close": 5301.6001,
+          "volume": 112054.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-30",
+          "move_pct": -11.3662,
+          "close": 4713.8999,
+          "volume": 8374.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2025-12-29",
+          "move_pct": -4.5042,
+          "close": 4325.1001,
+          "volume": 2044.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-03-06",
+          "move_pct": 1.8242,
+          "close": 5157.7002,
+          "volume": 126900.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-01-28",
+          "move_pct": 4.3643,
+          "close": 5301.6001,
+          "volume": 112054.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-03",
+          "headline": "Current price of gold: February 3, 2026 | Fortune",
+          "source": "",
+          "url": "https://fortune.com/article/current-price-of-gold-02-03-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold.com Reports Fiscal Second Quarter 2026 Results :: Gold.com, Inc. (GOLD)",
+          "source": "",
+          "url": "https://ir.gold.com/news-events/press-releases/detail/215/gold-com-reports-fiscal-second-quarter-2026-results?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "\u2022 Consolidated cash operating costs of $736 per ounce produced in Q4 2025: Consolidated cash | operating costs (see \u201cNon-IFRS Measures\u201d) were $736 per gold ounce produced during the fourth",
+          "source": "",
+          "url": "https://s204.q4cdn.com/324791784/files/doc_financials/2025/q4/02-18-2026-2025-Earnings-2026-Guidance-News-Release-12-31-25-FINAL.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Commodity Morning Trading Guide | Globe Capital Market LTD.",
+          "source": "",
+          "url": "https://globecapital.com/research-reports/commodity-morning-trading-guide-02-march-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold Plunges Amid Fed Nomination Turmoil; Futures Dip",
+          "source": "",
+          "url": "https://www.whalesbook.com/news/English/commodities/Gold-Plunges-Amid-Fed-Nomination-Turmoil-Futures-Dip/69815eae69d815649b723e5a?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold's February 2026 Outlook: A Macro Cycle Perspective",
+          "source": "",
+          "url": "https://www.ainvest.com/news/gold-february-2026-outlook-macro-cycle-perspective-2602/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold price climbs as Iran conflict escalates",
+          "source": "",
+          "url": "https://moneyweek.com/investments/commodities/gold/gold-price?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "COT on forex and commodities - Week to 3 February 2026 | Saxo Bank",
+          "source": "",
+          "url": "https://www.home.saxo/en-mena/content/articles/commodities/cot-on-forex-and-commodities---week-to-3-february-2026-09022026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Commodities Buzz: Gold net speculative long positions slide heavily to eight-month low| Capital Market News",
+          "source": "",
+          "url": "https://www.capitalmarket.com/markets/news/commodity-mid-session-news/commodities-buzz-gold-net-speculative-long-positions-slide-heavily-to-eight-month-low/1673963?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold Hits 3-Week High as Supreme Court Blocks Trump\u2019s Tariff Blitz & Dollar Weakens \u2013 Outlook Business",
+          "source": "",
+          "url": "https://www.outlookbusiness.com/markets/gold-hits-3-week-high-as-supreme-court-blocks-trumps-tariff-blitz-dollar-weakens?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Gold price hits record after threat of lawsuit against the Fed | Sweden Herald",
+          "source": "",
+          "url": "https://swedenherald.com/article/gold-price-hits-record-after-threat-of-lawsuit-against-the-fed?utm_source=openai"
+        },
+        {
+          "date": "2026-01-28",
+          "headline": "Current price of gold: January 28, 2026 | Fortune",
+          "source": "",
+          "url": "https://fortune.com/article/current-price-of-gold-01-28-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-28",
+          "headline": "News item",
+          "source": "",
+          "url": "https://investor.wedbush.com/wedbush/article/marketminute-2026-1-29-the-great-revaluation-gold-and-silver-hit-record-highs-as-federal-reserve-defies-political-pressure-to-cut-rates?utm_source=openai"
+        },
+        {
+          "date": "2026-01-28",
+          "headline": "News item",
+          "source": "",
+          "url": "https://investor.wedbush.com/wedbush/article/marketminute-2026-1-30-the-copper-gold-renaissance-barrick-golds-173-january-surge-redefines-the-mining-industry?utm_source=openai"
+        },
+        {
+          "date": "2026-01-28",
+          "headline": "Consensus price forecasts \u2013 Gold, silver prices surge to new highs | S&P Global",
+          "source": "",
+          "url": "https://www.spglobal.com/market-intelligence/en/news-insights/research/2026/02/consensus-price-forecasts-gold-silver-prices-surge-to-new-highs?utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 4187.2002 to an ending price of 5157.7002, the asset experienced a total return of 23.1778%. Over the period, the annualized volatility was relatively high at 0.373835, with a maximum drawdown of -13.0848%, indicating notable price fluctuations and some downside risk. The largest upward price movement occurred on 2026-02-03, with a 6.0833% gain closing at 4903.7002, coinciding with multiple news items including fiscal second quarter results and geopolitical tensions such as the Iran conflict escalation [1][2][7]. Conversely, the largest downward move was on 2026-01-30, with an 11.3662% decline to 4713.8999, shortly after a significant high-volume day on 2026-01-28 when the price surged 4.3643% to 5301.6001 amid reports of record highs and Federal Reserve policy discussions [3][4]. Volume activity was notable, with an average daily volume of 5356.8852 and a substantial volume increase of 660.4441%, including a high-volume day on 2026-03-06 with 126900.0 units traded, when the price closed at 5157.7002. The price dynamics appear influenced by a combination of corporate earnings, macroeconomic factors, and geopolitical events, as reflected in the clustered news headlines around key price moves. While direct causality cannot be definitively established, these factors may have contributed to the observed market behavior.",
+      "tldr": [
+        "Period return: 23.18% with annualized volatility 0.374.",
+        "Largest up day: 2026-02-03 (6.08%), largest down day: 2026-01-30 (-11.37%).",
+        "Highest volume spike was on 2026-03-06 with volume 126,900."
+      ],
+      "conclusion": "Over this period, the asset ended higher (23.18%) with peak drawdown of -13.08%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://fortune.com/article/current-price-of-gold-02-03-2026/?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://ir.gold.com/news-events/press-releases/detail/215/gold-com-reports-fiscal-second-quarter-2026-results?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://moneyweek.com/investments/commodities/gold/gold-price?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://fortune.com/article/current-price-of-gold-01-28-2026/?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://investor.wedbush.com/wedbush/article/marketminute-2026-1-29-the-great-revaluation-gold-and-silver-hit-record-highs-as-federal-reserve-defies-political-pressure-to-cut-rates?utm_source=openai"
+        },
+        {
+          "id": 6,
+          "url": "https://investor.wedbush.com/wedbush/article/marketminute-2026-1-30-the-copper-gold-renaissance-barrick-golds-173-january-surge-redefines-the-mining-industry?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}
