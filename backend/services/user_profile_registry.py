@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 USER_FIELD_ORDER = [
     "name",
+    "age",
     "cash_balance",
     "liability",
     "portfolio",
@@ -24,6 +25,7 @@ USER_FIELD_ORDER = [
 def _build_default_user_profile(name: str) -> Dict[str, Any]:
     return {
         "name": name,
+        "age": None,
         "cash_balance": 0.0,
         "liability": 0.0,
         "portfolio": {"stocks": [], "cryptos": [], "commodities": []},
@@ -47,6 +49,25 @@ def _build_default_user_profile(name: str) -> Dict[str, Any]:
     }
 
 
+def normalize_user_profile(user: Dict[str, Any]) -> Dict[str, Any]:
+    normalized = dict(user)
+    if "age" not in normalized:
+        normalized["age"] = None
+    normalized.pop("monthly_expenses", None)
+    normalized.pop("essential_monthly_expenses", None)
+    return _reorder_user_fields(normalized)
+
+
+def normalize_users_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    normalized: Dict[str, Any] = {}
+    for user_id, payload in data.items():
+        if isinstance(payload, dict) and not user_id.startswith("_"):
+            normalized[user_id] = normalize_user_profile(payload)
+        else:
+            normalized[user_id] = payload
+    return normalized
+
+
 def _reorder_user_fields(user: Dict[str, Any]) -> Dict[str, Any]:
     ordered: Dict[str, Any] = {}
     for key in USER_FIELD_ORDER:
@@ -62,12 +83,7 @@ def rewrite_user_profiles_with_order(json_path: Path) -> None:
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    rewritten: Dict[str, Any] = {}
-    for user_id, payload in data.items():
-        if isinstance(payload, dict) and not user_id.startswith("_"):
-            rewritten[user_id] = _reorder_user_fields(payload)
-        else:
-            rewritten[user_id] = payload
+    rewritten = normalize_users_data(data)
 
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(rewritten, f, indent=2)
@@ -80,12 +96,7 @@ def add_default_user_profile(json_path: Path, user_id: str, name: str) -> None:
     if user_id not in data:
         data[user_id] = _build_default_user_profile(name)
 
-    rewritten: Dict[str, Any] = {}
-    for uid, payload in data.items():
-        if isinstance(payload, dict) and not uid.startswith("_"):
-            rewritten[uid] = _reorder_user_fields(payload)
-        else:
-            rewritten[uid] = payload
+    rewritten = normalize_users_data(data)
 
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(rewritten, f, indent=2)

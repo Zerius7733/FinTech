@@ -1,11 +1,13 @@
 import email.utils
 import os
+import re
 import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from typing import Dict, List, Optional, Protocol
 from urllib.parse import quote_plus
+from urllib.parse import urlparse
 
 import httpx
 import yfinance as yf
@@ -64,6 +66,18 @@ def _now_utc_date() -> date:
     return datetime.now(timezone.utc).date()
 
 
+def _extract_first_publisher_url_from_description(description_html: str) -> str:
+    if not description_html:
+        return ""
+    hrefs = re.findall(r'href=[\"\'](https?://[^\"\']+)[\"\']', description_html, flags=re.IGNORECASE)
+    for candidate in hrefs:
+        host = (urlparse(candidate).netloc or "").lower()
+        if "news.google.com" in host:
+            continue
+        return candidate.strip()
+    return ""
+
+
 class GoogleNewsRSSProvider:
     def __init__(self, client: httpx.AsyncClient, *, ttl_seconds: int = 1800) -> None:
         self.client = client
@@ -105,10 +119,15 @@ class GoogleNewsRSSProvider:
             for item in root.findall(".//item"):
                 title = (item.findtext("title") or "").strip()
                 url = (item.findtext("link") or "").strip()
+                description_html = (item.findtext("description") or "").strip()
                 source = (item.findtext("source") or "").strip()
                 pub_raw = (item.findtext("pubDate") or "").strip()
                 if not title or not url:
                     continue
+
+                publisher_url = _extract_first_publisher_url_from_description(description_html)
+                if publisher_url:
+                    url = publisher_url
 
                 try:
                     dt = email.utils.parsedate_to_datetime(pub_raw)

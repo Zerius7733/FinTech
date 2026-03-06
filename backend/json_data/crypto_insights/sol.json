@@ -1,0 +1,195 @@
+{
+  "type": "crypto",
+  "symbol": "SOL",
+  "updated_at": "2026-03-06T17:20:58.035566+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "crypto",
+      "symbol": "SOL",
+      "name": "SOL",
+      "period": {
+        "months": 3,
+        "start": "2025-12-06",
+        "end": "2026-03-06"
+      },
+      "metrics": {
+        "start_price": 132.3484,
+        "end_price": 84.3718,
+        "return_pct": -36.2502,
+        "volatility_annualized": 0.624476,
+        "max_drawdown_pct": -47.0175,
+        "avg_daily_volume": 4349575837.2088,
+        "volume_change_pct": 4.5004
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-06",
+          "move_pct": 11.8655,
+          "close": 87.4648,
+          "volume": 11668451362.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-25",
+          "move_pct": 11.2342,
+          "close": 87.9156,
+          "volume": 5782225888.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-05",
+          "move_pct": -15.0407,
+          "close": 78.1874,
+          "volume": 10561367080.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-31",
+          "move_pct": -10.1577,
+          "close": 105.4417,
+          "volume": 9542017060.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": 11.8655,
+          "close": 87.4648,
+          "volume": 11668451362.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-02-05",
+          "move_pct": -15.0407,
+          "close": 78.1874,
+          "volume": 10561367080.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-06",
+          "headline": "February 2026 Monthly Business Update | SOL Strategies",
+          "source": "",
+          "url": "https://solstrategies.io/sol-strategies-february-2026-monthly-business-update/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "21Shares to Pay Staking Rewards on Solana ETF TSOL in February Payout Move That Could Redefine Crypto ETFs - HOKANEWS.COM",
+          "source": "",
+          "url": "https://www.hokanews.com/2026/02/21shares-to-pay-staking-rewards-on.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Solana Drops to 2026 Lows as Tech Layoffs and AI Revenue Fears Rattle Markets",
+          "source": "",
+          "url": "https://www.ainvest.com/news/solana-drops-2026-lows-tech-layoffs-ai-revenue-fears-rattle-markets-2602/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Why Solana Price is Consolidating Below Key Resistance Levels",
+          "source": "",
+          "url": "https://www.analyticsinsight.net/cryptocurrency-analytics-insight/solana-sol-price-forecast-2026-consolidating-below-key-resistance?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Solana Price Forecast; SOL-USD Holding $116, Eyeing $147\u2013$167 in February",
+          "source": "",
+          "url": "https://www.tradingnews.com/news/solana-price-forecast-sol-usd-defends-116-usd-while-bulls-target-147-167-usd?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "SEC Concludes Multi-Year Investigation into Zcash Foundation; Solana Mobile Opens SKR Airdrop Claims | KuCoin",
+          "source": "",
+          "url": "https://www.kucoin.com/news/flash/sec-ends-multi-year-investigation-into-zcash-foundation-solana-mobile-opens-skr-airdrop-claims?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "SEC Delays Truth Social and Solana ETF Decisions to Q4",
+          "source": "",
+          "url": "https://www.bitcoinsensus.com/news/altcoins/sec-delays-truth-social-and-solana-etf-decisions-to-q4?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "SEC delays decision on 21Shares and Bitwise Solana ETFs, opens public comment period | The Block",
+          "source": "",
+          "url": "https://www.theblock.co/post/354890/sec-delays-decision-on-21shares-and-bitwise-solana-etfs-opens-public-comment-period?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "SEC withdraws claims that ADA, MATIC, and SOL are securities in its Binance lawsuit | Bitcoin Insider",
+          "source": "",
+          "url": "https://www.bitcoininsider.org/article/255047/sec-withdraws-claims-ada-matic-and-sol-are-securities-its-binance-lawsuit?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "SOL Global Announces Proposed Debt Settlement Transaction and Proposed Warrant Repricing | SOL Global Investments",
+          "source": "",
+          "url": "https://www.solglobal.com/news/sol-global-announces-proposed-debt-settlement-transaction-and-proposed-warrant-repricing?utm_source=openai"
+        },
+        {
+          "date": "2026-02-25",
+          "headline": "As filed with the Securities and Exchange Commission on December 19, 2025",
+          "source": "",
+          "url": "https://s3.amazonaws.com/sec.irpass.cc/2472/0001213900-25-123930.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-02-25",
+          "headline": "Solana (blockchain platform)",
+          "source": "",
+          "url": "https://en.wikipedia.org/wiki/Solana_%28blockchain_platform%29?utm_source=openai"
+        },
+        {
+          "date": "2026-02-25",
+          "headline": "Judge Greenlights Broader Scope for Solana 'Pump.fun' Lawsuit Following Discovery of 5,000 Internal Messages",
+          "source": "",
+          "url": "https://intellectia.ai/news/crypto/judge-approves-expansion-of-solana-pumpfun-lawsuit-after-5000-internal-chats-surface?utm_source=openai"
+        },
+        {
+          "date": "2026-02-25",
+          "headline": "Solana, Jito Executives Named in Expanded $722M Pump.fun Lawsuit",
+          "source": "",
+          "url": "https://www.lbank.com/how-to-buy-news/article/jito-governance-token-5180?utm_source=openai"
+        },
+        {
+          "date": "2026-02-25",
+          "headline": "Solana Pioneer Sued by Ex-Wife for Millions in Crypto Returns",
+          "source": "",
+          "url": "https://news.bloomberglaw.com/crypto/solana-pioneer-sued-by-ex-wife-for-millions-in-crypto-returns?utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 132.3484, the asset experienced a significant decline to an end price of 84.3718, resulting in a negative return of -36.2502%. The period was marked by elevated volatility, with an annualized volatility of 0.624476 and a maximum drawdown reaching -47.0175%, indicating substantial price fluctuations and risk exposure. The largest down day occurred on 2026-02-05, with a sharp drop of -15.0407% closing at 78.1874, accompanied by high trading volume of 10,561,367,080 shares; this day coincided with reports of tech layoffs and AI revenue concerns impacting market sentiment [3]. Conversely, the largest up day was on 2026-02-06, with an 11.8655% gain closing at 87.4648 and an exceptionally high volume of 11,684,451,362 shares, coinciding with multiple news items including a monthly business update and announcements related to staking rewards on the Solana ETF [1][2]. Another notable up day on 2026-02-25 saw an 11.2342% increase closing at 87.9156 with volume of 5,782,225,888 shares, occurring alongside legal developments such as the expansion of a lawsuit involving Solana executives [14][15]. Average daily volume increased by 4.5004% to over 4.3 billion shares, reflecting heightened trading activity during this period. Overall, the price action and volume spikes appear linked to a mix of regulatory, legal, and operational news events, though the precise impact of each driver on price movements remains subject to interpretation.",
+      "tldr": [
+        "Period return: -36.25% with annualized volatility 0.624.",
+        "Largest up day: 2026-02-06 (11.87%), largest down day: 2026-02-05 (-15.04%).",
+        "Highest volume spike was on 2026-02-06 with volume 11,668,451,362."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-36.25%) with peak drawdown of -47.02%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.ainvest.com/news/solana-drops-2026-lows-tech-layoffs-ai-revenue-fears-rattle-markets-2602/?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://solstrategies.io/sol-strategies-february-2026-monthly-business-update/?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.hokanews.com/2026/02/21shares-to-pay-staking-rewards-on.html?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://intellectia.ai/news/crypto/judge-approves-expansion-of-solana-pumpfun-lawsuit-after-5000-internal-chats-surface?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://www.lbank.com/how-to-buy-news/article/jito-governance-token-5180?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

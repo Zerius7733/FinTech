@@ -171,6 +171,134 @@ This backend computes user-level financial metrics from `backend/json_data/user.
 - GPT-wrapped:
   - `GET /users/{user_id}/recommendations/gpt?limit=3&model=gpt-4.1-mini`
 
+## User Profile Inputs
+
+Set a user's age:
+
+- `POST /users/age`
+- Body:
+
+```json
+{
+  "user_id": "u001",
+  "age": 30
+}
+```
+
+## Retirement Planning
+
+Build a retirement plan using the stored user age and current portfolio, while passing monthly spending inputs per request:
+
+- `POST /users/{user_id}/retirement`
+- Body:
+
+```json
+{
+  "retirement_age": 60,
+  "monthly_expenses": 3200,
+  "essential_monthly_expenses": 2200
+}
+```
+
+Input meanings:
+
+- `monthly_expenses`
+  - The user's estimated total monthly spending across normal life.
+  - This should include rent or mortgage, bills, groceries, transport, insurance, debt payments, and usual discretionary spending.
+  - The retirement planner uses this as the main lifestyle-spend anchor when estimating the retirement fund target.
+
+- `essential_monthly_expenses`
+  - The user's minimum monthly cost to stay afloat.
+  - This should include only survival and fixed necessities such as housing, utilities, basic food, insurance, minimum debt obligations, and other non-optional bills.
+  - The retirement planner uses this to size the recommended cash reserve and to keep the allocation from becoming too aggressive when the user needs a larger safety buffer.
+
+Why these inputs are on the retirement request instead of stored in the user profile:
+
+- They are planning assumptions, not stable identity fields.
+- They may change often depending on scenario:
+  - current lifestyle
+  - post-retirement downsizing
+  - different housing assumptions
+  - conservative vs aggressive planning runs
+- Passing them per request lets the frontend run multiple retirement scenarios for the same user without mutating saved profile data.
+
+Response includes:
+
+- current age and years to retirement
+- current investable assets
+- monthly and essential monthly expense inputs
+- essential cash reserve target
+- target retirement fund
+- required annual and monthly contribution
+- projected retirement value
+- recommended vehicle mix with target weights and amounts
+
+## Stock Market Pipeline
+
+The stock endpoint now follows this pipeline:
+
+- market data provider
+- ingestion service
+- stored snapshot / rankings files
+- precomputed rankings
+- frontend API
+
+Current implementation:
+
+- Provider: `yfinance`
+- Ingestion service: `backend/services/stock_market_pipeline.py`
+- Universe file: `backend/knowledge_base/stocks_symbols/large_cap_us.txt`
+- Stored snapshot: `backend/json_data/stock_market_snapshot.json`
+- Precomputed rankings: `backend/json_data/stock_market_rankings.json`
+- Frontend API: `GET /api/market/stocks`
+
+Endpoints:
+
+- `GET /update/market/stocks`
+  - Fetches the stock universe from `yfinance`
+  - Writes a raw market snapshot file
+  - Rebuilds the precomputed market-cap ranking file
+  - This same refresh also runs automatically when the server starts
+
+- `GET /api/market/stocks?page=1&per_page=50`
+  - Reads from the precomputed rankings file
+  - If the rankings file is missing or stale, it triggers a refresh before serving
+
+Automatic refresh behavior:
+
+- when the backend process starts, it runs one stock market refresh immediately
+- while the backend stays live, it runs the stock market refresh again every 30 minutes
+
+## Commodity Market Pipeline
+
+The commodity endpoint uses the same stored-ranking pattern as stocks:
+
+- Provider: `yfinance`
+- Ingestion service: `backend/services/commodity_market_pipeline.py`
+- Stored snapshot: `backend/json_data/commodity_market_snapshot.json`
+- Precomputed rankings: `backend/json_data/commodity_market_rankings.json`
+- Frontend API: `GET /api/market/commodities`
+
+Endpoints:
+
+- `GET /update/market/commodities`
+  - Fetches the configured commodity contracts from `yfinance`
+  - Writes a raw commodity snapshot file
+  - Rebuilds the precomputed commodity ranking file
+
+- `GET /api/market/commodities?page=1&per_page=50`
+  - Reads from the precomputed rankings file
+  - If the rankings file is missing or stale, it triggers a refresh before serving
+
+Commodities do not have market cap in the same way stocks do, so the ranking is based on `total_volume`.
+
+Automatic refresh behavior:
+
+- when the backend process starts, it runs one commodity market refresh immediately
+- while the backend stays live, it runs the commodity market refresh again every 30 minutes
+
+Legacy cache endpoints still exist, but they are not the primary stock listing path anymore.
+
 ## OpenAI Token Setup
 
 Put your token in either:

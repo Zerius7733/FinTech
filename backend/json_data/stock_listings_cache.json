@@ -1,0 +1,3914 @@
+{
+  "symbols": {
+    "ALCY": {
+      "name": "Alchemy Investments Acquisition Corp 1",
+      "market_cap": 49612838,
+      "total_volume": 2700,
+      "price_change_percentage_24h": -0.25380483,
+      "ath": 15.9,
+      "current_price": 11.79
+    },
+    "ALCYU": {
+      "name": "Alchemy Investments Acquisition Corp 1",
+      "total_volume": 0,
+      "price_change_percentage_24h": 0.0,
+      "ath": 15.0,
+      "current_price": 13.5
+    },
+    "ALCYW": {
+      "name": "Alchemy Investments Acquisition Corp 1",
+      "total_volume": 101,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.2,
+      "current_price": 0.2
+    },
+    "ALDF": {
+      "name": "Aldel Financial II Inc.",
+      "market_cap": 315109663,
+      "total_volume": 1,
+      "price_change_percentage_24h": 0.0,
+      "ath": 10.59,
+      "current_price": 10.55
+    },
+    "ALDFU": {
+      "name": "Aldel Financial II Inc.",
+      "total_volume": 200,
+      "price_change_percentage_24h": -0.18621513,
+      "ath": 11.779,
+      "current_price": 10.72
+    },
+    "ALDFW": {
+      "name": "Aldel Financial II Inc.",
+      "total_volume": 84,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.3531,
+      "current_price": 0.3531
+    },
+    "ALDX": {
+      "name": "Aldeyra Therapeutics, Inc.",
+      "market_cap": 279756900,
+      "total_volume": 2607600,
+      "price_change_percentage_24h": -10.4909,
+      "ath": 7.2,
+      "current_price": 4.65
+    },
+    "ALEC": {
+      "name": "Alector, Inc.",
+      "market_cap": 218517912,
+      "total_volume": 1100200,
+      "price_change_percentage_24h": -7.90698,
+      "ath": 3.4,
+      "current_price": 1.98
+    },
+    "ALF": {
+      "name": "Centurion Acquisition Corp.",
+      "market_cap": 387046891,
+      "total_volume": 1100,
+      "price_change_percentage_24h": 0.000929775,
+      "ath": 10.77,
+      "current_price": 10.77
+    },
+    "ALFUU": {
+      "name": "Centurion Acquisition Corp.",
+      "total_volume": 0,
+      "price_change_percentage_24h": 0.0,
+      "ath": 11.0,
+      "current_price": 10.79
+    },
+    "ALFUW": {
+      "name": "Centurion Acquisition Corp.",
+      "total_volume": 200,
+      "price_change_percentage_24h": -5.000003,
+      "ath": 0.19,
+      "current_price": 0.19
+    },
+    "ALGM": {
+      "name": "Allegro MicroSystems, Inc.",
+      "market_cap": 6073834492,
+      "total_volume": 2064500,
+      "price_change_percentage_24h": -3.78632,
+      "ath": 43.86,
+      "current_price": 32.78
+    },
+    "ALGN": {
+      "name": "Align Technology, Inc.",
+      "market_cap": 12599299735,
+      "total_volume": 1113800,
+      "price_change_percentage_24h": -3.60123,
+      "ath": 208.31,
+      "current_price": 175.6
+    },
+    "ALGS": {
+      "name": "Aligos Therapeutics, Inc.",
+      "market_cap": 40982855,
+      "total_volume": 31600,
+      "price_change_percentage_24h": -2.91546,
+      "ath": 13.689,
+      "current_price": 6.66
+    },
+    "ALGT": {
+      "name": "Allegiant Travel Company",
+      "market_cap": 1552391443,
+      "total_volume": 874600,
+      "price_change_percentage_24h": -8.64372,
+      "ath": 118.0,
+      "current_price": 84.13
+    },
+    "ALHC": {
+      "name": "Alignment Healthcare, Inc.",
+      "market_cap": 3793785812,
+      "total_volume": 3213200,
+      "price_change_percentage_24h": -1.64195,
+      "ath": 23.87,
+      "current_price": 18.57
+    },
+    "ALIL": {
+      "name": "Argent Focused Small Cap ETF",
+      "total_volume": 500,
+      "price_change_percentage_24h": -1.541873,
+      "ath": 31.29,
+      "current_price": 29.272
+    },
+    "ALIS": {
+      "name": "Calisa Acquisition Corp",
+      "market_cap": 84106446,
+      "total_volume": 8800,
+      "price_change_percentage_24h": 0.0,
+      "ath": 10.07,
+      "current_price": 9.98
+    },
+    "ALISR": {
+      "name": "Calisa Acquisition Corp",
+      "total_volume": 2568,
+      "price_change_percentage_24h": -3.9746501,
+      "ath": 0.5105,
+      "current_price": 0.5001
+    },
+    "ALISU": {
+      "name": "Calisa Acquisition Corp",
+      "total_volume": 300,
+      "price_change_percentage_24h": 0.0,
+      "ath": 11.11,
+      "current_price": 11.05
+    },
+    "ALKS": {
+      "name": "Alkermes plc",
+      "market_cap": 4724525692,
+      "total_volume": 2233600,
+      "price_change_percentage_24h": -3.17623,
+      "ath": 36.32,
+      "current_price": 28.35
+    },
+    "ALKT": {
+      "name": "Alkami Technology, Inc.",
+      "market_cap": 1751444376,
+      "total_volume": 2942800,
+      "price_change_percentage_24h": 0.0606442,
+      "ath": 31.66,
+      "current_price": 16.5
+    },
+    "ALLO": {
+      "name": "Allogene Therapeutics, Inc.",
+      "market_cap": 519126619,
+      "total_volume": 4707300,
+      "price_change_percentage_24h": -8.69565,
+      "ath": 2.8,
+      "current_price": 2.31
+    },
+    "ALLR": {
+      "name": "Allarity Therapeutics, Inc.",
+      "market_cap": 16402599,
+      "total_volume": 108400,
+      "price_change_percentage_24h": -2.85714,
+      "ath": 2.35,
+      "current_price": 1.02
+    },
+    "ALLT": {
+      "name": "Allot Ltd.",
+      "market_cap": 337042289,
+      "total_volume": 372000,
+      "price_change_percentage_24h": 0.288184,
+      "ath": 11.92,
+      "current_price": 6.96
+    },
+    "ALLW": {
+      "name": "State Street Bridgewater All Weather ETF",
+      "total_volume": 944300,
+      "price_change_percentage_24h": -0.810536,
+      "ath": 30.155,
+      "current_price": 29.37
+    },
+    "ALM": {
+      "name": "Almonty Industries Inc.",
+      "market_cap": 4950235053,
+      "total_volume": 6389600,
+      "price_change_percentage_24h": -1.27877,
+      "ath": 20.88,
+      "current_price": 19.3
+    },
+    "ALMS": {
+      "name": "Alumis Inc.",
+      "market_cap": 3446456482,
+      "total_volume": 1301600,
+      "price_change_percentage_24h": -4.26048,
+      "ath": 30.6,
+      "current_price": 27.64
+    },
+    "ALMU": {
+      "name": "Aeluma, Inc.",
+      "market_cap": 283735095,
+      "total_volume": 1092700,
+      "price_change_percentage_24h": -14.3791,
+      "ath": 25.883,
+      "current_price": 15.72
+    },
+    "ALNT": {
+      "name": "Allient Inc.",
+      "market_cap": 1051682853,
+      "total_volume": 429500,
+      "price_change_percentage_24h": -2.32887,
+      "ath": 70.0,
+      "current_price": 62.07
+    },
+    "ALNY": {
+      "name": "Alnylam Pharmaceuticals, Inc.",
+      "market_cap": 42507045178,
+      "total_volume": 1215100,
+      "price_change_percentage_24h": -2.07454,
+      "ath": 495.55,
+      "current_price": 320.51
+    },
+    "ALOT": {
+      "name": "AstroNova, Inc.",
+      "market_cap": 68822201,
+      "total_volume": 13700,
+      "price_change_percentage_24h": -1.58383,
+      "ath": 12.68,
+      "current_price": 9.01
+    },
+    "ALOVU": {
+      "name": "Aldabra 4 Liquidity Opportunity Vehicle, Inc.",
+      "total_volume": 3100,
+      "price_change_percentage_24h": 0.0,
+      "ath": 10.05,
+      "current_price": 9.95
+    },
+    "ALOY": {
+      "name": "REalloys Inc.",
+      "total_volume": 1929000,
+      "price_change_percentage_24h": -16.1901,
+      "ath": 26.9,
+      "current_price": 21.69
+    },
+    "ALPS": {
+      "name": "Alps Group Inc",
+      "market_cap": 148096288,
+      "total_volume": 16200,
+      "price_change_percentage_24h": -2.51917,
+      "ath": 2.9,
+      "current_price": 0.89
+    },
+    "ALRM": {
+      "name": "Alarm.com Holdings, Inc.",
+      "market_cap": 2501466078,
+      "total_volume": 624400,
+      "price_change_percentage_24h": 0.0598615,
+      "ath": 60.76,
+      "current_price": 50.15
+    },
+    "ALRS": {
+      "name": "Alerus Financial Corporation",
+      "market_cap": 614708115,
+      "total_volume": 118600,
+      "price_change_percentage_24h": -2.57649,
+      "ath": 26.32,
+      "current_price": 24.2
+    },
+    "ALT": {
+      "name": "Altimmune, Inc.",
+      "market_cap": 438936484,
+      "total_volume": 7660900,
+      "price_change_percentage_24h": -17.9157,
+      "ath": 7.73,
+      "current_price": 3.505
+    },
+    "ALTI": {
+      "name": "AlTi Global, Inc.",
+      "market_cap": 637524180,
+      "total_volume": 67200,
+      "price_change_percentage_24h": -2.7027,
+      "ath": 5.445,
+      "current_price": 4.32
+    },
+    "ALTO": {
+      "name": "Alto Ingredients, Inc.",
+      "market_cap": 311138764,
+      "total_volume": 27179800,
+      "price_change_percentage_24h": 54.6154,
+      "ath": 4.2,
+      "current_price": 4.02
+    },
+    "ALTS": {
+      "name": "ALT5 Sigma Corporation",
+      "market_cap": 180664940,
+      "total_volume": 2186000,
+      "price_change_percentage_24h": -7.14286,
+      "ath": 10.95,
+      "current_price": 1.43
+    },
+    "ALTY": {
+      "name": "Global X Alternative Income ETF",
+      "total_volume": 15300,
+      "price_change_percentage_24h": -0.5640588,
+      "ath": 12.58,
+      "current_price": 12.34
+    },
+    "ALVO": {
+      "name": "Alvotech",
+      "market_cap": 1296260753,
+      "total_volume": 733400,
+      "price_change_percentage_24h": 6.94087,
+      "ath": 11.85,
+      "current_price": 4.16
+    },
+    "ALVOW": {
+      "name": "Alvotech",
+      "total_volume": 2451,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.35,
+      "current_price": 0.35
+    },
+    "ALXO": {
+      "name": "ALX Oncology Holdings Inc.",
+      "market_cap": 279449867,
+      "total_volume": 340200,
+      "price_change_percentage_24h": -2.73972,
+      "ath": 2.66,
+      "current_price": 2.13
+    },
+    "ALZN": {
+      "name": "Alzamend Neuro, Inc.",
+      "market_cap": 7413129,
+      "total_volume": 39800,
+      "price_change_percentage_24h": -1.51515,
+      "ath": 10.17,
+      "current_price": 1.95
+    },
+    "AMAL": {
+      "name": "Amalgamated Financial Corp.",
+      "market_cap": 1153147098,
+      "total_volume": 129800,
+      "price_change_percentage_24h": -1.6092,
+      "ath": 42.66,
+      "current_price": 38.52
+    },
+    "AMAT": {
+      "name": "Applied Materials, Inc.",
+      "market_cap": 275009626242,
+      "total_volume": 5899700,
+      "price_change_percentage_24h": -3.13898,
+      "ath": 395.95,
+      "current_price": 346.53
+    },
+    "AMBA": {
+      "name": "Ambarella, Inc.",
+      "market_cap": 2385427422,
+      "total_volume": 621700,
+      "price_change_percentage_24h": -2.01591,
+      "ath": 96.69,
+      "current_price": 55.41
+    },
+    "AMBR": {
+      "name": "Amber International Holding Limited",
+      "market_cap": 235144143,
+      "total_volume": 52800,
+      "price_change_percentage_24h": -3.0888,
+      "ath": 13.09,
+      "current_price": 2.51
+    },
+    "AACB": {
+      "name": "Artius II Acquisition Inc.",
+      "market_cap": 286159504,
+      "total_volume": 7,
+      "price_change_percentage_24h": 0.0,
+      "ath": 10.39,
+      "current_price": 10.34000015258789
+    },
+    "AACBR": {
+      "name": "Artius II Acquisition Inc.",
+      "total_volume": 53413,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.3414,
+      "current_price": 0.3
+    },
+    "AACBU": {
+      "name": "Artius II Acquisition Inc.",
+      "market_cap": 265092743,
+      "total_volume": 4,
+      "price_change_percentage_24h": 0.0,
+      "ath": 12.15,
+      "current_price": 10.529999732971191
+    },
+    "AACG": {
+      "name": "ATA Creativity Global",
+      "market_cap": 32407909,
+      "total_volume": 4600,
+      "price_change_percentage_24h": 1.7862478,
+      "ath": 2.58,
+      "current_price": 1.0199999809265137
+    },
+    "AACIU": {
+      "name": "Armada Acquisition Corp. III",
+      "total_volume": 11000,
+      "price_change_percentage_24h": 0.10029363,
+      "ath": 9.98,
+      "current_price": 9.98
+    },
+    "AACOU": {
+      "name": "Abony Acquisition Corp. I",
+      "total_volume": 62800,
+      "price_change_percentage_24h": -0.050252408,
+      "ath": 10.01,
+      "current_price": 9.95
+    },
+    "AADR": {
+      "name": "AdvisorShares Dorsey Wright ADR ETF",
+      "total_volume": 4800,
+      "price_change_percentage_24h": -3.4170308,
+      "ath": 98.38,
+      "current_price": 86.9
+    },
+    "AAEQ": {
+      "name": "Alpha Architect US Equity 2 ETF",
+      "total_volume": 100,
+      "price_change_percentage_24h": -0.18034856,
+      "ath": 50.189,
+      "current_price": 48.652
+    },
+    "AAL": {
+      "name": "American Airlines Group Inc.",
+      "market_cap": 7784990890,
+      "total_volume": 125747300,
+      "price_change_percentage_24h": -5.37721,
+      "ath": 16.5,
+      "current_price": 11.789999961853027
+    },
+    "AALG": {
+      "name": "Leverage Shares 2X Long AAL Daily ETF",
+      "total_volume": 61900,
+      "price_change_percentage_24h": -10.717532,
+      "ath": 20.43,
+      "current_price": 9.83
+    },
+    "AAME": {
+      "name": "Atlantic American Corporation",
+      "market_cap": 53848684,
+      "total_volume": 3500,
+      "price_change_percentage_24h": 0.5725231,
+      "ath": 3.71,
+      "current_price": 2.640000104904175
+    },
+    "AAOI": {
+      "name": "Applied Optoelectronics, Inc.",
+      "market_cap": 7605608305,
+      "total_volume": 10179500,
+      "price_change_percentage_24h": 1.43416,
+      "ath": 110.0,
+      "current_price": 101.13999938964844
+    },
+    "AAON": {
+      "name": "AAON, Inc.",
+      "market_cap": 7542987083,
+      "total_volume": 1357400,
+      "price_change_percentage_24h": -3.71991,
+      "ath": 116.04,
+      "current_price": 92.4000015258789
+    },
+    "AAPB": {
+      "name": "GraniteShares 2x Long AAPL Daily ETF",
+      "total_volume": 181700,
+      "price_change_percentage_24h": -1.6864071,
+      "ath": 37.89,
+      "current_price": 28.717
+    },
+    "AAPD": {
+      "name": "Direxion Daily AAPL Bear 1X Shares",
+      "total_volume": 15205300,
+      "price_change_percentage_24h": 0.83635163,
+      "ath": 21.96,
+      "current_price": 13.648
+    },
+    "AAPG": {
+      "name": "Ascentage Pharma Group Internat",
+      "market_cap": 2087107321,
+      "total_volume": 1200,
+      "price_change_percentage_24h": 0.269661,
+      "ath": 48.45,
+      "current_price": 22.309999465942383
+    },
+    "AAPL": {
+      "name": "Apple Inc.",
+      "market_cap": 3825723284132,
+      "total_volume": 49554600,
+      "price_change_percentage_24h": -0.849452,
+      "ath": 288.62,
+      "current_price": 260.2900085449219
+    },
+    "AAPU": {
+      "name": "Direxion Daily AAPL Bull 2X Shares",
+      "total_volume": 2458000,
+      "price_change_percentage_24h": -1.73714,
+      "ath": 40.7,
+      "current_price": 29.98
+    },
+    "AARD": {
+      "name": "Aardvark Therapeutics, Inc.",
+      "market_cap": 124978576,
+      "total_volume": 394100,
+      "price_change_percentage_24h": 1.77305,
+      "ath": 17.94,
+      "current_price": 5.739999771118164
+    },
+    "AAUS": {
+      "name": "Alpha Architect US Equity ETF",
+      "total_volume": 100,
+      "price_change_percentage_24h": 0.73158365,
+      "ath": 56.05,
+      "current_price": 54.828
+    },
+    "AAVM": {
+      "name": "Alpha Architect Global Factor Equity ETF",
+      "total_volume": 6500,
+      "price_change_percentage_24h": -2.5426912,
+      "ath": 33.99,
+      "current_price": 32.073
+    },
+    "AAXJ": {
+      "name": "iShares MSCI All Country Asia ex Japan ETF",
+      "total_volume": 2730800,
+      "price_change_percentage_24h": -2.10694,
+      "ath": 107.85,
+      "current_price": 98.5
+    },
+    "ABAT": {
+      "name": "American Battery Technology Company",
+      "market_cap": 447811445,
+      "total_volume": 3840400,
+      "price_change_percentage_24h": -3.1339,
+      "ath": 11.49,
+      "current_price": 3.4000000953674316
+    },
+    "ABCL": {
+      "name": "AbCellera Biologics Inc.",
+      "market_cap": 1088346122,
+      "total_volume": 2332100,
+      "price_change_percentage_24h": -1.10193,
+      "ath": 6.515,
+      "current_price": 3.5899999141693115
+    },
+    "ABCS": {
+      "name": "Alpha Blue Capital US Small-Mid Cap Dynamic ETF",
+      "total_volume": 3500,
+      "price_change_percentage_24h": -0.9334354,
+      "ath": 31.87,
+      "current_price": 30.884
+    },
+    "ABEO": {
+      "name": "Abeona Therapeutics Inc.",
+      "market_cap": 263911921,
+      "total_volume": 1797800,
+      "price_change_percentage_24h": -2.01207,
+      "ath": 7.54,
+      "current_price": 4.869999885559082
+    },
+    "ABI": {
+      "name": "VictoryShares Pioneer Asset-Based Inc ETF",
+      "total_volume": 100,
+      "price_change_percentage_24h": -0.080269806,
+      "ath": 25.36,
+      "current_price": 25.02
+    },
+    "ABIG": {
+      "name": "Argent Large Cap ETF",
+      "total_volume": 4400,
+      "price_change_percentage_24h": -0.19242226,
+      "ath": 32.986,
+      "current_price": 30.811
+    },
+    "ABLV": {
+      "name": "Able View Global Inc.",
+      "market_cap": 33190027,
+      "total_volume": 1300,
+      "price_change_percentage_24h": 2.1729202,
+      "ath": 1.77,
+      "current_price": 0.671999990940094
+    },
+    "ABLVW": {
+      "name": "Able View Global Inc.",
+      "total_volume": 5435,
+      "price_change_percentage_24h": -10.362696,
+      "ath": 0.0173,
+      "current_price": 0.0173
+    },
+    "ABNB": {
+      "name": "Airbnb, Inc.",
+      "market_cap": 81443974853,
+      "total_volume": 5521000,
+      "price_change_percentage_24h": 0.228724,
+      "ath": 143.88,
+      "current_price": 135.85000610351562
+    },
+    "ABNG": {
+      "name": "Leverage Shares 2X Long Abnb Daily ETF",
+      "total_volume": 400,
+      "price_change_percentage_24h": -0.199313,
+      "ath": 19.287,
+      "current_price": 17.375
+    },
+    "ABOS": {
+      "name": "Acumen Pharmaceuticals, Inc.",
+      "market_cap": 202315234,
+      "total_volume": 325600,
+      "price_change_percentage_24h": 0.906344,
+      "ath": 3.41,
+      "current_price": 3.3399999141693115
+    },
+    "ABSI": {
+      "name": "Absci Corporation",
+      "market_cap": 389462252,
+      "total_volume": 3259800,
+      "price_change_percentage_24h": -2.63159,
+      "ath": 5.228,
+      "current_price": 2.5899999141693115
+    },
+    "ABTC": {
+      "name": "American Bitcoin Corp",
+      "market_cap": 1085297803,
+      "total_volume": 24908100,
+      "price_change_percentage_24h": 1.73913,
+      "ath": 14.65,
+      "current_price": 1.1699999570846558
+    },
+    "ABTS": {
+      "name": "Abits Group Inc.",
+      "market_cap": 9139472,
+      "total_volume": 44500,
+      "price_change_percentage_24h": 10.3054,
+      "ath": 10.855,
+      "current_price": 2.890000104904175
+    },
+    "ABUS": {
+      "name": "Arbutus Biopharma Corporation",
+      "market_cap": 903922843,
+      "total_volume": 2546600,
+      "price_change_percentage_24h": -1.05264,
+      "ath": 5.1,
+      "current_price": 4.699999809265137
+    },
+    "ABVC": {
+      "name": "ABVC BioPharma, Inc.",
+      "market_cap": 34264534,
+      "total_volume": 17400,
+      "price_change_percentage_24h": -2.75863,
+      "ath": 5.48,
+      "current_price": 1.409999966621399
+    },
+    "ABVE": {
+      "name": "Above Food Ingredients Inc.",
+      "market_cap": 60406377,
+      "total_volume": 2089400,
+      "price_change_percentage_24h": 0.8547,
+      "ath": 6.56,
+      "current_price": 1.1799999475479126
+    },
+    "ABVEW": {
+      "name": "Above Food Ingredients Inc.",
+      "total_volume": 45439,
+      "price_change_percentage_24h": -2.7777834,
+      "ath": 0.4402,
+      "current_price": 0.35
+    },
+    "ABVX": {
+      "name": "ABIVAX Soci\u00e9t\u00e9 Anonyme",
+      "market_cap": 8911484934,
+      "total_volume": 593000,
+      "price_change_percentage_24h": -3.48548,
+      "ath": 148.83,
+      "current_price": 112.69999694824219
+    },
+    "ACAAU": {
+      "name": "Averin Capital Acquisition Corp.",
+      "total_volume": 36700,
+      "price_change_percentage_24h": 0.0997032,
+      "ath": 10.04,
+      "current_price": 10.04
+    },
+    "ACAD": {
+      "name": "ACADIA Pharmaceuticals Inc.",
+      "market_cap": 3819079266,
+      "total_volume": 2209000,
+      "price_change_percentage_24h": -4.23258,
+      "ath": 28.35,
+      "current_price": 22.399999618530273
+    },
+    "ACB": {
+      "name": "Aurora Cannabis Inc.",
+      "market_cap": 198482984,
+      "total_volume": 603000,
+      "price_change_percentage_24h": -4.10959,
+      "ath": 6.665,
+      "current_price": 3.5
+    },
+    "ACCL": {
+      "name": "Acco Group Holdings Limited",
+      "market_cap": 22738336,
+      "total_volume": 775800,
+      "price_change_percentage_24h": 13.1944,
+      "ath": 5.0,
+      "current_price": 1.6299999952316284
+    },
+    "ACDC": {
+      "name": "ProFrac Holding Corp.",
+      "market_cap": 960425971,
+      "total_volume": 1704900,
+      "price_change_percentage_24h": 5.98802,
+      "ath": 10.7,
+      "current_price": 5.309999942779541
+    },
+    "ACEP": {
+      "name": "ARS Core Equity Portfolio ETF",
+      "total_volume": 100,
+      "price_change_percentage_24h": -1.4702046,
+      "ath": 18.27,
+      "current_price": 17.626
+    },
+    "ACET": {
+      "name": "Adicet Bio, Inc.",
+      "market_cap": 71616000,
+      "total_volume": 77300,
+      "price_change_percentage_24h": -1.45311,
+      "ath": 17.44,
+      "current_price": 7.460000038146973
+    },
+    "ACFN": {
+      "name": "Acorn Energy, Inc.",
+      "market_cap": 45884747,
+      "total_volume": 50800,
+      "price_change_percentage_24h": -15.6538,
+      "ath": 33.0,
+      "current_price": 18.31999969482422
+    },
+    "ACGL": {
+      "name": "Arch Capital Group Ltd.",
+      "market_cap": 35200099690,
+      "total_volume": 1533100,
+      "price_change_percentage_24h": -1.37167,
+      "ath": 103.39,
+      "current_price": 97.06999969482422
+    },
+    "ACGLN": {
+      "name": "Arch Capital Group Ltd.",
+      "total_volume": 15100,
+      "price_change_percentage_24h": -0.39976978,
+      "ath": 18.54,
+      "current_price": 17.44
+    },
+    "ACGLO": {
+      "name": "Arch Capital Group Ltd.",
+      "market_cap": 12081604608,
+      "total_volume": 10500,
+      "price_change_percentage_24h": -0.57581973,
+      "ath": 22.2,
+      "current_price": 20.719999313354492
+    },
+    "ACHC": {
+      "name": "Acadia Healthcare Company, Inc.",
+      "market_cap": 2273942406,
+      "total_volume": 3379600,
+      "price_change_percentage_24h": 2.45118,
+      "ath": 31.43,
+      "current_price": 24.65999984741211
+    },
+    "ACHV": {
+      "name": "Achieve Life Sciences, Inc.",
+      "market_cap": 234229552,
+      "total_volume": 353800,
+      "price_change_percentage_24h": -3.93013,
+      "ath": 6.03,
+      "current_price": 4.400000095367432
+    },
+    "ACIC": {
+      "name": "American Coastal Insurance Corporation",
+      "market_cap": 567140467,
+      "total_volume": 327700,
+      "price_change_percentage_24h": -0.428084,
+      "ath": 13.06,
+      "current_price": 11.630000114440918
+    },
+    "ACIU": {
+      "name": "AC Immune SA",
+      "market_cap": 274638001,
+      "total_volume": 274000,
+      "price_change_percentage_24h": -3.87324,
+      "ath": 4.0,
+      "current_price": 2.7300000190734863
+    },
+    "ACIW": {
+      "name": "ACI Worldwide, Inc.",
+      "market_cap": 4418352042,
+      "total_volume": 783200,
+      "price_change_percentage_24h": 0.989637,
+      "ath": 57.49,
+      "current_price": 42.86000061035156
+    },
+    "ACLS": {
+      "name": "Axcelis Technologies, Inc.",
+      "market_cap": 2639053509,
+      "total_volume": 810200,
+      "price_change_percentage_24h": -0.819671,
+      "ath": 102.93,
+      "current_price": 85.91000366210938
+    },
+    "ACLX": {
+      "name": "Arcellx, Inc.",
+      "market_cap": 6687751336,
+      "total_volume": 1674200,
+      "price_change_percentage_24h": 0.0524913,
+      "ath": 114.65,
+      "current_price": 114.36000061035156
+    },
+    "ACMR": {
+      "name": "ACM Research, Inc.",
+      "market_cap": 3175300156,
+      "total_volume": 1496600,
+      "price_change_percentage_24h": -6.77344,
+      "ath": 71.65,
+      "current_price": 48.310001373291016
+    },
+    "ACNB": {
+      "name": "ACNB Corporation",
+      "market_cap": 508128854,
+      "total_volume": 51800,
+      "price_change_percentage_24h": -3.10891,
+      "ath": 53.89,
+      "current_price": 48.93000030517578
+    },
+    "ACNT": {
+      "name": "Ascent Industries Co.",
+      "market_cap": 125785798,
+      "total_volume": 230300,
+      "price_change_percentage_24h": -2.82609,
+      "ath": 17.92,
+      "current_price": 13.40999984741211
+    },
+    "ACOG": {
+      "name": "Alpha Cognition Inc. Common Stock",
+      "market_cap": 124799677,
+      "total_volume": 85700,
+      "price_change_percentage_24h": -2.04779,
+      "ath": 11.54,
+      "current_price": 5.739999771118164
+    },
+    "ACON": {
+      "name": "Aclarion, Inc.",
+      "market_cap": 3226375,
+      "total_volume": 28500,
+      "price_change_percentage_24h": -0.9708729,
+      "ath": 48.33,
+      "current_price": 3.059999942779541
+    },
+    "ACONW": {
+      "name": "Aclarion, Inc.",
+      "total_volume": 299,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.0385,
+      "current_price": 0.038
+    },
+    "ACRS": {
+      "name": "Aclaris Therapeutics, Inc.",
+      "market_cap": 338037133,
+      "total_volume": 1426700,
+      "price_change_percentage_24h": 0.645161,
+      "ath": 4.89,
+      "current_price": 3.119999885559082
+    },
+    "ACRV": {
+      "name": "Acrivon Therapeutics, Inc.",
+      "market_cap": 50488202,
+      "total_volume": 736900,
+      "price_change_percentage_24h": -5.32545,
+      "ath": 5.651,
+      "current_price": 1.600000023841858
+    },
+    "ACT": {
+      "name": "Enact Holdings, Inc.",
+      "market_cap": 5979428730,
+      "total_volume": 456100,
+      "price_change_percentage_24h": -2.1734,
+      "ath": 44.8,
+      "current_price": 41.40999984741211
+    },
+    "ACTG": {
+      "name": "Acacia Research Corporation",
+      "market_cap": 397416746,
+      "total_volume": 96100,
+      "price_change_percentage_24h": -1.67065,
+      "ath": 4.32,
+      "current_price": 4.119999885559082
+    },
+    "ACTU": {
+      "name": "Actuate Therapeutics, Inc. Common stock",
+      "market_cap": 74378650,
+      "total_volume": 82700,
+      "price_change_percentage_24h": 4.91804,
+      "ath": 11.99,
+      "current_price": 3.200000047683716
+    },
+    "ACWI": {
+      "name": "iShares MSCI ACWI ETF",
+      "total_volume": 13123200,
+      "price_change_percentage_24h": -1.15862,
+      "ath": 148.75,
+      "current_price": 143.32
+    },
+    "ACWX": {
+      "name": "iShares MSCI ACWI ex U.S. ETF",
+      "total_volume": 2273300,
+      "price_change_percentage_24h": -2.15626,
+      "ath": 74.92,
+      "current_price": 69.88
+    },
+    "ACXP": {
+      "name": "Acurx Pharmaceuticals, Inc.",
+      "market_cap": 3692739,
+      "total_volume": 76100,
+      "price_change_percentage_24h": -3.973506,
+      "ath": 21.0,
+      "current_price": 1.4500000476837158
+    },
+    "ADAC": {
+      "name": "American Drive Acquisition Company",
+      "market_cap": 285200002,
+      "total_volume": 187,
+      "price_change_percentage_24h": 0.0,
+      "ath": 9.95,
+      "current_price": 9.920000076293945
+    },
+    "ADACU": {
+      "name": "American Drive Acquisition Company",
+      "total_volume": 700,
+      "price_change_percentage_24h": -0.19900952,
+      "ath": 10.07,
+      "current_price": 10.03
+    },
+    "ADACW": {
+      "name": "American Drive Acquisition Company",
+      "total_volume": 2455,
+      "price_change_percentage_24h": 1.082405,
+      "ath": 0.3,
+      "current_price": 0.2895
+    },
+    "ADAG": {
+      "name": "Adagene Inc.",
+      "market_cap": 142336434,
+      "total_volume": 53300,
+      "price_change_percentage_24h": 3.0716693,
+      "ath": 3.53,
+      "current_price": 3.0199999809265137
+    },
+    "ADAM": {
+      "name": "Adamas Trust, Inc.",
+      "market_cap": 740984814,
+      "total_volume": 612300,
+      "price_change_percentage_24h": -0.967362,
+      "ath": 8.76,
+      "current_price": 8.1899995803833
+    },
+    "ADAMG": {
+      "name": "Adamas Trust, Inc.",
+      "total_volume": 23800,
+      "price_change_percentage_24h": -0.27635095,
+      "ath": 25.434,
+      "current_price": 25.26
+    },
+    "ADAMH": {
+      "name": "Adamas Trust, Inc.",
+      "total_volume": 21400,
+      "price_change_percentage_24h": -0.17868103,
+      "ath": 25.99,
+      "current_price": 25.699
+    },
+    "ADAMI": {
+      "name": "New York Mortgage Trust, Inc. 9.125% Senior Notes Due 2029",
+      "total_volume": 6100,
+      "price_change_percentage_24h": -0.06706192,
+      "ath": 25.5,
+      "current_price": 25.333
+    },
+    "ADAML": {
+      "name": "Adamas Trust, Inc.",
+      "total_volume": 10900,
+      "price_change_percentage_24h": -0.21213083,
+      "ath": 23.84,
+      "current_price": 23.52
+    },
+    "ADAMM": {
+      "name": "Adamas Trust, Inc.",
+      "total_volume": 10600,
+      "price_change_percentage_24h": -0.0784947,
+      "ath": 25.5,
+      "current_price": 25.46
+    },
+    "ADAMN": {
+      "name": "Adamas Trust, Inc.",
+      "total_volume": 6100,
+      "price_change_percentage_24h": 0.08772131,
+      "ath": 23.1,
+      "current_price": 22.82
+    },
+    "ADAMO": {
+      "name": "Adamas Trust, Inc. 9.250% Senior Notes Due 2031",
+      "total_volume": 67600,
+      "price_change_percentage_24h": -0.4330658,
+      "ath": 27.4,
+      "current_price": 25.29
+    },
+    "ADAMZ": {
+      "name": "Adamas Trust, Inc.",
+      "total_volume": 6000,
+      "price_change_percentage_24h": 0.2016079,
+      "ath": 21.72,
+      "current_price": 19.88
+    },
+    "ADBE": {
+      "name": "Adobe Inc.",
+      "market_cap": 117936359912,
+      "total_volume": 5810400,
+      "price_change_percentage_24h": 3.15612,
+      "ath": 452.51,
+      "current_price": 281.739990234375
+    },
+    "ADBG": {
+      "name": "Leverage Shares 2X Long ADBE Daily ETF",
+      "total_volume": 1943100,
+      "price_change_percentage_24h": 6.23947,
+      "ath": 16.99,
+      "current_price": 6.3
+    },
+    "ADEA": {
+      "name": "Adeia Inc.",
+      "market_cap": 2299714011,
+      "total_volume": 1329446,
+      "price_change_percentage_24h": 1.20482,
+      "ath": 21.07,
+      "current_price": 21.0
+    },
+    "ADGM": {
+      "name": "Adagio Medical Holdings, Inc.",
+      "market_cap": 20544248,
+      "total_volume": 15100,
+      "price_change_percentage_24h": -3.01,
+      "ath": 2.87,
+      "current_price": 0.9700000286102295
+    },
+    "ADI": {
+      "name": "Analog Devices, Inc.",
+      "market_cap": 160970675241,
+      "total_volume": 5368400,
+      "price_change_percentage_24h": -3.45232,
+      "ath": 363.2,
+      "current_price": 329.7200012207031
+    },
+    "ADIL": {
+      "name": "Adial Pharmaceuticals, Inc.",
+      "market_cap": 2189004,
+      "total_volume": 143400,
+      "price_change_percentage_24h": -1.00502,
+      "ath": 30.25,
+      "current_price": 1.9700000286102295
+    },
+    "ADMA": {
+      "name": "ADMA Biologics, Inc.",
+      "market_cap": 3739099017,
+      "total_volume": 4009800,
+      "price_change_percentage_24h": -5.0786,
+      "ath": 25.67,
+      "current_price": 15.699999809265137
+    },
+    "ADP": {
+      "name": "Automatic Data Processing, Inc.",
+      "market_cap": 90070734054,
+      "total_volume": 4813900,
+      "price_change_percentage_24h": 2.55111,
+      "ath": 329.93,
+      "current_price": 222.6999969482422
+    },
+    "ADPT": {
+      "name": "Adaptive Biotechnologies Corporation",
+      "market_cap": 2452926313,
+      "total_volume": 1850800,
+      "price_change_percentage_24h": -3.10219,
+      "ath": 20.76,
+      "current_price": 15.930000305175781
+    },
+    "ADSE": {
+      "name": "ADS-TEC Energy PLC",
+      "market_cap": 689004264,
+      "total_volume": 363,
+      "price_change_percentage_24h": 0.0,
+      "ath": 15.18,
+      "current_price": 11.460000038146973
+    },
+    "ADSEW": {
+      "name": "ADS-TEC Energy PLC",
+      "total_volume": 23350,
+      "price_change_percentage_24h": -8.390056,
+      "ath": 0.7648,
+      "current_price": 0.6999
+    },
+    "ADSK": {
+      "name": "Autodesk, Inc.",
+      "market_cap": 55993438964,
+      "total_volume": 2186400,
+      "price_change_percentage_24h": 2.41575,
+      "ath": 329.09,
+      "current_price": 264.1199951171875
+    },
+    "ADTN": {
+      "name": "ADTRAN Holdings, Inc.",
+      "market_cap": 811436122,
+      "total_volume": 1440400,
+      "price_change_percentage_24h": -1.85365,
+      "ath": 11.1,
+      "current_price": 10.0600004196167
+    },
+    "ADTX": {
+      "name": "Aditxt, Inc.",
+      "market_cap": 770793,
+      "total_volume": 319400,
+      "price_change_percentage_24h": -8.575641,
+      "ath": 1751.5,
+      "current_price": 0.4339999854564667
+    },
+    "ADUR": {
+      "name": "Aduro Clean Technologies Inc.",
+      "market_cap": 388361930,
+      "total_volume": 192300,
+      "price_change_percentage_24h": 0.178408,
+      "ath": 17.66,
+      "current_price": 11.229999542236328
+    },
+    "ADUS": {
+      "name": "Addus HomeCare Corporation",
+      "market_cap": 1937381562,
+      "total_volume": 188300,
+      "price_change_percentage_24h": -1.00303,
+      "ath": 124.44,
+      "current_price": 104.62000274658203
+    },
+    "ADV": {
+      "name": "Advantage Solutions Inc.",
+      "market_cap": 198469662,
+      "total_volume": 1548600,
+      "price_change_percentage_24h": 6.05531,
+      "ath": 2.466,
+      "current_price": 0.6060000061988831
+    },
+    "ADVB": {
+      "name": "Advanced Biomed Inc.",
+      "market_cap": 5553661,
+      "total_volume": 136800,
+      "price_change_percentage_24h": -11.329,
+      "ath": 80.0,
+      "current_price": 4.070000171661377
+    },
+    "ADXN": {
+      "name": "Addex Therapeutics Ltd",
+      "market_cap": 8685586,
+      "total_volume": 400,
+      "price_change_percentage_24h": -0.98314184,
+      "ath": 12.05,
+      "current_price": 7.050000190734863
+    },
+    "AEAQ": {
+      "name": "Activate Energy Acquisition Corp.",
+      "market_cap": 309672407,
+      "total_volume": 10000,
+      "price_change_percentage_24h": -0.4028193,
+      "ath": 10.03,
+      "current_price": 9.890000343322754
+    },
+    "AEAQU": {
+      "name": "Activate Energy Acquisition Corp.",
+      "total_volume": 101,
+      "price_change_percentage_24h": 0.0,
+      "ath": 10.52,
+      "current_price": 10.05
+    },
+    "AEAQW": {
+      "name": "Activate Energy Acquisition Corp.",
+      "market_cap": 3310300,
+      "total_volume": 4,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.28,
+      "current_price": 0.2800000011920929
+    },
+    "AEBI": {
+      "name": "Aebi Schmidt Holding AG",
+      "market_cap": 1068090083,
+      "total_volume": 188900,
+      "price_change_percentage_24h": -5.92643,
+      "ath": 33.0,
+      "current_price": 13.8100004196167
+    },
+    "AEC": {
+      "name": "Anfield Energy Inc.",
+      "market_cap": 110643937,
+      "total_volume": 66500,
+      "price_change_percentage_24h": -3.61445,
+      "ath": 12.49,
+      "current_price": 6.400000095367432
+    },
+    "AEHL": {
+      "name": "Antelope Enterprise Holdings Limited",
+      "market_cap": 3778575,
+      "total_volume": 450200,
+      "price_change_percentage_24h": -2.98255,
+      "ath": 50.5242,
+      "current_price": 2.2899999618530273
+    },
+    "AEHR": {
+      "name": "Aehr Test Systems, Inc.",
+      "market_cap": 1240101128,
+      "total_volume": 1771900,
+      "price_change_percentage_24h": -5.08673,
+      "ath": 46.95,
+      "current_price": 40.4900016784668
+    },
+    "AEI": {
+      "name": "Alset Inc.",
+      "market_cap": 65749883,
+      "total_volume": 10600,
+      "price_change_percentage_24h": -7.1428566,
+      "ath": 4.55,
+      "current_price": 1.690000057220459
+    },
+    "AEIS": {
+      "name": "Advanced Energy Industries, Inc.",
+      "market_cap": 11756413812,
+      "total_volume": 823100,
+      "price_change_percentage_24h": -5.78447,
+      "ath": 350.0,
+      "current_price": 311.4200134277344
+    },
+    "AEMD": {
+      "name": "Aethlon Medical, Inc.",
+      "market_cap": 2288291,
+      "total_volume": 15500,
+      "price_change_percentage_24h": -4.91803,
+      "ath": 37.6,
+      "current_price": 1.7400000095367432
+    },
+    "AENT": {
+      "name": "Alliance Entertainment Holding Corporation",
+      "market_cap": 340395222,
+      "total_volume": 40100,
+      "price_change_percentage_24h": 0.754143,
+      "ath": 8.8,
+      "current_price": 6.679999828338623
+    },
+    "AENTW": {
+      "name": "Alliance Entertainment Holding Corporation",
+      "total_volume": 38573,
+      "price_change_percentage_24h": 1.51515,
+      "ath": 0.67,
+      "current_price": 0.67
+    },
+    "AEP": {
+      "name": "American Electric Power Company, Inc.",
+      "market_cap": 71415345263,
+      "total_volume": 5158700,
+      "price_change_percentage_24h": -1.10846,
+      "ath": 134.6,
+      "current_price": 132.0399932861328
+    },
+    "AERT": {
+      "name": "Aeries Technology, Inc",
+      "market_cap": 16820255,
+      "total_volume": 326100,
+      "price_change_percentage_24h": -14.8016,
+      "ath": 1.518,
+      "current_price": 0.33500000834465027
+    },
+    "AERTW": {
+      "name": "Aeries Technology, Inc",
+      "total_volume": 30932,
+      "price_change_percentage_24h": 7.0000067,
+      "ath": 0.0214,
+      "current_price": 0.0214
+    },
+    "AEVA": {
+      "name": "Aeva Technologies, Inc.",
+      "market_cap": 906005008,
+      "total_volume": 2218600,
+      "price_change_percentage_24h": 0.466354,
+      "ath": 38.8,
+      "current_price": 15.079999923706055
+    },
+    "AEVAW": {
+      "name": "Aeva Technologies, Inc.",
+      "total_volume": 108390,
+      "price_change_percentage_24h": -38.372097,
+      "ath": 0.0086,
+      "current_price": 0.0053
+    },
+    "AEYE": {
+      "name": "AudioEye, Inc.",
+      "market_cap": 97734514,
+      "total_volume": 569100,
+      "price_change_percentage_24h": 2.60756,
+      "ath": 16.39,
+      "current_price": 7.869999885559082
+    },
+    "AFBI": {
+      "name": "Affinity Bancshares, Inc.",
+      "market_cap": 121193396,
+      "total_volume": 7400,
+      "price_change_percentage_24h": -1.2562814,
+      "ath": 22.5,
+      "current_price": 19.649999618530273
+    },
+    "AFCG": {
+      "name": "Advanced Flower Capital Inc.",
+      "market_cap": 58067971,
+      "total_volume": 770800,
+      "price_change_percentage_24h": 6.639,
+      "ath": 8.55,
+      "current_price": 2.569999933242798
+    },
+    "AFJK": {
+      "name": "Aimei Health Technology Co., Ltd",
+      "market_cap": 188182071,
+      "total_volume": 14600,
+      "price_change_percentage_24h": -3.9375007,
+      "ath": 130.37,
+      "current_price": 30.739999771118164
+    },
+    "AFJKR": {
+      "name": "Aimei Health Technology Co., Ltd",
+      "total_volume": 14706,
+      "price_change_percentage_24h": 6.250004,
+      "ath": 0.3405,
+      "current_price": 0.34
+    },
+    "AFJKU": {
+      "name": "Aimei Health Technology Co., Ltd",
+      "total_volume": 300,
+      "price_change_percentage_24h": -9.903507,
+      "ath": 80.0,
+      "current_price": 35.48
+    },
+    "AFOS": {
+      "name": "ARS Focused Opportunities Strategy ETF",
+      "total_volume": 14600,
+      "price_change_percentage_24h": -1.5587698,
+      "ath": 40.125,
+      "current_price": 37.437
+    },
+    "AFRI": {
+      "name": "Forafric Global PLC",
+      "market_cap": 261214469,
+      "total_volume": 3900,
+      "price_change_percentage_24h": -1.82002,
+      "ath": 11.42,
+      "current_price": 9.710000038146973
+    },
+    "AFRIW": {
+      "name": "Forafric Global PLC",
+      "total_volume": 1155,
+      "price_change_percentage_24h": -2.2988515,
+      "ath": 0.765,
+      "current_price": 0.765
+    },
+    "AFRM": {
+      "name": "Affirm Holdings, Inc.",
+      "market_cap": 17488309177,
+      "total_volume": 6170900,
+      "price_change_percentage_24h": 3.50946,
+      "ath": 100.0,
+      "current_price": 52.5
+    },
+    "AFSC": {
+      "name": "abrdn Focused U.S. Small Cap Active ETF",
+      "total_volume": 9000,
+      "price_change_percentage_24h": -1.3310784,
+      "ath": 33.181,
+      "current_price": 32.156
+    },
+    "AFYA": {
+      "name": "Afya Limited",
+      "market_cap": 1254100155,
+      "total_volume": 71900,
+      "price_change_percentage_24h": 2.75298,
+      "ath": 19.9,
+      "current_price": 13.8100004196167
+    },
+    "AGAE": {
+      "name": "Allied Gaming & Entertainment Inc.",
+      "market_cap": 11898516,
+      "total_volume": 192100,
+      "price_change_percentage_24h": -4.01225,
+      "ath": 3.79,
+      "current_price": 0.31299999356269836
+    },
+    "AGCC": {
+      "name": "Agencia Comercial Spirits Ltd",
+      "market_cap": 305899341,
+      "total_volume": 135200,
+      "price_change_percentage_24h": 9.14894,
+      "ath": 16.588,
+      "current_price": 15.390000343322754
+    },
+    "AGEM": {
+      "name": "abrdn Emerging Markets Dividend Active ETF",
+      "total_volume": 13500,
+      "price_change_percentage_24h": -2.69383,
+      "ath": 45.76,
+      "current_price": 41.54
+    },
+    "AGEN": {
+      "name": "Agenus Inc.",
+      "market_cap": 105533714,
+      "total_volume": 1022500,
+      "price_change_percentage_24h": -8.75,
+      "ath": 7.34,
+      "current_price": 2.9200000762939453
+    },
+    "AGGA": {
+      "name": "Astoria Dynamic Core US Fixed Income ETF",
+      "total_volume": 3600,
+      "price_change_percentage_24h": -0.22419406,
+      "ath": 25.73,
+      "current_price": 25.255
+    },
+    "AGH": {
+      "name": "Aureus Greenway Holdings Inc.",
+      "market_cap": 75733177,
+      "total_volume": 19100,
+      "price_change_percentage_24h": 0.39920118,
+      "ath": 8.25,
+      "current_price": 5.03000020980835
+    },
+    "AGIO": {
+      "name": "Agios Pharmaceuticals, Inc.",
+      "market_cap": 1621831338,
+      "total_volume": 1020400,
+      "price_change_percentage_24h": -1.80915,
+      "ath": 46.0,
+      "current_price": 27.68000030517578
+    },
+    "AGIX": {
+      "name": "KraneShares Artificial Intelligence and Technology ETF",
+      "total_volume": 101800,
+      "price_change_percentage_24h": 0.18901554,
+      "ath": 40.01,
+      "current_price": 34.455
+    },
+    "AGMB": {
+      "name": "AgomAb Therapeutics NV",
+      "market_cap": 701200963,
+      "total_volume": 75200,
+      "price_change_percentage_24h": -3.20164,
+      "ath": 17.45,
+      "current_price": 14.210000038146973
+    },
+    "AGMH": {
+      "name": "AGM Group Holdings Inc.",
+      "market_cap": 2942632,
+      "total_volume": 12100,
+      "price_change_percentage_24h": 3.2258034,
+      "ath": 18.1,
+      "current_price": 1.2799999713897705
+    },
+    "AGMI": {
+      "name": "Themes Silver Miners ETF",
+      "total_volume": 3900,
+      "price_change_percentage_24h": -6.000308,
+      "ath": 91.8,
+      "current_price": 77.464
+    },
+    "AGNC": {
+      "name": "AGNC Investment Corp.",
+      "market_cap": 12085599880,
+      "total_volume": 16721700,
+      "price_change_percentage_24h": -0.63811,
+      "ath": 12.19,
+      "current_price": 10.899999618530273
+    },
+    "AGNCL": {
+      "name": "AGNC Investment Corp.",
+      "total_volume": 14700,
+      "price_change_percentage_24h": 0.07942993,
+      "ath": 26.59,
+      "current_price": 25.2
+    },
+    "AGNCM": {
+      "name": "AGNC Investment Corp.",
+      "market_cap": 8873155584,
+      "total_volume": 4600,
+      "price_change_percentage_24h": -0.16000366,
+      "ath": 25.49,
+      "current_price": 24.959999084472656
+    },
+    "AGNCN": {
+      "name": "AGNC Investment Corp.",
+      "market_cap": 8795780096,
+      "total_volume": 12900,
+      "price_change_percentage_24h": 0.0394584,
+      "ath": 26.589,
+      "current_price": 25.610000610351562
+    },
+    "AGNCO": {
+      "name": "AGNC Investment Corp.",
+      "total_volume": 7700,
+      "price_change_percentage_24h": 0.031889383,
+      "ath": 25.95,
+      "current_price": 25.41
+    },
+    "AGNCP": {
+      "name": "AGNC Investment Corp.",
+      "total_volume": 52600,
+      "price_change_percentage_24h": -0.199925,
+      "ath": 25.57,
+      "current_price": 24.96
+    },
+    "AGNCZ": {
+      "name": "AGNC Investment Corp.",
+      "total_volume": 36300,
+      "price_change_percentage_24h": -0.1745542,
+      "ath": 26.37,
+      "current_price": 25.735
+    },
+    "AGNG": {
+      "name": "Global X Aging Population ETF",
+      "total_volume": 14400,
+      "price_change_percentage_24h": -2.27455,
+      "ath": 39.48,
+      "current_price": 36.52
+    },
+    "AGPU": {
+      "name": "Axe Compute Inc.",
+      "market_cap": 5802914,
+      "total_volume": 35200,
+      "price_change_percentage_24h": -3.38983,
+      "ath": 39.0,
+      "current_price": 1.7100000381469727
+    },
+    "AGRZ": {
+      "name": "Agroz Inc.",
+      "market_cap": 8214250,
+      "total_volume": 88000,
+      "price_change_percentage_24h": -2.54499,
+      "ath": 7.2,
+      "current_price": 0.3790000081062317
+    },
+    "AGYS": {
+      "name": "Agilysys, Inc.",
+      "market_cap": 2241632698,
+      "total_volume": 413300,
+      "price_change_percentage_24h": -0.324962,
+      "ath": 145.25,
+      "current_price": 79.75
+    },
+    "AGZD": {
+      "name": "WisdomTree Interest Rate Hedged U.S. Aggregate Bond Fund",
+      "total_volume": 3300,
+      "price_change_percentage_24h": 0.14684513,
+      "ath": 22.77,
+      "current_price": 22.51
+    },
+    "AHCO": {
+      "name": "AdaptHealth Corp.",
+      "market_cap": 1304782285,
+      "total_volume": 2088500,
+      "price_change_percentage_24h": -0.723885,
+      "ath": 11.17,
+      "current_price": 9.600000381469727
+    },
+    "AHG": {
+      "name": "Akso Health Group",
+      "market_cap": 1156550659,
+      "total_volume": 1700,
+      "price_change_percentage_24h": -0.26595753,
+      "ath": 2.1,
+      "current_price": 1.350000023841858
+    },
+    "AHMA": {
+      "name": "Ambitions Enterprise Management Co. L.L.C",
+      "market_cap": 174783003,
+      "total_volume": 18600,
+      "price_change_percentage_24h": 0.170362,
+      "ath": 39.5,
+      "current_price": 5.880000114440918
+    },
+    "AIA": {
+      "name": "iShares Asia 50 ETF",
+      "total_volume": 527900,
+      "price_change_percentage_24h": -2.74641,
+      "ath": 119.7,
+      "current_price": 107.65
+    },
+    "AIDX": {
+      "name": "20/20 Biolabs, Inc.",
+      "market_cap": 32076418,
+      "total_volume": 222900,
+      "price_change_percentage_24h": -7.18563,
+      "ath": 50.0,
+      "current_price": 3.0999999046325684
+    },
+    "AIFD": {
+      "name": "TCW Artificial Intelligence ETF",
+      "total_volume": 8500,
+      "price_change_percentage_24h": 0.2931473,
+      "ath": 40.54,
+      "current_price": 39.345
+    },
+    "AIFF": {
+      "name": "Firefly Neuroscience, Inc.",
+      "market_cap": 20183995,
+      "total_volume": 12556100,
+      "price_change_percentage_24h": -8.3871,
+      "ath": 6.0,
+      "current_price": 1.4199999570846558
+    },
+    "AIFU": {
+      "name": "AIFU Inc.",
+      "market_cap": 220297459,
+      "total_volume": 6100,
+      "price_change_percentage_24h": -1.0937452,
+      "ath": 9.4,
+      "current_price": 1.899999976158142
+    },
+    "AIHS": {
+      "name": "Senmiao Technology Limited",
+      "market_cap": 6334909,
+      "total_volume": 6500,
+      "price_change_percentage_24h": 0.0,
+      "ath": 17.0,
+      "current_price": 1.3899999856948853
+    },
+    "AIIO": {
+      "name": "Robo.ai Inc.",
+      "market_cap": 59255749,
+      "total_volume": 3124700,
+      "price_change_percentage_24h": 4.0989,
+      "ath": 3.48,
+      "current_price": 0.1599999964237213
+    },
+    "AIIOW": {
+      "name": "Robo.ai Inc.",
+      "total_volume": 55842,
+      "price_change_percentage_24h": 0.3289468,
+      "ath": 0.0324,
+      "current_price": 0.0305
+    },
+    "AIMD": {
+      "name": "Ainos, Inc.",
+      "market_cap": 10264532,
+      "total_volume": 36500,
+      "price_change_percentage_24h": -2.649,
+      "ath": 4.5,
+      "current_price": 1.4700000286102295
+    },
+    "AIMDW": {
+      "name": "Ainos, Inc.",
+      "total_volume": 1000,
+      "price_change_percentage_24h": -3.5406728,
+      "ath": 0.101,
+      "current_price": 0.1008
+    },
+    "AIMS": {
+      "name": "Acuitas Small Cap Active ETF",
+      "total_volume": 5100,
+      "price_change_percentage_24h": -2.1171265,
+      "ath": 25.42,
+      "current_price": 24.4
+    },
+    "AIOS": {
+      "name": "AIOS Tech Inc.",
+      "market_cap": 3003772,
+      "total_volume": 191300,
+      "price_change_percentage_24h": -1.80449,
+      "ath": 8.12,
+      "current_price": 0.6259999871253967
+    },
+    "AIOT": {
+      "name": "PowerFleet, Inc.",
+      "market_cap": 468173998,
+      "total_volume": 1756300,
+      "price_change_percentage_24h": -2.78551,
+      "ath": 6.38,
+      "current_price": 3.490000009536743
+    },
+    "AIP": {
+      "name": "Arteris, Inc.",
+      "market_cap": 707015917,
+      "total_volume": 518900,
+      "price_change_percentage_24h": -5.52855,
+      "ath": 19.85,
+      "current_price": 15.550000190734863
+    },
+    "AIPI": {
+      "name": "REX AI Equity Premium Income ETF",
+      "total_volume": 81900,
+      "price_change_percentage_24h": 0.61008704,
+      "ath": 45.08,
+      "current_price": 36.28
+    },
+    "AIPO": {
+      "name": "Defiance AI & Power Infrastructure ETF",
+      "total_volume": 594000,
+      "price_change_percentage_24h": -2.12437,
+      "ath": 27.05,
+      "current_price": 25.34
+    },
+    "AIQ": {
+      "name": "Global X Artificial Intelligence & Technology ETF",
+      "total_volume": 5497600,
+      "price_change_percentage_24h": -0.540859,
+      "ath": 53.94,
+      "current_price": 49.65
+    },
+    "AIRE": {
+      "name": "reAlpha Tech Corp.",
+      "market_cap": 38699240,
+      "total_volume": 1878200,
+      "price_change_percentage_24h": -1.30001,
+      "ath": 1.8,
+      "current_price": 0.29600000381469727
+    },
+    "AIRG": {
+      "name": "Airgain, Inc.",
+      "market_cap": 49028590,
+      "total_volume": 90800,
+      "price_change_percentage_24h": -0.726397,
+      "ath": 5.85,
+      "current_price": 4.099999904632568
+    },
+    "AIRJ": {
+      "name": "AirJoule Technologies Corporation",
+      "market_cap": 237148205,
+      "total_volume": 555400,
+      "price_change_percentage_24h": 6.38298,
+      "ath": 8.3,
+      "current_price": 3.5
+    },
+    "AIRJW": {
+      "name": "AirJoule Technologies Corporation",
+      "total_volume": 8962,
+      "price_change_percentage_24h": 10.301057,
+      "ath": 0.7474,
+      "current_price": 0.7474
+    },
+    "AIRO": {
+      "name": "AIRO Group Holdings, Inc.",
+      "market_cap": 320551252,
+      "total_volume": 447700,
+      "price_change_percentage_24h": 1.5873,
+      "ath": 39.07,
+      "current_price": 10.239999771118164
+    },
+    "AIRR": {
+      "name": "First Trust RBA American Industrial RenaissanceTM ETF",
+      "total_volume": 1065900,
+      "price_change_percentage_24h": -3.79789,
+      "ath": 123.54,
+      "current_price": 113.48
+    },
+    "AIRS": {
+      "name": "AirSculpt Technologies, Inc.",
+      "market_cap": 115507840,
+      "total_volume": 858300,
+      "price_change_percentage_24h": 0.817438,
+      "ath": 12.0,
+      "current_price": 1.850000023841858
+    },
+    "AIRT": {
+      "name": "Air T, Inc.",
+      "market_cap": 56485154,
+      "total_volume": 800,
+      "price_change_percentage_24h": 1.8518478,
+      "ath": 26.7,
+      "current_price": 20.899999618530273
+    },
+    "AIRTP": {
+      "name": "Air T, Inc.",
+      "market_cap": 465160512,
+      "total_volume": 7,
+      "price_change_percentage_24h": 0.0,
+      "ath": 21.0,
+      "current_price": 19.309999465942383
+    },
+    "AISP": {
+      "name": "Airship AI Holdings, Inc.",
+      "market_cap": 94512445,
+      "total_volume": 410500,
+      "price_change_percentage_24h": 1.10294,
+      "ath": 7.2,
+      "current_price": 2.75
+    },
+    "AISPW": {
+      "name": "Airship AI Holdings, Inc.",
+      "total_volume": 20945,
+      "price_change_percentage_24h": -1.9901955,
+      "ath": 1.0,
+      "current_price": 0.98
+    },
+    "AIXC": {
+      "name": "AIxCrypto Holdings, Inc.",
+      "market_cap": 5573214,
+      "total_volume": 46400,
+      "price_change_percentage_24h": -4.42477,
+      "ath": 8.81,
+      "current_price": 1.0800000429153442
+    },
+    "AIXI": {
+      "name": "Xiao-I Corporation",
+      "market_cap": 2950227,
+      "total_volume": 1716900,
+      "price_change_percentage_24h": -4.69625,
+      "ath": 4.671,
+      "current_price": 0.22100000083446503
+    },
+    "AKAM": {
+      "name": "Akamai Technologies, Inc.",
+      "market_cap": 14633699514,
+      "total_volume": 2781500,
+      "price_change_percentage_24h": -1.92271,
+      "ath": 113.5,
+      "current_price": 101.0
+    },
+    "AKAN": {
+      "name": "Akanda Corp.",
+      "market_cap": 1824124,
+      "total_volume": 114600,
+      "price_change_percentage_24h": -5.64008,
+      "ath": 46.45,
+      "current_price": 0.8679999709129333
+    },
+    "AKBA": {
+      "name": "Akebia Therapeutics, Inc.",
+      "market_cap": 318776309,
+      "total_volume": 2837400,
+      "price_change_percentage_24h": -4.8,
+      "ath": 4.079,
+      "current_price": 1.190000057220459
+    },
+    "AKTS": {
+      "name": "Aktis Oncology, Inc.",
+      "market_cap": 1133187331,
+      "total_volume": 189400,
+      "price_change_percentage_24h": -1.48681,
+      "ath": 29.16,
+      "current_price": 20.540000915527344
+    },
+    "AKTX": {
+      "name": "Akari Therapeutics, Plc",
+      "market_cap": 11308525,
+      "total_volume": 210300,
+      "price_change_percentage_24h": -1.36,
+      "ath": 1.73,
+      "current_price": 0.24699999392032623
+    },
+    "ALAB": {
+      "name": "Astera Labs, Inc.",
+      "market_cap": 20425740360,
+      "total_volume": 6435300,
+      "price_change_percentage_24h": 5.47596,
+      "ath": 262.9,
+      "current_price": 120.0
+    },
+    "ALAR": {
+      "name": "Alarum Technologies Ltd.",
+      "market_cap": 56211967,
+      "total_volume": 50100,
+      "price_change_percentage_24h": 12.46377,
+      "ath": 18.0,
+      "current_price": 7.760000228881836
+    },
+    "ALBG": {
+      "name": "Leverage Shares 2X Long ALB Daily ETF",
+      "total_volume": 4700,
+      "price_change_percentage_24h": -6.792567,
+      "ath": 20.37,
+      "current_price": 12.783
+    },
+    "ALBT": {
+      "name": "Avalon GloboCare Corp.",
+      "market_cap": 4990688,
+      "total_volume": 990900,
+      "price_change_percentage_24h": -11.2771,
+      "ath": 11.51,
+      "current_price": 0.8669999837875366
+    },
+    "ALCO": {
+      "name": "Alico, Inc.",
+      "market_cap": 305729877,
+      "total_volume": 35000,
+      "price_change_percentage_24h": -2.4432,
+      "ath": 43.2,
+      "current_price": 39.93000030517578
+    },
+    "AMCI": {
+      "name": "AMC Robotics Corporation",
+      "market_cap": 140769242,
+      "total_volume": 24200,
+      "price_change_percentage_24h": -7.1535,
+      "ath": 42.0,
+      "current_price": 6.23
+    },
+    "AMCX": {
+      "name": "AMC Networks Inc.",
+      "market_cap": 360401635,
+      "total_volume": 333900,
+      "price_change_percentage_24h": 1.22249,
+      "ath": 10.28,
+      "current_price": 8.28
+    },
+    "AMD": {
+      "name": "Advanced Micro Devices, Inc.",
+      "market_cap": 325185437660,
+      "total_volume": 35891700,
+      "price_change_percentage_24h": -1.29659,
+      "ath": 267.08,
+      "current_price": 199.45
+    },
+    "AMDD": {
+      "name": "Direxion Daily AMD Bear 1X Shares",
+      "total_volume": 22700100,
+      "price_change_percentage_24h": 1.4733421,
+      "ath": 34.74,
+      "current_price": 9.422
+    },
+    "AMDG": {
+      "name": "Leverage Shares 2X Long AMD Daily ETF",
+      "total_volume": 126000,
+      "price_change_percentage_24h": -2.8530688,
+      "ath": 49.0,
+      "current_price": 20.43
+    },
+    "AMDL": {
+      "name": "GraniteShares 2x Long AMD Daily ETF",
+      "total_volume": 11966600,
+      "price_change_percentage_24h": -2.65915,
+      "ath": 25.86,
+      "current_price": 12.08
+    },
+    "AMGN": {
+      "name": "Amgen Inc.",
+      "market_cap": 198161280620,
+      "total_volume": 2868400,
+      "price_change_percentage_24h": -3.07696,
+      "ath": 391.29,
+      "current_price": 367.6
+    },
+    "AMID": {
+      "name": "Argent Mid Cap ETF",
+      "total_volume": 3500,
+      "price_change_percentage_24h": -1.1408603,
+      "ath": 36.55,
+      "current_price": 33.899
+    },
+    "AMIX": {
+      "name": "Autonomix Medical, Inc.",
+      "market_cap": 4757696,
+      "total_volume": 94700,
+      "price_change_percentage_24h": 2.23259,
+      "ath": 2.82,
+      "current_price": 0.417
+    },
+    "AMKR": {
+      "name": "Amkor Technology, Inc.",
+      "market_cap": 11020092186,
+      "total_volume": 4055100,
+      "price_change_percentage_24h": -2.64365,
+      "ath": 57.09,
+      "current_price": 44.56
+    },
+    "AMLX": {
+      "name": "Amylyx Pharmaceuticals, Inc.",
+      "market_cap": 1548455964,
+      "total_volume": 1345900,
+      "price_change_percentage_24h": -6.31229,
+      "ath": 17.49,
+      "current_price": 14.1
+    },
+    "AMOD": {
+      "name": "Alpha Modus Holdings, Inc.",
+      "market_cap": 24764803,
+      "total_volume": 345900,
+      "price_change_percentage_24h": -6.82021,
+      "ath": 2.6,
+      "current_price": 0.522
+    },
+    "AMODW": {
+      "name": "Alpha Modus Holdings, Inc.",
+      "total_volume": 1000,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.0753,
+      "current_price": 0.0753
+    },
+    "AMPG": {
+      "name": "AmpliTech Group, Inc.",
+      "market_cap": 65975086,
+      "total_volume": 568600,
+      "price_change_percentage_24h": -5.41517,
+      "ath": 4.89,
+      "current_price": 2.62
+    },
+    "AMPGR": {
+      "name": "AmpliTech Group, Inc.",
+      "total_volume": 4487,
+      "price_change_percentage_24h": 3.448283,
+      "ath": 0.16,
+      "current_price": 0.15
+    },
+    "AMPGZ": {
+      "name": "AmpliTech Group, Inc.",
+      "total_volume": 586,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.2354,
+      "current_price": 0.2354
+    },
+    "AMPH": {
+      "name": "Amphastar Pharmaceuticals, Inc.",
+      "market_cap": 939262461,
+      "total_volume": 726300,
+      "price_change_percentage_24h": 2.40482,
+      "ath": 31.26,
+      "current_price": 20.44
+    },
+    "AMPL": {
+      "name": "Amplitude, Inc.",
+      "market_cap": 1052110174,
+      "total_volume": 2190500,
+      "price_change_percentage_24h": 1.94301,
+      "ath": 14.49,
+      "current_price": 7.87
+    },
+    "AMRN": {
+      "name": "Amarin Corporation plc",
+      "market_cap": 294840265,
+      "total_volume": 77700,
+      "price_change_percentage_24h": -2.47593,
+      "ath": 20.9,
+      "current_price": 14.18
+    },
+    "AMRX": {
+      "name": "Amneal Pharmaceuticals, Inc.",
+      "market_cap": 4171981951,
+      "total_volume": 2444500,
+      "price_change_percentage_24h": -0.300752,
+      "ath": 15.42,
+      "current_price": 13.26
+    },
+    "AMSC": {
+      "name": "American Superconductor Corporation",
+      "market_cap": 1468362876,
+      "total_volume": 687800,
+      "price_change_percentage_24h": -3.20151,
+      "ath": 70.49,
+      "current_price": 30.84
+    },
+    "AMSF": {
+      "name": "AMERISAFE, Inc.",
+      "market_cap": 658785691,
+      "total_volume": 208000,
+      "price_change_percentage_24h": -2.72014,
+      "ath": 53.27,
+      "current_price": 34.69
+    },
+    "AMST": {
+      "name": "Amesite Inc.",
+      "market_cap": 8047974,
+      "total_volume": 30100,
+      "price_change_percentage_24h": 6.0241,
+      "ath": 4.78,
+      "current_price": 1.76
+    },
+    "AMTX": {
+      "name": "Aemetis, Inc.",
+      "market_cap": 92017999,
+      "total_volume": 433400,
+      "price_change_percentage_24h": 0.0,
+      "ath": 3.66,
+      "current_price": 1.39
+    },
+    "AMUN": {
+      "name": "abrdn Ultra Short Municipal Income Active ETF",
+      "total_volume": 100,
+      "price_change_percentage_24h": -0.038344435,
+      "ath": 26.3,
+      "current_price": 26.07
+    },
+    "AMUU": {
+      "name": "Direxion Daily AMD Bull 2X Shares",
+      "total_volume": 232800,
+      "price_change_percentage_24h": -2.879081,
+      "ath": 101.84,
+      "current_price": 42.325
+    },
+    "AMWD": {
+      "name": "American Woodmark Corporation",
+      "market_cap": 668598705,
+      "total_volume": 216800,
+      "price_change_percentage_24h": -1.81858,
+      "ath": 72.16,
+      "current_price": 45.89
+    },
+    "AMYY": {
+      "name": "Graniteshares YieldBOOST AMD ETF",
+      "total_volume": 12300,
+      "price_change_percentage_24h": -0.95823777,
+      "ath": 26.53,
+      "current_price": 16.599
+    },
+    "AMZD": {
+      "name": "Direxion Daily AMZN Bear 1X Shares",
+      "total_volume": 15313000,
+      "price_change_percentage_24h": -0.845866,
+      "ath": 15.25,
+      "current_price": 10.55
+    },
+    "AMZN": {
+      "name": "Amazon.com, Inc.",
+      "market_cap": 2350303601486,
+      "total_volume": 60834400,
+      "price_change_percentage_24h": 0.977767,
+      "ath": 258.6,
+      "current_price": 218.94
+    },
+    "AMZU": {
+      "name": "Direxion Daily AMZN Bull 2X Shares",
+      "total_volume": 5276400,
+      "price_change_percentage_24h": 1.84936,
+      "ath": 46.88,
+      "current_price": 30.29
+    },
+    "AMZZ": {
+      "name": "GraniteShares 2x Long AMZN Daily ETF",
+      "total_volume": 522000,
+      "price_change_percentage_24h": 2.00594,
+      "ath": 40.205,
+      "current_price": 27.46
+    },
+    "ANAB": {
+      "name": "AnaptysBio, Inc.",
+      "market_cap": 1602293291,
+      "total_volume": 951300,
+      "price_change_percentage_24h": -5.4005,
+      "ath": 63.47,
+      "current_price": 57.28
+    },
+    "ANDE": {
+      "name": "The Andersons, Inc.",
+      "market_cap": 2153759853,
+      "total_volume": 255600,
+      "price_change_percentage_24h": -1.9889,
+      "ath": 70.06,
+      "current_price": 63.57
+    },
+    "ANEL": {
+      "name": "Defiance Daily Target 2X Long ANET ETF",
+      "total_volume": 53400,
+      "price_change_percentage_24h": 6.2713547,
+      "ath": 26.97,
+      "current_price": 16.918
+    },
+    "ANGH": {
+      "name": "Anghami Inc.",
+      "market_cap": 23840645,
+      "total_volume": 1400,
+      "price_change_percentage_24h": -6.552013,
+      "ath": 7.6,
+      "current_price": 2.63
+    },
+    "ANGHW": {
+      "name": "Anghami Inc.",
+      "total_volume": 29297,
+      "price_change_percentage_24h": 8.333334,
+      "ath": 0.013,
+      "current_price": 0.013
+    },
+    "ANGI": {
+      "name": "Angi Inc.",
+      "market_cap": 405183923,
+      "total_volume": 1380500,
+      "price_change_percentage_24h": 4.68227,
+      "ath": 19.42,
+      "current_price": 9.39
+    },
+    "ANGL": {
+      "name": "VanEck Fallen Angel High Yield Bond ETF",
+      "total_volume": 1034600,
+      "price_change_percentage_24h": -0.612038,
+      "ath": 29.78,
+      "current_price": 29.23
+    },
+    "ANGO": {
+      "name": "AngioDynamics, Inc.",
+      "market_cap": 448032981,
+      "total_volume": 212100,
+      "price_change_percentage_24h": -1.0919,
+      "ath": 13.99,
+      "current_price": 10.87
+    },
+    "ANIK": {
+      "name": "Anika Therapeutics, Inc.",
+      "market_cap": 205502385,
+      "total_volume": 159700,
+      "price_change_percentage_24h": -0.766014,
+      "ath": 17.21,
+      "current_price": 14.25
+    },
+    "ANIP": {
+      "name": "ANI Pharmaceuticals, Inc.",
+      "market_cap": 1697837466,
+      "total_volume": 314000,
+      "price_change_percentage_24h": -1.21521,
+      "ath": 99.5,
+      "current_price": 75.6
+    },
+    "ANIX": {
+      "name": "Anixa Biosciences, Inc.",
+      "market_cap": 96466772,
+      "total_volume": 103000,
+      "price_change_percentage_24h": -0.687285,
+      "ath": 5.46,
+      "current_price": 2.89
+    },
+    "ANL": {
+      "name": "Adlai Nortye Ltd.",
+      "market_cap": 340958467,
+      "total_volume": 240100,
+      "price_change_percentage_24h": 10.2625,
+      "ath": 12.09,
+      "current_price": 9.24
+    },
+    "ANNA": {
+      "name": "AleAnna, Inc.",
+      "market_cap": 156133939,
+      "total_volume": 676900,
+      "price_change_percentage_24h": 19.2547,
+      "ath": 18.3,
+      "current_price": 3.84
+    },
+    "ANNAW": {
+      "name": "AleAnna, Inc.",
+      "total_volume": 166050,
+      "price_change_percentage_24h": 9.285711,
+      "ath": 0.49,
+      "current_price": 0.306
+    },
+    "ANNX": {
+      "name": "Annexon, Inc.",
+      "market_cap": 809373397,
+      "total_volume": 3159100,
+      "price_change_percentage_24h": -2.86226,
+      "ath": 7.18,
+      "current_price": 5.43
+    },
+    "ANPA": {
+      "name": "Rich Sparkle Holdings Limited",
+      "market_cap": 115625000,
+      "total_volume": 73400,
+      "price_change_percentage_24h": 1.31435,
+      "ath": 180.639,
+      "current_price": 9.25
+    },
+    "ANSC": {
+      "name": "Agriculture & Natural Solutions Acquisition Corporation",
+      "market_cap": 466907857,
+      "total_volume": 600,
+      "price_change_percentage_24h": 0.118485,
+      "ath": 11.244,
+      "current_price": 11.238
+    },
+    "ANSCU": {
+      "name": "Agriculture & Natural Solutions Acquisition Corporation",
+      "total_volume": 1,
+      "price_change_percentage_24h": 0.0,
+      "ath": 11.9,
+      "current_price": 11.1
+    },
+    "ANSCW": {
+      "name": "Agriculture & Natural Solutions Acquisition Corporation",
+      "total_volume": 92334,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.24,
+      "current_price": 0.24
+    },
+    "ANTA": {
+      "name": "Antalpha Platform Holding Compa",
+      "market_cap": 198654233,
+      "total_volume": 6400,
+      "price_change_percentage_24h": 0.47904146,
+      "ath": 27.72,
+      "current_price": 8.39
+    },
+    "ANTX": {
+      "name": "AN2 Therapeutics, Inc.",
+      "market_cap": 46857462,
+      "total_volume": 1539300,
+      "price_change_percentage_24h": 27.6119,
+      "ath": 1.79,
+      "current_price": 1.71
+    },
+    "ANV": {
+      "name": "Graniteshares Autocallable Nvda ETF",
+      "total_volume": 500,
+      "price_change_percentage_24h": -0.42494008,
+      "ath": 25.28,
+      "current_price": 24.51
+    },
+    "ANY": {
+      "name": "Sphere 3D Corp.",
+      "market_cap": 4953088,
+      "total_volume": 303000,
+      "price_change_percentage_24h": 5.7971,
+      "ath": 12.6,
+      "current_price": 1.46
+    },
+    "AOHY": {
+      "name": "Angel Oak High Yield Opportunities ETF",
+      "total_volume": 83600,
+      "price_change_percentage_24h": -0.2695394,
+      "ath": 11.29,
+      "current_price": 11.1
+    },
+    "AOSL": {
+      "name": "Alpha and Omega Semiconductor Limited",
+      "market_cap": 599382997,
+      "total_volume": 237800,
+      "price_change_percentage_24h": -1.37121,
+      "ath": 33.01,
+      "current_price": 20.14
+    },
+    "AOTG": {
+      "name": "AOT Growth and Innovation ETF",
+      "total_volume": 6200,
+      "price_change_percentage_24h": 1.4837189,
+      "ath": 59.42,
+      "current_price": 51.128
+    },
+    "AOUT": {
+      "name": "American Outdoor Brands, Inc.",
+      "market_cap": 114164116,
+      "total_volume": 42700,
+      "price_change_percentage_24h": 0.669648,
+      "ath": 15.67,
+      "current_price": 9.02
+    },
+    "APA": {
+      "name": "APA Corporation",
+      "market_cap": 11585125956,
+      "total_volume": 9625600,
+      "price_change_percentage_24h": 4.11576,
+      "ath": 32.78,
+      "current_price": 32.38
+    },
+    "APAC": {
+      "name": "StoneBridge Acquisition II Corporation",
+      "market_cap": 80826196,
+      "total_volume": 8030,
+      "price_change_percentage_24h": 0.0,
+      "ath": 10.06,
+      "current_price": 10.04
+    },
+    "APACR": {
+      "name": "StoneBridge Acquisition II Corporation",
+      "total_volume": 116415,
+      "price_change_percentage_24h": -3.2258034,
+      "ath": 0.16,
+      "current_price": 0.15
+    },
+    "APACU": {
+      "name": "StoneBridge Acquisition II Corporation",
+      "total_volume": 380,
+      "price_change_percentage_24h": 0.0,
+      "ath": 10.565,
+      "current_price": 10.23
+    },
+    "APAD": {
+      "name": "A Paradise Acquisition Corp.",
+      "market_cap": 277029342,
+      "total_volume": 61500,
+      "price_change_percentage_24h": 0.0985244,
+      "ath": 10.21,
+      "current_price": 10.16
+    },
+    "APADR": {
+      "name": "A Paradise Acquisition Corp.",
+      "market_cap": 0,
+      "total_volume": 3751,
+      "price_change_percentage_24h": -6.666667,
+      "ath": 0.4396,
+      "current_price": 0.42
+    },
+    "APADU": {
+      "name": "A Paradise Acquisition Corp.",
+      "total_volume": 600,
+      "price_change_percentage_24h": 0.0,
+      "ath": 11.0,
+      "current_price": 10.5
+    },
+    "APC": {
+      "name": "ARKO Petroleum Corp.",
+      "market_cap": 1545977732,
+      "total_volume": 131200,
+      "price_change_percentage_24h": -0.858262,
+      "ath": 19.8,
+      "current_price": 19.06
+    },
+    "APEI": {
+      "name": "American Public Education, Inc.",
+      "market_cap": 819613554,
+      "total_volume": 269600,
+      "price_change_percentage_24h": -1.34958,
+      "ath": 47.27,
+      "current_price": 45.32
+    },
+    "APGE": {
+      "name": "Apogee Therapeutics, Inc.",
+      "market_cap": 4845270515,
+      "total_volume": 1119300,
+      "price_change_percentage_24h": -1.92228,
+      "ath": 84.56,
+      "current_price": 70.92
+    },
+    "API": {
+      "name": "Agora, Inc.",
+      "market_cap": 396468239,
+      "total_volume": 289400,
+      "price_change_percentage_24h": 1.39211,
+      "ath": 5.71,
+      "current_price": 4.37
+    },
+    "APLD": {
+      "name": "Applied Digital Corporation",
+      "market_cap": 7853565810,
+      "total_volume": 15861900,
+      "price_change_percentage_24h": -1.95462,
+      "ath": 42.27,
+      "current_price": 28.09
+    },
+    "APLM": {
+      "name": "Apollomics, Inc.",
+      "market_cap": 43209895,
+      "total_volume": 2800,
+      "price_change_percentage_24h": -1.7064866,
+      "ath": 42.12,
+      "current_price": 20.16
+    },
+    "APLMW": {
+      "name": "Apollomics, Inc.",
+      "market_cap": 72479368,
+      "total_volume": 12383,
+      "price_change_percentage_24h": 4.8780556,
+      "ath": 0.026,
+      "current_price": 0.026
+    },
+    "APLS": {
+      "name": "Apellis Pharmaceuticals, Inc.",
+      "market_cap": 2575772617,
+      "total_volume": 2925800,
+      "price_change_percentage_24h": 1.46022,
+      "ath": 30.48,
+      "current_price": 20.15
+    },
+    "APM": {
+      "name": "Aptorum Group Limited",
+      "market_cap": 6515005,
+      "total_volume": 30400,
+      "price_change_percentage_24h": -3.1476955,
+      "ath": 4.47,
+      "current_price": 0.8
+    },
+    "APOG": {
+      "name": "Apogee Enterprises, Inc.",
+      "market_cap": 786869895,
+      "total_volume": 145700,
+      "price_change_percentage_24h": -4.46592,
+      "ath": 49.99,
+      "current_price": 36.58
+    },
+    "APP": {
+      "name": "AppLovin Corporation",
+      "market_cap": 171870393974,
+      "total_volume": 7609000,
+      "price_change_percentage_24h": 5.33336,
+      "ath": 745.61,
+      "current_price": 508.56
+    },
+    "APPF": {
+      "name": "AppFolio, Inc.",
+      "market_cap": 6834487107,
+      "total_volume": 380100,
+      "price_change_percentage_24h": 0.871135,
+      "ath": 326.04,
+      "current_price": 189.9
+    },
+    "APPN": {
+      "name": "Appian Corporation",
+      "market_cap": 1996035311,
+      "total_volume": 840600,
+      "price_change_percentage_24h": 0.633856,
+      "ath": 46.059,
+      "current_price": 26.99
+    },
+    "APPS": {
+      "name": "Digital Turbine, Inc.",
+      "market_cap": 509574715,
+      "total_volume": 1920700,
+      "price_change_percentage_24h": -0.9324,
+      "ath": 8.28,
+      "current_price": 4.25
+    },
+    "APPX": {
+      "name": "Tradr 2X Long APP Daily ETF",
+      "total_volume": 4415900,
+      "price_change_percentage_24h": 10.699,
+      "ath": 52.54,
+      "current_price": 15.52
+    },
+    "APRE": {
+      "name": "Aprea Therapeutics, Inc.",
+      "market_cap": 10557930,
+      "total_volume": 132100,
+      "price_change_percentage_24h": 1.28571,
+      "ath": 2.76,
+      "current_price": 0.922
+    },
+    "APVO": {
+      "name": "Aptevo Therapeutics Inc.",
+      "market_cap": 10087852,
+      "total_volume": 43100,
+      "price_change_percentage_24h": -3.869044,
+      "ath": 1299.6,
+      "current_price": 6.46
+    },
+    "APWC": {
+      "name": "Asia Pacific Wire & Cable Corporation Limited",
+      "market_cap": 34775215,
+      "total_volume": 600,
+      "price_change_percentage_24h": -1.2048181,
+      "ath": 2.34,
+      "current_price": 1.64
+    },
+    "APXT": {
+      "name": "Apex Treasury Corporation",
+      "market_cap": 456382814,
+      "total_volume": 18900,
+      "price_change_percentage_24h": 0.100808755,
+      "ath": 9.99,
+      "current_price": 9.93
+    },
+    "APXTU": {
+      "name": "Apex Treasury Corporation",
+      "total_volume": 100,
+      "price_change_percentage_24h": 0.0,
+      "ath": 10.41,
+      "current_price": 10.09
+    },
+    "APXTW": {
+      "name": "Apex Treasury Corporation",
+      "total_volume": 3900,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.25,
+      "current_price": 0.25
+    },
+    "APYX": {
+      "name": "Apyx Medical Corporation",
+      "market_cap": 133756567,
+      "total_volume": 71400,
+      "price_change_percentage_24h": -1.21212,
+      "ath": 4.5,
+      "current_price": 3.26
+    },
+    "AQB": {
+      "name": "AquaBounty Technologies, Inc.",
+      "market_cap": 3606257,
+      "total_volume": 6600,
+      "price_change_percentage_24h": 0.0,
+      "ath": 2.95,
+      "current_price": 0.93
+    },
+    "AQMS": {
+      "name": "Aqua Metals, Inc.",
+      "market_cap": 14399306,
+      "total_volume": 23400,
+      "price_change_percentage_24h": -2.0284,
+      "ath": 39.4,
+      "current_price": 4.83
+    },
+    "AQST": {
+      "name": "Aquestive Therapeutics, Inc.",
+      "market_cap": 519733289,
+      "total_volume": 4851800,
+      "price_change_percentage_24h": -2.51715,
+      "ath": 7.55,
+      "current_price": 4.26
+    },
+    "AQWA": {
+      "name": "Global X Clean Water ETF",
+      "total_volume": 107400,
+      "price_change_percentage_24h": -2.7315512,
+      "ath": 20.92,
+      "current_price": 19.891
+    },
+    "ARAI": {
+      "name": "Arrive AI Inc.",
+      "market_cap": 38256247,
+      "total_volume": 215600,
+      "price_change_percentage_24h": 0.0,
+      "ath": 40.0,
+      "current_price": 1.05
+    },
+    "ARAY": {
+      "name": "Accuray Incorporated",
+      "market_cap": 60579140,
+      "total_volume": 824300,
+      "price_change_percentage_24h": -3.06045,
+      "ath": 2.1,
+      "current_price": 0.51
+    },
+    "ARBB": {
+      "name": "ARB IOT Group Limited",
+      "market_cap": 8755669,
+      "total_volume": 700,
+      "price_change_percentage_24h": 2.9045615,
+      "ath": 18.6,
+      "current_price": 4.96
+    },
+    "ARBE": {
+      "name": "Arbe Robotics Ltd.",
+      "market_cap": 101235646,
+      "total_volume": 1560200,
+      "price_change_percentage_24h": -1.04167,
+      "ath": 2.88,
+      "current_price": 0.827
+    },
+    "ARBEW": {
+      "name": "Arbe Robotics Ltd.",
+      "total_volume": 54,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.08,
+      "current_price": 0.0617
+    },
+    "ARBK": {
+      "name": "Argo Blockchain plc",
+      "market_cap": 990904,
+      "total_volume": 19600,
+      "price_change_percentage_24h": -4.1935444,
+      "ath": 205.2,
+      "current_price": 2.97
+    },
+    "ARCB": {
+      "name": "ArcBest Corporation",
+      "market_cap": 2244573983,
+      "total_volume": 214100,
+      "price_change_percentage_24h": -5.00191,
+      "ath": 112.92,
+      "current_price": 99.71
+    },
+    "ARCC": {
+      "name": "Ares Capital Corporation",
+      "market_cap": 13642434055,
+      "total_volume": 7870100,
+      "price_change_percentage_24h": -0.679557,
+      "ath": 23.42,
+      "current_price": 19.0
+    },
+    "ARCIU": {
+      "name": "Archimedes Tech SPAC Partners III Co.",
+      "total_volume": 1600,
+      "price_change_percentage_24h": 0.0,
+      "ath": 10.15,
+      "current_price": 10.04
+    },
+    "ARCT": {
+      "name": "Arcturus Therapeutics Holdings Inc.",
+      "market_cap": 206003522,
+      "total_volume": 565200,
+      "price_change_percentage_24h": -4.35356,
+      "ath": 24.17,
+      "current_price": 7.25
+    },
+    "ARDX": {
+      "name": "Ardelyx, Inc.",
+      "market_cap": 1537701362,
+      "total_volume": 3563000,
+      "price_change_percentage_24h": -5.71429,
+      "ath": 8.4,
+      "current_price": 6.27
+    },
+    "AREB": {
+      "name": "American Rebel Holdings, Inc.",
+      "market_cap": 2079219,
+      "total_volume": 3630500,
+      "price_change_percentage_24h": 10.6618,
+      "ath": 8356.0,
+      "current_price": 0.151
+    },
+    "AREBW": {
+      "name": "American Rebel Holdings, Inc.",
+      "total_volume": 107,
+      "price_change_percentage_24h": -9.090911,
+      "ath": 0.01,
+      "current_price": 0.01
+    },
+    "AREC": {
+      "name": "American Resources Corporation",
+      "market_cap": 336063602,
+      "total_volume": 3087900,
+      "price_change_percentage_24h": 1.24223,
+      "ath": 7.11,
+      "current_price": 3.26
+    },
+    "ARGX": {
+      "name": "argenx SE",
+      "market_cap": 45057925836,
+      "total_volume": 414200,
+      "price_change_percentage_24h": -2.86168,
+      "ath": 934.62,
+      "current_price": 728.11
+    },
+    "ARHS": {
+      "name": "Arhaus, Inc.",
+      "market_cap": 1109221454,
+      "total_volume": 1921500,
+      "price_change_percentage_24h": -0.127062,
+      "ath": 12.98,
+      "current_price": 7.86
+    },
+    "ARKO": {
+      "name": "Arko Corp.",
+      "market_cap": 706894482,
+      "total_volume": 580700,
+      "price_change_percentage_24h": -2.03125,
+      "ath": 6.705,
+      "current_price": 6.27
+    },
+    "ARKR": {
+      "name": "Ark Restaurants Corp.",
+      "market_cap": 25207043,
+      "total_volume": 510,
+      "price_change_percentage_24h": 0.0,
+      "ath": 12.6,
+      "current_price": 6.99
+    },
+    "ARLP": {
+      "name": "Alliance Resource Partners, L.P.",
+      "market_cap": 3459635107,
+      "total_volume": 660600,
+      "price_change_percentage_24h": -0.259643,
+      "ath": 28.39,
+      "current_price": 26.89
+    },
+    "ARM": {
+      "name": "Arm Holdings plc",
+      "market_cap": 128098270309,
+      "total_volume": 3437800,
+      "price_change_percentage_24h": -2.81202,
+      "ath": 183.16,
+      "current_price": 120.62
+    },
+    "ARMG": {
+      "name": "Leverage Shares 2X Long ARM Daily ETF",
+      "total_volume": 307800,
+      "price_change_percentage_24h": -5.839824,
+      "ath": 17.56,
+      "current_price": 6.525
+    },
+    "AROW": {
+      "name": "Arrow Financial Corporation",
+      "market_cap": 542531860,
+      "total_volume": 196300,
+      "price_change_percentage_24h": -2.82768,
+      "ath": 36.44,
+      "current_price": 32.99
+    },
+    "ARQ": {
+      "name": "Arq, Inc.",
+      "market_cap": 145159209,
+      "total_volume": 195600,
+      "price_change_percentage_24h": -2.85714,
+      "ath": 7.89,
+      "current_price": 3.4
+    },
+    "ARQQ": {
+      "name": "Arqit Quantum Inc.",
+      "market_cap": 249177596,
+      "total_volume": 185700,
+      "price_change_percentage_24h": -4.44178,
+      "ath": 62.0,
+      "current_price": 15.92
+    },
+    "ARQQW": {
+      "name": "Arqit Quantum Inc.",
+      "total_volume": 32946,
+      "price_change_percentage_24h": -8.288771,
+      "ath": 0.37,
+      "current_price": 0.37
+    },
+    "ARQT": {
+      "name": "Arcutis Biotherapeutics, Inc.",
+      "market_cap": 2973080081,
+      "total_volume": 1241400,
+      "price_change_percentage_24h": -0.621897,
+      "ath": 31.77,
+      "current_price": 23.97
+    },
+    "ARRY": {
+      "name": "Array Technologies, Inc.",
+      "market_cap": 1091341782,
+      "total_volume": 8714000,
+      "price_change_percentage_24h": -2.32558,
+      "ath": 12.23,
+      "current_price": 7.14
+    },
+    "ARTC": {
+      "name": "Art Technology Acquisition Corp.",
+      "market_cap": 297942328,
+      "total_volume": 150500,
+      "price_change_percentage_24h": 0.0,
+      "ath": 9.86,
+      "current_price": 9.79
+    },
+    "ARTCU": {
+      "name": "Art Technology Acquisition Corp.",
+      "total_volume": 9800,
+      "price_change_percentage_24h": -0.10100278,
+      "ath": 10.01,
+      "current_price": 9.89
+    },
+    "ARTCW": {
+      "name": "Art Technology Acquisition Corp.",
+      "total_volume": 1250,
+      "price_change_percentage_24h": 18.51851,
+      "ath": 0.32,
+      "current_price": 0.32
+    },
+    "ARTL": {
+      "name": "Artelo Biosciences, Inc.",
+      "market_cap": 2485983,
+      "total_volume": 7200,
+      "price_change_percentage_24h": -2.50001,
+      "ath": 28.6,
+      "current_price": 1.17
+    },
+    "ARTNA": {
+      "name": "Artesian Resources Corporation",
+      "market_cap": 348587762,
+      "total_volume": 28300,
+      "price_change_percentage_24h": -1.69096,
+      "ath": 36.19,
+      "current_price": 33.72
+    },
+    "ARTV": {
+      "name": "Artiva Biotherapeutics, Inc.",
+      "market_cap": 140887743,
+      "total_volume": 136000,
+      "price_change_percentage_24h": 5.1282,
+      "ath": 7.36,
+      "current_price": 5.74
+    },
+    "ARTW": {
+      "name": "Art's-Way Manufacturing Co., Inc.",
+      "market_cap": 11751980,
+      "total_volume": 4800,
+      "price_change_percentage_24h": -1.30435,
+      "ath": 4.71,
+      "current_price": 2.27
+    },
+    "ARVN": {
+      "name": "Arvinas, Inc.",
+      "market_cap": 881157330,
+      "total_volume": 1051900,
+      "price_change_percentage_24h": -0.290697,
+      "ath": 18.76,
+      "current_price": 13.72
+    },
+    "ARVR": {
+      "name": "First Trust Indxx Metaverse ETF",
+      "total_volume": 100,
+      "price_change_percentage_24h": -1.2971616,
+      "ath": 52.059,
+      "current_price": 45.754
+    },
+    "ARWR": {
+      "name": "Arrowhead Pharmaceuticals, Inc.",
+      "market_cap": 8906047070,
+      "total_volume": 2556900,
+      "price_change_percentage_24h": -2.30415,
+      "ath": 76.76,
+      "current_price": 63.6
+    },
+    "ASBP": {
+      "name": "Aspire Biopharma Holdings, Inc.",
+      "market_cap": 6581625,
+      "total_volume": 120200,
+      "price_change_percentage_24h": -0.75758404,
+      "ath": 36.48,
+      "current_price": 1.31
+    },
+    "ASBPW": {
+      "name": "Aspire Biopharma Holdings, Inc.",
+      "total_volume": 1548,
+      "price_change_percentage_24h": 11.981564,
+      "ath": 0.0243,
+      "current_price": 0.0243
+    },
+    "ASCI": {
+      "name": "abrdn International Small Cap Active ETF",
+      "total_volume": 9100,
+      "price_change_percentage_24h": -1.5949504,
+      "ath": 36.253,
+      "current_price": 34.304
+    },
+    "ASLE": {
+      "name": "AerSale Corporation",
+      "market_cap": 345394288,
+      "total_volume": 193400,
+      "price_change_percentage_24h": -3.30251,
+      "ath": 9.12,
+      "current_price": 7.32
+    },
+    "ASMB": {
+      "name": "Assembly Biosciences, Inc.",
+      "market_cap": 437502089,
+      "total_volume": 168700,
+      "price_change_percentage_24h": -7.15005,
+      "ath": 39.71,
+      "current_price": 27.66
+    },
+    "ASMG": {
+      "name": "Leverage Shares 2X Long ASML Daily ETF",
+      "total_volume": 113200,
+      "price_change_percentage_24h": -4.74243,
+      "ath": 45.082,
+      "current_price": 34.95
+    },
+    "ASML": {
+      "name": "ASML Holding N.V.",
+      "market_cap": 537298431086,
+      "total_volume": 1804500,
+      "price_change_percentage_24h": -2.216,
+      "ath": 1547.22,
+      "current_price": 1368.36
+    },
+    "ASMU": {
+      "name": "Direxion Daily ASML Bull 2X ETF",
+      "total_volume": 25100,
+      "price_change_percentage_24h": -4.6074514,
+      "ath": 29.64,
+      "current_price": 23.04
+    },
+    "ASND": {
+      "name": "Ascendis Pharma A/S",
+      "market_cap": 14571665951,
+      "total_volume": 535800,
+      "price_change_percentage_24h": -1.66957,
+      "ath": 248.6,
+      "current_price": 237.35
+    },
+    "ASNS": {
+      "name": "Actelis Networks, Inc.",
+      "market_cap": 3175006,
+      "total_volume": 50065900,
+      "price_change_percentage_24h": -26.9423,
+      "ath": 12.9,
+      "current_price": 0.394
+    },
+    "ASO": {
+      "name": "Academy Sports and Outdoors, Inc.",
+      "market_cap": 4026883666,
+      "total_volume": 929700,
+      "price_change_percentage_24h": -0.739646,
+      "ath": 62.445,
+      "current_price": 60.39
+    },
+    "ASPC": {
+      "name": "A SPAC III Acquisition Corp.",
+      "market_cap": 26087403,
+      "total_volume": 6100,
+      "price_change_percentage_24h": -3.8345516,
+      "ath": 63.98,
+      "current_price": 11.16
+    },
+    "ASPCR": {
+      "name": "A SPAC III Acquisition Corp.",
+      "total_volume": 32,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.1512,
+      "current_price": 0.1512
+    },
+    "ASPCU": {
+      "name": "A SPAC III Acquisition Corp.",
+      "total_volume": 690,
+      "price_change_percentage_24h": -4.436864,
+      "ath": 49.0,
+      "current_price": 11.2
+    },
+    "ASPI": {
+      "name": "ASP Isotopes Inc.",
+      "market_cap": 639312740,
+      "total_volume": 3757500,
+      "price_change_percentage_24h": -3.76647,
+      "ath": 14.49,
+      "current_price": 5.11
+    },
+    "ASPS": {
+      "name": "Altisource Portfolio Solutions S.A.",
+      "market_cap": 65961294,
+      "total_volume": 45400,
+      "price_change_percentage_24h": -10.4478,
+      "ath": 15.96,
+      "current_price": 6.0
+    },
+    "ASPSW": {
+      "name": "Altisource Portfolio Solutions S.A.",
+      "total_volume": 51850,
+      "price_change_percentage_24h": -7.5425835,
+      "ath": 0.435,
+      "current_price": 0.38
+    },
+    "ASPSZ": {
+      "name": "Altisource Portfolio Solutions S.A.",
+      "total_volume": 9859,
+      "price_change_percentage_24h": -9.774435,
+      "ath": 0.3,
+      "current_price": 0.3
+    },
+    "ASRT": {
+      "name": "Assertio Holdings, Inc.",
+      "market_cap": 76680830,
+      "total_volume": 15000,
+      "price_change_percentage_24h": -0.9942,
+      "ath": 15.15,
+      "current_price": 11.95
+    },
+    "ASRV": {
+      "name": "AmeriServ Financial, Inc.",
+      "market_cap": 63751803,
+      "total_volume": 4800,
+      "price_change_percentage_24h": -2.33766,
+      "ath": 3.93,
+      "current_price": 3.76
+    },
+    "ASST": {
+      "name": "Strive Asset Management, LLC",
+      "market_cap": 583198800,
+      "total_volume": 4620300,
+      "price_change_percentage_24h": -3.84615,
+      "ath": 268.4,
+      "current_price": 9.25
+    },
+    "ASTC": {
+      "name": "Astrotech Corporation",
+      "market_cap": 4274258,
+      "total_volume": 9400,
+      "price_change_percentage_24h": -6.581579,
+      "ath": 8.01,
+      "current_price": 2.43
+    },
+    "ASTE": {
+      "name": "Astec Industries, Inc.",
+      "market_cap": 1384445907,
+      "total_volume": 201100,
+      "price_change_percentage_24h": -3.36899,
+      "ath": 64.37,
+      "current_price": 60.52
+    },
+    "ASTH": {
+      "name": "Astrana Health, Inc.",
+      "market_cap": 1257401202,
+      "total_volume": 410400,
+      "price_change_percentage_24h": -2.03205,
+      "ath": 34.8,
+      "current_price": 25.07
+    },
+    "ASTI": {
+      "name": "Ascent Solar Technologies, Inc.",
+      "market_cap": 47774679,
+      "total_volume": 746700,
+      "price_change_percentage_24h": -4.46154,
+      "ath": 9.87,
+      "current_price": 6.21
+    },
+    "ASTL": {
+      "name": "Algoma Steel Group Inc.",
+      "market_cap": 488991501,
+      "total_volume": 778200,
+      "price_change_percentage_24h": -0.851063,
+      "ath": 7.245,
+      "current_price": 4.66
+    },
+    "ASTLW": {
+      "name": "Algoma Steel Group Inc.",
+      "total_volume": 8501,
+      "price_change_percentage_24h": -2.1481514,
+      "ath": 0.14,
+      "current_price": 0.1321
+    },
+    "ASTS": {
+      "name": "AST SpaceMobile, Inc.",
+      "market_cap": 35675675258,
+      "total_volume": 15738500,
+      "price_change_percentage_24h": -10.5158,
+      "ath": 129.89,
+      "current_price": 93.86
+    },
+    "ASUR": {
+      "name": "Asure Software, Inc.",
+      "market_cap": 259592260,
+      "total_volume": 185100,
+      "price_change_percentage_24h": -0.425985,
+      "ath": 11.48,
+      "current_price": 9.35
+    },
+    "ASYS": {
+      "name": "Amtech Systems, Inc.",
+      "market_cap": 199817945,
+      "total_volume": 133300,
+      "price_change_percentage_24h": -1.56139,
+      "ath": 18.59,
+      "current_price": 13.87
+    },
+    "ATAI": {
+      "name": "AtaiBeckley Inc.",
+      "market_cap": 1285779677,
+      "total_volume": 5048600,
+      "price_change_percentage_24h": -4.06504,
+      "ath": 6.75,
+      "current_price": 3.54
+    },
+    "ATAT": {
+      "name": "Atour Lifestyle Holdings Limited",
+      "market_cap": 5148808302,
+      "total_volume": 1364500,
+      "price_change_percentage_24h": 2.08219,
+      "ath": 43.173,
+      "current_price": 37.26
+    },
+    "ATCX": {
+      "name": "Atlas Critical Minerals Corporation",
+      "market_cap": 31034139,
+      "total_volume": 44700,
+      "price_change_percentage_24h": -2.35849,
+      "ath": 14.01,
+      "current_price": 6.21
+    },
+    "ATEC": {
+      "name": "Alphatec Holdings, Inc.",
+      "market_cap": 1902552667,
+      "total_volume": 2731000,
+      "price_change_percentage_24h": -3.30769,
+      "ath": 23.29,
+      "current_price": 12.57
+    },
+    "ATER": {
+      "name": "Aterian, Inc.",
+      "market_cap": 5725443,
+      "total_volume": 84200,
+      "price_change_percentage_24h": 1.80036,
+      "ath": 3.5,
+      "current_price": 0.571
+    },
+    "ATEX": {
+      "name": "Anterix Inc.",
+      "market_cap": 730582671,
+      "total_volume": 296900,
+      "price_change_percentage_24h": 3.09278,
+      "ath": 39.62,
+      "current_price": 39.0
+    },
+    "ATGL": {
+      "name": "Alpha Technology Group Limited",
+      "market_cap": 278874758,
+      "total_volume": 1400,
+      "price_change_percentage_24h": 2.6666698,
+      "ath": 50.0,
+      "current_price": 16.94
+    },
+    "ATHE": {
+      "name": "Alterity Therapeutics Limited",
+      "market_cap": 66559816,
+      "total_volume": 12100,
+      "price_change_percentage_24h": 3.5882347,
+      "ath": 7.0,
+      "current_price": 3.52
+    },
+    "ATHR": {
+      "name": "Aether Holdings, Inc.",
+      "market_cap": 43113790,
+      "total_volume": 17000,
+      "price_change_percentage_24h": 1.3417051,
+      "ath": 19.688,
+      "current_price": 3.55
+    },
+    "ATII": {
+      "name": "Archimedes Tech SPAC Partners II Co.",
+      "market_cap": 309215494,
+      "total_volume": 9500,
+      "price_change_percentage_24h": 0.0957876,
+      "ath": 10.7,
+      "current_price": 10.45
+    },
+    "ATIIU": {
+      "name": "Archimedes Tech SPAC Partners II Co.",
+      "market_cap": 281611457,
+      "total_volume": 9,
+      "price_change_percentage_24h": 0.0,
+      "ath": 12.57,
+      "current_price": 10.93
+    },
+    "ATIIW": {
+      "name": "Archimedes Tech SPAC Partners II Co.",
+      "total_volume": 1099,
+      "price_change_percentage_24h": -6.2805986,
+      "ath": 0.67,
+      "current_price": 0.67
+    },
+    "ATLC": {
+      "name": "Atlanticus Holdings Corporation",
+      "market_cap": 886839407,
+      "total_volume": 134800,
+      "price_change_percentage_24h": 2.34143,
+      "ath": 78.91,
+      "current_price": 58.57
+    },
+    "ATLCL": {
+      "name": "Atlanticus Holdings Corporation 6.125% Senior Notes due 2026",
+      "total_volume": 24900,
+      "price_change_percentage_24h": 0.0004037136,
+      "ath": 25.44,
+      "current_price": 25.04
+    },
+    "ATLCP": {
+      "name": "Atlanticus Holdings Corporation",
+      "total_volume": 1800,
+      "price_change_percentage_24h": 0.9058919,
+      "ath": 25.0,
+      "current_price": 24.55
+    },
+    "ATLCZ": {
+      "name": "Atlanticus Holdings Corporation 9.25% Senior Notes due 2029",
+      "total_volume": 27100,
+      "price_change_percentage_24h": 0.15600981,
+      "ath": 25.89,
+      "current_price": 25.68
+    },
+    "ATLN": {
+      "name": "Atlantic International Corp.",
+      "market_cap": 207441354,
+      "total_volume": 43200,
+      "price_change_percentage_24h": -2.66666,
+      "ath": 6.5,
+      "current_price": 2.92
+    },
+    "ATLO": {
+      "name": "Ames National Corporation",
+      "market_cap": 239199288,
+      "total_volume": 32700,
+      "price_change_percentage_24h": -1.4291,
+      "ath": 28.35,
+      "current_price": 26.9
+    },
+    "ATLX": {
+      "name": "Atlas Lithium Corporation",
+      "market_cap": 133833827,
+      "total_volume": 245000,
+      "price_change_percentage_24h": 1.00201,
+      "ath": 8.25,
+      "current_price": 5.04
+    },
+    "ATNI": {
+      "name": "ATN International, Inc.",
+      "market_cap": 382350235,
+      "total_volume": 329400,
+      "price_change_percentage_24h": -16.2433,
+      "ath": 30.45,
+      "current_price": 25.06
+    },
+    "ATOM": {
+      "name": "Atomera Incorporated",
+      "market_cap": 184193673,
+      "total_volume": 1046800,
+      "price_change_percentage_24h": -0.626299,
+      "ath": 7.728,
+      "current_price": 4.76
+    },
+    "ATON": {
+      "name": "AlphaTON Capital Corp.",
+      "market_cap": 9209793,
+      "total_volume": 413500,
+      "price_change_percentage_24h": -6.42857,
+      "ath": 15.818,
+      "current_price": 0.393
+    },
+    "ATOS": {
+      "name": "Atossa Therapeutics, Inc.",
+      "market_cap": 40301486,
+      "total_volume": 70700,
+      "price_change_percentage_24h": -4.87805,
+      "ath": 19.35,
+      "current_price": 4.68
+    },
+    "ATPC": {
+      "name": "Agape ATP Corporation",
+      "market_cap": 2041103,
+      "total_volume": 37600,
+      "price_change_percentage_24h": 2.0,
+      "ath": 128.25,
+      "current_price": 2.04
+    },
+    "ATRA": {
+      "name": "Atara Biotherapeutics, Inc.",
+      "market_cap": 36051175,
+      "total_volume": 75800,
+      "price_change_percentage_24h": -7.23562,
+      "ath": 19.145,
+      "current_price": 5.0
+    },
+    "ATRC": {
+      "name": "AtriCure, Inc.",
+      "market_cap": 1509738072,
+      "total_volume": 499600,
+      "price_change_percentage_24h": -2.19426,
+      "ath": 43.18,
+      "current_price": 30.31
+    },
+    "ATRO": {
+      "name": "Astronics Corporation",
+      "market_cap": 2690711098,
+      "total_volume": 406200,
+      "price_change_percentage_24h": -4.7547,
+      "ath": 83.96,
+      "current_price": 75.52
+    },
+    "ATXG": {
+      "name": "Addentax Group Corp.",
+      "market_cap": 3163144,
+      "total_volume": 153500,
+      "price_change_percentage_24h": -6.08695,
+      "ath": 1.86,
+      "current_price": 0.27
+    },
+    "ATYR": {
+      "name": "aTyr Pharma, Inc.",
+      "market_cap": 88383944,
+      "total_volume": 1298200,
+      "price_change_percentage_24h": -6.44894,
+      "ath": 7.29,
+      "current_price": 0.902
+    },
+    "AUBN": {
+      "name": "Auburn National Bancorporation, Inc.",
+      "market_cap": 87167792,
+      "total_volume": 800,
+      "price_change_percentage_24h": 0.24106619,
+      "ath": 29.0,
+      "current_price": 24.95
+    },
+    "AUDC": {
+      "name": "AudioCodes Ltd.",
+      "market_cap": 229131053,
+      "total_volume": 144600,
+      "price_change_percentage_24h": 0.376881,
+      "ath": 11.5,
+      "current_price": 7.99
+    },
+    "AUGO": {
+      "name": "Aura Minerals Inc.",
+      "market_cap": 6828945865,
+      "total_volume": 721600,
+      "price_change_percentage_24h": -5.15141,
+      "ath": 90.19,
+      "current_price": 81.75
+    },
+    "AUID": {
+      "name": "authID Inc.",
+      "market_cap": 23660186,
+      "total_volume": 888000,
+      "price_change_percentage_24h": -7.64706,
+      "ath": 9.584,
+      "current_price": 1.57
+    },
+    "AUMI": {
+      "name": "Themes Gold Miners ETF",
+      "total_volume": 10000,
+      "price_change_percentage_24h": -4.5331073,
+      "ath": 124.28,
+      "current_price": 107.839
+    },
+    "AUPH": {
+      "name": "Aurinia Pharmaceuticals Inc.",
+      "market_cap": 1959992200,
+      "total_volume": 1627000,
+      "price_change_percentage_24h": -1.99468,
+      "ath": 16.54,
+      "current_price": 14.74
+    },
+    "AUR": {
+      "name": "Aurora Innovation, Inc.",
+      "market_cap": 8711194782,
+      "total_volume": 15855300,
+      "price_change_percentage_24h": -0.445434,
+      "ath": 8.25,
+      "current_price": 4.47
+    },
+    "AURA": {
+      "name": "Aura Biosciences, Inc.",
+      "market_cap": 361968621,
+      "total_volume": 286700,
+      "price_change_percentage_24h": -7.31708,
+      "ath": 7.73,
+      "current_price": 5.7
+    },
+    "AURE": {
+      "name": "Aurelion Inc.",
+      "market_cap": 84075161,
+      "total_volume": 18700,
+      "price_change_percentage_24h": -5.81395,
+      "ath": 14.6,
+      "current_price": 2.43
+    },
+    "AUROW": {
+      "name": "Aurora Innovation, Inc.",
+      "total_volume": 63570,
+      "price_change_percentage_24h": 3.865679,
+      "ath": 0.2934,
+      "current_price": 0.266
+    },
+    "AUTL": {
+      "name": "Autolus Therapeutics plc",
+      "market_cap": 395222783,
+      "total_volume": 1868900,
+      "price_change_percentage_24h": -8.8957,
+      "ath": 2.7,
+      "current_price": 1.485
+    },
+    "AUUD": {
+      "name": "Auddia Inc.",
+      "market_cap": 2384995,
+      "total_volume": 138900,
+      "price_change_percentage_24h": 4.08771,
+      "ath": 7.29,
+      "current_price": 0.769
+    },
+    "AVAH": {
+      "name": "Aveanna Healthcare Holdings Inc.",
+      "market_cap": 1516696688,
+      "total_volume": 1522600,
+      "price_change_percentage_24h": -2.15633,
+      "ath": 10.32,
+      "current_price": 7.26
+    },
+    "AVAV": {
+      "name": "AeroVironment, Inc.",
+      "market_cap": 11013047454,
+      "total_volume": 2357500,
+      "price_change_percentage_24h": -2.61392,
+      "ath": 417.86,
+      "current_price": 220.56
+    },
+    "AVBH": {
+      "name": "Avidbank Holdings, Inc.",
+      "market_cap": 313083430,
+      "total_volume": 67300,
+      "price_change_percentage_24h": -1.41379,
+      "ath": 31.61,
+      "current_price": 28.59
+    },
+    "AVBP": {
+      "name": "ArriVent BioPharma, Inc.",
+      "market_cap": 1042354365,
+      "total_volume": 599200,
+      "price_change_percentage_24h": -4.93223,
+      "ath": 27.22,
+      "current_price": 25.25
+    },
+    "AVGB": {
+      "name": "Avantis Credit ETF",
+      "total_volume": 1500,
+      "price_change_percentage_24h": -0.23745608,
+      "ath": 52.07,
+      "current_price": 51.13
+    },
+    "AVGG": {
+      "name": "Leverage Shares 2X Long AVGO Daily ETF",
+      "total_volume": 725900,
+      "price_change_percentage_24h": 9.29061,
+      "ath": 40.73,
+      "current_price": 23.88
+    },
+    "AVGO": {
+      "name": "Broadcom Inc.",
+      "market_cap": 1577753630004,
+      "total_volume": 56987800,
+      "price_change_percentage_24h": 4.79954,
+      "ath": 414.61,
+      "current_price": 332.77
+    },
+    "AVGU": {
+      "name": "GraniteShares 2x Long AVGO Daily ETF",
+      "total_volume": 296100,
+      "price_change_percentage_24h": 9.6601,
+      "ath": 50.71,
+      "current_price": 30.65
+    },
+    "AVGX": {
+      "name": "Defiance Daily Target 2X Long AVGO ETF",
+      "total_volume": 2728400,
+      "price_change_percentage_24h": 9.30604,
+      "ath": 70.31,
+      "current_price": 41.11
+    },
+    "AVIR": {
+      "name": "Atea Pharmaceuticals, Inc.",
+      "market_cap": 414072033,
+      "total_volume": 1441900,
+      "price_change_percentage_24h": 6.42571,
+      "ath": 5.335,
+      "current_price": 5.3
+    },
+    "AVL": {
+      "name": "Direxion Daily AVGO Bull 2X Shares",
+      "total_volume": 2075800,
+      "price_change_percentage_24h": 9.49971,
+      "ath": 74.75,
+      "current_price": 38.96
+    },
+    "AVNW": {
+      "name": "Aviat Networks, Inc.",
+      "market_cap": 331589376,
+      "total_volume": 81900,
+      "price_change_percentage_24h": -3.8893,
+      "ath": 27.02,
+      "current_price": 25.7
+    },
+    "AVO": {
+      "name": "Mission Produce, Inc.",
+      "market_cap": 978381784,
+      "total_volume": 707600,
+      "price_change_percentage_24h": -3.42657,
+      "ath": 15.02,
+      "current_price": 13.81
+    },
+    "AVPT": {
+      "name": "AvePoint, Inc.",
+      "market_cap": 2436261346,
+      "total_volume": 2463100,
+      "price_change_percentage_24h": 1.62016,
+      "ath": 20.245,
+      "current_price": 11.29
+    },
+    "AVR": {
+      "name": "Anteris Technologies Global Corp.",
+      "market_cap": 613058872,
+      "total_volume": 657500,
+      "price_change_percentage_24h": -0.31496,
+      "ath": 8.08,
+      "current_price": 6.33
+    },
+    "AVS": {
+      "name": "Direxion Daily AVGO Bear 1X Shares",
+      "total_volume": 3656400,
+      "price_change_percentage_24h": -5.119604,
+      "ath": 27.465,
+      "current_price": 9.678
+    },
+    "AVT": {
+      "name": "Avnet, Inc.",
+      "market_cap": 5110705054,
+      "total_volume": 962700,
+      "price_change_percentage_24h": -1.40556,
+      "ath": 68.29,
+      "current_price": 62.43
+    },
+    "AVTX": {
+      "name": "Avalo Therapeutics, Inc.",
+      "market_cap": 325454266,
+      "total_volume": 1272200,
+      "price_change_percentage_24h": -4.24837,
+      "ath": 20.72,
+      "current_price": 17.58
+    },
+    "AVUQ": {
+      "name": "Avantis U.S. Quality ETF",
+      "total_volume": 4800,
+      "price_change_percentage_24h": -0.6145894,
+      "ath": 62.17,
+      "current_price": 59.671
+    },
+    "AVX": {
+      "name": "Avax One Technology Ltd.",
+      "market_cap": 71635613,
+      "total_volume": 727300,
+      "price_change_percentage_24h": 1.97889,
+      "ath": 22.5,
+      "current_price": 0.773
+    },
+    "AVXC": {
+      "name": "Avantis Emerging Markets Ex-China Equity ETF",
+      "total_volume": 65400,
+      "price_change_percentage_24h": -2.2739844,
+      "ath": 76.42,
+      "current_price": 69.161
+    },
+    "AVXL": {
+      "name": "Anavex Life Sciences Corp.",
+      "market_cap": 441117589,
+      "total_volume": 1085700,
+      "price_change_percentage_24h": -4.8,
+      "ath": 13.99,
+      "current_price": 4.76
+    },
+    "AVXX": {
+      "name": "Defiance Daily Target 2X Long AVAV ETF",
+      "total_volume": 1446500,
+      "price_change_percentage_24h": -4.69314,
+      "ath": 24.582,
+      "current_price": 5.28
+    },
+    "AWRE": {
+      "name": "Aware, Inc.",
+      "market_cap": 33556703,
+      "total_volume": 9400,
+      "price_change_percentage_24h": -6.5476127,
+      "ath": 2.95,
+      "current_price": 1.57
+    },
+    "AXG": {
+      "name": "Solowin Holdings",
+      "market_cap": 684012832,
+      "total_volume": 114900,
+      "price_change_percentage_24h": -1.0929,
+      "ath": 5.09,
+      "current_price": 3.62
+    },
+    "AXGN": {
+      "name": "Axogen, Inc.",
+      "market_cap": 1513336399,
+      "total_volume": 880300,
+      "price_change_percentage_24h": -0.205337,
+      "ath": 36.0,
+      "current_price": 29.16
+    },
+    "AXIN": {
+      "name": "Axiom Intelligence Acquisition Corp 1",
+      "market_cap": 344423327,
+      "total_volume": 4000,
+      "price_change_percentage_24h": 0.0,
+      "ath": 10.15,
+      "current_price": 10.15
+    },
+    "AXINR": {
+      "name": "Axiom Intelligence Acquisition Corp 1",
+      "total_volume": 1119,
+      "price_change_percentage_24h": 2.10084,
+      "ath": 0.1701,
+      "current_price": 0.1701
+    },
+    "AXINU": {
+      "name": "Axiom Intelligence Acquisition Corp 1",
+      "total_volume": 1,
+      "price_change_percentage_24h": 0.0,
+      "ath": 11.118,
+      "current_price": 10.379
+    },
+    "AXON": {
+      "name": "Axon Enterprise, Inc.",
+      "market_cap": 45866068825,
+      "total_volume": 738400,
+      "price_change_percentage_24h": 0.119337,
+      "ath": 885.92,
+      "current_price": 570.49
+    },
+    "AXPG": {
+      "name": "Leverage Shares 2X Long AXP Daily ETF",
+      "total_volume": 4800,
+      "price_change_percentage_24h": -2.4244735,
+      "ath": 14.95,
+      "current_price": 11.56
+    },
+    "AXSM": {
+      "name": "Axsome Therapeutics, Inc.",
+      "market_cap": 8259210385,
+      "total_volume": 496000,
+      "price_change_percentage_24h": -1.59678,
+      "ath": 191.5,
+      "current_price": 161.46
+    },
+    "AXTI": {
+      "name": "AXT, Inc.",
+      "market_cap": 2144637327,
+      "total_volume": 6419000,
+      "price_change_percentage_24h": -0.856128,
+      "ath": 47.03,
+      "current_price": 38.8
+    },
+    "AYTU": {
+      "name": "Aytu BioPharma, Inc.",
+      "market_cap": 27799007,
+      "total_volume": 31900,
+      "price_change_percentage_24h": -0.4107481,
+      "ath": 3.07,
+      "current_price": 2.59
+    },
+    "AZ": {
+      "name": "A2Z Cust2Mate Solutions Corp.",
+      "market_cap": 229739701,
+      "total_volume": 230900,
+      "price_change_percentage_24h": -0.904163,
+      "ath": 12.36,
+      "current_price": 5.48
+    },
+    "AZI": {
+      "name": "Autozi Internet Technology (Global) Ltd.",
+      "market_cap": 12774527,
+      "total_volume": 373800,
+      "price_change_percentage_24h": 1.42857,
+      "ath": 69.0,
+      "current_price": 0.277
+    },
+    "AZTA": {
+      "name": "Azenta, Inc.",
+      "market_cap": 1141865346,
+      "total_volume": 601600,
+      "price_change_percentage_24h": -1.35296,
+      "ath": 45.26,
+      "current_price": 24.79
+    },
+    "AZYY": {
+      "name": "Graniteshares YieldBOOST AMZN ETF",
+      "total_volume": 2000,
+      "price_change_percentage_24h": 0.5767035,
+      "ath": 25.32,
+      "current_price": 17.44
+    },
+    "BABU": {
+      "name": "Direxion Daily BABA Bull 2X ETF",
+      "total_volume": 28700,
+      "price_change_percentage_24h": -5.094877,
+      "ath": 24.48,
+      "current_price": 15.0
+    },
+    "BABX": {
+      "name": "GraniteShares 2x Long BABA Daily ETF",
+      "total_volume": 1039500,
+      "price_change_percentage_24h": -4.44288,
+      "ath": 66.0,
+      "current_price": 27.1
+    },
+    "BACC": {
+      "name": "Blue Acquisition Corp.",
+      "market_cap": 285214057,
+      "total_volume": 143400,
+      "price_change_percentage_24h": 0.0981377,
+      "ath": 10.44,
+      "current_price": 10.2
+    },
+    "BACCR": {
+      "name": "Blue Acquisition Corp.",
+      "total_volume": 13460,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.24,
+      "current_price": 0.24
+    },
+    "BACCU": {
+      "name": "Blue Acquisition Corp.",
+      "total_volume": 621,
+      "price_change_percentage_24h": 0.0,
+      "ath": 11.75,
+      "current_price": 10.39
+    },
+    "BACQ": {
+      "name": "Inflection Point Acquisition Corp. IV",
+      "market_cap": 440699754,
+      "total_volume": 251500,
+      "price_change_percentage_24h": -0.0954129,
+      "ath": 13.21,
+      "current_price": 10.47
+    },
+    "BACQR": {
+      "name": "Inflection Point Acquisition Corp. IV",
+      "total_volume": 182,
+      "price_change_percentage_24h": 0.0,
+      "ath": 0.77,
+      "current_price": 0.77
+    },
+    "BACQU": {
+      "name": "Inflection Point Acquisition Corp. IV",
+      "total_volume": 1467,
+      "price_change_percentage_24h": 0.0,
+      "ath": 13.97,
+      "current_price": 11.2
+    },
+    "BAER": {
+      "name": "Bridger Aerospace Group Holdings, Inc.",
+      "market_cap": 129970858,
+      "total_volume": 778500,
+      "price_change_percentage_24h": -6.0241,
+      "ath": 3.44,
+      "current_price": 2.34
+    },
+    "BAERW": {
+      "name": "Bridger Aerospace Group Holdings, Inc.",
+      "total_volume": 2684,
+      "price_change_percentage_24h": -7.6034703,
+      "ath": 0.5338,
+      "current_price": 0.48
+    },
+    "BAFE": {
+      "name": "Brown Advisory Flexible Equity ETF",
+      "total_volume": 21300,
+      "price_change_percentage_24h": -0.41419476,
+      "ath": 28.15,
+      "current_price": 26.52
+    },
+    "BAFN": {
+      "name": "BayFirst Financial Corp.",
+      "market_cap": 25893025,
+      "total_volume": 8200,
+      "price_change_percentage_24h": -1.2539172,
+      "ath": 19.75,
+      "current_price": 6.3
+    },
+    "MSFT": {
+      "name": "Microsoft Corporation",
+      "market_cap": 3052328801329,
+      "total_volume": 38912100,
+      "price_change_percentage_24h": 1.35241,
+      "ath": 555.45,
+      "current_price": 410.67999267578125
+    },
+    "NVDA": {
+      "name": "NVIDIA Corporation",
+      "market_cap": 4456078610992,
+      "total_volume": 198153200,
+      "price_change_percentage_24h": 0.1639,
+      "ath": 212.19,
+      "current_price": 183.33999633789062
+    },
+    "GOOGL": {
+      "name": "Alphabet Inc.",
+      "market_cap": 3639745419067,
+      "total_volume": 35693600,
+      "price_change_percentage_24h": -0.742256,
+      "ath": 349.0,
+      "current_price": 300.8800048828125
+    },
+    "META": {
+      "name": "Meta Platforms, Inc.",
+      "market_cap": 1670948471381,
+      "total_volume": 13314300,
+      "price_change_percentage_24h": -1.07229,
+      "ath": 796.25,
+      "current_price": 660.5700073242188
+    },
+    "TSLA": {
+      "name": "Tesla, Inc.",
+      "market_cap": 1521798745305,
+      "total_volume": 51772200,
+      "price_change_percentage_24h": -0.0960769,
+      "ath": 498.83,
+      "current_price": 405.54998779296875
+    },
+    "BRK-B": {
+      "name": "Berkshire Hathaway Inc.",
+      "market_cap": 1079530293731,
+      "total_volume": 8950700,
+      "price_change_percentage_24h": 2.65036,
+      "ath": 542.07,
+      "current_price": 500.3999938964844
+    },
+    "JPM": {
+      "name": "JPMorgan Chase & Co.",
+      "market_cap": 791713820758,
+      "total_volume": 12718200,
+      "price_change_percentage_24h": -1.95064,
+      "ath": 337.25,
+      "current_price": 293.54998779296875
+    },
+    "V": {
+      "name": "Visa Inc.",
+      "market_cap": 616587040864,
+      "total_volume": 8267200,
+      "price_change_percentage_24h": -0.209072,
+      "ath": 375.51,
+      "current_price": 319.79998779296875
+    }
+  }
+}

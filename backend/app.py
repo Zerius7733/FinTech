@@ -1,28 +1,24 @@
+import asyncio,os
 import json
+from dotenv import load_dotenv
 from pathlib import Path
 from typing import Any, Dict
-
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import AliasChoices, BaseModel, Field
-
 import backend.services.api_deps as api
-from backend.services.compatibility import evaluate_compatibility
-from backend.services.compatibility import synthesize_compatibility_with_llm
-from backend.services.screenshot_importer import create_pending_import
-from backend.services.screenshot_importer import DEFAULT_VISION_MODEL
-from backend.services.screenshot_importer import parse_screenshot_with_llm
-from backend.services.screenshot_importer import confirm_import
-from backend.services.insights_service import InsightError
-from backend.services.insights_service import build_insights
+
+load_dotenv()
 
 
 BASE_DIR = Path(__file__).resolve().parent
-JSON_PATH = BASE_DIR / "json_data" / "user.json"
+USER_JSON_PATH = BASE_DIR / "json_data" / "user.json"
 CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
 ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
+STOCK_LISTINGS_CACHE_PATH = BASE_DIR / "json_data" / "stock_listings_cache.json"
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
+STOCK_MARKET_REFRESH_INTERVAL_SECONDS = 30 * 60
 
 app = FastAPI(
     title="FinTech Wellness API",
@@ -36,6 +32,7 @@ app = FastAPI(
         {"name": "Updates", "description": "Endpoints that run data update jobs."},
         {"name": "Market", "description": "Live market quote retrieval endpoints."},
         {"name": "Portfolio", "description": "User portfolio information endpoints."},
+        {"name": "Retirement", "description": "Retirement planning and target allocation endpoints."},
     ],
 )
 
@@ -47,6 +44,66 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+api.rewrite_user_profiles_with_order(USER_JSON_PATH)
+
+
+async def _run_stock_market_refresh() -> None:
+    try:
+        result = await asyncio.to_thread(api.refresh_stock_market_data)
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        print(
+            "[api] stock market refresh complete:",
+            {
+                "source": meta.get("source"),
+                "ranked_count": meta.get("ranked_count"),
+                "failed_count": meta.get("failed_count"),
+            },
+        )
+    except Exception as exc:
+        print(f"[api] stock market refresh failed: {exc}")
+
+
+async def _run_commodity_market_refresh() -> None:
+    try:
+        result = await asyncio.to_thread(api.refresh_commodity_market_data)
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        print(
+            "[api] commodity market refresh complete:",
+            {
+                "source": meta.get("source"),
+                "ranked_count": meta.get("ranked_count"),
+                "failed_count": meta.get("failed_count"),
+            },
+        )
+    except Exception as exc:
+        print(f"[api] commodity market refresh failed: {exc}")
+
+
+async def _market_refresh_loop() -> None:
+    #await _run_stock_market_refresh()
+    #await _run_commodity_market_refresh()
+    while True:
+        await asyncio.sleep(STOCK_MARKET_REFRESH_INTERVAL_SECONDS)
+        await _run_stock_market_refresh()
+        await _run_commodity_market_refresh()
+
+
+@app.on_event("startup")
+async def startup_stock_market_refresh() -> None:
+    app.state.stock_market_refresh_task = asyncio.create_task(_market_refresh_loop())
+
+
+@app.on_event("shutdown")
+async def shutdown_stock_market_refresh() -> None:
+    task = getattr(app.state, "stock_market_refresh_task", None)
+    if task is None:
+        return
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
 
 def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
     user_count = len([k for k in result.keys() if not k.startswith("_")])
@@ -57,13 +114,14 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _read_users_data() -> Dict[str, Any]:
-    with open(JSON_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+    with open(USER_JSON_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return api.normalize_users_data(data)
 
 
 def _write_users_data(data: Dict[str, Any]) -> None:
-    with open(JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+    with open(USER_JSON_PATH, "w", encoding="utf-8") as f:
+        json.dump(api.normalize_users_data(data), f, indent=2)
 
 
 def _parse_market_query(query: str) -> Dict[str, str]:
@@ -95,6 +153,17 @@ class UserRiskUpdateRequest(BaseModel):
         validation_alias=AliasChoices("risk_profile", "risk_appetite", "risk_appetitie")
     )
 
+
+class UserAgeUpdateRequest(BaseModel):
+    user_id: str
+    age: int = Field(..., ge=18, le=100)
+
+
+class RetirementPlanRequest(BaseModel):
+    retirement_age: int = Field(..., ge=19, le=100)
+    monthly_expenses: float = Field(..., ge=0)
+    essential_monthly_expenses: float = Field(..., ge=0)
+
 class RegisterRequest(BaseModel):
     username: str
     password: str
@@ -119,9 +188,20 @@ class CoinListingResponse(BaseModel):
     ath: float | int | None = None
     ath_change_percentage: float | int | None = None
 
+class StockListingResponse(BaseModel):
+    id: str
+    name: str
+    symbol: str
+    current_price: float | int | None = None
+    market_cap: float | int | None = None
+    total_volume: float | int | None = None
+    price_change_percentage_24h: float | int | None = None
+    ath: float | int | None = None
+
+
 class ScreenshotParseRequest(BaseModel):
     image_base64: str
-    model: str = DEFAULT_VISION_MODEL
+    model: str = api.DEFAULT_VISION_MODEL
     page_text: str | None = None
 
 
@@ -141,6 +221,36 @@ class ScreenshotConfirmRequest(BaseModel):
     holdings: list[ScreenshotHolding]
 
 
+class ScreenshotParseRequest(BaseModel):
+    image_base64: str
+    model: str = api.DEFAULT_VISION_MODEL
+    page_text: str | None = None
+
+
+class ScreenshotHolding(BaseModel):
+    asset_class: str
+    symbol: str
+    qty: float | None = None
+    avg_price: float | None = None
+    current_price: float | None = None
+    market_value: float | None = None
+    name: str | None = None
+    confidence: float | None = None
+
+
+class ScreenshotConfirmRequest(BaseModel):
+    import_id: str
+    holdings: list[ScreenshotHolding]
+
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
 
 class AssetResolveResponse(BaseModel):
@@ -215,10 +325,16 @@ async def get_asset_insights(
     months: int = Query(3, ge=1, le=24, description="Historical window in months"),
 ) -> InsightsResponse:
     try:
-        result = await build_insights(asset_type=type, symbol=symbol, months=months)
+        result = await api.build_insights(asset_type=type, symbol=symbol, months=months)
         return InsightsResponse(**result)
-    except InsightError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except api.InsightError as exc:
+        detail = str(exc)
+        if detail == "price data not found":
+            detail = (
+                f"price data not found for type='{type}', symbol='{symbol}', months={months}. "
+                "Check the type/symbol pair, e.g. stock:AAPL, crypto:BTC, commodity:GOLD."
+            )
+        raise HTTPException(status_code=exc.status_code, detail=detail) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"insights failed: {exc}") from exc
 
@@ -226,17 +342,62 @@ async def get_asset_insights(
     "/api/market/cryptos",
     tags=["Market"],
     summary="Get CoinGecko crypto listings in normalized format",
-    response_model=list[CoinListingResponse],
+    response_model=list[StockListingResponse],
 )
 def get_crypto_listings(
     page: int = Query(1, ge=1, description="CoinGecko page number"),
     per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
-) -> list[CoinListingResponse]:
+) -> list[StockListingResponse]:
     try:
         rows = api.fetch_coingecko_coin_listings(page=page, per_page=per_page)
-        return [CoinListingResponse(**row) for row in rows]
+        return [StockListingResponse(**row) for row in rows]
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"coingecko fetch failed: {exc}") from exc
+
+@app.get(
+    "/api/market/stocks",
+    tags=["Market"],
+    summary="Get stock listings in normalized format",
+    response_model=list[StockListingResponse],
+)
+def get_stock_listings(
+    page: int = Query(1, ge=1, description="Stock page number"),
+    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
+) -> list[StockListingResponse]:
+    try:
+        rows = api.get_precomputed_stock_rankings(
+            page=page,
+            per_page=per_page,
+        )
+        return [StockListingResponse(**row) for row in rows]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        print(f"[api] stock fetch failed: {exc}")
+        raise HTTPException(status_code=502, detail=f"stock fetch failed: {exc}") from exc
+
+
+@app.get(
+    "/api/market/commodities",
+    tags=["Market"],
+    summary="Get commodity listings in normalized format",
+    response_model=list[CoinListingResponse],
+)
+def get_commodity_listings(
+    page: int = Query(1, ge=1, description="Commodity page number"),
+    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
+) -> list[CoinListingResponse]:
+    try:
+        rows = api.get_precomputed_commodity_rankings(
+            page=page,
+            per_page=per_page,
+        )
+        return [CoinListingResponse(**row) for row in rows]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        print(f"[api] commodity fetch failed: {exc}")
+        raise HTTPException(status_code=502, detail=f"commodity fetch failed: {exc}") from exc
 
 
 @app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
@@ -248,7 +409,7 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
             password=payload.password,
         )
         api.add_default_user_profile(
-            json_path=JSON_PATH,
+            USER_JSON_PATH=USER_JSON_PATH,
             user_id=result["user_id"],
             name=result["username"],
         )
@@ -265,23 +426,6 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
 
-'''
-@app.post("/auth/login", tags=["Users"], summary="Login with username and password")
-def login_user(payload: LoginRequest) -> Dict[str, Any]:
-    try:
-        result = api.authenticate_login_user(
-            login_csv_path=LOGIN_CSV_PATH,
-            username=payload.username,
-            password=payload.password,
-        )
-        return {"status": "ok", "username": result["username"]}
-    except api.LoginValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except api.LoginAuthError as exc:
-        raise HTTPException(status_code=401, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
-'''
 
 @app.get("/users", tags=["Users"], summary="Get all users")
 def get_users() -> Dict[str, Any]:
@@ -305,6 +449,33 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read user failed: {exc}") from exc
+
+
+@app.post(
+    "/users/age",
+    tags=["Users"],
+    summary="Update user age",
+)
+def update_user_age(payload: UserAgeUpdateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(payload.user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{payload.user_id}' not found")
+
+        user["age"] = int(payload.age)
+        users[payload.user_id] = user
+        _write_users_data(users)
+        return {
+            "status": "ok",
+            "user_id": payload.user_id,
+            "age": user["age"],
+            "user": user,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"age update failed: {exc}") from exc
 
 
 @app.get(
@@ -354,13 +525,13 @@ async def get_user_target_compatibility(
         resolved = await api.resolve_asset(resolve_query)
         resolved_category = str(resolved.get("category", "unknown")).lower()
 
-        result = evaluate_compatibility(
+        result = api.evaluate_compatibility(
             user=user,
             target_type=target_type,
             symbol=symbol,
             resolved_category=resolved_category,
         )
-        llm = synthesize_compatibility_with_llm(
+        llm = api.synthesize_compatibility_with_llm(
             user_id=user_id,
             user=user,
             compatibility=result,
@@ -460,12 +631,12 @@ def parse_screenshot_import(user_id: str, payload: ScreenshotParseRequest) -> Di
         if not isinstance(users.get(user_id), dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-        parsed = parse_screenshot_with_llm(
+        parsed = api.parse_screenshot_with_llm(
             payload.image_base64,
             model=payload.model,
             page_text=payload.page_text,
         )
-        pending = create_pending_import(user_id=user_id, parsed=parsed)
+        pending = api.create_pending_import(user_id=user_id, parsed=parsed)
         return {
             "status": "ok",
             "user_id": user_id,
@@ -511,7 +682,7 @@ async def confirm_screenshot_import(user_id: str, request: Request) -> Dict[str,
                 status_code=400,
                 detail="holdings array is empty; please provide at least one valid row",
             )
-        result = confirm_import(
+        result = api.confirm_import(
             import_id=import_id.strip(),
             user_id=user_id,
             users_data=users,
@@ -581,6 +752,33 @@ def update_user_risk_and_recalibrate(payload: UserRiskUpdateRequest) -> Dict[str
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"risk update failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/retirement",
+    tags=["Retirement"],
+    summary="Build a retirement plan using current profile, portfolio, and target retirement age",
+)
+def build_user_retirement_plan(user_id: str, payload: RetirementPlanRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        plan = api.build_retirement_plan(
+            user=user,
+            retirement_age=payload.retirement_age,
+            monthly_expenses=payload.monthly_expenses,
+            essential_monthly_expenses=payload.essential_monthly_expenses,
+        )
+        return {"status": "ok", "user_id": user_id, **plan}
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"retirement plan failed: {exc}") from exc
 
 
 @app.get(
@@ -681,7 +879,7 @@ def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, An
 def update_assets() -> Dict[str, Any]:
     try:
         print("[api] /update/assets called")
-        result = api.update_assets_file(str(JSON_PATH), str(CSV_PATH))
+        result = api.update_assets_file(str(USER_JSON_PATH), str(CSV_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"assets update failed: {exc}") from exc
@@ -691,17 +889,104 @@ def update_assets() -> Dict[str, Any]:
 def update_prices() -> Dict[str, Any]:
     try:
         print("[api] /update/prices called")
-        result = api.update_stock_prices_file(str(JSON_PATH))
+        # Backward-compatible alias: portfolio prices only.
+        result = api.update_stock_prices_file(str(USER_JSON_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"price update failed: {exc}") from exc
+
+
+@app.get("/update/prices/portfolio", tags=["Updates"], summary="Update portfolio stock prices")
+def update_portfolio_prices() -> Dict[str, Any]:
+    try:
+        print("[api] /update/prices/portfolio called")
+        result = api.update_stock_prices_file(str(USER_JSON_PATH))
+        return _safe_summary(result)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"portfolio price update failed: {exc}") from exc
+
+
+@app.get("/update/prices/listings", tags=["Updates"], summary="Update stock listings cache prices")
+def update_listing_cache_prices() -> Dict[str, Any]:
+    try:
+        print("[api] /update/prices/listings called")
+        result = api.update_stock_listings_cache_prices_file(str(STOCK_LISTINGS_CACHE_PATH))
+        symbols = result.get("symbols", {}) if isinstance(result, dict) else {}
+        count = len(symbols) if isinstance(symbols, dict) else 0
+        return {"status": "ok", "updated_symbols": count}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"listing cache price update failed: {exc}") from exc
+
+
+@app.get(
+    "/update/market/stocks",
+    tags=["Updates"],
+    summary="Ingest stock market snapshot and rebuild precomputed stock rankings",
+)
+def refresh_stock_market_rankings() -> Dict[str, Any]:
+    try:
+        print("[api] /update/market/stocks called")
+        result = api.refresh_stock_market_data()
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        return {
+            "status": "ok",
+            "source": meta.get("source"),
+            "built_at_epoch": meta.get("built_at_epoch"),
+            "ranked_count": meta.get("ranked_count"),
+            "failed_count": meta.get("failed_count"),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"stock market refresh failed: {exc}") from exc
+
+
+@app.get(
+    "/update/market/commodities",
+    tags=["Updates"],
+    summary="Ingest commodity market snapshot and rebuild precomputed commodity rankings",
+)
+def refresh_commodity_market_rankings() -> Dict[str, Any]:
+    try:
+        print("[api] /update/market/commodities called")
+        result = api.refresh_commodity_market_data()
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        return {
+            "status": "ok",
+            "source": meta.get("source"),
+            "built_at_epoch": meta.get("built_at_epoch"),
+            "ranked_count": meta.get("ranked_count"),
+            "failed_count": meta.get("failed_count"),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"commodity market refresh failed: {exc}") from exc
+
+
+@app.get(
+    "/update/cache/listings/rebuild",
+    tags=["Updates"],
+    summary="Rebuild stock listings cache from Nasdaq screener universe",
+)
+def rebuild_listing_cache() -> Dict[str, Any]:
+    try:
+        print("[api] /update/cache/listings/rebuild called")
+        result = api.rebuild_stock_listings_cache_from_nasdaq(str(STOCK_LISTINGS_CACHE_PATH))
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        symbols = result.get("symbols", {}) if isinstance(result, dict) else {}
+        count = len(symbols) if isinstance(symbols, dict) else 0
+        return {
+            "status": "ok",
+            "rebuilt_symbols": count,
+            "source": meta.get("source"),
+            "rebuilt_at_epoch": meta.get("rebuilt_at_epoch"),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"listing cache rebuild failed: {exc}") from exc
 
 
 @app.get("/update/wellness", tags=["Updates"], summary="Update wellness metrics")
 def update_wellness() -> Dict[str, Any]:
     try:
         print("[api] /update/wellness called")
-        result = api.update_wellness_file(str(JSON_PATH))
+        result = api.update_wellness_file(str(USER_JSON_PATH))
         return _safe_summary(result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"wellness update failed: {exc}") from exc
@@ -711,9 +996,9 @@ def update_wellness() -> Dict[str, Any]:
 def update_all() -> Dict[str, Any]:
     try:
         print("[api] /update/all called")
-        api.update_assets_file(str(JSON_PATH), str(CSV_PATH))
-        api.update_stock_prices_file(str(JSON_PATH))
-        result = api.update_wellness_file(str(JSON_PATH))
+        api.update_assets_file(str(USER_JSON_PATH), str(CSV_PATH))
+        api.update_stock_prices_file(str(USER_JSON_PATH))
+        result = api.update_wellness_file(str(USER_JSON_PATH))
         print("[api] /update/all completed")
         summary = _safe_summary(result)
         summary["pipeline"] = ["assets", "prices", "wellness"]

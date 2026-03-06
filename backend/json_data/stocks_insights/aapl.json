@@ -1,0 +1,195 @@
+{
+  "type": "stock",
+  "symbol": "AAPL",
+  "updated_at": "2026-03-06T16:57:08.760153+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "AAPL",
+      "name": "Apple Inc.",
+      "period": {
+        "months": 3,
+        "start": "2025-12-06",
+        "end": "2026-03-06"
+      },
+      "metrics": {
+        "start_price": 277.6302,
+        "end_price": 256.68,
+        "return_pct": -7.5461,
+        "volatility_annualized": 0.232646,
+        "max_drawdown_pct": -11.5073,
+        "avg_daily_volume": 47570241.3279,
+        "volume_change_pct": 7.8931
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-02",
+          "move_pct": 4.0581,
+          "close": 269.7576,
+          "volume": 73913400.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-17",
+          "move_pct": 3.1668,
+          "close": 263.88,
+          "volume": 58469100.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-12",
+          "move_pct": -4.9982,
+          "close": 261.73,
+          "volume": 81077200.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-20",
+          "move_pct": -3.4556,
+          "close": 246.4694,
+          "volume": 80267500.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2025-12-19",
+          "move_pct": 0.5437,
+          "close": 273.4142,
+          "volume": 144632000.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-01-30",
+          "move_pct": 0.4646,
+          "close": 259.2374,
+          "volume": 92443400.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-02",
+          "headline": "Apple reports first quarter results - Apple",
+          "source": "",
+          "url": "https://www.apple.com/newsroom/2026/01/apple-reports-first-quarter-results/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Strong iPhone Sales Drive Apple Up 18% in 6 Months: Buy the Stock? - February 12, 2026 - Zacks.com",
+          "source": "",
+          "url": "https://www.zacks.com/stock/news/2863216/strong-iphone-sales-drive-apple-up-18-in-6-months-buy-the-stock?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Inc. Plans Quarterly Dividend of $0.26 (NASDAQ:AAPL)",
+          "source": "",
+          "url": "https://www.marketbeat.com/instant-alerts/apple-inc-plans-quarterly-dividend-of-026-nasdaqaapl-2026-01-30/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Q1 Earnings Call Highlights - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2026/01/31/apple-q1-earnings-call-highlights.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "FY2027 EPS Estimates for Apple Increased by Erste Group Bank - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2026/02/23/fy2027-eps-estimates-for-apple-increased-by-erste-group-bank.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "SEC Filings - SEC Filings Details - Apple",
+          "source": "",
+          "url": "https://investor.apple.com/sec-filings/sec-filings-details/default.aspx?FilingId=19035760&utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Form 4 Insider Filing Concerning AAPL on 2026-02-01",
+          "source": "",
+          "url": "https://whalewisdom.com/filing/sugar-ronald-d-4-2026-02-03-183632-0500-aapl?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Inc.",
+          "source": "",
+          "url": "https://s2.q4cdn.com/470004039/files/doc_financials/2026/Proxy_Statement_2026.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Asks Judge to Toss Fraud Claims Over Siri AI, Epic Compliance - MacRumors",
+          "source": "",
+          "url": "https://www.macrumors.com/2026/02/27/apple-asks-judge-toss-fraud-claims-siri-epic/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Board, Executives Sued Over 'Anticompetitive Playbook' - California City Today",
+          "source": "",
+          "url": "https://nationaltoday.com/us/ca/california-city/news/2026/03/02/apple-board-executives-sued-over-anticompetitive-playbook/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple to pay $95 million to settle Siri privacy lawsuit By Reuters",
+          "source": "",
+          "url": "https://www.investing.com/news/stock-market-news/apple-to-pay-95-million-to-settle-siri-privacy-lawsuit-3794221?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Illinois judge approves lawsuit against Apple over Siri privacy concerns",
+          "source": "",
+          "url": "https://www.yahoo.com/news/articles/illinois-judge-approves-lawsuit-against-143106150.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "West Virginia Sues Apple Over iCloud CSAM Allegations - Englebrook Independent News",
+          "source": "",
+          "url": "https://englebrookindependentnews.com/2026/02/19/west-virginia-sues-apple-over-icloud-csam-allegations/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-17",
+          "headline": "Strong iPhone Sales Drive Apple Up 18% in 6 Months: Buy the Stock? - February 12, 2026 - Zacks.com",
+          "source": "",
+          "url": "https://www.zacks.com/stock/news/2863216/%7Bhttps%3A/www.zackstrade.com/2019-1-dollar%7D?utm_source=openai"
+        },
+        {
+          "date": "2026-02-17",
+          "headline": "Apple (AAPL) | Trefis",
+          "source": "",
+          "url": "https://www.trefis.com/data/companies/AAPL?fromforbesandarticle=trefis200217&utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 277.6302 to an ending price of 256.68, the stock experienced a total return of -7.5461% over the period. The annualized volatility was 0.232646, reflecting moderate price fluctuations, while the maximum drawdown reached -11.5073%, indicating a significant peak-to-trough decline. The largest upward move occurred on 2026-02-02, with a 4.0581% increase closing at 269.7576 on a volume of 73,913,400 shares, coinciding with multiple news events including Apple's first quarter results and plans for a quarterly dividend [1][2][3]. Conversely, the largest downward move was on 2026-02-12, with a -4.9982% decline closing at 261.73 on a volume of 81,077,200 shares, shortly after the strong up day and amid ongoing legal and regulatory challenges reported around that time [4][5]. Another notable down day was 2026-01-20 with a -3.4556% move and 80,267,500 shares traded. High volume days such as 2025-12-19 with 144,632,000 shares and 2026-01-30 with 92,443,400 shares traded suggest periods of heightened market activity. The price movements and volume changes may have been influenced by earnings announcements, dividend plans, and legal developments including lawsuits and regulatory scrutiny. However, the direct impact of these news items on price cannot be conclusively determined from the data alone.",
+      "tldr": [
+        "Period return: -7.55% with annualized volatility 0.233.",
+        "Largest up day: 2026-02-02 (4.06%), largest down day: 2026-02-12 (-5.00%).",
+        "Highest volume spike was on 2025-12-19 with volume 144,632,000."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-7.55%) with peak drawdown of -11.51%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.apple.com/newsroom/2026/01/apple-reports-first-quarter-results/?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.zacks.com/stock/news/2863216/strong-iphone-sales-drive-apple-up-18-in-6-months-buy-the-stock?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.marketbeat.com/instant-alerts/apple-inc-plans-quarterly-dividend-of-026-nasdaqaapl-2026-01-30/?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://www.macrumors.com/2026/02/27/apple-asks-judge-toss-fraud-claims-siri-epic/?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://nationaltoday.com/us/ca/california-city/news/2026/03/02/apple-board-executives-sued-over-anticompetitive-playbook/?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}
