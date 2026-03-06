@@ -38,10 +38,11 @@ def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, An
             user["liability"] = round(_to_float(row.get("liability")), 2)
             user["income"] = round(_to_float(row.get("income")), 2)
             user["estate"] = round(_to_float(row.get("estate")), 2)
+            user["expenses"] = round(_to_float(row.get("expenses")), 2)
             portfolio_total = sum(float(p.get("market_value", 0)) for p in _portfolio_positions(user))
             user["portfolio_value"] = round(portfolio_total, 2)
             user["total_balance"] = round(user["cash_balance"] + portfolio_total + user["estate"], 2)
-            user["net_worth"] = round(user["total_balance"] - user["liability"], 2)
+            user["net_worth"] = round(user["total_balance"] - user["liability"] - user["expenses"], 2)
     return updated
 
 def update_assets_file(
