@@ -3,41 +3,90 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Portfolio Import</title>
+  <title>WealthSphere Import</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main>
-    <h1>Portfolio Import</h1>
+  <main class="popup-shell">
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
 
-    <label>Backend URL</label>
-    <input id="apiBase" type="text" placeholder="http://127.0.0.1:8000" />
+    <section class="panel hero-panel">
+      <div class="brand-row">
+        <div class="brand-mark">◉</div>
+        <div>
+          <p class="eyebrow">WealthSphere Extension</p>
+          <h1>Portfolio Import</h1>
+        </div>
+      </div>
+      <p class="hero-copy">Capture a broker page, review detected holdings, and merge them into the signed-in WealthSphere account.</p>
+    </section>
 
-    <label>User ID</label>
-    <input id="userId" type="text" placeholder="u002" />
+    <section id="authView" class="panel auth-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Sign In Required</p>
+          <h2>Unlock the importer</h2>
+        </div>
+        <span class="pill pill-muted">Protected</span>
+      </div>
 
-    <label>Model</label>
-    <input id="model" type="text" placeholder="gpt-4.1-mini" />
+      <form id="loginForm" class="auth-form">
+        <label class="field">
+          <span>Username</span>
+          <input id="username" type="text" autocomplete="username" placeholder="e.g. Alice" />
+        </label>
 
-    <div class="row">
-      <button id="captureBtn">Capture + Parse</button>
-      <button id="confirmBtn">Confirm</button>
-    </div>
+        <label class="field">
+          <span>Password</span>
+          <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+        </label>
 
-    <p id="status">Idle</p>
+        <button id="loginBtn" type="submit" class="btn btn-primary btn-block">Sign In</button>
+      </form>
 
-    <img id="preview" alt="Screenshot preview" />
+      <div id="authStatus" class="status-banner">Sign in with your WealthSphere account to unlock importing.</div>
+      <p class="auth-note">Use the same WealthSphere account you use in the web app. The extension stays locked until sign-in succeeds.</p>
+    </section>
 
-    <div class="row between">
-      <label>Detected Holdings (edit before confirm)</label>
-      <button id="addRowBtn" type="button">+ Add</button>
-    </div>
+    <section id="appView" class="panel app-panel hidden">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Signed In</p>
+          <h2>Import Workspace</h2>
+        </div>
+        <button id="logoutBtn" type="button" class="btn btn-ghost">Log Out</button>
+      </div>
 
-    <div id="holdingsList" class="holdings-list"></div>
-    <div id="warningsBox" class="warnings-box"></div>
+      <div class="action-row">
+        <button id="captureBtn" type="button" class="btn btn-primary">Capture + Parse</button>
+        <button id="confirmBtn" type="button" class="btn btn-secondary">Confirm Import</button>
+      </div>
 
-    <label>Import ID</label>
-    <input id="importId" type="text" readonly />
+      <div id="status" class="status-banner">Sign in to begin.</div>
+
+      <div class="preview-card">
+        <div class="preview-head">
+          <div>
+            <p class="eyebrow">Capture Preview</p>
+            <h3>Latest screenshot</h3>
+          </div>
+          <span class="pill pill-muted">Review before confirm</span>
+        </div>
+        <img id="preview" alt="Screenshot preview" />
+      </div>
+
+      <div class="section-head compact">
+        <div>
+          <p class="eyebrow">Detected Holdings</p>
+          <h3>Edit before merging</h3>
+        </div>
+        <button id="addRowBtn" type="button" class="btn btn-mini">+ Add Row</button>
+      </div>
+
+      <div id="holdingsList" class="holdings-list"></div>
+      <div id="warningsBox" class="warnings-box"></div>
+    </section>
   </main>
 
   <script src="popup.js"></script>

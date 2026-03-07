@@ -1156,7 +1156,8 @@ export default function Globe() {
             /* ── LOGGED-IN HERO ── */
             <>
               <h1 style={{ ...S.heroTitle, marginBottom: 10 }}>
-                Welcome back,{' '}
+                <span style={{ whiteSpace:'nowrap' }}>Welcome back,</span>
+                <br />
                 <em style={{ fontStyle:'normal', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
                   {userProfile?.name?.split(' ')[0] ?? user.username}
                 </em>

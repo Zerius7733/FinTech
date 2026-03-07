@@ -1,21 +1,36 @@
-const apiBaseInput = document.getElementById("apiBase");
-const userIdInput = document.getElementById("userId");
-const modelInput = document.getElementById("model");
+const API_BASE = "http://127.0.0.1:8000";
+const DEFAULT_MODEL = "gpt-4.1-mini";
+
+const authViewEl = document.getElementById("authView");
+const appViewEl = document.getElementById("appView");
+
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const loginForm = document.getElementById("loginForm");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const authStatusEl = document.getElementById("authStatus");
+
 const statusEl = document.getElementById("status");
 const previewEl = document.getElementById("preview");
-const importIdEl = document.getElementById("importId");
 const holdingsListEl = document.getElementById("holdingsList");
 const warningsBoxEl = document.getElementById("warningsBox");
 const addRowBtn = document.getElementById("addRowBtn");
-
 const captureBtn = document.getElementById("captureBtn");
 const confirmBtn = document.getElementById("confirmBtn");
 
 let screenshotDataUrl = "";
+let authUser = null;
+let currentImportId = "";
 
-function setStatus(text, isError = false) {
+function setStatus(text, tone = "neutral") {
   statusEl.textContent = text;
-  statusEl.style.color = isError ? "#b00020" : "#1f2937";
+  statusEl.dataset.tone = tone;
+}
+
+function setAuthStatus(text, tone = "neutral") {
+  authStatusEl.textContent = text;
+  authStatusEl.dataset.tone = tone;
 }
 
 function setWarnings(warnings = []) {
@@ -26,15 +41,6 @@ function setWarnings(warnings = []) {
   }
   warningsBoxEl.style.display = "block";
   warningsBoxEl.textContent = warnings.join("\n");
-}
-
-function getApiBase() {
-  const raw = (apiBaseInput.value || "").trim();
-  return raw || "http://127.0.0.1:8000";
-}
-
-function getUserId() {
-  return (userIdInput.value || "").trim();
 }
 
 function toNumberOrNull(value) {
@@ -56,7 +62,7 @@ function parseLooseNumber(value) {
   if (Number.isFinite(direct)) {
     return direct;
   }
-  const match = cleaned.match(/[-+]?[0-9]*\\.?[0-9]+/);
+  const match = cleaned.match(/[-+]?[0-9]*\.?[0-9]+/);
   if (!match) {
     return null;
   }
@@ -79,15 +85,14 @@ function createHoldingCard(holding = {}) {
       <button class="remove-btn" type="button">X</button>
     </div>
     <div class="holding-row second">
-      <input data-k="avg_price" type="number" step="any" placeholder="Avg Price (optional)" />
-      <input data-k="current_price" type="number" step="any" placeholder="Current Price (optional)" />
-      <input data-k="name" placeholder="Name (optional)" />
-      <input data-k="confidence" type="number" step="any" placeholder="Confidence" />
+      <input data-k="avg_price" type="number" step="any" placeholder="Avg Price" />
+      <input data-k="current_price" type="number" step="any" placeholder="Current Price" />
+      <input data-k="name" placeholder="Asset Name" />
+      <input data-k="confidence" type="number" step="any" placeholder="Conf." />
     </div>
   `;
 
   card.querySelector(".remove-btn").addEventListener("click", () => card.remove());
-
   card.querySelector('[data-k="asset_class"]').value = holding.asset_class || "stocks";
   card.querySelector('[data-k="symbol"]').value = holding.symbol || "";
   card.querySelector('[data-k="qty"]').value = holding.qty ?? "";
@@ -105,8 +110,8 @@ function setHoldingsToUI(holdings = []) {
     holdingsListEl.appendChild(createHoldingCard());
     return;
   }
-  for (const h of holdings) {
-    holdingsListEl.appendChild(createHoldingCard(h));
+  for (const holding of holdings) {
+    holdingsListEl.appendChild(createHoldingCard(holding));
   }
 }
 
@@ -122,24 +127,23 @@ function getHoldingsFromUI() {
     const qtyParsed = parseLooseNumber(qtyRaw);
 
     if (!symbol) {
-      warnings.push("One row has missing symbol.");
+      warnings.push("One row has a missing symbol.");
       continue;
     }
     if (qtyParsed === null || qtyParsed <= 0) {
-      warnings.push(`Qty missing/invalid for ${symbol}.`);
+      warnings.push(`Qty missing or invalid for ${symbol}.`);
       continue;
     }
 
     holdings.push({
       asset_class: assetClass,
       symbol,
-      // Send raw qty text; backend normalizes robustly.
       qty: qtyRaw,
       avg_price: toNumberOrNull(card.querySelector('[data-k="avg_price"]').value),
       current_price: toNumberOrNull(card.querySelector('[data-k="current_price"]').value),
       name: (card.querySelector('[data-k="name"]').value || "").trim() || null,
       confidence: toNumberOrNull(card.querySelector('[data-k="confidence"]').value),
-      _client_debug_qty_parsed: qtyParsed
+      _client_debug_qty_parsed: qtyParsed,
     });
   }
 
@@ -148,36 +152,46 @@ function getHoldingsFromUI() {
 
 async function saveSettings() {
   await chrome.storage.local.set({
-    apiBase: apiBaseInput.value,
-    userId: userIdInput.value,
-    model: modelInput.value,
-    importId: importIdEl.value
+    authUser,
+    importId: currentImportId,
   });
 }
 
+function renderAuthState() {
+  const signedIn = !!authUser?.user_id;
+  authViewEl.classList.toggle("hidden", signedIn);
+  appViewEl.classList.toggle("hidden", !signedIn);
+
+  if (signedIn) {
+    setStatus("Scroll your assets into view, then click Capture + Parse.", "neutral");
+    setAuthStatus(`Signed in as ${authUser.username}.`, "success");
+  } else {
+    setAuthStatus("Sign in with your WealthSphere account to unlock importing.", "neutral");
+  }
+}
+
 async function loadSettings() {
-  const saved = await chrome.storage.local.get(["apiBase", "userId", "model", "importId"]);
-  apiBaseInput.value = saved.apiBase || "http://127.0.0.1:8000";
-  userIdInput.value = saved.userId || "";
-  modelInput.value = saved.model || "gpt-4.1-mini";
-  importIdEl.value = saved.importId || "";
+  const saved = await chrome.storage.local.get(["importId", "authUser"]);
+  currentImportId = saved.importId || "";
+  authUser = saved.authUser || null;
   setHoldingsToUI([]);
   setWarnings([]);
-  setStatus("Scroll your assets into view, then click Capture + Parse.");
+  previewEl.removeAttribute("src");
+  renderAuthState();
 }
 
 async function getActiveTab() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tabs.length || !tabs[0].id) {
-    throw new Error("No active tab found");
+    throw new Error("No active tab found.");
   }
   return tabs[0];
 }
 
-async function executeInTab(tabId, func, args = []) {
-  const results = await chrome.scripting.executeScript({ target: { tabId }, func, args });
+async function executeInTab(tabId, func) {
+  const results = await chrome.scripting.executeScript({ target: { tabId }, func });
   if (!results || !results.length) {
-    throw new Error("Failed to execute script in tab");
+    throw new Error("Failed to execute script in tab.");
   }
   return results[0].result;
 }
@@ -198,7 +212,7 @@ async function captureVisibleTab(windowId) {
         return;
       }
       if (!dataUrl) {
-        reject(new Error("No screenshot data returned"));
+        reject(new Error("No screenshot data returned."));
         return;
       }
       resolve(dataUrl);
@@ -206,102 +220,157 @@ async function captureVisibleTab(windowId) {
   });
 }
 
-async function captureAndParse() {
-  const userId = getUserId();
-  if (!userId) {
-    throw new Error("Please enter user ID.");
+function requireAuth() {
+  if (!authUser?.user_id) {
+    throw new Error("Sign in before using the importer.");
+  }
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  const username = (usernameInput.value || "").trim();
+  const password = (passwordInput.value || "").trim();
+
+  if (!username || !password) {
+    setAuthStatus("Enter both username and password.", "error");
+    return;
   }
 
+  try {
+    loginBtn.disabled = true;
+    setAuthStatus("Signing in to WealthSphere...", "busy");
+
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.detail || "Login failed.");
+    }
+
+    authUser = {
+      user_id: data.user_id,
+      username: data.username,
+    };
+
+    usernameInput.value = "";
+    passwordInput.value = "";
+    await saveSettings();
+    renderAuthState();
+    setStatus(`Signed in as ${authUser.username}.`, "success");
+  } catch (error) {
+    setAuthStatus(error.message || "Could not sign in.", "error");
+  } finally {
+    loginBtn.disabled = false;
+  }
+}
+
+async function captureAndParse() {
+  requireAuth();
   const tab = await getActiveTab();
   screenshotDataUrl = await captureVisibleTab(tab.windowId);
   previewEl.src = screenshotDataUrl;
 
-  const res = await fetch(`${getApiBase()}/users/${encodeURIComponent(userId)}/imports/screenshot/parse`, {
+  const res = await fetch(`${API_BASE}/users/${encodeURIComponent(authUser.user_id)}/imports/screenshot/parse`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       image_base64: screenshotDataUrl,
-      model: (modelInput.value || "gpt-4.1-mini").trim(),
-      page_text: await extractPageText()
-    })
+      model: DEFAULT_MODEL,
+      page_text: await extractPageText(),
+    }),
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.detail || "Parse failed");
+    throw new Error(data.detail || "Parse failed.");
   }
 
-  importIdEl.value = data.import_id;
-  setHoldingsToUI(data.parsed.holdings || []);
-  setWarnings(data.parsed.warnings || []);
+  currentImportId = data.import_id || "";
+  setHoldingsToUI(data.parsed?.holdings || []);
+  setWarnings(data.parsed?.warnings || []);
   await saveSettings();
 }
 
+async function confirmImport() {
+  requireAuth();
+  if (!currentImportId) {
+    throw new Error("Missing import ID.");
+  }
+
+  const collected = getHoldingsFromUI();
+  if (collected.warnings.length > 0) {
+    setWarnings(collected.warnings);
+    throw new Error("Please fix the warnings before confirming.");
+  }
+  if (!collected.holdings.length) {
+    throw new Error("Add at least one valid holding row first.");
+  }
+
+  const res = await fetch(`${API_BASE}/users/${encodeURIComponent(authUser.user_id)}/imports/screenshot/confirm`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      import_id: currentImportId,
+      holdings: collected.holdings,
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Confirm failed.");
+  }
+
+  const skipped = Array.isArray(data.skipped) ? data.skipped : [];
+  if (skipped.length > 0) {
+    const lines = skipped.map((item) => `${item.symbol || "unknown"}: ${item.reason || "skipped"}`);
+    setWarnings([`Some rows were skipped (${skipped.length}):`, ...lines]);
+  } else {
+    setWarnings([]);
+  }
+
+  await saveSettings();
+  setStatus(`Merged ${data.merged_count} holdings into ${authUser.username}'s portfolio.`, "success");
+}
+
+loginForm.addEventListener("submit", handleLogin);
+
+logoutBtn.addEventListener("click", async () => {
+  authUser = null;
+  screenshotDataUrl = "";
+  currentImportId = "";
+  previewEl.removeAttribute("src");
+  setHoldingsToUI([]);
+  setWarnings([]);
+  await saveSettings();
+  renderAuthState();
+  setStatus("Signed out. Sign in to unlock importing.", "neutral");
+});
+
 captureBtn.addEventListener("click", async () => {
   try {
-    setStatus("Capturing and parsing current view...");
+    setStatus("Capturing and parsing the current broker view...", "busy");
     await captureAndParse();
-    setStatus("Captured + parsed. Review rows, then click Confirm.");
-  } catch (err) {
-    setStatus(err.message || `Capture/parse failed: ${err}`, true);
+    setStatus("Capture complete. Review the rows, then confirm the import.", "success");
+  } catch (error) {
+    setStatus(error.message || "Capture failed.", "error");
   }
 });
 
 confirmBtn.addEventListener("click", async () => {
   try {
-    const userId = getUserId();
-    const importId = (importIdEl.value || "").trim();
-    if (!userId || !importId) {
-      setStatus("Missing user ID or import ID.", true);
-      return;
-    }
-
-    const collected = getHoldingsFromUI();
-    if (collected.warnings.length > 0) {
-      setWarnings(collected.warnings);
-      setStatus("Please fix warnings before confirm.", true);
-      return;
-    }
-    if (!collected.holdings.length) {
-      setStatus("Please add at least one valid row (symbol + qty).", true);
-      return;
-    }
-
-    setStatus("Confirming and merging into portfolio...");
-    const res = await fetch(`${getApiBase()}/users/${encodeURIComponent(userId)}/imports/screenshot/confirm`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        import_id: importId,
-        holdings: collected.holdings
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.detail || "Confirm failed");
-    }
-
-    const skipped = Array.isArray(data.skipped) ? data.skipped : [];
-    if (skipped.length > 0) {
-      const lines = skipped.map((s) => `${s.symbol || "unknown"}: ${s.reason || "skipped"}`);
-      setWarnings([`Some rows were skipped (${skipped.length}):`, ...lines]);
-    } else {
-      setWarnings([]);
-    }
-    setStatus(`Merged ${data.merged_count} holdings. Portfolio value: ${data.portfolio_value}`);
-    await saveSettings();
-  } catch (err) {
-    setStatus(`Confirm error: ${err.message}`, true);
+    setStatus("Confirming holdings and merging into portfolio...", "busy");
+    await confirmImport();
+  } catch (error) {
+    setStatus(error.message || "Confirm failed.", "error");
   }
 });
 
 addRowBtn.addEventListener("click", () => {
   holdingsListEl.appendChild(createHoldingCard());
 });
-
-apiBaseInput.addEventListener("change", saveSettings);
-userIdInput.addEventListener("change", saveSettings);
-modelInput.addEventListener("change", saveSettings);
 
 loadSettings();

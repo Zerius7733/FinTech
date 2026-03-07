@@ -56,5 +56,22 @@
       "image_sha256": "74e99debdb60f127d2aa74fa1b8a51d1aeb9bb3b7beda8daa569e5de22ac27cb",
       "model": "gpt-4.1-mini"
     }
+  },
+  "imp_55223e1ebda045a2": {
+    "status": "pending",
+    "user_id": "u001",
+    "created_at": "2026-03-07T18:28:49.168021+00:00",
+    "parsed": {
+      "platform_name": "YouTube",
+      "detected_asset_classes": [],
+      "holdings": [],
+      "needs_review": false,
+      "notes": "No portfolio holdings or financial asset data visible in the screenshot.",
+      "warnings": [
+        "No holdings detected from screenshot."
+      ],
+      "image_sha256": "d8a194982abaef45d666da0c34f042d099b6392475c97a032018b6300d7550e4",
+      "model": "gpt-4.1-mini"
+    }
   }
 }

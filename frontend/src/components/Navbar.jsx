@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext.jsx'
 
 const NAV_LINKS = [
   { label: 'Globe',      path: '/' },
-  { label: 'Portfolio',  path: '/profile' },
   { label: 'Markets',    path: '/stocks' },
 ]
 

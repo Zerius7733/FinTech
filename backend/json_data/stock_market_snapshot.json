@@ -1,7 +1,7 @@
 {
   "_meta": {
     "source": "yfinance",
-    "ingested_at_epoch": 1772902886,
+    "ingested_at_epoch": 1772910509,
     "symbol_count": 503,
     "failed_count": 0
   },
@@ -2940,7 +2940,7 @@
       "current_price": 228.1300048828125,
       "market_cap": 58652224255,
       "total_volume": 2191800,
-      "price_change_percentage_24h": -0.358153,
+      "price_change_percentage_24h": -0.35815334,
       "price_change_percentage_7d": null,
       "circulating_supply": null,
       "ath": 351.23,
@@ -3180,7 +3180,7 @@
       "current_price": 809.5999755859375,
       "market_cap": 51514966267,
       "total_volume": 720600,
-      "price_change_percentage_24h": -3.95407,
+      "price_change_percentage_24h": -3.954067,
       "price_change_percentage_7d": null,
       "circulating_supply": null,
       "ath": 1021.47,

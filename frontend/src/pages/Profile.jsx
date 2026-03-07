@@ -82,24 +82,25 @@ function buildTrendSeriesFromHistory({ history, periodKey, viewKey, fallbackCurr
   }
 }
 
-function TrendChart({ points = [], tone = 'up', valueLabel = 'Value' }) {
-  const series = points.length >= 2
+function TrendChart({ points = [], tone = 'up', valueLabel = 'Value', comparisons = [] }) {
+  const primarySeries = points.length >= 2
     ? points
     : [
         { date: null, value: points[0]?.value ?? 0 },
         { date: null, value: points[0]?.value ?? 0 },
       ]
-  const [hoverIndex, setHoverIndex] = useState(series.length - 1)
+  const [hoverIndex, setHoverIndex] = useState(primarySeries.length - 1)
   const [isHovered, setIsHovered] = useState(false)
   useEffect(() => {
-    setHoverIndex(series.length - 1)
+    setHoverIndex(primarySeries.length - 1)
     setIsHovered(false)
-  }, [series.length, tone, valueLabel])
+  }, [primarySeries.length, tone, valueLabel])
   const width = 760
   const height = 260
   const padX = 18
   const padY = 18
-  const values = series.map(point => point.value)
+  const allSeries = [primarySeries, ...comparisons.map(item => item.points)]
+  const values = allSeries.flat().map(point => point.value)
   const min = Math.min(...values)
   const max = Math.max(...values)
   const span = Math.max(max - min, 1)
@@ -107,11 +108,16 @@ function TrendChart({ points = [], tone = 'up', valueLabel = 'Value' }) {
   const fillTop = tone === 'up' ? 'rgba(167,139,250,0.34)' : 'rgba(248,113,113,0.28)'
   const fillBottom = tone === 'up' ? 'rgba(167,139,250,0.02)' : 'rgba(248,113,113,0.02)'
 
-  const chartPoints = series.map((point, index) => {
-    const x = padX + (index / (series.length - 1)) * (width - padX * 2)
+  const buildChartPoints = inputSeries => inputSeries.map((point, index) => {
+    const x = padX + (index / (inputSeries.length - 1)) * (width - padX * 2)
     const y = height - padY - ((point.value - min) / span) * (height - padY * 2)
     return { x, y, value: point.value, date: point.date }
   })
+  const chartPoints = buildChartPoints(primarySeries)
+  const comparisonLines = comparisons.map(item => ({
+    ...item,
+    chartPoints: buildChartPoints(item.points),
+  }))
 
   const linePath = chartPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
   const areaPath = `${linePath} L ${chartPoints[chartPoints.length - 1].x} ${height - padY} L ${chartPoints[0].x} ${height - padY} Z`
@@ -162,6 +168,19 @@ function TrendChart({ points = [], tone = 'up', valueLabel = 'Value' }) {
         />
       ))}
       <path d={areaPath} fill="url(#netWorthFill)" />
+      {comparisonLines.map(item => (
+        <path
+          key={item.key}
+          d={item.chartPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')}
+          fill="none"
+          stroke={item.color}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray="7 7"
+          opacity="0.42"
+        />
+      ))}
       <path d={linePath} fill="none" stroke={lineColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       {isHovered && (
         <>
@@ -218,6 +237,76 @@ function startCase(value) {
     .replace(/\b\w/g, char => char.toUpperCase())
 }
 
+function wrapPdfText(text, maxChars = 86) {
+  const words = toText(text).split(/\s+/).filter(Boolean)
+  if (!words.length) return []
+  const lines = []
+  let current = words[0]
+  for (let i = 1; i < words.length; i += 1) {
+    const next = `${current} ${words[i]}`
+    if (next.length <= maxChars) current = next
+    else {
+      lines.push(current)
+      current = words[i]
+    }
+  }
+  lines.push(current)
+  return lines
+}
+
+function escapePdfText(text) {
+  return toText(text).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
+}
+
+function buildSimplePdf(lines) {
+  const pageWidth = 612
+  const pageHeight = 792
+  const marginX = 48
+  const marginTop = 56
+  const lineHeight = 16
+  const maxLinesPerPage = 42
+  const pages = []
+  for (let i = 0; i < lines.length; i += maxLinesPerPage) pages.push(lines.slice(i, i + maxLinesPerPage))
+
+  const objects = []
+  const pageRefs = []
+  const fontRef = 3
+
+  pages.forEach((pageLines, index) => {
+    const contentCommands = [
+      'BT',
+      '/F1 12 Tf',
+      `${marginX} ${pageHeight - marginTop} Td`,
+      `(${escapePdfText(pageLines[0] || '')}) Tj`,
+    ]
+    for (let i = 1; i < pageLines.length; i += 1) contentCommands.push(`0 -${lineHeight} Td (${escapePdfText(pageLines[i])}) Tj`)
+    contentCommands.push('ET')
+    const stream = contentCommands.join('\n')
+    const contentObjId = 4 + index * 2
+    const pageObjId = 5 + index * 2
+    objects[contentObjId - 1] = `${contentObjId} 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj`
+    objects[pageObjId - 1] = `${pageObjId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${fontRef} 0 R >> >> /Contents ${contentObjId} 0 R >>\nendobj`
+    pageRefs.push(`${pageObjId} 0 R`)
+  })
+
+  objects[0] = '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj'
+  objects[1] = `2 0 obj\n<< /Type /Pages /Kids [${pageRefs.join(' ')}] /Count ${pageRefs.length} >>\nendobj`
+  objects[2] = '3 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj'
+
+  let pdf = '%PDF-1.4\n'
+  const offsets = [0]
+  for (const obj of objects.filter(Boolean)) {
+    offsets.push(pdf.length)
+    pdf += `${obj}\n`
+  }
+  const xrefStart = pdf.length
+  pdf += `xref\n0 ${offsets.length}\n`
+  pdf += '0000000000 65535 f \n'
+  for (let i = 1; i < offsets.length; i += 1) pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`
+  pdf += `trailer\n<< /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`
+  return new Blob([pdf], { type: 'application/pdf' })
+}
+
 function priorityTone(priority) {
   const text = toText(priority).toLowerCase()
   if (text.includes('high') || text === '1') return { color:'var(--red)', bg:'rgba(248,113,113,0.12)', border:'rgba(248,113,113,0.24)' }
@@ -240,9 +329,13 @@ function FutureTag() {
   )
 }
 
-function FutureBar({ label }) {
+function FutureBar({ label, onHoverChange }) {
   return (
-    <div style={{ marginBottom:12 }}>
+    <div
+      style={{ marginBottom:12 }}
+      onMouseEnter={() => onHoverChange?.(true)}
+      onMouseLeave={() => onHoverChange?.(false)}
+    >
       <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'var(--text-faint)', marginBottom:4 }}>
         <span>{label} <FutureTag /></span>
         <span style={{ fontFamily:'var(--font-mono)' }}>—</span>
@@ -437,6 +530,7 @@ export default function Profile() {
   const [gptError,   setGptError]   = useState('')
   const [analysisMode, setAnalysisMode] = useState('lite')
   const [selectedScenario, setSelectedScenario] = useState('base_case')
+  const [wellnessHint, setWellnessHint] = useState(null)
 
   // ── Initial data fetch ────────────────────────────────────────────────────
   useEffect(() => {
@@ -543,8 +637,6 @@ export default function Profile() {
     ? gptPayload.scenario_insights
     : null
   const gptNextSteps = toArray(gptPayload?.immediate_next_steps)
-  const ruleRecs = toArray(gptRecs?.rule_based?.recommendations)
-  const leadRuleRec = ruleRecs[0] ?? null
   const scenarioCards = [
     { key:'bullish_case', label:'Bullish Case', text:gptScenarios?.bullish_case, color:'var(--green)' },
     { key:'base_case', label:'Base Case', text:gptScenarios?.base_case, color:'var(--gold)' },
@@ -560,31 +652,73 @@ export default function Profile() {
       sub:insightTone(wellnessScore).label,
     },
     {
-      label:'Top driver',
-      value:leadRuleRec?.title ?? 'No dominant driver',
-      valueColor:'var(--text)',
-      sub:leadRuleRec?.category ? startCase(leadRuleRec.category) : 'Derived from current profile',
-    },
-    {
       label:'Action count',
       value:gptTopRecs.length || gptNextSteps.length || 0,
       valueColor:'var(--teal)',
       sub:'Recommended near-term moves',
     },
   ]
+  const exportComprehensivePdf = useCallback(() => {
+    const lines = [
+      'WealthSphere Comprehensive Portfolio Analysis',
+      '',
+      `Generated for: ${profile?.name ?? authUser.username}`,
+      `Wellness Score: ${Math.round(wellnessScore)} (${insightTone(wellnessScore).label})`,
+      `Risk Profile: ${profile?.risk_profile ?? 'Unavailable'}`,
+      '',
+      'Portfolio Outlook',
+      ...wrapPdfText(gptSummary || 'No summary returned.'),
+      '',
+      'Top Recommendations',
+    ]
+
+    if (gptTopRecs.length === 0) lines.push('No recommendations returned.')
+    gptTopRecs.forEach((rec, index) => {
+      const title = rec.title ?? rec.symbol ?? rec.asset ?? `Recommendation ${index + 1}`
+      const body = rec.action ?? rec.message ?? rec.description ?? rec.reason ?? rec.why ?? rec.body
+      lines.push(`${index + 1}. ${title}`)
+      wrapPdfText(body || 'No recommendation detail returned.', 82).forEach(line => lines.push(`   ${line}`))
+      lines.push('')
+    })
+
+    if (scenarioCards.length) {
+      lines.push('Scenario Insights')
+      scenarioCards.forEach(item => {
+        lines.push(item.label)
+        wrapPdfText(item.text || 'No scenario detail returned.', 82).forEach(line => lines.push(`   ${line}`))
+        lines.push('')
+      })
+    }
+
+    if (gptNextSteps.length) {
+      lines.push('Next 30 Days')
+      gptNextSteps.forEach((step, index) => {
+        wrapPdfText(`${index + 1}. ${step}`, 84).forEach(line => lines.push(line))
+      })
+    }
+
+    const blob = buildSimplePdf(lines)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `wealthsphere-analysis-${(profile?.name ?? authUser.username).toLowerCase().replace(/\s+/g, '-')}.pdf`
+    link.click()
+    URL.revokeObjectURL(url)
+  }, [authUser.username, gptNextSteps, gptSummary, gptTopRecs, profile?.name, profile?.risk_profile, scenarioCards, wellnessScore])
   const gptText = !gptSummary && gptTopRecs.length === 0 && !gptScenarios && gptNextSteps.length === 0 && gptRecs
     ? (typeof gptPayload === 'string'
         ? gptPayload
         : gptPayload?.message ?? gptPayload?.recommendation ?? gptPayload?.content ?? JSON.stringify(gptPayload, null, 2))
     : null
 
+  const currentMap = {
+    combined: netWorth ?? totalAUM,
+    stocks: stocksValue,
+    commodities: commoditiesValue,
+    crypto: cryptosValue,
+  }
+
   const trendPayload = useMemo(() => {
-    const currentMap = {
-      combined: netWorth ?? totalAUM,
-      stocks: stocksValue,
-      commodities: commoditiesValue,
-      crypto: cryptosValue,
-    }
     return buildTrendSeriesFromHistory({
       history: portfolioHistory,
       periodKey: trendRange,
@@ -592,6 +726,28 @@ export default function Profile() {
       fallbackCurrent: currentMap[trendView] ?? (netWorth ?? totalAUM),
     })
   }, [portfolioHistory, trendRange, trendView, netWorth, totalAUM, stocksValue, commoditiesValue, cryptosValue])
+
+  const trendComparisons = useMemo(() => {
+    const comparisonColors = {
+      combined: '#8b5cf6',
+      stocks: '#6d8df7',
+      commodities: '#e4a04f',
+      crypto: '#2ab8a3',
+    }
+
+    return Object.keys(currentMap)
+      .filter(key => key !== trendView)
+      .map(key => ({
+        key,
+        color: comparisonColors[key],
+        points: buildTrendSeriesFromHistory({
+          history: portfolioHistory,
+          periodKey: trendRange,
+          viewKey: key,
+          fallbackCurrent: currentMap[key] ?? 0,
+        }).points,
+      }))
+  }, [portfolioHistory, trendRange, trendView, currentMap])
 
   const trendTone = trendPayload.change >= 0 ? 'up' : 'down'
   const trendTitleMap = {
@@ -711,7 +867,11 @@ export default function Profile() {
                 {['1M', '3M', '6M', '1Y', 'ALL'].map(range => (
                   <button
                     key={range}
-                    onClick={() => setTrendRange(range)}
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={e => {
+                      setTrendRange(range)
+                      e.currentTarget.blur()
+                    }}
                     style={{ ...s.rangeTab, ...(trendRange === range ? s.rangeTabActive : {}) }}
                   >
                     {range}
@@ -728,7 +888,11 @@ export default function Profile() {
               ].map(([key, label]) => (
                 <button
                   key={key}
-                  onClick={() => setTrendView(key)}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={e => {
+                    setTrendView(key)
+                    e.currentTarget.blur()
+                  }}
                   style={{ ...s.rangeTab, ...(trendView === key ? s.rangeTabActive : {}) }}
                 >
                   {label}
@@ -738,7 +902,12 @@ export default function Profile() {
           </div>
 
           <div style={s.trendPanel}>
-            <TrendChart points={trendPayload.points} tone={trendTone} valueLabel={trendTitleMap[trendView]} />
+            <TrendChart
+              points={trendPayload.points}
+              tone={trendTone}
+              valueLabel={trendTitleMap[trendView]}
+              comparisons={trendComparisons}
+            />
             <div style={s.trendFooter}>
               <span>{trendTitleMap[trendView]} · {trendPayload.labels[0]}</span>
               <span>{trendPayload.labels[1]}</span>
@@ -748,18 +917,28 @@ export default function Profile() {
 
         {/* Row 1: Wellness + Composition */}
         <div style={{ ...s.twoCol, animation:'sectionIn 0.5s ease both', animationDelay:'0.24s' }}>
-          <div style={s.card}>
+          <div style={{ ...s.card, position:'relative' }}>
             <div style={s.secLabel}>Financial Wellness Score</div>
+            {wellnessHint && (
+              <div style={s.hoverHint}>
+                {wellnessHint}
+              </div>
+            )}
             {loading ? <LoadingPulse /> : (
               <div style={{ display:'flex', alignItems:'center', gap:24 }}>
                 <WellnessRing score={wellnessScore} />
                 <div style={{ flex:1 }}>
                   {[
-                    { label:'Diversification', val:wellness.diversification_score, color:'var(--green)' },
-                    { label:'Liquidity',        val:wellness.liquidity_score,       color:'var(--gold)' },
-                    { label:'Debt / Income',    val:wellness.debt_income_score,     color:'var(--orange)' },
+                    { label:'Diversification', val:wellness.diversification_score, color:'var(--green)', hint:'How spread out your money is, so you are not relying too much on one asset.' },
+                    { label:'Liquidity',        val:wellness.liquidity_score,       color:'var(--gold)', hint:'How easily you can access cash for bills, emergencies, or short-term needs.' },
+                    { label:'Debt / Income',    val:wellness.debt_income_score,     color:'var(--orange)', hint:'How manageable your debt is compared with the income you bring in.' },
                   ].map(w => (
-                    <div key={w.label} style={{ marginBottom:12 }}>
+                    <div
+                      key={w.label}
+                      style={{ marginBottom:12 }}
+                      onMouseEnter={() => setWellnessHint(w.hint)}
+                      onMouseLeave={() => setWellnessHint(null)}
+                    >
                       <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:4 }}>
                         <span>{w.label}</span>
                         <span style={{ fontFamily:'var(--font-mono)', color:'var(--text)' }}>{w.val != null ? Math.round(w.val) : '—'}</span>
@@ -769,9 +948,18 @@ export default function Profile() {
                       </div>
                     </div>
                   ))}
-                  <FutureBar label="Behavioural Resilience" />
-                  <FutureBar label="Currency Exposure" />
-                  <FutureBar label="Volatility Buffer" />
+                  <FutureBar
+                    label="Behavioural Resilience"
+                    onHoverChange={active => setWellnessHint(active ? 'How likely you are to stay calm and avoid panic decisions when markets swing.' : null)}
+                  />
+                  <FutureBar
+                    label="Currency Exposure"
+                    onHoverChange={active => setWellnessHint(active ? 'How much exchange-rate moves could affect your portfolio if you hold assets in different currencies.' : null)}
+                  />
+                  <FutureBar
+                    label="Volatility Buffer"
+                    onHoverChange={active => setWellnessHint(active ? 'How much protection you have against sudden market ups and downs.' : null)}
+                  />
                 </div>
               </div>
             )}
@@ -861,94 +1049,31 @@ export default function Profile() {
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════
-            SECTION 1 — Risk Profile Update
-            PATCH /users/risk  { user_id, risk_profile }
-        ══════════════════════════════════════════════════════════════════ */}
-        <div style={{ ...s.card, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.38s' }}>
-          <div style={s.secLabel}>
-            Risk Profile
-            {profile?.risk_profile && (
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--gold)', background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.25)', borderRadius:8, padding:'2px 10px' }}>
-                Saved: {profile.risk_profile}
-              </span>
-            )}
-          </div>
-
-          <p style={{ fontSize:'0.83rem', color:'var(--text-dim)', lineHeight:1.65, marginBottom:20 }}>
-            Your risk profile shapes every recommendation and wellness calculation. Select the tolerance level that best matches your investment approach, then save to update the backend.
-          </p>
-
-          {/* Three option cards */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:22 }}>
-            {RISK_OPTIONS.map(opt => {
-              const active = selectedRisk === opt.key
-              return (
-                <div
-                  key={opt.key}
-                  onClick={() => { setSelectedRisk(opt.key); setRiskSaved(false); setRiskError('') }}
-                  style={{
-                    border:      active ? `1.5px solid ${opt.glow}` : '1.5px solid var(--border)',
-                    background:  active ? `${opt.color}12` : 'var(--surface2)',
-                    borderRadius:14, padding:'18px 16px', cursor:'pointer',
-                    transition:'all 0.2s', position:'relative',
-                  }}
-                >
-                  {/* Selected dot */}
-                  <div style={{ position:'absolute', top:12, right:12, width:10, height:10, borderRadius:'50%', background: active ? opt.color : 'var(--border)', boxShadow: active ? `0 0 8px ${opt.color}` : 'none', transition:'all 0.2s' }} />
-                  <div style={{ fontSize:'1.6rem', marginBottom:10 }}>{opt.icon}</div>
-                  <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.92rem', marginBottom:4, color: active ? opt.color : 'var(--text)' }}>{opt.label}</div>
-                  <div style={{ fontSize:'0.76rem', color:'var(--text-dim)', lineHeight:1.55 }}>{opt.desc}</div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Save row */}
-          <div style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
-            <button
-              onClick={saveRiskProfile}
-              disabled={riskSaving || !riskChanged}
-              style={{
-                ...s.btnGold,
-                opacity: (riskSaving || !riskChanged) ? 0.4 : 1,
-                cursor:  (riskSaving || !riskChanged) ? 'not-allowed' : 'pointer',
-                display:'flex', alignItems:'center', gap:8,
-              }}
-            >
-              {riskSaving
-                ? <><Spinner size={14} color="#080c14" /> Saving…</>
-                : riskSaved ? '✓ Saved' : 'Update Risk Profile'}
-            </button>
-            {riskSaved && (
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.74rem', color:'var(--green)', animation:'profileFadeUp 0.3s ease' }}>
-                Risk profile updated successfully
-              </span>
-            )}
-            {riskError && (
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.74rem', color:'var(--red)' }}>⚠ {riskError}</span>
-            )}
-          </div>
-
-          {/* Live payload preview */}
-          {/* <div style={{ marginTop:16, background:'rgba(255,255,255,0.03)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 14px', fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--text-faint)' }}>
-            <span style={{ color:'var(--teal)' }}>POST</span>{' '}/users/risk
-            {' → { '}
-            <span style={{ color:'var(--text-dim)' }}>"user_id"</span>: "<span style={{ color:'var(--teal)' }}>{authUser.user_id}</span>",{' '}
-            <span style={{ color:'var(--text-dim)' }}>"risk_profile"</span>: "<span style={{ color:'var(--gold)' }}>{selectedRisk || '…'}</span>"
-            {' }'}
-          </div> */}
-        </div>
-        {/* ══════════════════════════════════════════════════════════════════
             AI Recommendations
             POST /users/:id/recommendations/gpt
         ══════════════════════════════════════════════════════════════════ */}
         <div style={{ ...s.card, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.44s' }}>
           <div style={s.secLabel}>
             <span style={{ display:'flex', alignItems:'center', gap:8 }}>
-              Curated AI Recommendations
+              Portfolio Analysis
               <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:'rgba(45,212,191,0.1)', color:'var(--teal)', border:'1px solid rgba(45,212,191,0.25)' }}>WealthSphere AI</span>
             </span>
-            <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', justifyContent:'flex-end' }}>
+            <div style={s.analysisControls}>
+              <div style={s.analysisActionSlot}>
+                {gptRecs && (
+                  <button
+                    type="button"
+                    onClick={analysisMode === 'comprehensive' ? exportComprehensivePdf : undefined}
+                    style={{
+                      ...s.btnReport,
+                      visibility: analysisMode === 'comprehensive' ? 'visible' : 'hidden',
+                      pointerEvents: analysisMode === 'comprehensive' ? 'auto' : 'none',
+                    }}
+                  >
+                    Download Report
+                  </button>
+                )}
+              </div>
               {gptRecs && (
                 <div style={s.modeSwitch}>
                   {[
@@ -1022,7 +1147,7 @@ export default function Profile() {
                 background:'linear-gradient(135deg, rgba(45,212,191,0.08), rgba(59,91,219,0.08))',
                 border:'1px solid rgba(45,212,191,0.16)',
                 borderRadius:16,
-                padding: analysisMode === 'lite' ? '22px 24px' : '18px 20px',
+                padding:'18px 20px',
               }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap', marginBottom:12 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -1042,11 +1167,11 @@ export default function Profile() {
                     )}
                   </div>
                 </div>
-                <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize: analysisMode === 'lite' ? '1.12rem' : '1.2rem', marginBottom:gptSummary ? 10 : 0 }}>
+                <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.2rem', marginBottom:gptSummary ? 10 : 0 }}>
                   Portfolio outlook
                 </div>
                 {gptSummary ? (
-                  <div style={{ fontSize: analysisMode === 'lite' ? '1rem' : '1rem', color:'var(--text-dim)', lineHeight: analysisMode === 'lite' ? 1.82 : 1.82, maxWidth: 1080 }}>{gptSummary}</div>
+                  <div style={{ fontSize:'1rem', color:'var(--text-dim)', lineHeight:1.82, maxWidth: 1080 }}>{gptSummary}</div>
                 ) : (
                   <div style={{ fontSize:'0.82rem', color:'var(--text-faint)', lineHeight:1.7 }}>
                     The system returned structured actions without a written summary, so the key insights are broken out below.
@@ -1054,30 +1179,26 @@ export default function Profile() {
                 )}
               </div>
 
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:12 }}>
-                {(analysisMode === 'lite'
-                  ? visibleInsightTiles.filter(tile => tile.label !== 'Top driver')
-                  : visibleInsightTiles
-                ).map(tile => (
-                  <div key={tile.label} style={s.insightTile}>
-                    <div style={s.insightLabel}>{tile.label}</div>
-                    <div style={{ ...s.insightValue, fontSize: tile.label === 'Top driver' ? '1rem' : '1.55rem', color:tile.valueColor }}>
-                      {tile.value}
+              {analysisMode === 'comprehensive' && (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:12 }}>
+                  {visibleInsightTiles.map(tile => (
+                    <div key={tile.label} style={s.insightTile}>
+                      <div style={s.insightLabel}>{tile.label}</div>
+                      <div style={{ ...s.insightValue, fontSize:'1.55rem', color:tile.valueColor }}>
+                        {tile.value}
+                      </div>
+                      <div style={s.insightSub}>{tile.sub}</div>
                     </div>
-                    <div style={s.insightSub}>{tile.sub}</div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
-              {visibleTopRecs.length > 0 && (
+              {analysisMode === 'comprehensive' && visibleTopRecs.length > 0 && (
                 <div>
-                  <div style={s.secSubhead}>{analysisMode === 'lite' ? 'Top Priorities' : 'Top Recommendations'}</div>
+                  <div style={s.secSubhead}>Top Recommendations</div>
                   <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                    {visibleTopRecs.map((rec, i) => <RecCard key={i} rec={rec} i={i} tint compact={analysisMode === 'lite'} />)}
+                    {visibleTopRecs.map((rec, i) => <RecCard key={i} rec={rec} i={i} tint compact={false} />)}
                   </div>
-                  {analysisMode === 'lite' && gptTopRecs.length > visibleTopRecs.length && (
-                    <div style={s.liteHint}>Switch to comprehensive mode to view {gptTopRecs.length - visibleTopRecs.length} more recommendations.</div>
-                  )}
                 </div>
               )}
 
@@ -1131,6 +1252,7 @@ export default function Profile() {
                   </div>
                 </div>
               )}
+
             </div>
           )}
 
@@ -1184,6 +1306,73 @@ export default function Profile() {
           ))}
         </div>
 
+        {/* ══════════════════════════════════════════════════════════════════
+            SECTION 1 — Risk Profile Update
+            PATCH /users/risk  { user_id, risk_profile }
+        ══════════════════════════════════════════════════════════════════ */}
+        <div style={{ ...s.card, marginTop:24, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.38s' }}>
+          <div style={s.secLabel}>
+            Risk Profile
+            {profile?.risk_profile && (
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--gold)', background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.25)', borderRadius:8, padding:'2px 10px' }}>
+                Saved: {profile.risk_profile}
+              </span>
+            )}
+          </div>
+
+          <p style={{ fontSize:'0.83rem', color:'var(--text-dim)', lineHeight:1.65, marginBottom:20 }}>
+            Your risk profile shapes every recommendation and wellness calculation. Select the tolerance level that best matches your investment approach, then save to update the backend.
+          </p>
+
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:22 }}>
+            {RISK_OPTIONS.map(opt => {
+              const active = selectedRisk === opt.key
+              return (
+                <div
+                  key={opt.key}
+                  onClick={() => { setSelectedRisk(opt.key); setRiskSaved(false); setRiskError('') }}
+                  style={{
+                    border:      active ? `1.5px solid ${opt.glow}` : '1.5px solid var(--border)',
+                    background:  active ? `${opt.color}12` : 'var(--surface2)',
+                    borderRadius:14, padding:'18px 16px', cursor:'pointer',
+                    transition:'all 0.2s', position:'relative',
+                  }}
+                >
+                  <div style={{ position:'absolute', top:12, right:12, width:10, height:10, borderRadius:'50%', background: active ? opt.color : 'var(--border)', boxShadow: active ? `0 0 8px ${opt.color}` : 'none', transition:'all 0.2s' }} />
+                  <div style={{ fontSize:'1.6rem', marginBottom:10 }}>{opt.icon}</div>
+                  <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.92rem', marginBottom:4, color: active ? opt.color : 'var(--text)' }}>{opt.label}</div>
+                  <div style={{ fontSize:'0.76rem', color:'var(--text-dim)', lineHeight:1.55 }}>{opt.desc}</div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
+            <button
+              onClick={saveRiskProfile}
+              disabled={riskSaving || !riskChanged}
+              style={{
+                ...s.btnGold,
+                opacity: (riskSaving || !riskChanged) ? 0.4 : 1,
+                cursor:  (riskSaving || !riskChanged) ? 'not-allowed' : 'pointer',
+                display:'flex', alignItems:'center', gap:8,
+              }}
+            >
+              {riskSaving
+                ? <><Spinner size={14} color="#080c14" /> Saving…</>
+                : riskSaved ? '✓ Saved' : 'Update Risk Profile'}
+            </button>
+            {riskSaved && (
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.74rem', color:'var(--green)', animation:'profileFadeUp 0.3s ease' }}>
+                Risk profile updated successfully
+              </span>
+            )}
+            {riskError && (
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.74rem', color:'var(--red)' }}>⚠ {riskError}</span>
+            )}
+          </div>
+        </div>
+
         <HoldingInsightModal holding={selectedHolding} onClose={() => setSelectedHolding(null)} userId={authUser?.user_id} />
 
       </main>
@@ -1204,6 +1393,22 @@ const s = {
     background:'var(--surface)', border:'1px solid var(--border)',
     borderRadius:22, padding:'32px 36px', marginBottom:28,
     display:'flex', alignItems:'center', gap:28, position:'relative', overflow:'hidden', flexWrap:'wrap',
+  },
+  hoverHint: {
+    position:'absolute',
+    top:18,
+    right:18,
+    maxWidth:300,
+    padding:'10px 12px',
+    borderRadius:12,
+    background:'rgba(29,39,56,0.96)',
+    color:'#f5f7fb',
+    fontSize:'0.76rem',
+    lineHeight:1.55,
+    boxShadow:'0 16px 36px rgba(15,23,42,0.18)',
+    border:'1px solid rgba(255,255,255,0.08)',
+    zIndex:5,
+    animation:'profileFadeUp 0.18s ease',
   },
   avatarWrap: { position:'relative', flexShrink:0 },
   avatar: {
@@ -1244,8 +1449,10 @@ const s = {
     display:'flex', justifyContent:'space-between', alignItems:'center',
   },
   rangeTab: {
+    appearance:'none',
+    WebkitAppearance:'none',
     background:'rgba(255,255,255,0.64)',
-    border:'1px solid var(--border)',
+    border:'1px solid rgba(29,33,48,0.06)',
     color:'var(--text-dim)',
     borderRadius:999,
     padding:'8px 12px',
@@ -1253,6 +1460,8 @@ const s = {
     fontSize:'0.68rem',
     letterSpacing:'0.08em',
     textTransform:'uppercase',
+    outline:'none',
+    boxShadow:'none',
   },
   rangeTabActive: {
     background:'rgba(139,92,246,0.14)',
@@ -1289,6 +1498,34 @@ const s = {
     background:'var(--surface)',
     color:'var(--text)',
     boxShadow:'0 6px 16px rgba(15,23,42,0.08)',
+  },
+  analysisActionSlot: {
+    width:160,
+    display:'flex',
+    justifyContent:'flex-end',
+    flexShrink:0,
+  },
+  analysisControls: {
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'flex-end',
+    gap:12,
+    flexWrap:'nowrap',
+    minWidth:0,
+    flexShrink:0,
+  },
+  btnReport: {
+    background:'var(--surface2)',
+    border:'1px solid rgba(29,39,56,0.14)',
+    color:'var(--gold)',
+    padding:'8px 16px',
+    borderRadius:10,
+    fontFamily:'var(--font-body)',
+    fontSize:'0.82rem',
+    fontWeight:700,
+    cursor:'pointer',
+    boxShadow:'0 8px 22px rgba(15,23,42,0.06)',
+    transition:'opacity 0.2s',
   },
   inlineStat: {
     fontFamily:'var(--font-mono)', fontSize:'0.64rem',

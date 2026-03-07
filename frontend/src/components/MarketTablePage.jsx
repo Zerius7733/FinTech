@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, forwardRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -319,20 +319,28 @@ const SK = {
   circle: { borderRadius: '50%', background: 'rgba(255,255,255,0.06)', flexShrink: 0 },
 }
 
-function MarketRow({ item, rank, style, onClick }) {
+const MarketRow = forwardRef(function MarketRow({ item, rank, style, onClick, highlightState }, ref) {
   const [hovered, setHovered] = useState(false)
   const p24 = item.price_change_percentage_24h
   const p7 = item.price_change_percentage_7d
   const pos24 = p24 >= 0
   const pos7 = p7 >= 0
+  const isHighlighted = highlightState === 'active' || highlightState === 'fading'
+  const highlightOpacity = highlightState === 'active' ? 1 : highlightState === 'fading' ? 0 : 0
 
   return (
     <div
+      ref={ref}
       style={{
         ...R.row,
         ...style,
-        background: hovered ? 'rgba(255,255,255,0.04)' : style?.background ?? 'transparent',
-        transition: 'background 0.15s',
+        background: isHighlighted
+          ? `rgba(45,212,191,${0.14 * highlightOpacity})`
+          : hovered
+            ? 'rgba(255,255,255,0.04)'
+            : style?.background ?? 'transparent',
+        boxShadow: isHighlighted ? `inset 0 0 0 1px rgba(45,212,191,${0.28 * highlightOpacity})` : 'none',
+        transition: 'background 1s ease, box-shadow 1s ease',
       }}
       onClick={() => onClick?.(item)}
       onMouseEnter={() => setHovered(true)}
@@ -402,7 +410,7 @@ function MarketRow({ item, rank, style, onClick }) {
       </div>
     </div>
   )
-}
+})
 
 const R = {
   row: {
@@ -500,8 +508,13 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
   const [selectedItem, setSelectedItem] = useState(null)
   const [favourites, setFavourites] = useState(() => loadFaves())
   const [showFavourites, setShowFavourites] = useState(false)
+  const [highlightedItemKey, setHighlightedItemKey] = useState(null)
+  const [fadingItemKey, setFadingItemKey] = useState(null)
   const cacheRef = useRef({})
   const tableRef = useRef(null)
+  const rowRefs = useRef({})
+  const highlightTimeoutRef = useRef(null)
+  const fadeTimeoutRef = useRef(null)
 
   const toggleFavourite = useCallback((item, itemEndpoint) => {
     setFavourites(prev => {
@@ -561,6 +574,29 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
     }))
   }
 
+  const scrollToItem = useCallback((item) => {
+    const key = item?.id ?? item?.symbol
+    const row = key ? rowRefs.current[key] : null
+    if (!row) return
+    if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
+    if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current)
+    setHighlightedItemKey(key)
+    setFadingItemKey(null)
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    highlightTimeoutRef.current = setTimeout(() => {
+      setHighlightedItemKey(current => (current === key ? null : current))
+      setFadingItemKey(key)
+      fadeTimeoutRef.current = setTimeout(() => {
+        setFadingItemKey(current => (current === key ? null : current))
+      }, 1000)
+    }, 700)
+  }, [])
+
+  useEffect(() => () => {
+    if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
+    if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current)
+  }, [])
+
   const displayed = [...items]
     .filter(item => {
       if (!search) return true
@@ -576,8 +612,17 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
 
   const startRank = (page - 1) * PAGE_SIZE + 1
   const endRank = startRank + Math.max(items.length - 1, 0)
-  const positiveCount = items.filter(item => (item.price_change_percentage_24h ?? 0) >= 0).length
-  const negativeCount = items.filter(item => (item.price_change_percentage_24h ?? 0) < 0).length
+  const movers = displayed.filter(item => item.price_change_percentage_24h != null)
+  const positiveCount = movers.filter(item => item.price_change_percentage_24h >= 0).length
+  const negativeCount = movers.filter(item => item.price_change_percentage_24h < 0).length
+  const topGainer = movers.reduce((best, item) => {
+    if (!best) return item
+    return (item.price_change_percentage_24h ?? -Infinity) > (best.price_change_percentage_24h ?? -Infinity) ? item : best
+  }, null)
+  const topLoser = movers.reduce((worst, item) => {
+    if (!worst) return item
+    return (item.price_change_percentage_24h ?? Infinity) < (worst.price_change_percentage_24h ?? Infinity) ? item : worst
+  }, null)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
@@ -631,14 +676,43 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
         {!showFavourites && !loading && !error && items.length > 0 && (
           <div style={PS.pills}>
             {[
-              { label: accentLabel, val: `${startRank}–${endRank}`, color: 'var(--gold)' },
-              { label: 'Names up today', val: `${positiveCount}`, color: 'var(--green)' },
-              { label: 'Names down today', val: `${negativeCount}`, color: 'var(--red)' },
+              { label: `${title} up today`, val: `${positiveCount}`, color: 'var(--green)' },
+              { label: `${title} down today`, val: `${negativeCount}`, color: 'var(--red)' },
+              {
+                label: 'Top gainer',
+                val: topGainer ? (topGainer.symbol || topGainer.name) : '—',
+                meta: topGainer ? fmt.pct(topGainer.price_change_percentage_24h) : null,
+                color: 'var(--green)',
+                item: topGainer,
+              },
+              {
+                label: 'Top loser',
+                val: topLoser ? (topLoser.symbol || topLoser.name) : '—',
+                meta: topLoser ? fmt.pct(topLoser.price_change_percentage_24h) : null,
+                color: 'var(--red)',
+                item: topLoser,
+              },
             ].map(pill => (
-              <div key={pill.label} style={PS.pill}>
+              <button
+                key={pill.label}
+                type="button"
+                onClick={() => pill.item && scrollToItem(pill.item)}
+                style={{
+                  ...PS.pill,
+                  cursor: pill.item ? 'pointer' : 'default',
+                  background: 'transparent',
+                  border: 'none',
+                  appearance: 'none',
+                }}
+              >
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.05rem', color: pill.color }}>{pill.val}</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{pill.label}</span>
-              </div>
+                {pill.meta ? (
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: pill.color, fontWeight: 600 }}>
+                    {pill.meta}
+                  </span>
+                ) : null}
+              </button>
             ))}
           </div>
         )}
@@ -681,6 +755,19 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
                 item={item}
                 rank={startRank + i}
                 style={i % 2 === 1 ? { background: 'rgba(255,255,255,0.015)' } : {}}
+                highlightState={
+                  highlightedItemKey === (item.id ?? item.symbol)
+                    ? 'active'
+                    : fadingItemKey === (item.id ?? item.symbol)
+                      ? 'fading'
+                      : 'idle'
+                }
+                ref={node => {
+                  const key = item.id ?? item.symbol
+                  if (!key) return
+                  if (node) rowRefs.current[key] = node
+                  else delete rowRefs.current[key]
+                }}
                 onClick={clicked => setSelectedItem({ ...clicked, __displayRank: startRank + i })}
               />
             ))}
