@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const API_BASE = 'http://127.0.0.1:8000'
 const PAGE_SIZE = 100
-const CACHE_TTL_MS = 60_000
+const CACHE_TTL_MS = 30 * 60_000
 
 const MARKET_TABS = [
   { label: 'Stocks', path: '/stocks' },
@@ -42,6 +43,69 @@ const fmt = {
   },
 }
 
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+function scoreTone(score) {
+  if (score >= 80) return { label: 'Strong fit', color: 'var(--green)', bg: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.22)' }
+  if (score >= 65) return { label: 'Aligned', color: 'var(--teal)', bg: 'rgba(45,212,191,0.12)', border: 'rgba(45,212,191,0.22)' }
+  if (score >= 45) return { label: 'Watchlist fit', color: 'var(--orange)', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.22)' }
+  return { label: 'Cautious fit', color: 'var(--red)', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.22)' }
+}
+
+function getAssetClassBase(endpoint, riskProfile) {
+  const risk = (riskProfile || 'Balanced').toLowerCase()
+  const matrix = {
+    stocks: { conservative: 58, balanced: 76, aggressive: 84 },
+    commodities: { conservative: 68, balanced: 72, aggressive: 62 },
+    cryptos: { conservative: 28, balanced: 52, aggressive: 82 },
+  }
+  return matrix[endpoint]?.[risk] ?? 68
+}
+
+function getCompatibilityAnalysis(item, endpoint, userProfile, fallbackRank) {
+  const riskProfile = userProfile?.risk_profile || 'Balanced'
+  const wellness = userProfile?.financial_wellness_score ?? 60
+  const stress = userProfile?.financial_stress_index ?? 50
+  const p24 = item.price_change_percentage_24h ?? 0
+  const p7 = item.price_change_percentage_7d ?? 0
+  const absMove = Math.abs(p24) + Math.abs(p7 || 0) * 0.35
+  const rank = item.market_cap_rank ?? fallbackRank ?? 100
+  const sizeBonus = clamp((120 - rank) / 6, -4, 14)
+
+  let score = getAssetClassBase(endpoint, riskProfile)
+
+  if (endpoint === 'cryptos') score += (wellness - 60) * 0.18 - (stress - 50) * 0.26 - absMove * 1.35
+  if (endpoint === 'stocks') score += (wellness - 55) * 0.12 - (stress - 50) * 0.14 - Math.max(0, absMove - 6) * 0.55
+  if (endpoint === 'commodities') score += (wellness - 55) * 0.08 + (stress - 50) * 0.08 - Math.max(0, absMove - 9) * 0.35
+
+  score += sizeBonus
+  score = Math.round(clamp(score, 18, 95))
+
+  const reasons = []
+  reasons.push(`${riskProfile} risk profile has ${endpoint === 'cryptos' ? 'the strongest sensitivity' : endpoint === 'stocks' ? 'a constructive bias' : 'a measured fit'} to ${endpoint.slice(0, -1)} exposure.`)
+  reasons.push(`Current market behavior is ${absMove > 12 ? 'volatile' : absMove > 6 ? 'active' : 'relatively stable'}, based on the latest 24h and 7d move profile.`)
+  reasons.push(`Scale support is ${rank <= 25 ? 'strong' : rank <= 75 ? 'moderate' : 'limited'}, using market-cap rank as a liquidity and resilience signal.`)
+
+  const action =
+    score >= 80 ? 'High-conviction candidate if it fits your allocation plan.' :
+    score >= 65 ? 'Worth monitoring as a core watchlist name.' :
+    score >= 45 ? 'Treat as selective exposure rather than a priority add.' :
+    'Best kept on watch until your profile or market conditions improve.'
+
+  return {
+    score,
+    tone: scoreTone(score),
+    reasons,
+    action,
+    stats: [
+      { label: 'Risk profile', value: riskProfile },
+      { label: 'Wellness score', value: `${Math.round(wellness)}/100` },
+      { label: 'Stress level', value: `${Math.round(stress)}/100` },
+      { label: 'Market rank', value: `#${rank}` },
+    ],
+  }
+}
+
 function MiniSparkline({ positive, seed = 0 }) {
   const pts = []
   let v = 0.5
@@ -65,6 +129,145 @@ function MiniSparkline({ positive, seed = 0 }) {
       <path d={`${path} L${W},${H} L0,${H} Z`} fill={`url(#spk-${seed})`} />
       <path d={path} stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" />
     </svg>
+  )
+}
+
+function DetailSparkline({ item }) {
+  const positive = (item.price_change_percentage_24h ?? 0) >= 0
+  const seed = (item.market_cap_rank ?? 1) * 0.77
+  const pts = []
+  let v = 0.54
+  for (let i = 0; i < 24; i += 1) {
+    const drift = positive ? 0.012 : -0.012
+    v = Math.max(0.12, Math.min(0.9, v + drift + Math.sin(seed + i * 0.7) * 0.05))
+    pts.push(v)
+  }
+  const W = 520
+  const H = 160
+  const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${(i / (pts.length - 1)) * W},${H - p * (H - 24)}`).join(' ')
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 180, display: 'block' }} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={`detail-${item.id ?? item.symbol}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={`${path} L${W},${H} L0,${H} Z`} fill={`url(#detail-${item.id ?? item.symbol})`} />
+      <path d={path} stroke="#7c3aed" strokeWidth="3" fill="none" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function MarketDetailModal({ item, endpoint, title, profile, onClose }) {
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  if (!item) return null
+
+  const displayRank = item.market_cap_rank ?? item.__displayRank ?? null
+  const analysis = getCompatibilityAnalysis(item, endpoint, profile, displayRank)
+  const positive24 = (item.price_change_percentage_24h ?? 0) >= 0
+  const positive7 = (item.price_change_percentage_7d ?? 0) >= 0
+
+  return (
+    <div
+      onClick={e => e.target === e.currentTarget && onClose()}
+      style={MD.backdrop}
+    >
+      <div style={MD.panel}>
+        <div style={MD.topBar} />
+
+        <div style={MD.header}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            {item.image ? (
+              <img src={item.image} alt={item.name} width={52} height={52} style={{ borderRadius: '50%', border: '1px solid var(--border)' }} />
+            ) : (
+              <div style={MD.avatar}>{(item.symbol || '?').slice(0, 4).toUpperCase()}</div>
+            )}
+            <div>
+              <div style={MD.eyebrow}>{title} Detail</div>
+              <div style={MD.nameRow}>
+                <h2 style={MD.name}>{item.name}</h2>
+                <span style={MD.symbol}>{item.symbol}</span>
+              </div>
+              <div style={MD.subline}>
+                {fmt.price(item.current_price)} · Rank {displayRank ? `#${displayRank}` : '—'} · {fmt.cap(item.market_cap)} market cap
+              </div>
+            </div>
+          </div>
+
+          <button onClick={onClose} style={MD.closeBtn}>✕</button>
+        </div>
+
+        <div style={MD.grid}>
+          <div style={{ ...MD.card, gridColumn: '1 / -1' }}>
+            <div style={MD.cardLabel}>Price Trend</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, marginBottom: 10, flexWrap: 'wrap' }}>
+              <div style={MD.heroPrice}>{fmt.price(item.current_price)}</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ ...MD.changePill, color: positive24 ? 'var(--green)' : 'var(--red)', background: positive24 ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)' }}>
+                  24H {fmt.pct(item.price_change_percentage_24h)}
+                </div>
+                <div style={{ ...MD.changePill, color: positive7 ? 'var(--green)' : 'var(--red)', background: positive7 ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)' }}>
+                  7D {fmt.pct(item.price_change_percentage_7d)}
+                </div>
+              </div>
+            </div>
+            <DetailSparkline item={item} />
+          </div>
+
+          <div style={{ ...MD.card, ...MD.scoreCard }}>
+            <div style={MD.cardLabel}>Compatibility Score</div>
+            <div style={{ ...MD.scoreValue, color: analysis.tone.color }}>{analysis.score}</div>
+            <div style={{ ...MD.scorePill, color: analysis.tone.color, background: analysis.tone.bg, borderColor: analysis.tone.border }}>
+              {analysis.tone.label}
+            </div>
+            <div style={MD.scoreBody}>
+              Calculated from your risk profile, current wellness, stress level, and this asset&apos;s recent market behavior.
+            </div>
+          </div>
+
+          <div style={MD.card}>
+            <div style={MD.cardLabel}>Why It Fits</div>
+            <div style={MD.reasonList}>
+              {analysis.reasons.map(reason => (
+                <div key={reason} style={MD.reasonRow}>
+                  <span style={MD.reasonDot} />
+                  <span>{reason}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ ...MD.card, gridColumn: '1 / -1' }}>
+            <div style={MD.cardLabel}>Useful Signals</div>
+            <div style={MD.metricsGrid}>
+              {[
+                { label: '24h move', value: fmt.pct(item.price_change_percentage_24h), color: positive24 ? 'var(--green)' : 'var(--red)' },
+                { label: '7d move', value: fmt.pct(item.price_change_percentage_7d), color: positive7 ? 'var(--green)' : 'var(--red)' },
+                { label: 'Volume', value: fmt.vol(item.total_volume), color: 'var(--text)' },
+                { label: 'Market cap', value: fmt.cap(item.market_cap), color: 'var(--text)' },
+                ...analysis.stats,
+              ].map(stat => (
+                <div key={stat.label} style={MD.metricCard}>
+                  <div style={MD.metricLabel}>{stat.label}</div>
+                  <div style={{ ...MD.metricValue, color: stat.color || 'var(--text)' }}>{stat.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ ...MD.card, gridColumn: '1 / -1' }}>
+            <div style={MD.cardLabel}>Suggested Read</div>
+            <div style={MD.actionText}>{analysis.action}</div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -95,7 +298,7 @@ const SK = {
   circle: { borderRadius: '50%', background: 'rgba(255,255,255,0.06)', flexShrink: 0 },
 }
 
-function MarketRow({ item, rank, style }) {
+function MarketRow({ item, rank, style, onClick }) {
   const [hovered, setHovered] = useState(false)
   const p24 = item.price_change_percentage_24h
   const p7 = item.price_change_percentage_7d
@@ -110,6 +313,7 @@ function MarketRow({ item, rank, style }) {
         background: hovered ? 'rgba(255,255,255,0.04)' : style?.background ?? 'transparent',
         transition: 'background 0.15s',
       }}
+      onClick={() => onClick?.(item)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -184,7 +388,7 @@ const R = {
     display: 'flex', alignItems: 'center',
     padding: '0 20px', height: 60,
     borderBottom: '1px solid rgba(255,255,255,0.04)',
-    cursor: 'default',
+    cursor: 'pointer',
   },
   col: {
     display: 'flex', alignItems: 'center',
@@ -218,6 +422,7 @@ function SortHeader({ label, field, sort, onSort, right }) {
 export default function MarketTablePage({ endpoint, title, accentLabel, description }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const { user } = useAuth()
   const [page, setPage] = useState(1)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -225,8 +430,18 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
   const [hasMore, setHasMore] = useState(true)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState({ field: 'market_cap_rank', dir: 'asc' })
+  const [profile, setProfile] = useState(null)
+  const [selectedItem, setSelectedItem] = useState(null)
   const cacheRef = useRef({})
   const tableRef = useRef(null)
+
+  useEffect(() => {
+    if (!user?.user_id) return
+    fetch(`${API_BASE}/api/users/${user.user_id}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => setProfile(data?.user ?? null))
+      .catch(() => {})
+  }, [user?.user_id])
 
   const load = useCallback(async (pg) => {
     setLoading(true)
@@ -377,6 +592,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
                 item={item}
                 rank={startRank + i}
                 style={i % 2 === 1 ? { background: 'rgba(255,255,255,0.015)' } : {}}
+                onClick={clicked => setSelectedItem({ ...clicked, __displayRank: startRank + i })}
               />
             ))}
 
@@ -455,6 +671,14 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
           </div>
         </div>
       </main>
+
+      <MarketDetailModal
+        item={selectedItem}
+        endpoint={endpoint}
+        title={title}
+        profile={profile}
+        onClose={() => setSelectedItem(null)}
+      />
 
       <style>{`
         @keyframes skPulse { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
@@ -560,5 +784,198 @@ const PS = {
     fontSize: '0.85rem',
     cursor: 'pointer',
     marginTop: 4,
+  },
+}
+
+const MD = {
+  backdrop: {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 300,
+    background: 'rgba(15,23,42,0.26)',
+    backdropFilter: 'blur(14px)',
+    WebkitBackdropFilter: 'blur(14px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px',
+  },
+  panel: {
+    width: 'min(980px, 100%)',
+    maxHeight: '92vh',
+    overflowY: 'auto',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
+    border: '1px solid rgba(15,23,42,0.08)',
+    borderRadius: 24,
+    boxShadow: '0 36px 90px rgba(15,23,42,0.2)',
+    overflow: 'hidden',
+  },
+  topBar: {
+    height: 2,
+    background: 'linear-gradient(90deg, var(--teal), #7c3aed, var(--gold))',
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 16,
+    padding: '28px 28px 20px',
+  },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: '50%',
+    border: '1px solid var(--border)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(15,23,42,0.05)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.82rem',
+    color: 'var(--text-faint)',
+    flexShrink: 0,
+  },
+  eyebrow: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.65rem',
+    color: 'var(--teal)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.14em',
+    marginBottom: 4,
+  },
+  nameRow: { display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' },
+  name: {
+    margin: 0,
+    fontFamily: 'var(--font-display)',
+    fontSize: '1.55rem',
+    lineHeight: 1.1,
+  },
+  symbol: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.82rem',
+    color: 'var(--text-faint)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+  },
+  subline: { fontSize: '0.84rem', color: 'var(--text-dim)', marginTop: 6 },
+  closeBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    border: '1px solid var(--border)',
+    background: 'rgba(255,255,255,0.9)',
+    color: 'var(--text-faint)',
+    cursor: 'pointer',
+    flexShrink: 0,
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: 16,
+    padding: '0 28px 28px',
+  },
+  card: {
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
+    border: '1px solid rgba(15,23,42,0.08)',
+    borderRadius: 18,
+    padding: 20,
+    boxShadow: '0 14px 28px rgba(15,23,42,0.06)',
+  },
+  cardLabel: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.65rem',
+    color: 'var(--text-faint)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.12em',
+    marginBottom: 10,
+  },
+  heroPrice: {
+    fontFamily: 'var(--font-display)',
+    fontWeight: 800,
+    fontSize: '1.9rem',
+    lineHeight: 1,
+  },
+  changePill: {
+    padding: '6px 10px',
+    borderRadius: 999,
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.74rem',
+    fontWeight: 600,
+  },
+  scoreCard: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  scoreValue: {
+    fontFamily: 'var(--font-display)',
+    fontWeight: 800,
+    fontSize: '3rem',
+    lineHeight: 1,
+  },
+  scorePill: {
+    marginTop: 10,
+    border: '1px solid',
+    borderRadius: 999,
+    padding: '6px 12px',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.72rem',
+  },
+  scoreBody: {
+    fontSize: '0.84rem',
+    color: 'var(--text-dim)',
+    lineHeight: 1.7,
+    marginTop: 14,
+  },
+  reasonList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    fontSize: '0.84rem',
+    color: 'var(--text-dim)',
+    lineHeight: 1.7,
+  },
+  reasonRow: {
+    display: 'flex',
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  reasonDot: {
+    width: 7,
+    height: 7,
+    borderRadius: '50%',
+    marginTop: 7,
+    flexShrink: 0,
+    background: 'var(--teal)',
+  },
+  metricsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+    gap: 12,
+  },
+  metricCard: {
+    borderRadius: 14,
+    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'rgba(255,255,255,0.72)',
+    padding: '14px 14px 12px',
+  },
+  metricLabel: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.62rem',
+    color: 'var(--text-faint)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    marginBottom: 6,
+  },
+  metricValue: {
+    fontFamily: 'var(--font-display)',
+    fontWeight: 700,
+    fontSize: '1rem',
+  },
+  actionText: {
+    fontSize: '0.92rem',
+    lineHeight: 1.7,
+    color: 'var(--text-dim)',
   },
 }

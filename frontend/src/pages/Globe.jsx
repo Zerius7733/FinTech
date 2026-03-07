@@ -176,12 +176,12 @@ function PriceChart({ mtd, nodeColor }) {
     <svg viewBox="0 0 800 110" style={{ width:'100%', height:100 }} preserveAspectRatio="none">
       <defs>
         <linearGradient id={`pg_${nodeColor}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={hex} stopOpacity="0.3" />
+          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.28" />
           <stop offset="100%" stopColor={hex} stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={area} fill={`url(#pg_${nodeColor})`} />
-      <path d={path} stroke={hex} strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      <path d={path} stroke="#7c3aed" strokeWidth="2.5" fill="none" strokeLinecap="round" />
     </svg>
   )
 }
@@ -204,7 +204,7 @@ function WellnessRing({ score, size = 84 }) {
           strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - score/100)} />
       </svg>
       <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:size*0.24, color:'var(--gold)', lineHeight:1 }}>{score}</span>
+        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:size*0.24, color:'var(--text)', lineHeight:1 }}>{score}</span>
         <span style={{ fontFamily:'var(--font-mono)', fontSize:size*0.11, color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.07em', marginTop:2 }}>score</span>
       </div>
     </div>
@@ -237,9 +237,9 @@ function BentoDashboard({ node, show, onClose }) {
         onClick={e => e.target === e.currentTarget && onClose()}
         style={{
           position: 'fixed', inset: 0, zIndex: 300,
-          background: 'rgba(4,8,16,0.82)',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
+          background: 'rgba(16,24,40,0.22)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '20px 16px',
           opacity: entered ? 1 : 0,
@@ -250,21 +250,19 @@ function BentoDashboard({ node, show, onClose }) {
         <div style={{
           width: '100%', maxWidth: 980,
           maxHeight: '92vh', overflowY: 'auto',
-          background: 'linear-gradient(155deg,rgba(13,18,32,0.99),rgba(8,12,20,1))',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
+          border: '1px solid rgba(15,23,42,0.08)',
           borderTop: `2px solid ${hex}`,
           borderRadius: 24,
-          boxShadow: `0 50px 130px rgba(0,0,0,0.75), 0 0 80px ${hex}20, inset 0 1px 0 rgba(255,255,255,0.05)`,
+          boxShadow: `0 34px 90px rgba(15,23,42,0.18), 0 18px 40px rgba(15,23,42,0.1)`,
           transform: entered ? 'scale(1) translateY(0)' : 'scale(0.86) translateY(50px)',
           transition: 'transform 0.45s cubic-bezier(0.16,1,0.3,1)',
           overflow: 'hidden',
         }}>
-          {/* Shimmer top bar */}
+          {/* Accent top bar */}
           <div style={{
             height: 2, width:'100%',
-            background: `linear-gradient(90deg,transparent,${hex},var(--teal),${hex},transparent)`,
-            backgroundSize:'200% 100%',
-            animation:'dashShimmer 2.5s ease-in-out infinite',
+            background: `linear-gradient(90deg,${hex},#7c3aed,${hex})`,
           }} />
 
           <div style={{ padding: '28px 32px 32px' }}>
@@ -273,11 +271,11 @@ function BentoDashboard({ node, show, onClose }) {
               <div style={{ display:'flex', gap:16, alignItems:'center' }}>
                 <div style={{
                   width:56, height:56, borderRadius:16,
-                  background:`linear-gradient(135deg,${hex}22,${hex}10)`,
-                  border:`1px solid ${hex}44`,
+                  background:`linear-gradient(135deg,rgba(255,255,255,0.92),${hex}12)`,
+                  border:`1px solid ${hex}30`,
                   display:'flex', alignItems:'center', justifyContent:'center',
                   fontSize:'1.9rem', flexShrink:0,
-                  boxShadow:`0 0 24px ${hex}28`,
+                  boxShadow:'0 12px 24px rgba(15,23,42,0.08)',
                 }}>
                   {node.flag}
                 </div>
@@ -297,13 +295,13 @@ function BentoDashboard({ node, show, onClose }) {
                 </div>
               </div>
               <button onClick={onClose} style={{
-                background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)',
+                background:'rgba(255,255,255,0.86)', border:'1px solid rgba(15,23,42,0.08)',
                 color:'var(--text-faint)', width:38, height:38, borderRadius:10,
                 fontSize:'1rem', display:'flex', alignItems:'center', justifyContent:'center',
                 cursor:'pointer', transition:'all 0.2s', flexShrink:0,
               }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(248,113,113,0.5)'; e.currentTarget.style.color='var(--red)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'; e.currentTarget.style.color='var(--text-faint)' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.18)'; e.currentTarget.style.color='var(--text)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.08)'; e.currentTarget.style.color='var(--text-faint)' }}
               >✕</button>
             </div>
 
@@ -322,7 +320,7 @@ function BentoDashboard({ node, show, onClose }) {
               </div>
 
               {/* Cell B — Wellness ring */}
-              <div style={{ ...BC, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, background:`linear-gradient(135deg,${hex}10,rgba(13,18,32,0.95))` }}>
+              <div style={{ ...BC, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, background:'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98))' }}>
                 <WellnessRing score={node.wellness} size={90} />
                 <div style={{ textAlign:'center' }}>
                   <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.82rem', marginBottom:3 }}>Wellness Score</div>
@@ -344,8 +342,8 @@ function BentoDashboard({ node, show, onClose }) {
                     <div style={{ height:5, background:'rgba(255,255,255,0.06)', borderRadius:3, overflow:'hidden' }}>
                       <div style={{
                         height:'100%', width:`${a.pct}%`,
-                        background: `linear-gradient(90deg,${a.color}aa,${a.color})`,
-                        borderRadius:3, boxShadow:`0 0 6px ${a.color}55`,
+                        background: `linear-gradient(90deg,${a.color}cc,${a.color})`,
+                        borderRadius:3,
                         transition:'width 0.9s cubic-bezier(0.4,0,0.2,1)',
                       }} />
                     </div>
@@ -354,7 +352,7 @@ function BentoDashboard({ node, show, onClose }) {
               </div>
 
               {/* Cell D — P&L summary */}
-              <div style={{ ...BC, background:`linear-gradient(135deg,rgba(52,211,153,0.07),rgba(13,18,32,0.95))` }}>
+              <div style={{ ...BC, background:'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(243,247,251,0.98))' }}>
                 <div style={BL}><span>P&L Summary</span></div>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.7rem', color: isPos?'var(--green)':'var(--red)', lineHeight:1, marginBottom:4 }}>
                   {isPos?'+':''}{node.mtd}%
@@ -382,14 +380,15 @@ function BentoDashboard({ node, show, onClose }) {
                 const dir = h.dir || (h.change >= 0 ? 'up' : 'dn')
                 return (
                   <div key={h.ticker} style={{
-                    background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)',
+                    background:'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,250,252,0.96))',
+                    border:'1px solid rgba(15,23,42,0.08)',
                     borderRadius:14, padding:'15px 17px', cursor:'pointer', transition:'all 0.2s',
                   }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(201,168,76,0.35)'; e.currentTarget.style.transform='translateY(-2px)' }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.07)'; e.currentTarget.style.transform='translateY(0)' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.16)'; e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 14px 28px rgba(15,23,42,0.08)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.08)'; e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none' }}
                   >
                     <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
-                      <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', background:'rgba(45,212,191,0.12)', padding:'2px 8px', borderRadius:6, color:'var(--teal)' }}>
+                      <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', background:'rgba(15,23,42,0.05)', padding:'2px 8px', borderRadius:6, color:'var(--text-faint)' }}>
                         {h.ticker}
                       </span>
                       <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:hc }}>
@@ -412,9 +411,10 @@ function BentoDashboard({ node, show, onClose }) {
 
 // Bento shared styles
 const BC = {
-  background: 'rgba(255,255,255,0.025)',
-  border: '1px solid rgba(255,255,255,0.07)',
+  background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
+  border: '1px solid rgba(15,23,42,0.08)',
   borderRadius: 16, padding: '18px 20px',
+  boxShadow: '0 14px 28px rgba(15,23,42,0.06)',
 }
 const BL = {
   fontFamily: 'var(--font-mono)', fontSize: '0.64rem',
