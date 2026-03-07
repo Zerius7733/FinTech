@@ -1238,7 +1238,7 @@ export default function Globe() {
               <div style={{ fontSize:'0.8rem', color:'var(--text-dim)' }}>{riskLevel.desc}</div>
             </div>
           </div>
-          <button style={{ background:'linear-gradient(135deg,var(--gold),#b8922e)', border:'none', color:'#080c14', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.9rem', fontWeight:700, cursor:'pointer', boxShadow:'0 4px 20px rgba(201,168,76,0.3)' }} onClick={() => navigate('/survey')}>
+          <button style={{ background:'var(--gold)', border:'none', color:'#ffffff', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.9rem', fontWeight:700, cursor:'pointer', boxShadow:'0 10px 24px rgba(17,24,39,0.16)' }} onClick={() => navigate('/survey')}>
             Continue to Full Onboarding →
           </button>
         </div>
@@ -1309,10 +1309,10 @@ const S = {
     maxWidth:520, margin:'0 auto 32px',
   },
   btnCta: {
-    background:'linear-gradient(135deg,var(--gold),#b8922e)',
-    border:'none', color:'#080c14', padding:'14px 36px', borderRadius:10,
+    background:'var(--gold)',
+    border:'none', color:'#ffffff', padding:'14px 36px', borderRadius:10,
     fontFamily:'var(--font-display)', fontSize:'0.95rem', fontWeight:700,
-    cursor:'pointer', boxShadow:'0 6px 32px rgba(201,168,76,0.35)',
+    cursor:'pointer', boxShadow:'0 12px 28px rgba(17,24,39,0.18)',
   },
   btnOutline: {
     background:'transparent', border:'1px solid rgba(45,212,191,0.4)',

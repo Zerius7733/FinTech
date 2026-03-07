@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 const NAV_LINKS = [
   { label: 'Globe',      path: '/' },
   { label: 'Portfolio',  path: '/profile' },
-  { label: 'Markets',    path: '/crypto' },
+  { label: 'Markets',    path: '/stocks' },
 ]
 
 export default function Navbar() {
@@ -28,7 +28,9 @@ export default function Navbar() {
       {/* Links */}
       <ul style={S.links}>
         {NAV_LINKS.map(({ label, path }) => {
-          const active = pathname === path
+          const active = label === 'Markets'
+            ? ['/stocks', '/commodities', '/crypto'].includes(pathname)
+            : pathname === path
           return (
             <li key={label}>
               <span

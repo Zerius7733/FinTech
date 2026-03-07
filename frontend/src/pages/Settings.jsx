@@ -23,9 +23,9 @@ function Toggle({ on, onChange }) {
   return (
     <div
       onClick={() => onChange(!on)}
-      style={{ width:44, height:24, borderRadius:12, background: on ? 'rgba(45,212,191,0.3)' : 'var(--surface2)', border:`1px solid ${on ? 'var(--teal)' : 'var(--border)'}`, position:'relative', cursor:'pointer', transition:'all 0.3s', flexShrink:0 }}
+      style={{ width:46, height:26, borderRadius:999, background: on ? 'rgba(42,184,163,0.22)' : 'var(--surface3)', border:`1px solid ${on ? 'rgba(42,184,163,0.42)' : 'var(--border)'}`, position:'relative', cursor:'pointer', transition:'all 0.3s', flexShrink:0 }}
     >
-      <div style={{ position:'absolute', top:2, left: on ? 'calc(100% - 20px)' : 2, width:18, height:18, borderRadius:'50%', background: on ? 'var(--teal)' : 'var(--text-faint)', transition:'all 0.3s', boxShadow: on ? '0 0 8px rgba(45,212,191,0.5)' : 'none' }} />
+      <div style={{ position:'absolute', top:2, left: on ? 'calc(100% - 22px)' : 2, width:20, height:20, borderRadius:'50%', background: on ? 'var(--teal)' : '#fff', transition:'all 0.3s', boxShadow:'0 6px 14px rgba(17,24,39,0.14)' }} />
     </div>
   )
 }
@@ -45,7 +45,7 @@ function SettingRow({ name, desc, children }) {
 function SelInput({ value, opts, onChange }) {
   return (
     <select value={value} onChange={e => onChange(e.target.value)}
-      style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:'8px 12px', color:'var(--text)', fontFamily:'var(--font-body)', fontSize:'0.87rem', outline:'none', minWidth:150, cursor:'pointer' }}>
+      style={{ background:'#fff', border:'1px solid var(--border)', borderRadius:12, padding:'10px 14px', color:'var(--text)', fontFamily:'var(--font-body)', fontSize:'0.87rem', outline:'none', minWidth:180, cursor:'pointer', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.8)' }}>
       {opts.map(o => <option key={o}>{o}</option>)}
     </select>
   )
@@ -74,7 +74,7 @@ export default function Settings() {
 
       {/* Settings sub-nav */}
       <nav style={s.settingsNav}>
-        <div style={s.settingsTitle}>Settings</div>
+        <div style={s.settingsTitle}>Workspace</div>
         {SECTIONS.map(sec => (
           <div key={sec.group} style={{ marginBottom:24 }}>
             <div style={s.groupLabel}>{sec.group}</div>
@@ -92,6 +92,15 @@ export default function Settings() {
 
       {/* Content */}
       <main style={s.content}>
+        <div style={s.topBar}>
+          <div>
+            <h1 style={s.topTitle}>Settings</h1>
+            <p style={s.topSub}>Manage your account preferences and platform controls.</p>
+          </div>
+          <button style={s.topSave} onClick={handleSave}>
+            {saved ? 'Saved' : 'Save Changes'}
+          </button>
+        </div>
 
         {/* ── RISK ── */}
         {activeKey === 'risk' && (
@@ -323,47 +332,51 @@ export default function Settings() {
 
 const s = {
   settingsNav: {
-    width:230, background:'var(--surface)', borderRight:'1px solid var(--border)',
-    padding:'40px 18px', flexShrink:0, position:'sticky', top:0, height:'100vh',
-    overflowY:'auto', marginLeft:72,
+    width:250, background:'rgba(255,255,255,0.36)', borderRight:'1px solid rgba(29,33,48,0.06)',
+    padding:'38px 16px', flexShrink:0, position:'sticky', top:0, height:'100vh',
+    overflowY:'auto', marginLeft:'var(--sidebar-w)', backdropFilter:'blur(12px)',
   },
-  settingsTitle: { fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', marginBottom:28, padding:'0 6px' },
-  groupLabel: { fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.15em', padding:'0 8px', marginBottom:6 },
+  settingsTitle: { fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.02rem', marginBottom:24, padding:'0 10px' },
+  groupLabel: { fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.15em', padding:'0 12px', marginBottom:8 },
   snavItem: {
-    display:'flex', alignItems:'center', gap:9, padding:'10px 12px',
-    borderRadius:10, cursor:'pointer', transition:'all 0.2s',
-    color:'var(--text-dim)', fontSize:'0.87rem', border:'1px solid transparent', marginBottom:2,
+    display:'flex', alignItems:'center', gap:10, padding:'12px 14px',
+    borderRadius:14, cursor:'pointer', transition:'all 0.2s',
+    color:'var(--text-dim)', fontSize:'0.9rem', border:'1px solid transparent', marginBottom:4, fontWeight:500,
   },
-  snavActive: { background:'rgba(201,168,76,0.08)', borderColor:'rgba(201,168,76,0.2)', color:'var(--gold)' },
+  snavActive: { background:'#fff', borderColor:'rgba(29,33,48,0.08)', color:'var(--text)', boxShadow:'0 10px 28px rgba(17,24,39,0.08)' },
   snavIcon: { fontSize:'0.88rem', width:20, textAlign:'center' },
-  content: { flex:1, padding:'40px 52px', overflowY:'auto' },
-  section: { maxWidth:780 },
-  pageHeader: { marginBottom:32 },
-  eyebrow: { fontFamily:'var(--font-mono)', fontSize:'0.67rem', color:'var(--teal)', textTransform:'uppercase', letterSpacing:'0.15em', marginBottom:6 },
-  pageTitle: { fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.6rem', marginBottom:6 },
-  pageSub: { color:'var(--text-dim)', fontSize:'0.89rem', lineHeight:1.65 },
-  riskPanel: { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, padding:26, marginBottom:24 },
+  content: { flex:1, padding:'36px 56px 48px', overflowY:'auto' },
+  topBar: { display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, marginBottom:30, flexWrap:'wrap' },
+  topTitle: { fontFamily:'var(--font-display)', fontWeight:800, fontSize:'2rem', marginBottom:6 },
+  topSub: { color:'var(--text-dim)', fontSize:'0.92rem' },
+  topSave: { background:'var(--gold)', color:'#fff', border:'none', borderRadius:14, padding:'14px 24px', fontWeight:700, boxShadow:'0 12px 28px rgba(17,24,39,0.14)' },
+  section: { maxWidth:900 },
+  pageHeader: { marginBottom:28 },
+  eyebrow: { fontFamily:'var(--font-mono)', fontSize:'0.66rem', color:'var(--teal)', textTransform:'uppercase', letterSpacing:'0.15em', marginBottom:8 },
+  pageTitle: { fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.85rem', marginBottom:8 },
+  pageSub: { color:'var(--text-dim)', fontSize:'0.92rem', lineHeight:1.7 },
+  riskPanel: { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:24, padding:28, marginBottom:24, boxShadow:'0 14px 36px rgba(17,24,39,0.06)' },
   riskCurrent: {
     display:'flex', alignItems:'center', gap:18,
     background:'var(--surface2)', border:'1px solid var(--border)',
-    borderRadius:14, padding:'14px 18px',
+    borderRadius:18, padding:'16px 18px',
   },
-  card: { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, padding:22, marginBottom:20 },
+  card: { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:22, padding:24, marginBottom:20, boxShadow:'0 14px 34px rgba(17,24,39,0.05)' },
   cardTitle: {
-    fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem',
-    marginBottom:14, paddingBottom:12, borderBottom:'1px solid var(--border)',
+    fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.05rem',
+    marginBottom:16, paddingBottom:14, borderBottom:'1px solid var(--border)',
     display:'flex', alignItems:'center', gap:8,
   },
-  btnGhost: { background:'transparent', border:'1px solid var(--border)', color:'var(--text-dim)', padding:'8px 16px', borderRadius:8, fontFamily:'var(--font-display)', fontSize:'0.82rem', fontWeight:600, cursor:'pointer' },
+  btnGhost: { background:'#fff', border:'1px solid var(--border)', color:'var(--text)', padding:'10px 16px', borderRadius:12, fontFamily:'var(--font-display)', fontSize:'0.82rem', fontWeight:600, cursor:'pointer' },
   saveBanner: {
     position:'fixed', bottom:28, left:'50%', transform:'translateX(-50%)',
-    background:'var(--surface2)', border:'1px solid var(--border)',
-    borderRadius:14, padding:'13px 24px',
+    background:'#fff', border:'1px solid var(--border)',
+    borderRadius:18, padding:'14px 24px',
     display:'flex', alignItems:'center', gap:14,
-    boxShadow:'0 8px 32px rgba(0,0,0,0.4)',
+    boxShadow:'0 16px 36px rgba(17,24,39,0.14)',
     backdropFilter:'blur(12px)', zIndex:200,
     animation:'fadeUp 0.3s ease',
   },
-  btnDiscard: { background:'transparent', border:'1px solid var(--border)', color:'var(--text-dim)', padding:'9px 14px', borderRadius:8, fontFamily:'var(--font-display)', fontSize:'0.83rem', cursor:'pointer' },
-  btnSave: { background:'linear-gradient(135deg,var(--gold),#b8922e)', border:'none', color:'#080c14', padding:'9px 22px', borderRadius:8, fontFamily:'var(--font-display)', fontSize:'0.85rem', fontWeight:700, cursor:'pointer', boxShadow:'0 4px 16px rgba(201,168,76,0.3)', transition:'all 0.3s' },
+  btnDiscard: { background:'transparent', border:'1px solid var(--border)', color:'var(--text-dim)', padding:'10px 15px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.83rem', cursor:'pointer' },
+  btnSave: { background:'var(--gold)', border:'none', color:'#fff', padding:'10px 24px', borderRadius:12, fontFamily:'var(--font-display)', fontSize:'0.85rem', fontWeight:700, cursor:'pointer', boxShadow:'0 10px 24px rgba(17,24,39,0.16)', transition:'all 0.3s' },
 }

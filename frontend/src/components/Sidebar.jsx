@@ -1,41 +1,88 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 
-const NAV_ITEMS = [
-  { icon: '🌍', label: 'Globe',     path: '/' },
-  { icon: '👤', label: 'Profile',   path: '/profile' },
-  { icon: '₿',  label: 'Crypto',    path: '/crypto' },
-  { icon: '⚙️', label: 'Settings',  path: '/settings' },
-  { icon: '📊', label: 'Analytics', path: null },
-  { icon: '🔔', label: 'Alerts',    path: null },
+const NAV_GROUPS = [
+  {
+    label: 'Main',
+    items: [
+      { icon: '🌍', label: 'Globe', path: '/' },
+      { icon: '👤', label: 'Profile', path: '/profile' },
+      { icon: '📈', label: 'Stocks', path: '/stocks' },
+      { icon: '🪙', label: 'Commodities', path: '/commodities' },
+      { icon: '₿', label: 'Crypto', path: '/crypto' },
+    ],
+  },
+  {
+    label: 'Other',
+    items: [
+      { icon: '⚙️', label: 'Settings', path: '/settings' },
+      { icon: '🔔', label: 'Alerts', path: null },
+      { icon: '❓', label: 'Help', path: null },
+    ],
+  },
 ]
 
 export default function Sidebar() {
-  const navigate  = useNavigate()
-  const location  = useLocation()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { user } = useAuth()
+
+  const displayName = user?.username || 'WealthSphere User'
+  const initials = displayName
+    .split(/\s+/)
+    .map(part => part[0]?.toUpperCase())
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('') || 'WS'
 
   return (
     <aside style={styles.sidebar}>
-      <div style={styles.logo}>◉</div>
+      <div>
+        <div style={styles.brandWrap}>
+          <div style={styles.brandIcon}>◈</div>
+          <div>
+            <div style={styles.brandTitle}>WealthSphere</div>
+            <div style={styles.brandSub}>Finance App</div>
+          </div>
+        </div>
 
-      <nav style={styles.nav}>
-        {NAV_ITEMS.map(item => {
-          const active = item.path && location.pathname === item.path
-          return (
-            <div
-              key={item.label}
-              style={{ ...styles.navIcon, ...(active ? styles.navIconActive : {}) }}
-              onClick={() => item.path && navigate(item.path)}
-              title={item.label}
-            >
-              {item.icon}
-              <span style={styles.tip}>{item.label}</span>
+        {NAV_GROUPS.map(group => (
+          <div key={group.label} style={styles.group}>
+            <div style={styles.groupLabel}>{group.label}</div>
+            <div style={styles.groupList}>
+              {group.items.map(item => {
+                const active = item.path && location.pathname === item.path
+                return (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => item.path && navigate(item.path)}
+                    style={{ ...styles.navItem, ...(active ? styles.navItemActive : {}) }}
+                  >
+                    <span style={styles.navIcon}>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </button>
+                )
+              })}
             </div>
-          )
-        })}
-      </nav>
+          </div>
+        ))}
+      </div>
 
-      <div style={styles.bottom}>
-        <div style={styles.avatar} onClick={() => navigate('/profile')}>AC</div>
+      <div style={styles.lower}>
+        <div style={styles.supportCard}>
+          <div style={styles.supportTitle}>Need support?</div>
+          <div style={styles.supportText}>Contact one of our experts for help with setup and account preferences.</div>
+          <button type="button" style={styles.supportBtn}>Contact Us</button>
+        </div>
+
+        <div style={styles.profileCard}>
+          <div style={styles.avatar}>{initials}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={styles.profileName}>{displayName}</div>
+            <div style={styles.profileMeta}>Personal workspace</div>
+          </div>
+        </div>
       </div>
     </aside>
   )
@@ -43,47 +90,150 @@ export default function Sidebar() {
 
 const styles = {
   sidebar: {
-    width: 72, background: 'var(--surface)',
-    borderRight: '1px solid var(--border)',
-    display: 'flex', flexDirection: 'column',
-    alignItems: 'center', padding: '20px 0',
-    position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50,
+    width: 'var(--sidebar-w)',
+    background: '#060914',
+    color: '#eef2ff',
+    borderRight: '1px solid rgba(255,255,255,0.06)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    padding: '26px 16px 18px',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    zIndex: 50,
+    boxShadow: '18px 0 42px rgba(4,7,15,0.18)',
   },
-  logo: {
-    width: 36, height: 36, borderRadius: '50%',
-    background: 'linear-gradient(135deg, var(--gold), var(--teal))',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: '1rem', marginBottom: 32,
-    boxShadow: '0 0 16px rgba(201,168,76,0.3)', cursor: 'pointer',
+  brandWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 30,
+    padding: '2px 8px',
   },
-  nav: { display: 'flex', flexDirection: 'column', gap: 8, flex: 1 },
+  brandIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    background: 'linear-gradient(135deg,#0f1729,#1d2738)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '1.05rem',
+    boxShadow: '0 14px 28px rgba(0,0,0,0.28)',
+  },
+  brandTitle: {
+    fontFamily: 'var(--font-display)',
+    fontWeight: 700,
+    fontSize: '1rem',
+    color: '#f9fbff',
+  },
+  brandSub: {
+    color: 'rgba(225,230,244,0.62)',
+    fontSize: '0.78rem',
+    marginTop: 2,
+  },
+  group: {
+    marginBottom: 20,
+  },
+  groupLabel: {
+    color: 'rgba(196,203,223,0.52)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.62rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.16em',
+    padding: '0 10px',
+    marginBottom: 10,
+  },
+  groupList: {
+    display: 'grid',
+    gap: 6,
+  },
+  navItem: {
+    width: '100%',
+    background: 'transparent',
+    border: '1px solid transparent',
+    color: 'rgba(229,234,247,0.78)',
+    borderRadius: 14,
+    padding: '12px 12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    textAlign: 'left',
+    fontSize: '0.95rem',
+    transition: 'all 0.18s ease',
+  },
+  navItemActive: {
+    background: '#ffffff',
+    color: '#161c2d',
+    boxShadow: '0 10px 22px rgba(0,0,0,0.22)',
+  },
   navIcon: {
-    width: 44, height: 44, borderRadius: 12,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: '1.1rem', cursor: 'pointer',
-    color: 'var(--text-faint)', position: 'relative',
-    transition: 'all 0.2s',
+    width: 22,
+    textAlign: 'center',
+    fontSize: '1rem',
+    flexShrink: 0,
   },
-  navIconActive: {
-    background: 'rgba(201,168,76,0.12)',
-    color: 'var(--gold)',
-    boxShadow: 'inset 0 0 0 1px rgba(201,168,76,0.25)',
+  lower: {
+    display: 'grid',
+    gap: 14,
   },
-  tip: {
-    position: 'absolute', left: 'calc(100% + 12px)',
-    background: 'var(--surface2)', border: '1px solid var(--border)',
-    borderRadius: 6, padding: '5px 10px',
-    fontFamily: 'var(--font-mono)', fontSize: '0.68rem',
-    color: 'var(--text)', whiteSpace: 'nowrap', pointerEvents: 'none',
-    opacity: 0, transition: 'opacity 0.2s', zIndex: 100,
+  supportCard: {
+    background: '#ffffff',
+    borderRadius: 16,
+    padding: '16px 14px',
+    color: '#202636',
   },
-  bottom: { display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' },
+  supportTitle: {
+    fontFamily: 'var(--font-display)',
+    fontWeight: 700,
+    fontSize: '0.96rem',
+    marginBottom: 8,
+  },
+  supportText: {
+    color: 'var(--text-dim)',
+    fontSize: '0.8rem',
+    lineHeight: 1.65,
+    marginBottom: 12,
+  },
+  supportBtn: {
+    width: '100%',
+    background: '#f6f8fb',
+    border: '1px solid var(--border)',
+    color: 'var(--text)',
+    borderRadius: 12,
+    padding: '11px 14px',
+    fontWeight: 600,
+  },
+  profileCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '8px 6px',
+  },
   avatar: {
-    width: 36, height: 36, borderRadius: '50%',
-    background: 'linear-gradient(135deg, #3b5bdb, #6e48c7)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
-    border: '2px solid var(--gold)',
-    boxShadow: '0 0 10px rgba(201,168,76,0.25)',
+    width: 42,
+    height: 42,
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg,#9fb6ff,#ffffff)',
+    color: '#0f1729',
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  profileName: {
+    fontWeight: 600,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  profileMeta: {
+    color: 'rgba(225,230,244,0.62)',
+    fontSize: '0.76rem',
+    marginTop: 2,
   },
 }

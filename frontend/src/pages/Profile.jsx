@@ -21,6 +21,39 @@ function gainPct(current, avg) {
   return ((current - avg) / avg) * 100
 }
 
+function toArray(value) {
+  return Array.isArray(value) ? value : []
+}
+
+function toText(value) {
+  if (typeof value === 'string') return value.trim()
+  if (value == null) return ''
+  if (typeof value === 'number') return String(value)
+  return ''
+}
+
+function startCase(value) {
+  return toText(value)
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function priorityTone(priority) {
+  const text = toText(priority).toLowerCase()
+  if (text.includes('high') || text === '1') return { color:'var(--red)', bg:'rgba(248,113,113,0.12)', border:'rgba(248,113,113,0.24)' }
+  if (text.includes('medium') || text === '2') return { color:'var(--gold)', bg:'rgba(201,168,76,0.12)', border:'rgba(201,168,76,0.24)' }
+  return { color:'var(--teal)', bg:'rgba(45,212,191,0.12)', border:'rgba(45,212,191,0.24)' }
+}
+
+function insightTone(score) {
+  if (score == null) return { label:'Unavailable', color:'var(--text-faint)' }
+  if (score >= 75) return { label:'Strong', color:'var(--green)' }
+  if (score >= 50) return { label:'Watch', color:'var(--gold)' }
+  return { label:'Needs attention', color:'var(--red)' }
+}
+
 function FutureTag() {
   return (
     <span style={{ background:'rgba(96,165,250,0.1)', color:'var(--blue)', fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, border:'1px solid rgba(96,165,250,0.2)', marginLeft:6 }}>
@@ -106,7 +139,12 @@ const REC_COLOR = { buy:'var(--green)', sell:'var(--red)', hold:'var(--gold)', r
 function RecCard({ rec, i, tint = false }) {
   const type  = rec.type?.toLowerCase()
   const color = REC_COLOR[type] ?? (tint ? 'var(--teal)' : 'var(--text-dim)')
-  const icon  = REC_ICON[type]  ?? (tint ? '🤖' : '💡')
+  const icon  = REC_ICON[type]  ?? (tint ? '🧑‍💼' : '💡')
+  const title = rec.title ?? rec.symbol ?? rec.asset ?? `Recommendation ${i + 1}`
+  const body = rec.action ?? rec.message ?? rec.description ?? rec.reason ?? rec.why ?? rec.body
+  const rationale = rec.why ?? rec.rationale
+  const priority = toText(rec.priority)
+  const priorityStyle = priorityTone(priority)
   return (
     <div style={{
       background: tint ? 'rgba(45,212,191,0.04)' : 'var(--surface2)',
@@ -120,22 +158,25 @@ function RecCard({ rec, i, tint = false }) {
       <div style={{ flex:1 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5, flexWrap:'wrap' }}>
           <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.88rem' }}>
-            {rec.title ?? rec.symbol ?? rec.asset ?? `Recommendation ${i + 1}`}
+            {title}
           </span>
           {rec.type && (
             <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', padding:'2px 8px', borderRadius:6, background:`${color}18`, color, border:`1px solid ${color}30`, textTransform:'uppercase', letterSpacing:'0.07em' }}>
               {rec.type}
             </span>
           )}
-          {rec.priority && (
-            <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:'rgba(255,255,255,0.05)', color:'var(--text-faint)', border:'1px solid var(--border)' }}>
-              {rec.priority}
+          {priority && (
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:priorityStyle.bg, color:priorityStyle.color, border:`1px solid ${priorityStyle.border}` }}>
+              {startCase(priority)}
             </span>
           )}
         </div>
-        <div style={{ fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.65 }}>
-          {rec.message ?? rec.description ?? rec.reason ?? rec.body ?? JSON.stringify(rec)}
-        </div>
+        {body && <div style={{ fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.65 }}>{body}</div>}
+        {rationale && rationale !== body && (
+          <div style={{ marginTop:8, fontSize:'0.75rem', color:'var(--text-faint)', lineHeight:1.6 }}>
+            {rationale}
+          </div>
+        )}
         {rec.symbol && rec.title && (
           <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--teal)', marginTop:6 }}>{rec.symbol}</div>
         )}
@@ -245,11 +286,21 @@ export default function Profile() {
     { icon:'🪙', name:'Commodities',  color:'#fbbf24'       },
   ]
 
-  // Normalise GPT response — could be string, { message }, { recommendations: [] }, etc.
-  const gptArray = gptRecs && Array.isArray(gptRecs.recommendations) ? gptRecs.recommendations : null
-  const gptText  = gptRecs && !gptArray
-    ? (typeof gptRecs === 'string' ? gptRecs
-        : gptRecs.message ?? gptRecs.recommendation ?? gptRecs.content ?? JSON.stringify(gptRecs, null, 2))
+  const gptPayload = gptRecs?.gpt_recommendations ?? gptRecs?.recommendations ?? gptRecs ?? null
+  const gptSummary = toText(gptPayload?.summary)
+  const gptTopRecs = toArray(gptPayload?.top_recommendations).length
+    ? toArray(gptPayload?.top_recommendations)
+    : (Array.isArray(gptPayload) ? gptPayload : [])
+  const gptScenarios = gptPayload && typeof gptPayload?.scenario_insights === 'object' && !Array.isArray(gptPayload.scenario_insights)
+    ? gptPayload.scenario_insights
+    : null
+  const gptNextSteps = toArray(gptPayload?.immediate_next_steps)
+  const ruleRecs = toArray(gptRecs?.rule_based?.recommendations)
+  const leadRuleRec = ruleRecs[0] ?? null
+  const gptText = !gptSummary && gptTopRecs.length === 0 && !gptScenarios && gptNextSteps.length === 0 && gptRecs
+    ? (typeof gptPayload === 'string'
+        ? gptPayload
+        : gptPayload?.message ?? gptPayload?.recommendation ?? gptPayload?.content ?? JSON.stringify(gptPayload, null, 2))
     : null
 
   // Is current selection different from what's saved?
@@ -312,7 +363,7 @@ export default function Profile() {
           <div style={{ flex:1 }}>
             <div style={s.userName}>{profile?.name ?? authUser.username}</div>
             <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:12 }}>
-              {[['var(--teal)','Individual Investor'],['var(--gold)', profile?.risk_profile ? `Risk: ${profile.risk_profile}` : 'Risk: —'],['var(--purple)',`ID: ${authUser.user_id}`]].map(([c,t]) => (
+              {[['var(--teal)','Individual Investor'],['var(--gold)', profile?.risk_profile ? `Risk: ${profile.risk_profile}` : 'Risk: —']].map(([c,t]) => (
                 <span key={t} style={{ display:'flex', alignItems:'center', gap:6, fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' }}>
                   <div style={{ width:6, height:6, borderRadius:'50%', background:c }}/>{t}
                 </span>
@@ -533,14 +584,14 @@ export default function Profile() {
           </div> */}
         </div>
         {/* ══════════════════════════════════════════════════════════════════
-            GPT Recommendations
+            AI Recommendations
             POST /users/:id/recommendations/gpt
         ══════════════════════════════════════════════════════════════════ */}
         <div style={{ ...s.card, marginBottom:24 }}>
           <div style={s.secLabel}>
             <span style={{ display:'flex', alignItems:'center', gap:8 }}>
-              AI-Powered Recommendations
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:'rgba(45,212,191,0.1)', color:'var(--teal)', border:'1px solid rgba(45,212,191,0.25)' }}>GPT</span>
+              Curated AI Recommendations
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:'rgba(45,212,191,0.1)', color:'var(--teal)', border:'1px solid rgba(45,212,191,0.25)' }}>WealthSphere AI</span>
             </span>
             <button
               onClick={fetchGptRecs}
@@ -549,12 +600,12 @@ export default function Profile() {
             >
               {gptLoading
                 ? <><Spinner size={12} color="#080c14" /> Generating…</>
-                : gptRecs ? '↻ Regenerate' : '✦ Generate with GPT'}
+                : gptRecs ? '↻ Refresh Analysis' : '✦ Generate Analysis'}
             </button>
           </div>
 
           <p style={{ fontSize:'0.83rem', color:'var(--text-dim)', lineHeight:1.65, marginBottom:20 }}>
-            Sends your full portfolio context — holdings, risk profile, wellness score — to GPT for personalised investment guidance.
+            Uses your portfolio context, risk profile, and financial wellness signals to generate curated insights and next-step guidance.
           </p>
 
           {gptError && <div style={s.errBox}>⚠ {gptError}</div>}
@@ -564,7 +615,7 @@ export default function Profile() {
             <div style={{ background:'rgba(45,212,191,0.04)', border:'1px solid rgba(45,212,191,0.14)', borderRadius:14, padding:'24px 20px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
                 <Spinner size={18} color="var(--teal)" />
-                <span style={{ fontFamily:'var(--font-display)', fontWeight:600, fontSize:'0.9rem', color:'var(--teal)' }}>GPT is analysing your portfolio…</span>
+                <span style={{ fontFamily:'var(--font-display)', fontWeight:600, fontSize:'0.9rem', color:'var(--teal)' }}>Our analyst AI is reviewing your portfolio…</span>
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
                 {['Reading holdings and risk profile…','Evaluating portfolio composition…','Generating personalised recommendations…'].map((t,i) => (
@@ -581,17 +632,134 @@ export default function Profile() {
           {!gptLoading && !gptError && gptRecs === null && (
             <div style={{ textAlign:'center', padding:'36px 20px' }}>
               <div style={{ fontSize:'2.2rem', marginBottom:12 }}>✦</div>
-              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem', marginBottom:8 }}>GPT-Powered Portfolio Analysis</div>
+              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem', marginBottom:8 }}>Curated Portfolio Analysis</div>
               <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.76rem', color:'var(--text-faint)', maxWidth:380, margin:'0 auto', lineHeight:1.7 }}>
-                Hit "Generate with GPT" for a personalised AI analysis based on your current holdings and risk profile.
+                Generate a tailored review based on your current holdings, financial wellness, and risk profile.
               </div>
             </div>
           )}
 
-          {/* Result — structured array */}
-          {!gptLoading && gptArray && (
-            <div style={{ display:'flex', flexDirection:'column', gap:12, animation:'profileFadeUp 0.4s ease' }}>
-              {gptArray.map((rec, i) => <RecCard key={i} rec={rec} i={i} tint />)}
+          {!gptLoading && !gptText && (gptSummary || gptTopRecs.length > 0 || gptScenarios || gptNextSteps.length > 0) && (
+            <div style={{ display:'flex', flexDirection:'column', gap:18, animation:'profileFadeUp 0.4s ease' }}>
+              <div style={{
+                background:'linear-gradient(135deg, rgba(45,212,191,0.08), rgba(59,91,219,0.08))',
+                border:'1px solid rgba(45,212,191,0.16)',
+                borderRadius:16,
+                padding:'18px 20px',
+              }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap', marginBottom:12 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <span>🧑‍💼</span>
+                    <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:'var(--teal)' }}>
+                      WealthSphere Analyst AI · {new Date().toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                    <span style={{ ...s.inlineStat, color:insightTone(wellnessScore).color, borderColor:'rgba(255,255,255,0.08)' }}>
+                      Wellness {Math.round(wellnessScore)} · {insightTone(wellnessScore).label}
+                    </span>
+                    {stressIndex != null && (
+                      <span style={{ ...s.inlineStat, color:insightTone(100 - stressIndex).color, borderColor:'rgba(255,255,255,0.08)' }}>
+                        Stress {Math.round(stressIndex)}
+                      </span>
+                    )}
+                    {profile?.risk_profile && (
+                      <span style={{ ...s.inlineStat, color:'var(--gold)', borderColor:'rgba(201,168,76,0.2)' }}>
+                        Risk {profile.risk_profile}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', marginBottom:gptSummary ? 8 : 0 }}>
+                  Portfolio outlook
+                </div>
+                {gptSummary ? (
+                  <div style={{ fontSize:'0.85rem', color:'var(--text-dim)', lineHeight:1.75 }}>{gptSummary}</div>
+                ) : (
+                  <div style={{ fontSize:'0.82rem', color:'var(--text-faint)', lineHeight:1.7 }}>
+                    The system returned structured actions without a written summary, so the key insights are broken out below.
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(170px, 1fr))', gap:12 }}>
+                <div style={s.insightTile}>
+                  <div style={s.insightLabel}>Wellness score</div>
+                  <div style={{ ...s.insightValue, color:insightTone(wellnessScore).color }}>{Math.round(wellnessScore)}</div>
+                  <div style={s.insightSub}>{insightTone(wellnessScore).label}</div>
+                </div>
+                <div style={s.insightTile}>
+                  <div style={s.insightLabel}>Stress index</div>
+                  <div style={{ ...s.insightValue, color:insightTone(100 - (stressIndex ?? 0)).color }}>
+                    {stressIndex != null ? Math.round(stressIndex) : '—'}
+                  </div>
+                  <div style={s.insightSub}>
+                    {stressIndex != null ? (stressIndex >= 60 ? 'High pressure' : stressIndex >= 40 ? 'Moderate pressure' : 'Contained') : 'Unavailable'}
+                  </div>
+                </div>
+                <div style={s.insightTile}>
+                  <div style={s.insightLabel}>Top driver</div>
+                  <div style={{ ...s.insightValue, fontSize:'1rem', color:'var(--text)' }}>
+                    {leadRuleRec?.title ?? 'No dominant driver'}
+                  </div>
+                  <div style={s.insightSub}>
+                    {leadRuleRec?.category ? startCase(leadRuleRec.category) : 'Derived from current profile'}
+                  </div>
+                </div>
+                <div style={s.insightTile}>
+                  <div style={s.insightLabel}>Action count</div>
+                  <div style={{ ...s.insightValue, color:'var(--teal)' }}>{gptTopRecs.length || gptNextSteps.length || 0}</div>
+                  <div style={s.insightSub}>Recommended near-term moves</div>
+                </div>
+              </div>
+
+              {gptTopRecs.length > 0 && (
+                <div>
+                  <div style={s.secSubhead}>Top Recommendations</div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                    {gptTopRecs.map((rec, i) => <RecCard key={i} rec={rec} i={i} tint />)}
+                  </div>
+                </div>
+              )}
+
+              {gptScenarios && (
+                <div>
+                  <div style={s.secSubhead}>Scenario Insights</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))', gap:12 }}>
+                    {[
+                      ['Bullish Case', gptScenarios.bullish_case, 'var(--green)'],
+                      ['Base Case', gptScenarios.base_case, 'var(--gold)'],
+                      ['Bearish Case', gptScenarios.bearish_case, 'var(--red)'],
+                    ].map(([label, text, color]) => (
+                      <div key={label} style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:14, padding:'16px 16px 15px' }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                          <div style={{ width:9, height:9, borderRadius:'50%', background:color, boxShadow:`0 0 10px ${color}` }} />
+                          <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.86rem', color }}>{label}</div>
+                        </div>
+                        <div style={{ fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.7 }}>
+                          {toText(text) || 'No scenario detail returned.'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {gptNextSteps.length > 0 && (
+                <div style={{ background:'rgba(255,255,255,0.02)', border:'1px solid var(--border)', borderRadius:14, padding:'16px 18px' }}>
+                  <div style={s.secSubhead}>Next 30 Days</div>
+                  <div style={{ display:'grid', gap:10 }}>
+                    {gptNextSteps.map((step, i) => (
+                      <div key={`${step}-${i}`} style={{ display:'flex', alignItems:'flex-start', gap:10 }}>
+                        <div style={{ width:22, height:22, borderRadius:'50%', background:'rgba(45,212,191,0.12)', border:'1px solid rgba(45,212,191,0.22)', color:'var(--teal)', fontFamily:'var(--font-mono)', fontSize:'0.68rem', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
+                          {i + 1}
+                        </div>
+                        <div style={{ fontSize:'0.82rem', color:'var(--text-dim)', lineHeight:1.7 }}>{step}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -599,9 +767,9 @@ export default function Profile() {
           {!gptLoading && gptText && (
             <div style={{ animation:'profileFadeUp 0.4s ease' }}>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14, padding:'10px 14px', background:'rgba(45,212,191,0.05)', border:'1px solid rgba(45,212,191,0.15)', borderRadius:10 }}>
-                <span>🤖</span>
+                <span>🧑‍💼</span>
                 <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:'var(--teal)' }}>
-                  GPT Analysis · {authUser.user_id} · {new Date().toLocaleTimeString()}
+                  WealthSphere Analyst AI · {new Date().toLocaleTimeString()}
                 </span>
               </div>
               <div style={{ fontSize:'0.86rem', color:'var(--text-dim)', lineHeight:1.85, whiteSpace:'pre-wrap', background:'var(--surface2)', borderRadius:12, padding:'18px 20px', border:'1px solid var(--border)' }}>
@@ -686,16 +854,39 @@ const s = {
     letterSpacing:'0.13em', marginBottom:16,
     display:'flex', justifyContent:'space-between', alignItems:'center',
   },
+  secSubhead: {
+    fontFamily:'var(--font-display)', fontSize:'0.92rem', fontWeight:700,
+    marginBottom:12,
+  },
+  inlineStat: {
+    fontFamily:'var(--font-mono)', fontSize:'0.64rem',
+    padding:'4px 10px', borderRadius:999, background:'rgba(255,255,255,0.04)',
+    border:'1px solid var(--border)', letterSpacing:'0.05em',
+  },
+  insightTile: {
+    background:'var(--surface2)', border:'1px solid var(--border)',
+    borderRadius:14, padding:'16px 16px 14px',
+  },
+  insightLabel: {
+    fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)',
+    textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:8,
+  },
+  insightValue: {
+    fontFamily:'var(--font-display)', fontSize:'1.4rem', fontWeight:800, lineHeight:1.1,
+  },
+  insightSub: {
+    marginTop:5, fontSize:'0.74rem', color:'var(--text-faint)', lineHeight:1.5,
+  },
   errBox: {
     background:'rgba(248,113,113,0.07)', border:'1px solid rgba(248,113,113,0.2)',
     borderRadius:10, padding:'11px 15px', color:'var(--red)',
     fontFamily:'var(--font-mono)', fontSize:'0.76rem', marginBottom:16,
   },
   btnGold: {
-    background:'linear-gradient(135deg,var(--gold),#b8922e)',
-    border:'none', color:'#080c14', padding:'10px 22px', borderRadius:10,
+    background:'var(--gold)',
+    border:'none', color:'#ffffff', padding:'10px 22px', borderRadius:10,
     fontFamily:'var(--font-display)', fontSize:'0.84rem', fontWeight:700,
-    boxShadow:'0 4px 16px rgba(201,168,76,0.22)', cursor:'pointer', transition:'opacity 0.2s',
+    boxShadow:'0 10px 24px rgba(17,24,39,0.16)', cursor:'pointer', transition:'opacity 0.2s',
   },
   btnTeal: {
     background:'linear-gradient(135deg,var(--teal),#0e9f84)',
