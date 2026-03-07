@@ -64,7 +64,7 @@ export default function Navbar() {
             <button
               style={S.btnGhost}
               onClick={handleSignOut}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'var(--text)' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-act)'; e.currentTarget.style.color = 'var(--text)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-dim)' }}
             >
               Sign Out
@@ -75,7 +75,7 @@ export default function Navbar() {
             <button
               style={S.btnGhost}
               onClick={() => navigate('/login')}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'var(--text)' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-act)'; e.currentTarget.style.color = 'var(--text)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-dim)' }}
             >
               Sign In
@@ -105,9 +105,9 @@ const S = {
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '18px 40px',
-    background: 'rgba(245,246,248,0.86)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
+    background: 'var(--nav-bg)',
+    backdropFilter: 'blur(18px)',
+    WebkitBackdropFilter: 'blur(18px)',
     borderBottom: '1px solid var(--border)',
   },
   logo: {
@@ -125,7 +125,7 @@ const S = {
   logoDot: {
     width: 28, height: 28,
     borderRadius: 10,
-    background: 'linear-gradient(135deg, #172033, #2c3852)',
+    background: 'var(--logo-bg)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: '0.9rem',
     WebkitTextFillColor: 'initial',
@@ -153,9 +153,9 @@ const S = {
     borderBottom: '2px solid var(--text)',
   },
   btnGold: {
-    background: '#182235',
-    border: '1px solid #182235',
-    color: '#fff',
+    background: 'var(--btn-primary-bg)',
+    border: '1px solid var(--btn-primary-bg)',
+    color: 'var(--btn-primary-text)',
     padding: '9px 20px',
     borderRadius: 12,
     fontFamily: 'var(--font-body)',
@@ -166,7 +166,7 @@ const S = {
     transition: 'opacity 0.18s',
   },
   btnGhost: {
-    background: 'rgba(255,255,255,0.72)',
+    background: 'var(--surface2)',
     border: '1px solid var(--border)',
     color: 'var(--text-dim)',
     padding: '9px 20px',
@@ -177,9 +177,9 @@ const S = {
     transition: 'all 0.18s',
   },
   btnPrimary: {
-    background: '#182235',
+    background: 'var(--btn-primary-bg)',
     border: 'none',
-    color: '#fff',
+    color: 'var(--btn-primary-text)',
     padding: '9px 22px',
     borderRadius: 12,
     fontFamily: 'var(--font-body)',

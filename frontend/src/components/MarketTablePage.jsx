@@ -8,10 +8,15 @@ const API_BASE = 'http://127.0.0.1:8000'
 const PAGE_SIZE = 100
 const CACHE_TTL_MS = 30 * 60_000
 
+const FAVES_KEY = 'ws_favourites'
+const loadFaves = () => { try { return JSON.parse(localStorage.getItem(FAVES_KEY) || '[]') } catch { return [] } }
+const saveFaves = arr => { try { localStorage.setItem(FAVES_KEY, JSON.stringify(arr)) } catch {} }
+
 const MARKET_TABS = [
   { label: 'Stocks', path: '/stocks' },
   { label: 'Commodities', path: '/commodities' },
   { label: 'Crypto', path: '/crypto' },
+  { label: '♥ Favourites', path: null, fav: true },
 ]
 
 async function fetchMarketPage(endpoint, page) {
@@ -160,7 +165,7 @@ function DetailSparkline({ item }) {
   )
 }
 
-function MarketDetailModal({ item, endpoint, title, profile, userId, onClose }) {
+function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, isFavourited, onToggleFavourite }) {
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -201,7 +206,13 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose }) 
             </div>
           </div>
 
-          <button onClick={onClose} style={MD.closeBtn}>✕</button>
+          <button
+            onClick={() => onToggleFavourite?.()}
+            style={{ ...MD.closeBtn, fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isFavourited ? '#f43f5e' : 'var(--text-faint)', background: isFavourited ? 'rgba(244,63,94,0.1)' : 'rgba(255,255,255,0.9)', border: `1px solid ${isFavourited ? 'rgba(244,63,94,0.35)' : 'var(--border)'}`, transition: 'all 0.2s' }}
+            title={isFavourited ? 'Remove from favourites' : 'Add to favourites'}
+          >
+            {isFavourited ? '♥' : '♡'}
+          </button>
         </div>
 
         <div style={MD.grid}>
@@ -406,6 +417,51 @@ const R = {
   },
 }
 
+function FavouritesView({ favourites, onSelect }) {
+  if (favourites.length === 0) {
+    return (
+      <div style={{ margin: '0 48px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.3)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 20px', gap: 16 }}>
+          <div style={{ fontSize: '3rem', lineHeight: 1 }}>♡</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem' }}>No favourites yet</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)', maxWidth: 380, textAlign: 'center', lineHeight: 1.7 }}>
+            Open any asset detail panel and tap the heart icon to save it here.
+          </div>
+        </div>
+      </div>
+    )
+  }
+  const groups = [
+    { ep: 'stocks', label: 'Stocks' },
+    { ep: 'commodities', label: 'Commodities' },
+    { ep: 'cryptos', label: 'Crypto' },
+  ]
+  return (
+    <div style={{ margin: '0 48px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', animation: 'fadeUp 0.8s ease 0.15s both', boxShadow: '0 8px 40px rgba(0,0,0,0.3)' }}>
+      {groups.map(({ ep, label }) => {
+        const epItems = favourites.filter(f => f.__endpoint === ep)
+        if (!epItems.length) return null
+        return (
+          <div key={ep}>
+            <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontFamily: 'var(--font-mono)', fontSize: '0.63rem', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.12em', background: 'rgba(255,255,255,0.02)' }}>
+              {label} · {epItems.length} saved
+            </div>
+            {epItems.map((item, i) => (
+              <MarketRow
+                key={item.__id ?? item.id ?? item.symbol}
+                item={item}
+                rank={item.market_cap_rank ?? '—'}
+                style={i % 2 === 1 ? { background: 'rgba(255,255,255,0.015)' } : {}}
+                onClick={() => onSelect(item)}
+              />
+            ))}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function SortHeader({ label, field, sort, onSort, right }) {
   const active = sort.field === field
   return (
@@ -442,8 +498,22 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
   const [sort, setSort] = useState({ field: 'market_cap_rank', dir: 'asc' })
   const [profile, setProfile] = useState(null)
   const [selectedItem, setSelectedItem] = useState(null)
+  const [favourites, setFavourites] = useState(() => loadFaves())
+  const [showFavourites, setShowFavourites] = useState(false)
   const cacheRef = useRef({})
   const tableRef = useRef(null)
+
+  const toggleFavourite = useCallback((item, itemEndpoint) => {
+    setFavourites(prev => {
+      const id = item.id ?? item.symbol
+      const exists = prev.some(f => f.__id === id)
+      const next = exists
+        ? prev.filter(f => f.__id !== id)
+        : [...prev, { ...item, __id: id, __endpoint: itemEndpoint }]
+      saveFaves(next)
+      return next
+    })
+  }, [])
 
   useEffect(() => {
     if (!user?.user_id) return
@@ -542,20 +612,23 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
 
         <div style={PS.tabs}>
           {MARKET_TABS.map(tab => {
-            const active = pathname === tab.path
+            const active = tab.fav ? showFavourites : (pathname === tab.path && !showFavourites)
             return (
               <button
-                key={tab.path}
-                onClick={() => navigate(tab.path)}
+                key={tab.label}
+                onClick={() => {
+                  if (tab.fav) { setShowFavourites(true) }
+                  else { setShowFavourites(false); navigate(tab.path) }
+                }}
                 style={{ ...PS.tab, ...(active ? PS.tabActive : {}) }}
               >
-                {tab.label}
+                {tab.label}{tab.fav && favourites.length > 0 ? ` (${favourites.length})` : ''}
               </button>
             )
           })}
         </div>
 
-        {!loading && !error && items.length > 0 && (
+        {!showFavourites && !loading && !error && items.length > 0 && (
           <div style={PS.pills}>
             {[
               { label: accentLabel, val: `${startRank}–${endRank}`, color: 'var(--gold)' },
@@ -570,6 +643,12 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
           </div>
         )}
 
+        {showFavourites ? (
+          <FavouritesView
+            favourites={favourites}
+            onSelect={item => setSelectedItem(item)}
+          />
+        ) : (
         <div style={PS.tableWrap}>
           <div style={{ ...R.row, height: 44, borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', position: 'sticky', top: 0, zIndex: 5, borderRadius: '16px 16px 0 0' }}>
             <SortHeader label="#" field="market_cap_rank" sort={sort} onSort={handleSort} />
@@ -680,6 +759,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
             </div>
           </div>
         </div>
+        )}
       </main>
 
       <MarketDetailModal
@@ -689,6 +769,8 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
         profile={profile}
         userId={user?.user_id}
         onClose={() => setSelectedItem(null)}
+        isFavourited={!!selectedItem && favourites.some(f => f.__id === (selectedItem.id ?? selectedItem.symbol))}
+        onToggleFavourite={() => selectedItem && toggleFavourite(selectedItem, selectedItem.__endpoint || endpoint)}
       />
 
       <style>{`

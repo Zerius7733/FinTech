@@ -1,25 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import * as THREE from 'three'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
+import ThemeModal from '../components/ThemeModal.jsx'
+import SettingsModal from '../components/SettingsModal.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
 import { MOCK_NODES, genPriceSeries, genSparkline } from '../data.js'
 
 const API = 'http://localhost:8000'
-
-// ═══════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════
-function latLngToVec3(lat, lng, r = 1.03) {
-  const phi   = (90 - lat)  * Math.PI / 180
-  const theta = (lng + 180) * Math.PI / 180
-  return new THREE.Vector3(
-    -r * Math.sin(phi) * Math.cos(theta),
-     r * Math.cos(phi),
-     r * Math.sin(phi) * Math.sin(theta)
-  )
-}
 
 function animateCount(setter, target, duration = 1800) {
   let start = null
@@ -64,16 +53,16 @@ function GlassCard({ node, x, y, visible, onMouseEnter, onMouseLeave, onClick })
         cursor: 'pointer',
       }}
     >
-      {/* Glass panel */}
+      {/* Glass panel — theme-adaptive */}
       <div style={{
-        background: 'linear-gradient(145deg,rgba(10,16,28,0.94),rgba(17,24,39,0.97))',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        border: `1px solid rgba(255,255,255,0.1)`,
-        borderTop: `1px solid rgba(255,255,255,0.2)`,
+        background: 'var(--surface)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: `1px solid var(--border)`,
+        borderTop: `2px solid ${hex}66`,
         borderRadius: 18,
         padding: '16px 18px 14px',
-        boxShadow: `0 24px 60px rgba(0,0,0,0.55), 0 0 0 0.5px ${hex}33, inset 0 1px 0 rgba(255,255,255,0.08)`,
+        boxShadow: `0 20px 50px rgba(0,0,0,0.18), 0 0 0 0.5px ${hex}22`,
         position: 'relative', overflow: 'hidden',
       }}>
         {/* Colour accent top bar */}
@@ -82,23 +71,33 @@ function GlassCard({ node, x, y, visible, onMouseEnter, onMouseLeave, onClick })
           background: `linear-gradient(90deg,transparent,${hex},transparent)`,
           borderRadius: 99,
         }} />
+        {/* Subtle tinted bg wash */}
+        <div style={{
+          position:'absolute', inset:0, borderRadius:18, pointerEvents:'none',
+          background:`radial-gradient(ellipse at top right, ${hex}12 0%, transparent 65%)`,
+        }} />
 
         {/* Header row */}
-        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom: 10 }}>
-          <div>
-            <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.58rem', color: hex, textTransform:'uppercase', letterSpacing:'0.16em', marginBottom: 3 }}>
-              {node.region}
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom: 10, position:'relative' }}>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.55rem', color: hex, textTransform:'uppercase', letterSpacing:'0.16em', marginBottom: 2, fontWeight:600 }}>
+              {node.flag} {node.region}
             </div>
-            <div style={{ fontFamily:'var(--font-display)', fontWeight: 800, fontSize:'0.95rem', lineHeight: 1.2 }}>
-              {node.flag} {node.label}
+            <div style={{ fontFamily:'var(--font-display)', fontWeight: 800, fontSize:'1rem', lineHeight: 1.15, color:'var(--text)' }}>
+              {node.label}
             </div>
+            {node.holdings[0]?.name && node.holdings[0].name !== node.label && (
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-faint)', marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                {node.holdings[0].name}
+              </div>
+            )}
           </div>
           <div style={{
-            background: isPos ? 'rgba(52,211,153,0.14)' : 'rgba(248,113,113,0.14)',
-            border: `1px solid ${isPos ? 'rgba(52,211,153,0.35)' : 'rgba(248,113,113,0.35)'}`,
+            background: isPos ? 'rgba(22,163,74,0.12)' : 'rgba(220,38,38,0.12)',
+            border: `1px solid ${isPos ? 'rgba(22,163,74,0.35)' : 'rgba(220,38,38,0.35)'}`,
             borderRadius: 8, padding: '3px 8px',
             fontFamily: 'var(--font-mono)', fontSize:'0.72rem',
-            color: isPos ? 'var(--green)' : 'var(--red)', fontWeight: 600,
+            color: isPos ? 'var(--green)' : 'var(--red)', fontWeight: 700,
             flexShrink: 0, marginLeft: 8,
           }}>
             {isPos ? '+' : ''}{node.mtd}%
@@ -106,48 +105,59 @@ function GlassCard({ node, x, y, visible, onMouseEnter, onMouseLeave, onClick })
         </div>
 
         {/* Sparkline */}
-        <div style={{ margin: '8px 0', height: 28 }}>
+        <div style={{ margin: '8px 0', height: 28, position:'relative' }}>
           <svg viewBox="0 0 160 24" style={{ width:'100%', height:28 }} preserveAspectRatio="none">
             <defs>
               <linearGradient id={`sg_${node.id}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={isPos ? '#34d399' : '#f87171'} stopOpacity="0.25" />
-                <stop offset="100%" stopColor={isPos ? '#34d399' : '#f87171'} stopOpacity="0" />
+                <stop offset="0%" stopColor={isPos ? '#16a34a' : '#dc2626'} stopOpacity="0.22" />
+                <stop offset="100%" stopColor={isPos ? '#16a34a' : '#dc2626'} stopOpacity="0" />
               </linearGradient>
             </defs>
             <path d={sparkPath + ' L160,24 L0,24 Z'} fill={`url(#sg_${node.id})`} />
-            <path d={sparkPath} stroke={isPos ? '#34d399' : '#f87171'} strokeWidth="1.8" fill="none" strokeLinecap="round" />
+            <path d={sparkPath} stroke={isPos ? 'var(--green)' : 'var(--red)'} strokeWidth="1.8" fill="none" strokeLinecap="round" />
           </svg>
         </div>
 
-        {/* Stats row */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-          background: 'rgba(255,255,255,0.04)', borderRadius: 10,
-          overflow: 'hidden', marginBottom: 10,
-        }}>
-          {[
-            { label: 'AUM',      val: `$${(node.aum/1000).toFixed(0)}K` },
-            { label: 'Wellness', val: `${node.wellness}` },
-            { label: 'Holdings', val: `${node.holdings.length}` },
-          ].map((s, i) => (
-            <div key={s.label} style={{
-              padding: '7px 4px', textAlign: 'center',
-              borderRight: i < 2 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+        {/* Stats row — holding-specific */}
+        {(() => {
+          const h0 = node.holdings[0]
+          const price = h0?.price ?? 0
+          const qty   = h0?.shares ?? 0
+          const val   = node.aum
+          const stats = [
+            { label: 'Price', val: price >= 1000 ? `$${(price/1000).toFixed(1)}K` : `$${price.toLocaleString()}`, c:'var(--text)' },
+            { label: 'Qty',   val: qty >= 1000 ? `${(qty/1000).toFixed(1)}K` : `${qty.toLocaleString()}`,           c:'var(--text)' },
+            { label: 'Value', val: val >= 1000 ? `$${(val/1000).toFixed(1)}K` : `$${val.toLocaleString()}`,         c: hex },
+          ]
+          return (
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+              background: 'var(--surface2)', borderRadius: 10,
+              overflow: 'hidden', marginBottom: 10,
+              border: '1px solid var(--border)',
             }}>
-              <div style={{ fontFamily:'var(--font-display)', fontWeight: 700, fontSize:'0.82rem' }}>{s.val}</div>
-              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.52rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.07em', marginTop:1 }}>{s.label}</div>
+              {stats.map((s, i) => (
+                <div key={s.label} style={{
+                  padding: '7px 4px', textAlign: 'center',
+                  borderRight: i < 2 ? '1px solid var(--border)' : 'none',
+                }}>
+                  <div style={{ fontFamily:'var(--font-display)', fontWeight: 700, fontSize:'0.82rem', color: s.c }}>{s.val}</div>
+                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.52rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.07em', marginTop:1 }}>{s.label}</div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )
+        })()}
 
         {/* CTA hint */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 6,
           fontFamily: 'var(--font-mono)', fontSize: '0.64rem', color: hex,
-          borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10,
+          borderTop: '1px solid var(--border)', paddingTop: 10,
+          fontWeight: 600, position:'relative',
         }}>
           <div style={{ width: 6, height: 6, borderRadius:'50%', background: hex, animation:'gcPulse 1.5s ease-in-out infinite' }} />
-          Click to fly in →
+          Click to open →
         </div>
       </div>
     </div>
@@ -281,15 +291,18 @@ function BentoDashboard({ node, show, onClose }) {
                 </div>
                 <div>
                   <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:hex, textTransform:'uppercase', letterSpacing:'0.18em', marginBottom:4 }}>
-                    {node.region} · Portfolio Dashboard
+                    {node.region}
                   </div>
-                  <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.65rem', lineHeight:1.1, marginBottom:5 }}>
+                  <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.65rem', lineHeight:1.1, marginBottom:3 }}>
                     {node.label}
                   </div>
+                  {node.holdings.length === 1 && node.holdings[0].name !== node.label && (
+                    <div style={{ fontSize:'0.82rem', color:'var(--text-dim)', marginBottom:4 }}>{node.holdings[0].name}</div>
+                  )}
                   <div style={{ fontSize:'0.83rem', color:'var(--text-dim)' }}>
-                    {node.holdings.length} positions · ${node.aum.toLocaleString()} AUM ·{' '}
+                    ${node.aum.toLocaleString()} market value ·{' '}
                     <span style={{ color: isPos ? 'var(--green)':'var(--red)', fontWeight:600 }}>
-                      {isPos?'+':''}{node.mtd}% MTD
+                      {isPos?'+':''}{node.mtd}% since avg cost
                     </span>
                   </div>
                 </div>
@@ -306,62 +319,67 @@ function BentoDashboard({ node, show, onClose }) {
             </div>
 
             {/* ════ BENTO GRID ════ */}
+            {(() => {
+              const h0 = node.holdings[0]
+              const avgCost = h0 ? (node.aum / h0.shares || 0) : 0
+              const gain = node.aum - (h0 ? h0.shares * (avgCost / (1 + node.mtd / 100)) : 0)
+              // recalculate cost basis
+              const costBasis = h0 ? h0.shares * (h0.price / (1 + node.mtd / 100)) : 0
+              const gainAbs = node.aum - costBasis
+              return (
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gridTemplateRows:'auto auto', gap:14, marginBottom:14 }}>
 
               {/* Cell A — Price chart (2 cols) */}
               <div style={{ ...BC, gridColumn:'1/3' }}>
                 <div style={BL}>
-                  <span>Portfolio Value — 6M</span>
+                  <span>{h0?.name || node.label} — Price Trend</span>
                   <span style={{ fontFamily:'var(--font-display)', fontSize:'0.88rem', letterSpacing:0, color: isPos?'var(--green)':'var(--red)' }}>
-                    {node.returnPct} total return
+                    {node.returnPct} return
                   </span>
                 </div>
                 <PriceChart mtd={node.mtd} nodeColor={node.color} />
               </div>
 
-              {/* Cell B — Wellness ring */}
+              {/* Cell B — Return ring */}
               <div style={{ ...BC, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, background:'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98))' }}>
-                <WellnessRing score={node.wellness} size={90} />
+                <WellnessRing score={Math.min(100, Math.max(0, 50 + node.mtd))} size={90} />
                 <div style={{ textAlign:'center' }}>
-                  <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.82rem', marginBottom:3 }}>Wellness Score</div>
-                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.64rem', color:'var(--text-faint)' }}>
-                    {node.wellness >= 75 ? 'Excellent' : node.wellness >= 55 ? 'Good' : 'Needs attention'}
+                  <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', color: isPos?'var(--green)':'var(--red)', marginBottom:2 }}>
+                    {isPos?'+':''}{node.mtd}%
                   </div>
+                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)' }}>since avg cost</div>
                 </div>
               </div>
 
-              {/* Cell C — Allocation bars (2 cols) */}
+              {/* Cell C — Position details (2 cols) */}
               <div style={{ ...BC, gridColumn:'1/3' }}>
-                <div style={BL}><span>Asset Allocation</span></div>
-                {node.alloc.map(a => (
-                  <div key={a.label} style={{ marginBottom: 11 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.78rem', color:'var(--text-dim)', marginBottom:5 }}>
-                      <span>{a.label}</span>
-                      <span style={{ fontFamily:'var(--font-mono)', color:'var(--text)' }}>{a.pct}%</span>
+                <div style={BL}><span>Position Details</span></div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  {[
+                    { label:'Current Price', val: h0 ? `$${h0.price.toLocaleString()}` : '—', c: 'var(--text)' },
+                    { label:'Market Value',  val: `$${node.aum.toLocaleString()}`,              c: 'var(--gold)' },
+                    { label:'Quantity',      val: h0 ? h0.shares.toLocaleString() : '—',        c: 'var(--teal)' },
+                    { label:'Unrealised P&L',val: `${gainAbs >= 0 ? '+' : ''}$${Math.round(gainAbs).toLocaleString()}`, c: gainAbs >= 0 ? 'var(--green)' : 'var(--red)' },
+                  ].map(s => (
+                    <div key={s.label} style={{ background:'rgba(255,255,255,0.5)', borderRadius:10, padding:'10px 14px', border:'1px solid rgba(15,23,42,0.06)' }}>
+                      <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:5 }}>{s.label}</div>
+                      <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', color:s.c }}>{s.val}</div>
                     </div>
-                    <div style={{ height:5, background:'rgba(255,255,255,0.06)', borderRadius:3, overflow:'hidden' }}>
-                      <div style={{
-                        height:'100%', width:`${a.pct}%`,
-                        background: `linear-gradient(90deg,${a.color}cc,${a.color})`,
-                        borderRadius:3,
-                        transition:'width 0.9s cubic-bezier(0.4,0,0.2,1)',
-                      }} />
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               {/* Cell D — P&L summary */}
               <div style={{ ...BC, background:'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(243,247,251,0.98))' }}>
-                <div style={BL}><span>P&L Summary</span></div>
+                <div style={BL}><span>Summary</span></div>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.7rem', color: isPos?'var(--green)':'var(--red)', lineHeight:1, marginBottom:4 }}>
                   {isPos?'+':''}{node.mtd}%
                 </div>
-                <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.65rem', color:'var(--text-faint)', marginBottom:14 }}>Month to date</div>
+                <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.65rem', color:'var(--text-faint)', marginBottom:14 }}>since avg cost</div>
                 {[
-                  ['Total Return', node.returnPct, isPos?'var(--green)':'var(--red)'],
-                  ['AUM',          `$${node.aum.toLocaleString()}`, 'var(--gold)'],
-                  ['Positions',    node.holdings.length,            'var(--teal)'],
+                  ['Type',     node.region,                          'var(--teal)'],
+                  ['Value',    `$${node.aum.toLocaleString()}`,      'var(--gold)'],
+                  ['P&L',      `${gainAbs >= 0?'+':''}$${Math.round(gainAbs).toLocaleString()}`, gainAbs>=0?'var(--green)':'var(--red)'],
                 ].map(([k,v,c]) => (
                   <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', marginBottom:6 }}>
                     <span style={{ color:'var(--text-dim)' }}>{k}</span>
@@ -371,9 +389,11 @@ function BentoDashboard({ node, show, onClose }) {
               </div>
 
             </div>
+              )
+            })()}
 
             {/* Holdings grid */}
-            <div style={BL}><span>Holdings</span></div>
+            <div style={BL}><span>Price Action</span><span style={{ letterSpacing:0, fontSize:'0.7rem', color:'var(--text-dim)' }}>{node.label}</span></div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(195px,1fr))', gap:12 }}>
               {node.holdings.map(h => {
                 const hc  = h.change >= 0 ? 'var(--green)' : 'var(--red)'
@@ -396,7 +416,9 @@ function BentoDashboard({ node, show, onClose }) {
                       </span>
                     </div>
                     <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.88rem', marginBottom:3 }}>{h.name}</div>
-                    <div style={{ fontFamily:'var(--font-mono)', fontSize:'1rem', marginBottom:8 }}>${h.price.toLocaleString()}</div>
+                    <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.75rem', color:'var(--text-dim)', marginBottom:10 }}>
+                      {h.shares.toLocaleString()} units @ <span style={{ color:'var(--text)' }}>${h.price.toLocaleString()}</span>
+                    </div>
                     <Sparkline dir={dir} color={hc} h={30} />
                   </div>
                 )
@@ -441,7 +463,56 @@ const RISK_DEFS = [
   { min:67, max:100,icon:'🚀', title:'Aggressive Portfolio',   desc:'Growth-oriented. 90% equities, 5% bonds, 5% alternatives.', color:'var(--red)' },
 ]
 
-// ── Zone definitions — used for texture drawing AND hover detection ─────────
+// ═══════════════════════════════════════════════════════════
+// 2D GLOBE ENGINE
+// ═══════════════════════════════════════════════════════════
+
+// Sphere gradient colours per theme
+const SPHERE_THEMES = {
+  'default':      { s1:'#2a2d33', s2:'#18191e', s3:'#0a0b0d', land:'rgba(38,42,50,0.50)',   landStroke:'rgba(120,130,145,0.14)', rim:'#7a8899' },
+  'earthy':       { s1:'#966336', s2:'#5c3a18', s3:'#2a1608', land:'rgba(120,80,40,0.45)', landStroke:'rgba(210,150,70,0.14)', rim:'#966336' },
+  'moonlit':      { s1:'#22252c', s2:'#14161b', s3:'#08090b', land:'rgba(30,34,44,0.50)',   landStroke:'rgba(130,145,165,0.12)',rim:'#4a6fa5' },
+  'silent-night': { s1:'#2e2518', s2:'#1a1510', s3:'#0a0a08', land:'rgba(40,32,20,0.50)',   landStroke:'rgba(190,183,164,0.12)',rim:'#beb7a4' },
+}
+
+// Simplified continent outlines [lat, lng]
+const CONTINENT_POLYS = [
+  [[70,-140],[72,-120],[68,-100],[60,-85],[50,-80],[45,-65],[40,-70],[25,-80],[20,-87],[15,-85],[10,-75],[8,-77],[10,-85],[20,-105],[22,-110],[30,-115],[35,-120],[40,-124],[48,-124],[54,-130],[60,-138],[68,-140]],
+  [[10,-62],[8,-60],[5,-52],[0,-50],[-5,-35],[-10,-37],[-15,-39],[-23,-43],[-30,-50],[-34,-58],[-38,-62],[-42,-65],[-50,-68],[-55,-68],[-55,-65],[-50,-73],[-45,-75],[-40,-73],[-30,-71],[-20,-70],[-10,-75],[-5,-77],[0,-76],[5,-76],[8,-72]],
+  [[36,10],[37,15],[40,18],[42,20],[45,15],[47,10],[48,2],[51,-2],[53,3],[57,10],[60,5],[62,6],[65,14],[68,20],[70,28],[68,30],[65,28],[62,30],[60,25],[58,22],[56,22],[54,20],[52,20],[50,18],[48,17],[44,18],[42,18],[40,20],[38,22],[36,23],[35,25],[36,28],[38,30],[40,36],[38,40],[36,37],[35,33],[35,28],[36,22]],
+  [[37,10],[37,14],[33,12],[30,32],[22,37],[15,42],[12,44],[10,42],[4,40],[0,42],[-5,40],[-10,38],[-15,36],[-20,35],[-26,32],[-30,30],[-34,26],[-34,18],[-30,16],[-25,14],[-20,12],[-15,12],[-10,15],[-5,10],[0,10],[5,2],[5,-5],[10,-15],[15,-18],[20,-16],[25,-15],[30,-10],[36,-5],[38,8]],
+  [[70,30],[73,60],[72,100],[68,130],[65,140],[60,140],[55,135],[50,130],[45,135],[40,130],[35,127],[30,122],[25,120],[20,110],[15,108],[10,104],[5,100],[10,77],[15,74],[20,73],[22,70],[25,67],[28,62],[30,58],[32,44],[35,36],[38,28],[40,30],[45,38],[50,40],[55,38],[60,30],[65,30]],
+  [[-15,130],[-12,136],[-13,142],[-15,145],[-20,148],[-25,152],[-30,153],[-34,150],[-38,146],[-38,140],[-34,136],[-32,124],[-26,114],[-22,114],[-18,122]],
+]
+
+// ── 2D math helpers ──────────────────────────────────────────────────────────
+function ll2xyz(lat, lng) {
+  const phi   = (90 - lat)  * Math.PI / 180
+  const theta = (lng + 180) * Math.PI / 180
+  return { x: -Math.sin(phi) * Math.cos(theta), y: Math.cos(phi), z: Math.sin(phi) * Math.sin(theta) }
+}
+function rotP(p, ry, rx) {
+  const x  =  p.x * Math.cos(ry) + p.z * Math.sin(ry)
+  const z  = -p.x * Math.sin(ry) + p.z * Math.cos(ry)
+  const y2 =  p.y * Math.cos(rx) - z   * Math.sin(rx)
+  const z2 =  p.y * Math.sin(rx) + z   * Math.cos(rx)
+  return { x, y: y2, z: z2 }
+}
+function proj2d(p, cx, cy, r) {
+  return { sx: cx + p.x * r, sy: cy - p.y * r, z: p.z }
+}
+function randomSphere() {
+  const theta = 2 * Math.PI * Math.random()
+  const phi   = Math.acos(2 * Math.random() - 1)
+  return { lat: 90 - phi * 180 / Math.PI, lng: theta * 180 / Math.PI - 180 }
+}
+function hexRgba(hex, a) {
+  const h = (typeof hex === 'number' ? hex.toString(16).padStart(6,'0') : hex.replace('#',''))
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16)
+  return `rgba(${r},${g},${b},${a})`
+}
+
+// Kept only as ZONE_DEFS for hover detection — no longer used for canvas drawing
 const GLOBE_ZONES = [
   {
     label:'Equities',    cx:360,  cy:330, rx:265, ry:198,
@@ -480,21 +551,174 @@ const GLOBE_ZONES = [
   },
 ]
 
+// ─── Per-theme palette for the 2D canvas texture ────────────────────────────
+// base: THREE hex integer used to tint the globe material colour
+// bg:   CSS solid colour for the canvas texture fill
+// dot:  CSS rgba for the grid dot overlay
+const TEXTURE_THEMES = {
+  'default': {
+    base: 0x12244a,
+    bg:   '#12244a',
+    dot:  'rgba(45,212,191,0.18)',
+  },
+  'earthy': {
+    base: 0x3d1e0a,
+    bg:   '#3d1e0a',
+    dot:  'rgba(180,130,55,0.22)',
+  },
+  'moonlit': {
+    base: 0x22252c,
+    bg:   '#22252c',
+    dot:  'rgba(130,145,165,0.20)',
+  },
+  'silent-night': {
+    base: 0x2e2518,
+    bg:   '#2e2518',
+    dot:  'rgba(200,192,165,0.22)',
+  },
+}
+
+function paintGlobeCanvas(ctx, themeId) {
+  const t = TEXTURE_THEMES[themeId] || TEXTURE_THEMES['default']
+  ctx.clearRect(0, 0, 2048, 1024)
+
+  // Solid base colour
+  ctx.fillStyle = t.bg
+  ctx.fillRect(0, 0, 2048, 1024)
+
+  // Subtle dot grid
+  for (let gx = 0; gx < 2048; gx += 52) {
+    for (let gy = 0; gy < 1024; gy += 52) {
+      ctx.beginPath(); ctx.arc(gx, gy, 1.2, 0, Math.PI * 2)
+      ctx.fillStyle = t.dot; ctx.fill()
+    }
+  }
+
+  // Zone dashed outlines + labels only — no fills, no halos
+  GLOBE_ZONES.forEach(z => {
+    // Outer dashed ring
+    ctx.save()
+    ctx.beginPath(); ctx.ellipse(z.cx, z.cy, z.rx, z.ry, 0, 0, Math.PI * 2)
+    ctx.strokeStyle = `rgba(${z.lr},${z.lg},${z.lb},0.72)`
+    ctx.lineWidth = 2.2; ctx.setLineDash([11, 7]); ctx.stroke()
+    ctx.setLineDash([]); ctx.restore()
+
+    // Inner subtle ring
+    ctx.save()
+    ctx.beginPath(); ctx.ellipse(z.cx, z.cy, z.rx * 0.82, z.ry * 0.82, 0, 0, Math.PI * 2)
+    ctx.strokeStyle = `rgba(${z.lr},${z.lg},${z.lb},0.22)`
+    ctx.lineWidth = 1; ctx.stroke(); ctx.restore()
+
+    // Zone label
+    ctx.save()
+    ctx.font = 'bold 17px monospace'
+    ctx.fillStyle = `rgba(${z.lr},${z.lg},${z.lb},0.90)`
+    ctx.textAlign = 'center'
+    ctx.shadowColor = `rgba(${z.lr},${z.lg},${z.lb},0.55)`
+    ctx.shadowBlur = 10
+    ctx.fillText(z.label.toUpperCase(), z.cx, z.cy - z.ry * 0.52)
+    ctx.restore()
+  })
+}
+
+// ═══════════════════════════════════════════════════════════
+// Build live globe nodes — one node per individual holding
+// Falls back to MOCK_NODES when no profile is available
+// ═══════════════════════════════════════════════════════════
+
+// Deterministic spread: place n items in a ring/spiral around a base lat/lng
+function spreadPositions(n, baseLat, baseLng, latRadius, lngRadius) {
+  return Array.from({ length: n }, (_, i) => {
+    const angle = (i / Math.max(n, 1)) * Math.PI * 2
+    // two rings: inner half, outer half
+    const ring = i < Math.ceil(n / 2) ? 0.45 : 0.9
+    return {
+      lat: baseLat + Math.sin(angle) * latRadius * ring,
+      lng: baseLng + Math.cos(angle) * lngRadius * ring,
+    }
+  })
+}
+
+function buildGlobeNodes(profile) {
+  if (!profile?.portfolio) return MOCK_NODES
+
+  const fmt2 = n => Math.round(n * 100) / 100
+  const { stocks = [], cryptos = [], commodities = [] } = profile.portfolio
+  const wm = profile.wellness_metrics ?? {}
+
+  const makeNode = (h, ep, lat, lng, color, region, flag) => {
+    const mtd = h.avg_price > 0 ? fmt2((h.current_price - h.avg_price) / h.avg_price * 100) : 0
+    const ticker = (h.symbol || '').replace('-USD', '').replace('.SI', '')
+    const hexStr = '#' + color.toString(16).padStart(6, '0')
+    return {
+      id:       `node_${h.symbol}`,
+      lat, lng,
+      label:    ticker,
+      flag,
+      region,
+      color,
+      type:     ep === 'cryptos' ? 'crypto' : ep === 'commodities' ? 'commodity' : 'equity',
+      aum:      Math.round(h.market_value ?? 0),
+      mtd,
+      holdings: [{
+        ticker,
+        name:   h.name || h.symbol,
+        price:  h.current_price ?? 0,
+        change: mtd,
+        shares: h.qty,
+        dir:    mtd >= 0 ? 'up' : 'dn',
+      }],
+      alloc: [{ label: ticker, pct: 100, color: hexStr }],
+      wellness: Math.round(wm.diversification_score ?? 70),
+      returnPct: `${mtd >= 0 ? '+' : ''}${mtd}%`,
+    }
+  }
+
+  const nodes = []
+
+  // Stocks — spread across North America / Atlantic
+  const activeStocks = stocks.filter(h => (h.qty ?? 0) > 0)
+  const stockPos = spreadPositions(activeStocks.length, 38, -95, 16, 28)
+  activeStocks.forEach((h, i) =>
+    nodes.push(makeNode(h, 'stocks', stockPos[i].lat, stockPos[i].lng, 0x60a5fa, 'Equities', '📈'))
+  )
+
+  // Crypto — spread across East Asia / Pacific
+  const activeCryptos = cryptos.filter(h => (h.qty ?? 0) > 0)
+  const cryptoPos = spreadPositions(activeCryptos.length, 32, 118, 14, 22)
+  activeCryptos.forEach((h, i) =>
+    nodes.push(makeNode(h, 'cryptos', cryptoPos[i].lat, cryptoPos[i].lng, 0x2dd4bf, 'Digital Assets', '₿'))
+  )
+
+  // Commodities — spread across Africa / Middle East
+  const activeCommodities = commodities.filter(h => (h.qty ?? 0) > 0)
+  const commPos = spreadPositions(activeCommodities.length, -18, 22, 14, 22)
+  activeCommodities.forEach((h, i) =>
+    nodes.push(makeNode(h, 'commodities', commPos[i].lat, commPos[i].lng, 0xfbbf24, 'Commodities', '🪙'))
+  )
+
+  return nodes.length ? nodes : MOCK_NODES
+}
+
 export default function Globe() {
   const navigate    = useNavigate()
-  const { user: authUser } = useAuth()
+  const { user } = useAuth()
+  const { activeTheme } = useTheme()
   const canvasRef   = useRef(null)
   const globeRef    = useRef(null)   // THREE globe mesh
-  const nodeObjsRef = useRef([])
-  const isDragRef   = useRef(false)
-  const cameraRef   = useRef(null)
-  const rendererRef = useRef(null)
-  const sceneRef    = useRef(null)
-  const animIdRef   = useRef(null)
+  // 2D canvas globe refs
+  const isDragRef        = useRef(false)
+  const animIdRef        = useRef(null)
+  const clusterScreenRef = useRef({})      // screen pos of each node centre, updated each frame
+  const activeThemeRef   = useRef(activeTheme)  // read inside rAF without stale closure
+  const globeNodesRef     = useRef(MOCK_NODES)  // live portfolio nodes (updated when profile loads)
+  const buildParticlesRef = useRef(null)         // exposed by canvas effect so profile effect can rebuild
 
   // UI state
   const [aum,           setAum]         = useState(0)
   const [pl,            setPl]          = useState(0)
+  const [plSign,        setPlSign]      = useState(1)   // 1 = gain, -1 = loss
+  const [plPct,         setPlPct]       = useState(0)
   const [hoverNode,     setHoverNode]   = useState(null)
   const [hoverPos,      setHoverPos]    = useState({ x:0, y:0 })
   const cardLockedRef = useRef(false)
@@ -502,6 +726,9 @@ export default function Globe() {
   const [dashNode,      setDashNode]    = useState(null)
   const [dashShow,      setDashShow]    = useState(false)
   const [flyingIn,      setFlyingIn]    = useState(false)  // camera zoom animation
+  const [settingsOpen,  setSettingsOpen] = useState(false)
+  const [themeModalOpen, setThemeModalOpen] = useState(false)
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [riskPct,       setRiskPct]     = useState(50)
   const [hoverZone,     setHoverZone]   = useState(null)
   const [zonePos,        setZonePos]     = useState({ x:0, y:0 })
@@ -509,23 +736,50 @@ export default function Globe() {
   const riskTrackRef  = useRef(null)
   const riskDragRef   = useRef(false)
 
-  // Wellness score for logged-in hero
+  // Wellness score + portfolio nodes for logged-in hero
   const [userProfile, setUserProfile] = useState(null)
   useEffect(() => {
-    if (!authUser?.user_id) return
-    fetch(`${API}/users/${authUser.user_id}`)
+    if (!user?.user_id) return
+    fetch(`${API}/users/${user.user_id}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => d && setUserProfile(d.user))
       .catch(() => {})
-  }, [authUser?.user_id])
+  }, [user?.user_id])
 
-  // Animated counters
+  // Rebuild globe nodes whenever profile loads / changes
   useEffect(() => {
-    setTimeout(() => {
-      animateCount(setAum, 1096150, 2000)   // sum of all 12 type-based nodes
-      animateCount(setPl,   21840,  1800)
-    }, 400)
-  }, [])
+    globeNodesRef.current = (user && userProfile) ? buildGlobeNodes(userProfile) : MOCK_NODES
+    buildParticlesRef.current?.()   // regenerate cluster particles for new node set
+  }, [user, userProfile])
+
+  // Count of active holdings across all asset classes
+  const activePositions = (() => {
+    if (!userProfile?.portfolio) return 40
+    const { stocks = [], cryptos = [], commodities = [] } = userProfile.portfolio
+    return [...stocks, ...cryptos, ...commodities].filter(h => (h.qty ?? 0) > 0).length
+  })()
+
+  // Animated counters — driven entirely by real profile data
+  useEffect(() => {
+    if (!userProfile) return
+    const pv = userProfile.portfolio_value ?? userProfile.total_balance ?? 0
+    animateCount(setAum, pv, 1200)
+    // Compute total unrealised P&L: Σ (market_value - qty * avg_price)
+    const { stocks = [], cryptos = [], commodities = [] } = userProfile.portfolio ?? {}
+    const allHoldings = [...stocks, ...cryptos, ...commodities]
+    const totalPL = allHoldings.reduce((sum, h) => {
+      if ((h.qty ?? 0) === 0) return sum
+      return sum + ((h.market_value ?? 0) - (h.qty * (h.avg_price ?? 0)))
+    }, 0)
+    animateCount(setPl, Math.round(Math.abs(totalPL)), 1200)
+    setPlSign(totalPL >= 0 ? 1 : -1)
+    // P&L %
+    const costBasis = allHoldings.reduce((sum, h) => {
+      if ((h.qty ?? 0) === 0) return sum
+      return sum + h.qty * (h.avg_price ?? 0)
+    }, 0)
+    setPlPct(costBasis > 0 ? (totalPL / costBasis) * 100 : 0)
+  }, [userProfile])
 
   // Risk slider drag
   useEffect(() => {
@@ -540,50 +794,19 @@ export default function Globe() {
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
   }, [])
 
-  // Open dashboard — animate camera zoom then show dashboard
+  // Keep activeThemeRef in sync so the rAF loop always reads the latest theme
+  useEffect(() => { activeThemeRef.current = activeTheme }, [activeTheme])
+
+  // Open dashboard
   const openDashboard = useCallback((node) => {
     setCardLocked(false)
     setHoverNode(null)
     setFlyingIn(true)
-
-    // Camera zoom-in animation (pure Three.js)
-    const camera = cameraRef.current
-    if (camera) {
-      const startZ = camera.position.z
-      const targetZ = 1.35
-      const duration = 420
-      let startTs = null
-      const zoomStep = ts => {
-        if (!startTs) startTs = ts
-        const p = Math.min((ts - startTs) / duration, 1)
-        const ease = 1 - Math.pow(1 - p, 3)
-        camera.position.z = startZ + (targetZ - startZ) * ease
-        if (p < 1) requestAnimationFrame(zoomStep)
-        else {
-          // zoom back out & show dashboard
-          setTimeout(() => {
-            const backDuration = 280
-            let backTs = null
-            const backStep = ts2 => {
-              if (!backTs) backTs = ts2
-              const p2 = Math.min((ts2 - backTs) / backDuration, 1)
-              camera.position.z = targetZ + (2.6 - targetZ) * (1 - Math.pow(1 - p2, 2))
-              if (p2 < 1) requestAnimationFrame(backStep)
-              else camera.position.z = 2.6
-            }
-            requestAnimationFrame(backStep)
-          }, 80)
-          setFlyingIn(false)
-          setDashNode(node)
-          setDashShow(true)
-        }
-      }
-      requestAnimationFrame(zoomStep)
-    } else {
+    setTimeout(() => {
       setFlyingIn(false)
       setDashNode(node)
       setDashShow(true)
-    }
+    }, 320)
   }, [])
 
   const closeDashboard = useCallback(() => {
@@ -591,339 +814,264 @@ export default function Globe() {
     setTimeout(() => setDashNode(null), 420)
   }, [])
 
-  // ═══ THREE.JS GLOBE SETUP ═════════════════════════════════
+  // ═══ 2D CANVAS GLOBE ════════════════════════════════════════
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
     const container = canvas.parentElement
     if (!container) return
 
-    // ── Build the 2D texture FIRST (before any WebGL context is created) ──
-    const texCanvas = document.createElement('canvas')
-    texCanvas.width = 2048; texCanvas.height = 1024
-    const ctx = texCanvas.getContext('2d')
-    if (!ctx) { console.error('WealthSphere: could not get 2D context for globe texture'); return }
+    // ── Rotation + velocity state (mutable, lives outside React)
+    let rotY = 0.5, rotX = 0.12
+    let velY = 0.0016, velX = 0
+    const IDLE_VEL_Y = 0.0016  // default auto-spin rate the globe always returns to
+    let W = 0, H = 0, CX = 0, CY = 0, R = 0
 
-    // Pure space background — no ocean, no geography
-    const og = ctx.createLinearGradient(0, 0, 0, 1024)
-    og.addColorStop(0, '#020409'); og.addColorStop(0.5, '#03060f'); og.addColorStop(1, '#040810')
-    ctx.fillStyle = og; ctx.fillRect(0, 0, 2048, 1024)
+    // ── Particle arrays
+    let bgPts = [], clsPts = []
 
-    // ── Abstract dot grid (no geographic meaning) ──────────────────────────
-    for (let gx = 0; gx < 2048; gx += 52) {
-      for (let gy = 0; gy < 1024; gy += 52) {
-        ctx.beginPath(); ctx.arc(gx, gy, 0.9, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(45,212,191,0.10)'; ctx.fill()
-      }
+    const buildParticles = () => {
+      bgPts = Array.from({ length: 320 }, () => {
+        const { lat, lng } = randomSphere()
+        return {
+          lat, lng, baseLat: lat, baseLng: lng,
+          dL: (Math.random() - 0.5) * 0.1, dN: (Math.random() - 0.5) * 0.14,
+          ph: Math.random() * Math.PI * 2, per: 4000 + Math.random() * 9000,
+          r: Math.random() * 1.6 + 0.3, alpha: Math.random() * 0.45 + 0.1,
+        }
+      })
+      clsPts = []
+      globeNodesRef.current.forEach(node => {
+        const hex = '#' + node.color.toString(16).padStart(6, '0')
+        for (let i = 0; i < 16; i++) {
+          const spread = 4 + Math.random() * 5, angle = Math.random() * Math.PI * 2, dist = Math.random() * spread
+          const lat = node.lat + Math.cos(angle) * dist
+          const lng = node.lng + Math.sin(angle) * dist * 1.4
+          clsPts.push({
+            nid: node.id, lat, lng, baseLat: lat, baseLng: lng,
+            dL: (Math.random() - 0.5) * 0.07, dN: (Math.random() - 0.5) * 0.09,
+            ph: Math.random() * Math.PI * 2, per: 3000 + Math.random() * 6000,
+            color: hex, r: Math.random() * 2.4 + 0.7, alpha: Math.random() * 0.75 + 0.2,
+            twinkle: Math.random() * Math.PI * 2,
+          })
+        }
+      })
+      buildParticlesRef.current = buildParticles  // expose so profile effect can re-trigger
     }
 
-    // ── ABSTRACT INVESTMENT TYPE ZONES ─────────────────────────────────────
-    const ZONES = GLOBE_ZONES
+    const resize = () => {
+      W = canvas.width  = container.offsetWidth  || 560
+      H = canvas.height = container.offsetHeight || 560
+      CX = W / 2; CY = H / 2
+      R = Math.min(W, H) * 0.40
+      buildParticles()
+    }
 
-    ZONES.forEach(z => {
-      // Outer soft glow
-      const halo = ctx.createRadialGradient(z.cx, z.cy, z.rx * 0.4, z.cx, z.cy, z.rx * 1.8)
-      halo.addColorStop(0, `rgba(${z.dr},${z.dg},${z.db},0.38)`)
-      halo.addColorStop(1, 'rgba(0,0,0,0)')
-      ctx.save()
-      ctx.beginPath(); ctx.ellipse(z.cx, z.cy, z.rx * 1.8, z.ry * 1.8, 0, 0, Math.PI * 2)
-      ctx.fillStyle = halo; ctx.fill(); ctx.restore()
+    // ── Render one frame
+    const frame = now => {
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, W, H)
+      const th = SPHERE_THEMES[activeThemeRef.current?.id] || SPHERE_THEMES['default']
 
-      // Layered zone fills — darker opacities
-      z.core.forEach((s, i) => {
+      // Sphere base radial gradient
+      const sg = ctx.createRadialGradient(CX - R * 0.22, CY - R * 0.25, R * 0.07, CX, CY, R)
+      sg.addColorStop(0, th.s1); sg.addColorStop(0.5, th.s2); sg.addColorStop(1, th.s3)
+      ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2)
+      ctx.fillStyle = sg; ctx.fill()
+
+      // ── Collect all dots (bg + cluster), sort back→front
+      const dots = []
+
+      bgPts.forEach(p => {
+        const t = now / p.per
+        const lat = p.baseLat + Math.sin(t + p.ph) * 14 * p.dL
+        const lng  = p.baseLng + Math.cos(t * 0.7 + p.ph) * 14 * p.dN
+        const r3 = rotP(ll2xyz(lat, lng), rotY, rotX)
+        if (r3.z < -0.08) return
+        const { sx, sy } = proj2d(r3, CX, CY, R)
+        const fade = Math.max(0, Math.min(1, (r3.z + 0.08) / 0.25))
+        dots.push({ sx, sy, z: r3.z, r: p.r, alpha: p.alpha * fade, color: 'rgba(210,215,255', isCluster: false })
+      })
+
+      clsPts.forEach(p => {
+        const t = now / p.per
+        const lat = p.baseLat + Math.sin(t + p.ph) * 12 * p.dL
+        const lng  = p.baseLng + Math.cos(t * 0.65 + p.ph) * 12 * p.dN
+        const r3 = rotP(ll2xyz(lat, lng), rotY, rotX)
+        if (r3.z < -0.06) return
+        const { sx, sy } = proj2d(r3, CX, CY, R)
+        const fade     = Math.max(0, Math.min(1, (r3.z + 0.06) / 0.2))
+        const twk      = 0.6 + 0.4 * Math.sin(now * 0.003 + p.twinkle)
+        const [pr, pg, pb] = [parseInt(p.color.slice(1,3),16), parseInt(p.color.slice(3,5),16), parseInt(p.color.slice(5,7),16)]
+        dots.push({ sx, sy, z: r3.z, r: p.r, alpha: p.alpha * fade * twk, color: `rgba(${pr},${pg},${pb}`, isCluster: true, glowColor: p.color })
+      })
+
+      dots.sort((a, b) => a.z - b.z)
+
+      dots.forEach(d => {
         ctx.save()
-        ctx.translate(s.cx, s.cy); ctx.rotate(s.rot)
-        ctx.beginPath(); ctx.ellipse(0, 0, s.rx, s.ry, 0, 0, Math.PI * 2); ctx.clip()
-        const fg = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(s.rx, s.ry))
-        if (i === 0) {
-          fg.addColorStop(0,   `rgba(${z.dr},${z.dg},${z.db},0.92)`)
-          fg.addColorStop(0.5, `rgba(${z.dr},${z.dg},${z.db},0.72)`)
-          fg.addColorStop(1,   `rgba(${z.dr},${z.dg},${z.db},0.18)`)
-        } else {
-          fg.addColorStop(0,   `rgba(${z.lr},${z.lg},${z.lb},0.28)`)
-          fg.addColorStop(0.6, `rgba(${z.dr},${z.dg},${z.db},0.22)`)
-          fg.addColorStop(1,   'rgba(0,0,0,0)')
-        }
-        ctx.fillStyle = fg
-        ctx.fillRect(-s.rx - 2, -s.ry - 2, (s.rx + 2) * 2, (s.ry + 2) * 2)
+        if (d.isCluster && d.z > 0) { ctx.shadowBlur = 10; ctx.shadowColor = d.glowColor }
+        ctx.beginPath()
+        ctx.arc(d.sx, d.sy, Math.max(0.5, d.r * (0.4 + 0.6 * Math.max(0, d.z + 0.5))), 0, Math.PI * 2)
+        ctx.fillStyle = d.color + `,${d.alpha})`
+        ctx.fill()
         ctx.restore()
       })
 
-      // Outer dashed border
+      // ── Continent outlines (clipped to sphere)
       ctx.save()
-      ctx.beginPath(); ctx.ellipse(z.cx, z.cy, z.rx, z.ry, 0, 0, Math.PI * 2)
-      ctx.strokeStyle = `rgba(${z.lr},${z.lg},${z.lb},0.80)`
-      ctx.lineWidth = 2.2; ctx.setLineDash([11, 7]); ctx.stroke()
-      ctx.setLineDash([]); ctx.restore()
-
-      // Inner subtle ring
-      ctx.save()
-      ctx.beginPath(); ctx.ellipse(z.cx, z.cy, z.rx * 0.82, z.ry * 0.82, 0, 0, Math.PI * 2)
-      ctx.strokeStyle = `rgba(${z.lr},${z.lg},${z.lb},0.22)`
-      ctx.lineWidth = 1; ctx.stroke(); ctx.restore()
-
-      // Zone label
-      ctx.save()
-      ctx.font = 'bold 17px monospace'
-      ctx.fillStyle = `rgba(${z.lr},${z.lg},${z.lb},0.92)`
-      ctx.textAlign = 'center'
-      ctx.shadowColor = `rgba(${z.lr},${z.lg},${z.lb},0.65)`
-      ctx.shadowBlur = 12
-      ctx.fillText(z.label.toUpperCase(), z.cx, z.cy - z.ry * 0.52)
+      ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2); ctx.clip()
+      CONTINENT_POLYS.forEach(poly => {
+        const pts = poly.map(([la, lo]) => proj2d(rotP(ll2xyz(la, lo), rotY, rotX), CX, CY, R))
+        ctx.beginPath()
+        pts.forEach((pt, i) => i ? ctx.lineTo(pt.sx, pt.sy) : ctx.moveTo(pt.sx, pt.sy))
+        ctx.closePath()
+        ctx.fillStyle   = th.land;       ctx.fill()
+        ctx.strokeStyle = th.landStroke; ctx.lineWidth = 0.7; ctx.stroke()
+      })
       ctx.restore()
-    })
 
-    // ── Now create the WebGL renderer ──────────────────────
-    const W = container.offsetWidth  || 580
-    const H = container.offsetHeight || 580
+      // ── Rim glow
+      const rim = ctx.createRadialGradient(CX, CY, R * 0.72, CX, CY, R)
+      rim.addColorStop(0, 'transparent'); rim.addColorStop(1, hexRgba(th.rim, 0.2))
+      ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2); ctx.fillStyle = rim; ctx.fill()
+      ctx.beginPath(); ctx.arc(CX, CY, R + 1.5, 0, Math.PI * 2)
+      ctx.strokeStyle = hexRgba(th.rim, 0.16); ctx.lineWidth = 1.5; ctx.stroke()
+      ctx.beginPath(); ctx.arc(CX, CY, R + 6, 0, Math.PI * 2)
+      ctx.strokeStyle = hexRgba(th.rim, 0.05); ctx.lineWidth = 4; ctx.stroke()
 
-    let renderer
-    try {
-      renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true })
-    } catch(e) {
-      console.error('WealthSphere: WebGL renderer failed', e); return
+      // ── Sphere shine highlight
+      const shine = ctx.createRadialGradient(CX - R * 0.28, CY - R * 0.30, 0, CX - R * 0.18, CY - R * 0.22, R * 0.65)
+      shine.addColorStop(0, 'rgba(255,255,255,0.08)'); shine.addColorStop(1, 'transparent')
+      ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2); ctx.fillStyle = shine; ctx.fill()
+
+      // ── Cluster centres — pulse rings + core dot + label
+      globeNodesRef.current.forEach(node => {
+        const r3 = rotP(ll2xyz(node.lat, node.lng), rotY, rotX)
+        const { sx, sy } = proj2d(r3, CX, CY, R)
+        const hex = '#' + node.color.toString(16).padStart(6, '0')
+        clusterScreenRef.current[node.id] = { x: sx, y: sy, vis: r3.z > 0.05 }
+        if (r3.z < 0.05) return
+        const fade = Math.min(1, (r3.z - 0.05) / 0.15)
+
+        // Dual pulse rings — bigger
+        for (let w = 0; w < 2; w++) {
+          const tp = ((now + w * 1200) % 2400) / 2400
+          ctx.save()
+          ctx.beginPath(); ctx.arc(sx, sy, 14 + tp * 36, 0, Math.PI * 2)
+          ctx.strokeStyle = hexRgba(hex, (1 - tp) * 0.65 * fade)
+          ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore()
+        }
+
+        // Core glow dot — bigger
+        ctx.save()
+        ctx.shadowBlur = 28; ctx.shadowColor = hex
+        const cg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 14)
+        cg.addColorStop(0, hexRgba(hex, fade)); cg.addColorStop(1, hexRgba(hex, 0))
+        ctx.beginPath(); ctx.arc(sx, sy, 9 + 0.9 * Math.sin(now * 0.003), 0, Math.PI * 2)
+        ctx.fillStyle = cg; ctx.fill()
+        ctx.beginPath(); ctx.arc(sx, sy, 5.5, 0, Math.PI * 2)
+        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = fade * 0.92; ctx.fill()
+        ctx.restore()
+
+        // Label — always show ticker, show market value below
+        if (r3.z > 0.12) {
+          ctx.save(); ctx.globalAlpha = fade * 0.92
+          ctx.font = "bold 10px 'DM Mono',monospace"; ctx.fillStyle = hex
+          ctx.fillText(node.label.toUpperCase(), sx + 16, sy + 1)
+          ctx.globalAlpha = fade * 0.55
+          ctx.font = "8px 'DM Mono',monospace"; ctx.fillStyle = '#c8cfe0'
+          ctx.fillText('$' + (node.aum / 1000).toFixed(0) + 'K', sx + 16, sy + 12)
+          ctx.restore()
+        }
+      })
     }
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
-    renderer.setSize(W, H)
-    renderer.setClearColor(0x000000, 0)
-    rendererRef.current = renderer
 
-    const scene = new THREE.Scene()
-    sceneRef.current = scene
-
-    const camera = new THREE.PerspectiveCamera(45, W/H, 0.1, 1000)
-    camera.position.z = 2.6
-    cameraRef.current = camera
-
-    // ── LAYER 0 — 3D particle star field (slow drift) ──────
-    const starCount = 1200
-    const sPos = new Float32Array(starCount * 3)
-    for (let i = 0; i < starCount; i++) {
-      const theta = Math.random() * Math.PI * 2
-      const phi   = Math.acos(2 * Math.random() - 1)
-      const r     = 7 + Math.random() * 12
-      sPos[i*3]   = r * Math.sin(phi) * Math.cos(theta)
-      sPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta)
-      sPos[i*3+2] = r * Math.cos(phi)
-    }
-    const starGeo = new THREE.BufferGeometry()
-    starGeo.setAttribute('position', new THREE.BufferAttribute(sPos, 3))
-    const starPoints = new THREE.Points(starGeo, new THREE.PointsMaterial({
-      color: 0xffffff, size: 0.038, sizeAttenuation: true,
-      transparent: true, opacity: 0.75,
-    }))
-    scene.add(starPoints)
-
-    // ── Lighting ───────────────────────────────────────────
-    scene.add(new THREE.AmbientLight(0x334466, 1.3))
-    const sun = new THREE.DirectionalLight(0x6699ff, 1.5)
-    sun.position.set(3, 2, 4); scene.add(sun)
-    const gold = new THREE.PointLight(0xc9a84c, 0.7, 7)
-    gold.position.set(-2, 1, 2); scene.add(gold)
-    const teal = new THREE.PointLight(0x2dd4bf, 0.35, 6)
-    teal.position.set(2, -1, -2); scene.add(teal)
-
-    // ── LAYER 1 — Globe mesh (texture already built above) ──
-    const tex = new THREE.CanvasTexture(texCanvas)
-    const globe = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 72, 72),
-      new THREE.MeshPhongMaterial({ map:tex, transparent:true, opacity:0.98, shininess:32, specular:new THREE.Color(0x224488) })
-    )
-    scene.add(globe)
-    globeRef.current = globe
-
-    // Atmosphere layers
-    scene.add(new THREE.Mesh(
-      new THREE.SphereGeometry(1.04, 64, 64),
-      new THREE.MeshPhongMaterial({ color:0x2244aa, transparent:true, opacity:0.09, side:THREE.FrontSide })
-    ))
-    scene.add(new THREE.Mesh(
-      new THREE.SphereGeometry(1.09, 64, 64),
-      new THREE.MeshPhongMaterial({ color:0x1133cc, transparent:true, opacity:0.035, side:THREE.BackSide })
-    ))
-
-    // ── LAYER 2 — Portfolio markers (children of globe, rotate with it) ───
-    const nodeObjs = MOCK_NODES.map(node => {
-      // Position at r=1 (on the sphere surface), not r=1.03, because we parent to globe
-      const pos = latLngToVec3(node.lat, node.lng, 1.0)
-      // Surface normal direction for ring orientation
-      const normal = pos.clone().normalize()
-
-      const mkRing = (r0, r1, opacity) => {
-        const m = new THREE.Mesh(
-          new THREE.RingGeometry(r0, r1, 32),
-          new THREE.MeshBasicMaterial({ color:node.color, transparent:true, opacity, side:THREE.DoubleSide })
-        )
-        m.position.copy(pos)
-        // Orient ring to face outward from sphere centre
-        m.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), normal)
-        globe.add(m)   // ← child of globe
-        return m
+    // ── Animation loop
+    const loop = now => {
+      if (!isDragRef.current) {
+        // Gradually ease velY back toward the idle spin rate after a drag
+        velY += (IDLE_VEL_Y - velY) * 0.012
+        rotY += velY
+        rotX += velX; velX *= 0.94
+        rotX = Math.max(-0.5, Math.min(0.5, rotX))
       }
+      frame(now)
+      animIdRef.current = requestAnimationFrame(loop)
+    }
 
-      // Core dot — lifted off the surface so it sits fully above the globe
-      const dotRadius = 0.044
-      const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(dotRadius, 16, 16),
-        new THREE.MeshBasicMaterial({ color: node.color })
-      )
-      // Offset outward by dot radius so the bottom edge just kisses the globe surface
-      dot.position.copy(pos).addScaledVector(normal, dotRadius)
-      globe.add(dot)   // ← child of globe
-
-      // Soft glow halo — same centre as the dot so it wraps it symmetrically
-      const halo = new THREE.Mesh(
-        new THREE.SphereGeometry(0.068, 16, 16),
-        new THREE.MeshBasicMaterial({ color:node.color, transparent:true, opacity:0.28 })
-      )
-      halo.position.copy(dot.position)
-      globe.add(halo)  // ← child of globe
-
-      const ring   = mkRing(0.060, 0.092, 0.70)
-      const ring2  = mkRing(0.100, 0.120, 0.25)
-      const pulseA = mkRing(0.092, 0.132, 0.0)
-      const pulseB = mkRing(0.136, 0.168, 0.0)
-      pulseA._phase = Math.random() * Math.PI * 2
-      pulseB._phase = pulseA._phase + Math.PI
-
-      return { node, dot, halo, ring, ring2, pulseA, pulseB, pos, normal }
-    })
-    nodeObjsRef.current = nodeObjs
-
-    // ── Drag rotation + momentum ──────────────────────────
-    let isDrag = false, prev = {x:0,y:0}
-    let velY = 0, velX = 0, lastDx = 0, lastDy = 0
-    const onDown = e => { isDrag=true; isDragRef.current=true; prev={x:e.clientX,y:e.clientY}; velY=0; velX=0 }
-    const onUp   = () => {
-      isDrag=false; isDragRef.current=false
-      // carry the last frame's drag velocity into momentum
-      velY = lastDx * 0.004
-      velX = lastDy * 0.004
+    // ── Drag + hover + click handlers
+    let prev = { x: 0, y: 0 }, lastDx = 0, lastDy = 0
+    const onDown = e => {
+      isDragRef.current = true
+      prev = { x: e.clientX, y: e.clientY }
+      velY = 0; velX = 0
+      canvas.style.cursor = 'grabbing'
+    }
+    const onUp = e => {
+      isDragRef.current = false
+      velY = lastDx * 0.004; velX = lastDy * 0.004
+      canvas.style.cursor = 'grab'
+      // click detection
+      const dist = Math.hypot(e.clientX - prev.x, e.clientY - prev.y)
+      if (dist < 5) {
+        const rect = canvas.getBoundingClientRect()
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top
+        for (const node of globeNodesRef.current) {
+          const p = clusterScreenRef.current[node.id]
+          if (p && p.vis && Math.hypot(mx - p.x, my - p.y) < 44) {
+            openDashboard(node); break
+          }
+        }
+      }
     }
     const onMove = e => {
-      if (!isDrag) return
-      const dx=e.clientX-prev.x, dy=e.clientY-prev.y
-      globe.rotation.y += dx*0.004; globe.rotation.x += dy*0.004
-      lastDx=dx; lastDy=dy
-      prev={x:e.clientX,y:e.clientY}
-    }
-    canvas.addEventListener('mousedown', onDown)
-    window.addEventListener('mouseup', onUp)
-    window.addEventListener('mousemove', onMove)
-
-    // ── Raycaster helpers ────────────────────────────────────
-    const ray  = new THREE.Raycaster()
-    const m2d  = new THREE.Vector2()
-    const getHit = (cx, cy) => {
-      const rect = canvas.getBoundingClientRect()
-      m2d.x =  ((cx - rect.left) / rect.width)  * 2 - 1
-      m2d.y = -((cy - rect.top)  / rect.height) * 2 + 1
-      ray.setFromCamera(m2d, camera)
-      const hits = ray.intersectObjects(nodeObjs.map(n => n.dot))
-      if (!hits.length) return null
-      return nodeObjs.find(n => n.dot === hits[0].object) || null
-    }
-    // Zone hover: raycast the sphere surface, read UV, map to texture space
-    const getZoneHit = (cx, cy) => {
-      if (!globeRef.current) return null
-      const rect = canvas.getBoundingClientRect()
-      m2d.x =  ((cx - rect.left) / rect.width)  * 2 - 1
-      m2d.y = -((cy - rect.top)  / rect.height) * 2 + 1
-      ray.setFromCamera(m2d, camera)
-      const hits = ray.intersectObject(globeRef.current, false)
-      if (!hits.length || !hits[0].uv) return null
-      const tx = hits[0].uv.x * 2048
-      const ty = (1 - hits[0].uv.y) * 1024
-      for (const z of GLOBE_ZONES) {
-        const ex = (tx - z.cx) / z.rx
-        const ey = (ty - z.cy) / z.ry
-        if (ex*ex + ey*ey <= 1) return z.label
+      if (isDragRef.current) {
+        const dx = e.clientX - prev.x, dy = e.clientY - prev.y
+        rotY += dx * 0.004; rotX += dy * 0.004
+        rotX = Math.max(-0.6, Math.min(0.6, rotX))
+        lastDx = dx; lastDy = dy
+        prev = { x: e.clientX, y: e.clientY }
+        return
       }
-      return null
-    }
-
-    // ── LAYER 3 — Hover → glass card ────────────────────────
-    canvas.addEventListener('mousemove', e => {
-      if (isDrag) { setHoverNode(null); setHoverZone(null); return }
-      const hit = getHit(e.clientX, e.clientY)
-      if (hit) {
-        const rect = canvas.getBoundingClientRect()
-        setHoverPos({ x:e.clientX-rect.left+18, y:e.clientY-rect.top-30 })
-        setHoverNode(hit.node)
-        setHoverZone(null)
+      const rect = canvas.getBoundingClientRect()
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top
+      let found = null
+      for (const node of globeNodesRef.current) {
+        const p = clusterScreenRef.current[node.id]
+        if (p && p.vis && Math.hypot(mx - p.x, my - p.y) < 34) { found = node; break }
+      }
+      if (found) {
+        setHoverNode(found)
+        setHoverPos({ x: mx, y: my })
         canvas.style.cursor = 'pointer'
       } else {
         if (!cardLockedRef.current) setHoverNode(null)
-        const zone = getZoneHit(e.clientX, e.clientY)
-        setHoverZone(zone)
-        if (zone) {
-          const rect = canvas.getBoundingClientRect()
-          setZonePos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
-        }
         canvas.style.cursor = 'grab'
       }
-    })
-
-    // ── LAYER 4 — Click → portal → dashboard ────────────────
-    let clickMoved = false
-    canvas.addEventListener('mousedown', () => { clickMoved = false })
-    canvas.addEventListener('mousemove', () => { clickMoved = true }, { passive:true })
-    canvas.addEventListener('click', e => {
-      if (clickMoved) return
-      const hit = getHit(e.clientX, e.clientY)
-      if (hit) openDashboard(hit.node)
-    })
-
-    // ── Animation loop ───────────────────────────────────────
-    let t = 0
-    const animate = () => {
-      animIdRef.current = requestAnimationFrame(animate)
-      t += 0.01
-
-      // Layer 0 — star drift
-      starPoints.rotation.y += 0.00012
-      starPoints.rotation.x += 0.000045
-
-      // Layer 1 — momentum spin-to-stop
-      if (!isDragRef.current) {
-        globe.rotation.y += 0.0008005 + velY
-        globe.rotation.x += velX
-        velY *= 0.91
-        velX *= 0.91
-        if (Math.abs(velY) < 0.00005) velY = 0
-        if (Math.abs(velX) < 0.00005) velX = 0
-      }
-
-      // Layer 2 — pulse markers (no manual rotation sync needed — parented to globe)
-      nodeObjs.forEach(n => {
-        const phA = n.pulseA._phase + t * 1.7
-        const phB = n.pulseB._phase + t * 1.7
-        n.pulseA.material.opacity = Math.max(0, Math.sin(phA)) * 0.55
-        n.pulseA.scale.setScalar(1 + Math.sin(phA) * 0.42)
-        n.pulseB.material.opacity = Math.max(0, Math.sin(phB)) * 0.32
-        n.pulseB.scale.setScalar(1 + Math.sin(phB) * 0.6)
-        n.halo.material.opacity = 0.18 + Math.sin(t*1.4 + n.pulseA._phase) * 0.12
-      })
-
-      // Light drift
-      gold.position.x = -2 + Math.sin(t*0.28)*0.6
-      gold.position.y =  1 + Math.cos(t*0.2)*0.35
-
-      renderer.render(scene, camera)
     }
-    animate()
+
+    canvas.addEventListener('mousedown', onDown)
+    window.addEventListener('mouseup',   onUp)
+    window.addEventListener('mousemove', onMove)
+
+    const ro = new ResizeObserver(resize)
+    ro.observe(container)
+    resize()
+    animIdRef.current = requestAnimationFrame(loop)
 
     return () => {
       cancelAnimationFrame(animIdRef.current)
       canvas.removeEventListener('mousedown', onDown)
-      window.removeEventListener('mouseup', onUp)
+      window.removeEventListener('mouseup',   onUp)
       window.removeEventListener('mousemove', onMove)
-      renderer.dispose()
+      ro.disconnect()
     }
   }, [openDashboard]) // eslint-disable-line
 
-  // ═══ RENDER ═══════════════════════════════════════════════
+  // (theme changes are picked up inside the rAF loop via activeThemeRef)
+
+
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)', overflowX:'hidden', position:'relative' }}>
 
@@ -950,83 +1098,23 @@ export default function Globe() {
       <section style={S.hero}>
         <div style={S.globeGlow} />
 
+        {/* ── SPLIT ROW: text-left / globe-right ── */}
+        <div style={S.heroSplit}>
+
+          {/* ── LEFT column ── */}
+          <div style={S.heroLeft}>
+
         {/* Hero text */}
         <div style={S.heroText}>
-          {authUser ? (
+          {user ? (
             /* ── LOGGED-IN HERO ── */
             <>
-              <div style={S.eyebrow}>
-                <div style={S.eyeLine} /> Financial Wellness <div style={S.eyeLine} />
-              </div>
               <h1 style={{ ...S.heroTitle, marginBottom: 10 }}>
                 Welcome back,{' '}
                 <em style={{ fontStyle:'normal', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
-                  {userProfile?.name?.split(' ')[0] ?? authUser.username}
+                  {userProfile?.name?.split(' ')[0] ?? user.username}
                 </em>
-                <span style={{ display:'block', fontFamily:'var(--font-mono)', fontSize:'0.75rem', fontWeight:400, color:'var(--text-faint)', letterSpacing:'0.15em', textTransform:'uppercase', marginTop:6 }}>
-                  Financial Wellness Score
-                </span>
               </h1>
-
-              {/* Score badge */}
-              {(() => {
-                const score = userProfile?.financial_wellness_score ?? null
-                const stress = userProfile?.financial_stress_index ?? null
-                const status = score == null ? null
-                  : score >= 75 ? { label:'Excellent', color:'var(--green)',  glow:'rgba(52,211,153,0.35)' }
-                  : score >= 55 ? { label:'On Track',  color:'#d4a63a',       glow:'rgba(212,166,58,0.35)' }
-                  : score >= 35 ? { label:'Needs Work', color:'var(--orange)', glow:'rgba(251,146,60,0.35)' }
-                  :               { label:'At Risk',    color:'var(--red)',    glow:'rgba(248,113,113,0.35)' }
-                const ringGradient = score == null
-                  ? ['#cbd5e1', '#94a3b8']
-                  : score >= 75 ? ['#86efac', '#22c55e']
-                  : score >= 55 ? ['#f5d77a', '#d4a63a']
-                  : score >= 35 ? ['#fdba74', '#f97316']
-                  : ['#fca5a5', '#ef4444']
-                return (
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:20, marginBottom:18 }}>
-                    {/* Big score ring */}
-                    <div style={{ position:'relative', width:96, height:96, flexShrink:0 }}>
-                      <svg viewBox="0 0 96 96" width={96} height={96} style={{ transform:'rotate(-90deg)' }}>
-                        <defs>
-                          <linearGradient id="wellnessRingGradient" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stopColor={ringGradient[0]} />
-                            <stop offset="100%" stopColor={ringGradient[1]} />
-                          </linearGradient>
-                        </defs>
-                        <circle cx={48} cy={48} r={38} fill="none" stroke="var(--surface2)" strokeWidth={8} />
-                        <circle cx={48} cy={48} r={38} fill="none"
-                          stroke="url(#wellnessRingGradient)" strokeWidth={8}
-                          strokeLinecap="round"
-                          strokeDasharray={2 * Math.PI * 38}
-                          strokeDashoffset={2 * Math.PI * 38 * (1 - (score ?? 0) / 100)}
-                          style={{ filter:`drop-shadow(0 0 8px ${status?.glow ?? 'rgba(148,163,184,0.22)'})`, transition:'stroke-dashoffset 1s ease' }}
-                        />
-                      </svg>
-                      <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-                        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.5rem', color:'var(--text)' }}>
-                          {score != null ? Math.round(score) : '—'}
-                        </span>
-                        <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.52rem', color:'var(--text-faint)', textTransform:'uppercase' }}>/ 100</span>
-                      </div>
-                    </div>
-                    {/* Status label + breakdown */}
-                    <div style={{ textAlign:'left' }}>
-                      {status && (
-                        <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:`${status.color}18`, border:`1px solid ${status.color}44`, borderRadius:20, padding:'4px 12px', marginBottom:8 }}>
-                          <div style={{ width:6, height:6, borderRadius:'50%', background:status.color, boxShadow:`0 0 6px ${status.color}` }} />
-                          <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:status.color, fontWeight:600 }}>{status.label}</span>
-                        </div>
-                      )}
-                      <p style={{ fontFamily:'var(--font-body)', fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.5, margin:0 }}>
-                        {score != null
-                          ? `Your portfolio is ${status?.label === 'Excellent' ? 'performing strongly' : status?.label === 'On Track' ? 'on a healthy trajectory' : 'showing areas to improve'}.`
-                          : 'Loading your financial data…'}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })()}
 
             </>
           ) : (
@@ -1044,7 +1132,7 @@ export default function Globe() {
               <p style={S.heroSub}>
                 A living, breathing globe that visualises every asset you own — equities, digital, real estate — unified into one actionable financial health score.
               </p>
-              <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
+              <div style={{ display:'flex', gap:14, justifyContent:'flex-start', flexWrap:'wrap' }}>
                 <button style={S.btnCta}     onClick={() => navigate('/survey')}>Start Your Journey</button>
                 <button style={S.btnOutline} onClick={() => navigate('/profile')}>View Portfolio</button>
               </div>
@@ -1054,6 +1142,11 @@ export default function Globe() {
             </>
           )}
         </div>
+
+          </div>{/* /heroLeft */}
+
+          {/* ── RIGHT column ── */}
+          <div style={S.heroRight}>
 
         {/* ── Globe container — Layers 0-3 ── */}
         <div style={{ ...S.globeWrap, filter: flyingIn ? 'brightness(1.4)' : 'brightness(1)', transition:'filter 0.3s' }}>
@@ -1118,7 +1211,7 @@ export default function Globe() {
           {flyingIn && (
             <div style={{
               position:'absolute', inset:0, borderRadius:'50%',
-              background:'radial-gradient(circle,rgba(45,212,191,0.35) 0%,transparent 70%)',
+              background:'radial-gradient(circle,color-mix(in srgb,var(--teal) 35%,transparent) 0%,transparent 70%)',
               animation:'flyFlash 0.5s ease forwards',
               pointerEvents:'none',
             }} />
@@ -1151,13 +1244,33 @@ export default function Globe() {
           })}
         </div>
 
+          </div>{/* /heroRight */}
+        </div>{/* /heroSplit */}
+
         {/* Stats bar */}
         <div style={S.statsBar}>
           {[
-            { label:'Total AUM',     val:`$${aum.toLocaleString()}`, sub:'across 5 asset types', c:'var(--gold)'  },
-            { label:'Day P&L',       val:`+$${pl.toLocaleString()}`, sub:'+2.14% today',          c:'var(--green)' },
-            { label:'Wellness Score',val:'73 / 100',                 sub:'diversification',        c:'var(--teal)'  },
-            { label:'Active Positions',val:'40',                    sub:'across 12 portfolios',   c:'var(--gold)'  },
+            { label:'Total Portfolio', val:`$${aum.toLocaleString()}`,
+              sub: (() => {
+                if (!userProfile?.portfolio) return 'loading…'
+                const { stocks=[], cryptos=[], commodities=[] } = userProfile.portfolio
+                const types = [
+                  stocks.some(h => h.qty > 0) && 'Stocks',
+                  cryptos.some(h => h.qty > 0) && 'Crypto',
+                  commodities.some(h => h.qty > 0) && 'Commodities',
+                ].filter(Boolean)
+                return `${types.length} asset class${types.length !== 1 ? 'es' : ''} · ${types.join(', ')}`
+              })(),
+              c:'var(--gold)' },
+            { label:'Unrealised P&L',
+              val: userProfile ? `${plSign >= 0 ? '+' : '-'}$${pl.toLocaleString()}` : '—',
+              sub: userProfile ? `${plSign >= 0 ? '+' : ''}${plPct.toFixed(2)}% vs avg cost` : 'loading…',
+              c:   userProfile ? (plSign >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--text-faint)' },
+            { label:'Wellness Score',
+              val: userProfile?.financial_wellness_score != null ? `${Math.round(userProfile.financial_wellness_score)} / 100` : '— / 100',
+              sub: userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'Excellent':userProfile.financial_wellness_score>=55?'On Track':userProfile.financial_wellness_score>=35?'Needs Work':'At Risk') : 'diversification',
+              c:   userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'var(--green)':userProfile.financial_wellness_score>=55?'#d4a63a':userProfile.financial_wellness_score>=35?'var(--orange)':'var(--red)') : 'var(--teal)' },
+            { label:'Active Positions', val: String(activePositions), sub: userProfile ? `${activePositions} holdings` : 'across 12 portfolios', c:'var(--gold)' },
           ].map((s,i) => (
             <div key={s.label} style={{ ...S.statItem, borderRight: i<3 ? '1px solid var(--border)' : 'none' }}>
               <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:4 }}>{s.label}</div>
@@ -1174,8 +1287,9 @@ export default function Globe() {
       {/* <TickerBar /> */}
 
       {/* ══════════════════════════════════════════════════ */}
-      {/* FEATURES SECTION                                  */}
+      {/* FEATURES SECTION  (guests only)                   */}
       {/* ══════════════════════════════════════════════════ */}
+      {!user && (
       <section style={{ position:'relative', zIndex:3, padding:'100px 48px', maxWidth:1200, margin:'0 auto' }}>
         <div style={{ textAlign:'center', marginBottom:64 }}>
           <div style={S.sectionEyebrow}>Platform Features</div>
@@ -1206,10 +1320,12 @@ export default function Globe() {
           ))}
         </div>
       </section>
+      )} {/* /!user features */}
 
       {/* ══════════════════════════════════════════════════ */}
-      {/* RISK SURVEY SECTION                               */}
+      {/* RISK SURVEY SECTION  (guests only)                */}
       {/* ══════════════════════════════════════════════════ */}
+      {!user && (
       <section style={{ padding:'80px 48px', maxWidth:900, margin:'0 auto' }}>
         <div style={{ textAlign:'center', marginBottom:48 }}>
           <div style={S.sectionEyebrow}>Onboarding</div>
@@ -1250,6 +1366,7 @@ export default function Globe() {
           </button>
         </div>
       </section>
+      )} {/* /!user onboarding */}
 
       {/* ── Second ticker + Footer ── */}
       {/* <TickerBar /> */}
@@ -1259,8 +1376,81 @@ export default function Globe() {
         <div>Built with Three.js · Open Finance APIs</div>
       </footer>
 
+      {/* ══ THEME PICKER MODAL ══ */}
+      <ThemeModal open={themeModalOpen} onClose={() => setThemeModalOpen(false)} />
+      {settingsModalOpen && <SettingsModal onClose={() => setSettingsModalOpen(false)} />}
+
       {/* ══ LAYER 4 — BENTO DASHBOARD ══ */}
       <BentoDashboard node={dashNode} show={dashShow} onClose={closeDashboard} />
+
+      {/* ══ FIXED SETTINGS BUTTON + DROPUP ══ */}
+      <div style={{ position:'fixed', bottom:28, right:28, zIndex:200, display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
+
+        {/* Dropup menu */}
+        {settingsOpen && (
+          <div style={{
+            background:'var(--surface)', border:'1px solid var(--border)',
+            borderRadius:14, overflow:'hidden',
+            boxShadow:'0 16px 48px rgba(0,0,0,0.45)',
+            display:'flex', flexDirection:'column',
+            minWidth:190,
+            animation:'fadeUp 0.18s ease both',
+          }}>
+            {[
+              { icon:'🎨', label:'Change Theme',  action:() => { setSettingsOpen(false); setThemeModalOpen(true) } },
+              { icon:'⚙️', label:'Settings',       action:() => { setSettingsOpen(false); setSettingsModalOpen(true) } },
+            ].map((item, i, arr) => (
+              <button
+                key={item.label}
+                onClick={item.action}
+                style={{
+                  display:'flex', alignItems:'center', gap:12,
+                  background:'transparent', border:'none',
+                  borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
+                  padding:'13px 18px', cursor:'pointer',
+                  fontFamily:'var(--font-display)', fontSize:'0.88rem',
+                  color:'var(--text)', textAlign:'left',
+                  transition:'background 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface2)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <span style={{ fontSize:'1rem' }}>{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Filter / settings trigger button */}
+        <button
+          title="Settings"
+          onClick={() => setSettingsOpen(o => !o)}
+          style={{
+            width:50, height:50, borderRadius:10,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            border:'1px solid rgba(255,255,255,0.12)',
+            background: settingsOpen ? 'rgb(59,59,59)' : 'var(--surface)',
+            cursor:'pointer',
+            boxShadow:'0 10px 24px rgba(0,0,0,0.25)',
+            transition:'all 0.3s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background='rgb(59,59,59)'; e.currentTarget.querySelector('svg').style.fill='white' }}
+          onMouseLeave={e => { if(!settingsOpen){ e.currentTarget.style.background='var(--surface)'; e.currentTarget.querySelector('svg').style.fill='rgb(180,180,180)' } }}
+        >
+          <svg viewBox="0 0 512 512" style={{ height:16, fill: settingsOpen ? 'white' : 'rgb(180,180,180)', transition:'fill 0.3s' }}>
+            <path d="M0 416c0 17.7 14.3 32 32 32l54.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48L480 448c17.7 0 32-14.3 32-32s-14.3-32-32-32l-246.7 0c-12.3-28.3-40.5-48-73.3-48s-61 19.7-73.3 48L32 384c-17.7 0-32 14.3-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zM320 256a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zm32-80c-32.8 0-61 19.7-73.3 48L32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l246.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48l54.7 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-54.7 0c-12.3-28.3-40.5-48-73.3-48zM192 128a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73.3-64C253 35.7 224.8 16 192 16s-61 19.7-73.3 48L32 64C14.3 64 0 78.3 0 96s14.3 32 32 32l86.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48L480 128c17.7 0 32-14.3 32-32s-14.3-32-32-32L265.3 64z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Click-away to close dropup */}
+      {settingsOpen && (
+        <div
+          onClick={() => setSettingsOpen(false)}
+          style={{ position:'fixed', inset:0, zIndex:199 }}
+        />
+      )}
 
       {/* Global keyframes */}
       <style>{`
@@ -1269,6 +1459,7 @@ export default function Globe() {
         @keyframes flyFlash { 0%{opacity:0} 30%{opacity:1} 100%{opacity:0} }
         @keyframes starTwinkle { 0%,100%{opacity:var(--so,0.1)} 50%{opacity:calc(var(--so,0.1)*3)} }
         @keyframes globePulse { 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.7} 50%{transform:translate(-50%,-50%) scale(1.08);opacity:1} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
       `}</style>
     </div>
   )
@@ -1289,22 +1480,35 @@ const S = {
   hero: {
     minHeight:'100vh', display:'flex', flexDirection:'column',
     alignItems:'center', justifyContent:'center',
-    position:'relative', overflow:'hidden', paddingTop:130, paddingBottom:48,
+    position:'relative', overflow:'hidden', paddingTop:80, paddingBottom:48,
+  },
+  heroSplit: {
+    display:'flex', flexDirection:'row', alignItems:'center',
+    width:'100%', maxWidth:1400, flex:1, minHeight:'72vh',
+  },
+  heroLeft: {
+    flex:'0 0 44%', display:'flex', flexDirection:'column',
+    justifyContent:'center', alignItems:'flex-start',
+    paddingLeft:'6%', paddingRight:'3%', zIndex:3,
+  },
+  heroRight: {
+    flex:1, display:'flex', flexDirection:'column',
+    alignItems:'center', justifyContent:'center', position:'relative',
   },
   globeGlow: {
     position:'absolute', width:720, height:720, borderRadius:'50%',
-    background:'radial-gradient(circle,rgba(45,212,191,0.09) 0%,rgba(201,168,76,0.07) 40%,transparent 70%)',
+    background:'radial-gradient(circle,color-mix(in srgb,var(--teal) 9%,transparent) 0%,color-mix(in srgb,var(--gold-light) 6%,transparent) 40%,transparent 70%)',
     top:'50%', left:'50%', transform:'translate(-50%,-50%)',
     zIndex:1, pointerEvents:'none', animation:'globePulse 6s ease-in-out infinite',
   },
   heroText: {
-    position:'relative', zIndex:3, textAlign:'center',
-    maxWidth:680, marginBottom:32, animation:'fadeUp 1s ease both',
+    position:'relative', zIndex:3, textAlign:'left',
+    maxWidth:560, marginBottom:32, animation:'fadeUp 1s ease both',
   },
   eyebrow: {
     fontFamily:'var(--font-mono)', fontSize:'0.72rem', letterSpacing:'0.2em',
     color:'var(--teal)', textTransform:'uppercase', marginBottom:16,
-    display:'flex', alignItems:'center', justifyContent:'center', gap:10,
+    display:'flex', alignItems:'center', justifyContent:'flex-start', gap:10,
   },
   eyeLine: { width:32, height:1, background:'var(--teal)', opacity:0.5 },
   heroTitle: {
@@ -1313,7 +1517,7 @@ const S = {
   },
   heroSub: {
     fontSize:'1rem', lineHeight:1.7, color:'var(--text-dim)', fontWeight:300,
-    maxWidth:520, margin:'0 auto 32px',
+    maxWidth:520, margin:'0 0 32px',
   },
   btnCta: {
     background:'var(--gold)',

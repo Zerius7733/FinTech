@@ -1,7 +1,7 @@
 {
   "_meta": {
     "source": "yfinance",
-    "ingested_at_epoch": 1772870670,
+    "ingested_at_epoch": 1772895772,
     "symbol_count": 503,
     "failed_count": 0
   },
@@ -348,7 +348,7 @@
       "price_change_percentage_24h": 0.0210682,
       "price_change_percentage_7d": null,
       "circulating_supply": null,
-      "ath": 192.4,
+      "ath": 192.41,
       "ath_change_percentage": null
     },
     "PLTR": {
@@ -1743,7 +1743,7 @@
       "price_change_percentage_24h": -0.0162515,
       "price_change_percentage_7d": null,
       "circulating_supply": null,
-      "ath": 248.12,
+      "ath": 248.13,
       "ath_change_percentage": null
     },
     "CVS": {

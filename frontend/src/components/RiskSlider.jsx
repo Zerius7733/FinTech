@@ -59,7 +59,7 @@ export default function RiskSlider({ initialPct = 50, onChange }) {
       <div ref={trackRef} style={s.track} onClick={(e) => updatePct(e.clientX)}>
         <div style={{ ...s.fill, width: `${pct}%`, background: `linear-gradient(90deg, var(--green), ${level.color})` }} />
         <div
-          style={{ ...s.thumb, left: `${pct}%`, borderColor: level.color, boxShadow: `0 0 14px ${level.color}80` }}
+          style={{ ...s.thumb, left: `${pct}%`, border: `3px solid ${level.color}`, boxShadow: `0 0 14px ${level.color}80` }}
           onMouseDown={onMouseDown}
         />
       </div>
@@ -124,9 +124,9 @@ const s = {
     position:'absolute', top:'50%',
     transform:'translate(-50%,-50%)',
     width:26, height:26, borderRadius:'50%',
-    background:'var(--bg2)', border:'3px solid',
+    background:'var(--bg2)',
     cursor:'grab', zIndex:2,
-    transition:'border-color 0.3s, box-shadow 0.3s',
+    transition:'border 0.3s, box-shadow 0.3s',
   },
   presets: {
     display:'grid', gridTemplateColumns:'repeat(3,1fr)',
@@ -138,7 +138,7 @@ const s = {
     textAlign:'center', cursor:'pointer', transition:'all 0.2s',
   },
   presetActive: {
-    borderColor:'var(--gold)', background:'rgba(201,168,76,0.07)',
+    border:'1.5px solid var(--gold)', background:'rgba(201,168,76,0.07)',
   },
   presetIcon: { fontSize:'1.5rem', marginBottom:6 },
   presetName: { fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.85rem', marginBottom:2 },

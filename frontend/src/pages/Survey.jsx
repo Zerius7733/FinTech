@@ -4,6 +4,9 @@ import RiskSlider from '../components/RiskSlider.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
+const API = 'http://localhost:8000'
+const SLIDER_KEY_TO_RISK = { conservative: 'Low', balanced: 'Moderate', aggressive: 'High' }
+
 // Paste your OpenAI API key here. In production, proxy this through your backend.
 const OPENAI_API_KEY = ''   // ← e.g. 'sk-...'
 
@@ -383,7 +386,18 @@ export default function Survey() {
             </div>
           </div>
         )}
-        <button style={cs.btnLaunch} onClick={() => navigate('/')}>Enter My WealthSphere →</button>
+        <button style={cs.btnLaunch} onClick={async () => {
+          if (user?.user_id && riskLevel) {
+            try {
+              await fetch(`${API}/users/risk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: user.user_id, risk_profile: SLIDER_KEY_TO_RISK[riskLevel] }),
+              })
+            } catch (_) {}
+          }
+          navigate('/')
+        }}>Enter My WealthSphere →</button>
       </div>
     </div>
   )

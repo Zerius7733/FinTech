@@ -603,12 +603,13 @@ export default function Profile() {
         @keyframes profileFadeUp  { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
         @keyframes profilePulse   { 0%,100% { opacity:0.4 } 50% { opacity:1 } }
         @keyframes spinSlow       { to { transform: rotate(360deg) } }
+        @keyframes sectionIn      { from { opacity:0; transform:translateY(28px); filter:blur(3px) } to { opacity:1; transform:translateY(0); filter:blur(0) } }
       `}</style>
 
       <main style={{ paddingTop:110, paddingBottom:60, paddingLeft:48, paddingRight:48, maxWidth:1400, margin:'0 auto' }}>
 
         {/* Page header */}
-        <div style={s.topbar}>
+        <div style={{ ...s.topbar, animation:'sectionIn 0.5s ease both' }}>
           <div>
             <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--teal)', textTransform:'uppercase', letterSpacing:'0.2em', marginBottom:8, display:'flex', alignItems:'center', gap:10 }}>
               <div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>Personal Finance<div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>
@@ -626,7 +627,7 @@ export default function Profile() {
         )}
 
         {/* Hero card */}
-        <div style={s.heroCard}>
+        <div style={{ ...s.heroCard, animation:'sectionIn 0.5s ease both', animationDelay:'0.08s' }}>
           <div style={s.avatarWrap}>
             <div style={s.avatar}>{profile ? initials(profile.name) : initials(authUser.username)}</div>
             <div style={s.avatarRing} />
@@ -663,7 +664,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div style={{ ...s.card, marginBottom:24, padding:'22px 24px 18px' }}>
+        <div style={{ ...s.card, marginBottom:24, padding:'22px 24px 18px', animation:'sectionIn 0.5s ease both', animationDelay:'0.16s' }}>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, flexWrap:'wrap', marginBottom:18 }}>
             <div>
               <div style={s.secLabel}>{trendTitleMap[trendView]} Trend</div>
@@ -718,7 +719,7 @@ export default function Profile() {
         </div>
 
         {/* Row 1: Wellness + Composition */}
-        <div style={s.twoCol}>
+        <div style={{ ...s.twoCol, animation:'sectionIn 0.5s ease both', animationDelay:'0.24s' }}>
           <div style={s.card}>
             <div style={s.secLabel}>Financial Wellness Score</div>
             {loading ? <LoadingPulse /> : (
@@ -783,7 +784,7 @@ export default function Profile() {
         </div>
 
         {/* Holdings Table */}
-        <div style={{ ...s.card, marginBottom:24 }}>
+        <div style={{ ...s.card, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.32s' }}>
           <div style={s.secLabel}>Live Holdings</div>
           {loading ? <LoadingPulse /> : allHoldings.length === 0 ? (
             <p style={{ color:'var(--text-faint)', fontSize:'0.85rem' }}>No holdings found for this account.</p>
@@ -835,7 +836,7 @@ export default function Profile() {
             SECTION 1 — Risk Profile Update
             PATCH /users/risk  { user_id, risk_profile }
         ══════════════════════════════════════════════════════════════════ */}
-        <div style={{ ...s.card, marginBottom:24 }}>
+        <div style={{ ...s.card, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.38s' }}>
           <div style={s.secLabel}>
             Risk Profile
             {profile?.risk_profile && (
@@ -913,7 +914,7 @@ export default function Profile() {
             AI Recommendations
             POST /users/:id/recommendations/gpt
         ══════════════════════════════════════════════════════════════════ */}
-        <div style={{ ...s.card, marginBottom:24 }}>
+        <div style={{ ...s.card, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.44s' }}>
           <div style={s.secLabel}>
             <span style={{ display:'flex', alignItems:'center', gap:8 }}>
               Curated AI Recommendations

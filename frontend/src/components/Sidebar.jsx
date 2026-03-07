@@ -1,5 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
+import SettingsModal from './SettingsModal.jsx'
 
 const NAV_GROUPS = [
   {
@@ -15,7 +17,7 @@ const NAV_GROUPS = [
   {
     label: 'Other',
     items: [
-      { icon: '⚙️', label: 'Settings', path: '/settings' },
+      { icon: '⚙️', label: 'Settings', path: null, modal: 'settings' },
       { icon: '🔔', label: 'Alerts', path: null },
       { icon: '❓', label: 'Help', path: null },
     ],
@@ -26,6 +28,7 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const displayName = user?.username || 'WealthSphere User'
   const initials = displayName
@@ -37,6 +40,7 @@ export default function Sidebar() {
 
   return (
     <aside style={styles.sidebar}>
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
       <div>
         <div style={styles.brandWrap}>
           <div style={styles.brandIcon}>◈</div>
@@ -56,7 +60,10 @@ export default function Sidebar() {
                   <button
                     key={item.label}
                     type="button"
-                    onClick={() => item.path && navigate(item.path)}
+                    onClick={() => {
+                      if (item.modal === 'settings') { setSettingsOpen(true); return }
+                      item.path && navigate(item.path)
+                    }}
                     style={{ ...styles.navItem, ...(active ? styles.navItemActive : {}) }}
                   >
                     <span style={styles.navIcon}>{item.icon}</span>
