@@ -436,9 +436,9 @@ const FEATURES = [
 ]
 
 const RISK_DEFS = [
-  { min:0,  max:33, icon:'🛡️', title:'Conservative Portfolio', desc:'Factor: 1.0 · Capital preservation focus. 30% equities, 60% bonds, 10% alternatives.', color:'var(--green)' },
-  { min:34, max:66, icon:'⚖️', title:'Balanced Portfolio',     desc:'Factor: 0.7 · Moderate growth with managed volatility. 60% equities, 30% bonds, 10% alternatives.', color:'var(--gold)' },
-  { min:67, max:100,icon:'🚀', title:'Aggressive Portfolio',   desc:'Factor: 0.5 · Growth-oriented. 90% equities, 5% bonds, 5% alternatives.', color:'var(--red)' },
+  { min:0,  max:33, icon:'🛡️', title:'Conservative Portfolio', desc:'Capital preservation focus. 30% equities, 60% bonds, 10% alternatives.', color:'var(--green)' },
+  { min:34, max:66, icon:'⚖️', title:'Balanced Portfolio',     desc:'Moderate growth with managed volatility. 60% equities, 30% bonds, 10% alternatives.', color:'var(--gold)' },
+  { min:67, max:100,icon:'🚀', title:'Aggressive Portfolio',   desc:'Growth-oriented. 90% equities, 5% bonds, 5% alternatives.', color:'var(--red)' },
 ]
 
 // ── Zone definitions — used for texture drawing AND hover detection ─────────
@@ -974,25 +974,37 @@ export default function Globe() {
                 const stress = userProfile?.financial_stress_index ?? null
                 const status = score == null ? null
                   : score >= 75 ? { label:'Excellent', color:'var(--green)',  glow:'rgba(52,211,153,0.35)' }
-                  : score >= 55 ? { label:'On Track',  color:'var(--gold)',   glow:'rgba(201,168,76,0.35)' }
+                  : score >= 55 ? { label:'On Track',  color:'#d4a63a',       glow:'rgba(212,166,58,0.35)' }
                   : score >= 35 ? { label:'Needs Work', color:'var(--orange)', glow:'rgba(251,146,60,0.35)' }
                   :               { label:'At Risk',    color:'var(--red)',    glow:'rgba(248,113,113,0.35)' }
+                const ringGradient = score == null
+                  ? ['#cbd5e1', '#94a3b8']
+                  : score >= 75 ? ['#86efac', '#22c55e']
+                  : score >= 55 ? ['#f5d77a', '#d4a63a']
+                  : score >= 35 ? ['#fdba74', '#f97316']
+                  : ['#fca5a5', '#ef4444']
                 return (
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:20, marginBottom:18 }}>
                     {/* Big score ring */}
                     <div style={{ position:'relative', width:96, height:96, flexShrink:0 }}>
                       <svg viewBox="0 0 96 96" width={96} height={96} style={{ transform:'rotate(-90deg)' }}>
+                        <defs>
+                          <linearGradient id="wellnessRingGradient" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor={ringGradient[0]} />
+                            <stop offset="100%" stopColor={ringGradient[1]} />
+                          </linearGradient>
+                        </defs>
                         <circle cx={48} cy={48} r={38} fill="none" stroke="var(--surface2)" strokeWidth={8} />
                         <circle cx={48} cy={48} r={38} fill="none"
-                          stroke={status?.color ?? 'var(--gold)'} strokeWidth={8}
+                          stroke="url(#wellnessRingGradient)" strokeWidth={8}
                           strokeLinecap="round"
                           strokeDasharray={2 * Math.PI * 38}
                           strokeDashoffset={2 * Math.PI * 38 * (1 - (score ?? 0) / 100)}
-                          style={{ filter:`drop-shadow(0 0 6px ${status?.glow ?? 'rgba(201,168,76,0.4)'})`, transition:'stroke-dashoffset 1s ease' }}
+                          style={{ filter:`drop-shadow(0 0 8px ${status?.glow ?? 'rgba(148,163,184,0.22)'})`, transition:'stroke-dashoffset 1s ease' }}
                         />
                       </svg>
                       <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-                        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.5rem', color: status?.color ?? 'var(--gold)' }}>
+                        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.5rem', color:'var(--text)' }}>
                           {score != null ? Math.round(score) : '—'}
                         </span>
                         <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.52rem', color:'var(--text-faint)', textTransform:'uppercase' }}>/ 100</span>
@@ -1010,11 +1022,6 @@ export default function Globe() {
                         {score != null
                           ? `Your portfolio is ${status?.label === 'Excellent' ? 'performing strongly' : status?.label === 'On Track' ? 'on a healthy trajectory' : 'showing areas to improve'}.`
                           : 'Loading your financial data…'}
-                        {stress != null && (
-                          <span style={{ display:'block', marginTop:4, color:'var(--text-faint)', fontSize:'0.74rem' }}>
-                            Stress Index: <span style={{ color: stress > 70 ? 'var(--red)' : stress > 45 ? 'var(--orange)' : 'var(--green)', fontWeight:600 }}>{Math.round(stress)}</span> / 100
-                          </span>
-                        )}
                       </p>
                     </div>
                   </div>
