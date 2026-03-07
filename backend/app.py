@@ -1,6 +1,8 @@
 import asyncio,os
 import json
+import time
 from dotenv import load_dotenv
+from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -20,6 +22,10 @@ ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 STOCK_LISTINGS_CACHE_PATH = BASE_DIR / "json_data" / "stock_listings_cache.json"
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
 STOCK_MARKET_REFRESH_INTERVAL_SECONDS = 30 * 60
+INSIGHTS_RATE_LIMIT_ENABLED = os.getenv("INSIGHTS_RATE_LIMIT_ENABLED", "1").strip().lower() in {"1", "true", "yes", "on"}
+INSIGHTS_RATE_LIMIT_WINDOW_SECONDS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_WINDOW_SECONDS", "3600")))
+INSIGHTS_RATE_LIMIT_MAX_REQUESTS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_MAX_REQUESTS", "10")))
+_INSIGHTS_RATE_LIMIT_BUCKETS: dict[str, deque[float]] = defaultdict(deque)
 
 app = FastAPI(
     title="FinTech Wellness API",
@@ -154,6 +160,24 @@ def _normalize_risk_profile(value: str) -> str:
     if normalized not in mapping:
         raise ValueError("risk_appetite must be one of: Low, Moderate, High")
     return mapping[normalized]
+
+
+def _enforce_insights_rate_limit(subject: str) -> None:
+    if not INSIGHTS_RATE_LIMIT_ENABLED:
+        return
+    now = time.time()
+    bucket = _INSIGHTS_RATE_LIMIT_BUCKETS[subject]
+    while bucket and now - bucket[0] > INSIGHTS_RATE_LIMIT_WINDOW_SECONDS:
+        bucket.popleft()
+    if len(bucket) >= INSIGHTS_RATE_LIMIT_MAX_REQUESTS:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                "insight rate limit reached. "
+                f"Try again after {INSIGHTS_RATE_LIMIT_WINDOW_SECONDS} seconds."
+            ),
+        )
+    bucket.append(now)
 
 
 class UserRiskUpdateRequest(BaseModel):
@@ -329,11 +353,15 @@ async def resolve_asset_category(
     response_model=InsightsResponse,
 )
 async def get_asset_insights(
+    request: Request,
     type: str = Query(..., description="One of: stock, crypto, commodity"),
     symbol: str = Query(..., description="Ticker/symbol to analyze"),
     months: int = Query(3, ge=1, le=24, description="Historical window in months"),
+    user_id: str | None = Query(None, description="Optional user id for rate limiting"),
 ) -> InsightsResponse:
     try:
+        rate_subject = f"user:{user_id}" if user_id else f"ip:{getattr(request.client, 'host', 'unknown')}"
+        _enforce_insights_rate_limit(rate_subject)
         result = await api.build_insights(asset_type=type, symbol=symbol, months=months)
         return InsightsResponse(**result)
     except api.InsightError as exc:

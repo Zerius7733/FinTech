@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
+import AssetInsightsPanel from '../components/AssetInsightsPanel.jsx'
 
 const API = 'http://localhost:8000'
 
@@ -263,6 +264,56 @@ function LoadingPulse() {
   )
 }
 
+function HoldingInsightModal({ holding, onClose, userId }) {
+  useEffect(() => {
+    if (!holding) return
+    const onKey = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [holding, onClose])
+
+  if (!holding) return null
+  const gain = gainPct(holding.current_price, holding.avg_price)
+  const assetType = holding.type === 'Crypto' ? 'crypto' : holding.type === 'Commodity' ? 'commodity' : 'stock'
+
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()} style={hm.backdrop}>
+      <div style={hm.panel}>
+        <div style={hm.topBar} />
+        <div style={hm.header}>
+          <div>
+            <div style={hm.eyebrow}>Holding Insight</div>
+            <div style={{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap' }}>
+              <h2 style={hm.title}>{holding.symbol}</h2>
+              <span style={hm.typeTag}>{holding.type}</span>
+            </div>
+            <div style={hm.subline}>
+              Qty {holding.qty} · Market Value {fmt$(holding.market_value)} · Gain/Loss {gain != null ? fmtPct(gain) : '—'}
+            </div>
+          </div>
+          <button onClick={onClose} style={hm.closeBtn}>✕</button>
+        </div>
+
+        <div style={hm.metrics}>
+          {[
+            ['Avg Cost', fmt$(holding.avg_price)],
+            ['Current Price', fmt$(holding.current_price)],
+            ['Market Value', fmt$(holding.market_value)],
+            ['Position Return', gain != null ? fmtPct(gain) : '—'],
+          ].map(([label, value]) => (
+            <div key={label} style={hm.metricCard}>
+              <div style={hm.metricLabel}>{label}</div>
+              <div style={hm.metricValue}>{value}</div>
+            </div>
+          ))}
+        </div>
+
+        <AssetInsightsPanel assetType={assetType} symbol={holding.symbol} months={3} userId={userId} />
+      </div>
+    </div>
+  )
+}
+
 // Inline spinner used in buttons
 function Spinner({ size = 16, color = 'var(--teal)' }) {
   return (
@@ -372,6 +423,7 @@ export default function Profile() {
   const [portfolioHistory, setPortfolioHistory] = useState([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState('')
+  const [selectedHolding, setSelectedHolding] = useState(null)
 
   // ── Section 1: Risk profile update state ─────────────────────────────────
   const [selectedRisk, setSelectedRisk] = useState('')
@@ -750,7 +802,8 @@ export default function Profile() {
                     const gain = gainPct(h.current_price, h.avg_price)
                     const gainColor = gain == null ? 'var(--text-faint)' : gain >= 0 ? 'var(--green)' : 'var(--red)'
                     return (
-                      <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)' }}
+                      <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)', cursor:'pointer' }}
+                        onClick={() => setSelectedHolding(h)}
                         onMouseEnter={e => e.currentTarget.style.background='var(--surface2)'}
                         onMouseLeave={e => e.currentTarget.style.background='transparent'}>
                         <td style={{ padding:'12px 12px', color:'var(--text)', fontWeight:600 }}>{h.symbol}</td>
@@ -1086,6 +1139,8 @@ export default function Profile() {
           ))}
         </div>
 
+        <HoldingInsightModal holding={selectedHolding} onClose={() => setSelectedHolding(null)} userId={authUser?.user_id} />
+
       </main>
     </div>
   )
@@ -1199,5 +1254,95 @@ const s = {
     border:'none', color:'#080c14', padding:'8px 18px', borderRadius:8,
     fontFamily:'var(--font-display)', fontSize:'0.78rem', fontWeight:700,
     boxShadow:'0 4px 14px rgba(45,212,191,0.22)', cursor:'pointer', transition:'opacity 0.2s',
+  },
+}
+
+const hm = {
+  backdrop: {
+    position:'fixed',
+    inset:0,
+    zIndex:300,
+    background:'rgba(15,23,42,0.26)',
+    backdropFilter:'blur(14px)',
+    WebkitBackdropFilter:'blur(14px)',
+    display:'flex',
+    alignItems:'flex-start',
+    justifyContent:'center',
+    padding:'24px 24px 48px',
+    overflowY:'auto',
+  },
+  panel: {
+    width:'min(920px, 100%)',
+    margin:'0 auto',
+    background:'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:24,
+    boxShadow:'0 36px 90px rgba(15,23,42,0.2)',
+    overflow:'hidden',
+  },
+  topBar: { height:2, background:'linear-gradient(90deg, var(--teal), #7c3aed, var(--gold))' },
+  header: {
+    display:'flex',
+    alignItems:'flex-start',
+    justifyContent:'space-between',
+    gap:16,
+    padding:'28px 28px 20px',
+  },
+  eyebrow: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.65rem',
+    color:'var(--teal)',
+    textTransform:'uppercase',
+    letterSpacing:'0.14em',
+    marginBottom:4,
+  },
+  title: {
+    margin:0,
+    fontFamily:'var(--font-display)',
+    fontSize:'1.55rem',
+    lineHeight:1.1,
+  },
+  typeTag: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.72rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.08em',
+  },
+  subline: { fontSize:'0.84rem', color:'var(--text-dim)', marginTop:6 },
+  closeBtn: {
+    width:40,
+    height:40,
+    borderRadius:10,
+    border:'1px solid var(--border)',
+    background:'rgba(255,255,255,0.9)',
+    color:'var(--text-faint)',
+    cursor:'pointer',
+    flexShrink:0,
+  },
+  metrics: {
+    display:'grid',
+    gridTemplateColumns:'repeat(auto-fit, minmax(150px, 1fr))',
+    gap:12,
+    padding:'0 28px 18px',
+  },
+  metricCard: {
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:14,
+    background:'rgba(255,255,255,0.72)',
+    padding:'14px 14px 12px',
+  },
+  metricLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.08em',
+    marginBottom:6,
+  },
+  metricValue: {
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    fontSize:'1rem',
   },
 }

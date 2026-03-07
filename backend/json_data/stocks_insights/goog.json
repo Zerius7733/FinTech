@@ -1,0 +1,195 @@
+{
+  "type": "stock",
+  "symbol": "GOOG",
+  "updated_at": "2026-03-07T08:27:46.961962+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "GOOG",
+      "name": "Alphabet Inc.",
+      "period": {
+        "months": 3,
+        "start": "2025-12-07",
+        "end": "2026-03-07"
+      },
+      "metrics": {
+        "start_price": 314.45,
+        "end_price": 298.3,
+        "return_pct": -5.136,
+        "volatility_annualized": 0.215744,
+        "max_drawdown_pct": -13.5112,
+        "avg_daily_volume": 21806929.5082,
+        "volume_change_pct": 19.5937
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-20",
+          "move_pct": 3.7357,
+          "close": 314.9,
+          "volume": 33663100.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-07",
+          "move_pct": 2.5052,
+          "close": 322.43,
+          "volume": 24681800.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2025-12-17",
+          "move_pct": -3.1424,
+          "close": 298.06,
+          "volume": 29120400.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": -2.4839,
+          "close": 323.1,
+          "volume": 33877000.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-05",
+          "move_pct": -0.603,
+          "close": 331.33,
+          "volume": 51842000.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2025-12-19",
+          "move_pct": 1.6,
+          "close": 308.61,
+          "volume": 45234400.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-20",
+          "headline": "News item",
+          "source": "",
+          "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000012/googexhibit991q42025.htm?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet stock sinks after Google parent announces $180 billion spending plan for 2026 in massive AI bet",
+          "source": "",
+          "url": "https://finance.yahoo.com/news/alphabet-set-to-report-q4-earnings-in-test-of-stocks-rally-amid-googles-ai-wins-195254201.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet FY2026 EPS Estimate Boosted by Erste Group Bank - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2026/02/23/alphabet-fy2026-eps-estimate-boosted-by-erste-group-bank.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet 2025 Q4 Earnings Call",
+          "source": "",
+          "url": "https://www.youtube.com/live/mIK5-yi7a-c?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet Announces Fourth Quarter and Fiscal Year 2025 Results",
+          "source": "",
+          "url": "https://s206.q4cdn.com/479360582/files/doc_financials/2025/q4/2025q4-alphabet-earnings-release.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet Inc. (GOOG) Surpasses Q4 Earnings and Revenue Estimates - February 4, 2026 - Zacks.com",
+          "source": "",
+          "url": "https://www.zacks.com/stock/news/2829271/alphabet-inc-goog-surpasses-q4-earnings-and-revenue-estimates?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet\u2019s Massive $175\u2013185B 2026 Capex Guidance: A Clear Signal of Accelerating AI Infrastructure Demand \u2013 Exceeding Industry Forecasts",
+          "source": "",
+          "url": "https://www.ai-capex.com/alphabets-massive-175-185b-2026-capex-guidance-a-clear-signal-of-accelerating-ai-infrastructure-demand-exceeding-industry-forecasts/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet C shares fall 6.59% intraday as 2026 capex guidance of $175-185B exceeds expectations by over 50%, raising concerns over short-term earnings and cash flow, and rising depreciation pressures on margins.",
+          "source": "",
+          "url": "https://www.ainvest.com/news/alphabet-shares-fall-6-59-intraday-2026-capex-guidance-175-185b-exceeds-expectations-50-raising-concerns-short-term-earnings-cash-flow-rising-depreciation-pressures-margins-2602/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet 2025 Q4 Earnings Call",
+          "source": "",
+          "url": "https://www.youtube.com/watch?v=mIK5-yi7a-c&utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet (GOOG) | Trefis",
+          "source": "",
+          "url": "https://www.trefis.com/data/companies/goog?fromforbesandarticle=trefis200210&utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet in $20 Billion USD-Denominated Bonds Offering | News | Cleary Gottlieb",
+          "source": "",
+          "url": "https://www.clearygottlieb.com/news-and-insights/news-listing/alphabet-in-20-billion-usd-denominated-bonds-offering-feb-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet Inc board approves CEO compensation for Sundar Pichai on March 4, 2026 - SEC filing | MarketScreener",
+          "source": "",
+          "url": "https://www.marketscreener.com/news/alphabet-inc-board-approves-ceo-compensation-for-sundar-pichai-on-march-4-2026-sec-filing-ce7e5fd8d18cf425?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "goog-20250204",
+          "source": "",
+          "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000010/goog-20250204.htm?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Tsourdinis v. Alphabet, Inc. et al 5:2026cv01770 | U.S. District Court for the Northern District of California | Justia",
+          "source": "",
+          "url": "https://dockets.justia.com/docket/california/candce/5%3A2026cv01770/465150?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "MLQ.ai | AI for investors",
+          "source": "",
+          "url": "https://mlq.ai/news/federal-judge-rejects-additional-2-billion-penalty-demand-against-google-in-privacy-case/?utm_source=openai"
+        }
+      ],
+      "narrative": "Alphabet's stock price declined from a start price of 314.45 to an end price of 298.3, resulting in a return of -5.136% over the period. The stock exhibited an annualized volatility of 0.215744 and experienced a maximum drawdown of -13.5112%, indicating notable price fluctuations and downside risk during this timeframe. The largest upward move occurred on 2026-02-20, with a gain of 3.7357% closing at 314.9 on a volume of 33,663,100 shares, coinciding with multiple news items including Alphabet's announcement of a $180 billion spending plan for 2026 focused on AI investments and the release of its Q4 and fiscal year 2025 results [1][2][5]. The largest downward move was on 2026-02-06, with a decline of -2.4839% closing at 323.1 on a volume of 33,877,000 shares, though no specific driver is directly linked to this date in the provided data. High volume days include 2026-02-05 with 51,842,000 shares traded and a -0.603% price move, and 2025-12-19 with 45,234,400 shares traded and a 1.6% price increase, reflecting periods of elevated trading activity. The substantial capital expenditure guidance of $175-185 billion for 2026, exceeding expectations by over 50%, was noted as a factor raising concerns about short-term earnings, cash flow, and margin pressures due to rising depreciation [7][8]. Additional context includes Alphabet surpassing Q4 earnings and revenue estimates earlier in February 2026 [6]. Overall, the stock's performance and volatility appear influenced by significant corporate announcements and market reactions to the company's aggressive investment plans in AI infrastructure.",
+      "tldr": [
+        "Period return: -5.14% with annualized volatility 0.216.",
+        "Largest up day: 2026-02-20 (3.74%), largest down day: 2025-12-17 (-3.14%).",
+        "Highest volume spike was on 2026-02-05 with volume 51,842,000."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-5.14%) with peak drawdown of -13.51%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://finance.yahoo.com/news/alphabet-set-to-report-q4-earnings-in-test-of-stocks-rally-amid-googles-ai-wins-195254201.html?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://s206.q4cdn.com/479360582/files/doc_financials/2025/q4/2025q4-alphabet-earnings-release.pdf?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000012/googexhibit991q42025.htm?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://www.ainvest.com/news/alphabet-shares-fall-6-59-intraday-2026-capex-guidance-175-185b-exceeds-expectations-50-raising-concerns-short-term-earnings-cash-flow-rising-depreciation-pressures-margins-2602/?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://www.zacks.com/stock/news/2829271/alphabet-inc-goog-surpasses-q4-earnings-and-revenue-estimates?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import AssetInsightsPanel from './AssetInsightsPanel.jsx'
 
 const API_BASE = 'http://127.0.0.1:8000'
 const PAGE_SIZE = 100
@@ -159,7 +160,7 @@ function DetailSparkline({ item }) {
   )
 }
 
-function MarketDetailModal({ item, endpoint, title, profile, onClose }) {
+function MarketDetailModal({ item, endpoint, title, profile, userId, onClose }) {
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -264,6 +265,15 @@ function MarketDetailModal({ item, endpoint, title, profile, onClose }) {
           <div style={{ ...MD.card, gridColumn: '1 / -1' }}>
             <div style={MD.cardLabel}>Suggested Read</div>
             <div style={MD.actionText}>{analysis.action}</div>
+          </div>
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <AssetInsightsPanel
+              assetType={endpoint === 'stocks' ? 'stock' : endpoint === 'cryptos' ? 'crypto' : 'commodity'}
+              symbol={item.symbol}
+              months={3}
+              userId={userId}
+            />
           </div>
         </div>
       </div>
@@ -677,6 +687,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
         endpoint={endpoint}
         title={title}
         profile={profile}
+        userId={user?.user_id}
         onClose={() => setSelectedItem(null)}
       />
 
@@ -796,19 +807,21 @@ const MD = {
     backdropFilter: 'blur(14px)',
     WebkitBackdropFilter: 'blur(14px)',
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
-    padding: '24px',
+    padding: '24px 24px 48px',
+    overflowY: 'auto',
+    overscrollBehavior: 'contain',
+    scrollbarWidth: 'thin',
   },
   panel: {
     width: 'min(980px, 100%)',
-    maxHeight: '92vh',
-    overflowY: 'auto',
+    overflow: 'visible',
     background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
     border: '1px solid rgba(15,23,42,0.08)',
     borderRadius: 24,
     boxShadow: '0 36px 90px rgba(15,23,42,0.2)',
-    overflow: 'hidden',
+    margin: '0 auto',
   },
   topBar: {
     height: 2,
