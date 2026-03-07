@@ -364,7 +364,7 @@ const RISK_OPTIONS = [
 const REC_ICON  = { buy:'📈', sell:'📉', hold:'⏸', rebalance:'🔄', warning:'⚠️' }
 const REC_COLOR = { buy:'var(--green)', sell:'var(--red)', hold:'var(--gold)', rebalance:'var(--teal)', warning:'#fbbf24' }
 
-function RecCard({ rec, i, tint = false }) {
+function RecCard({ rec, i, tint = false, compact = false }) {
   const type  = rec.type?.toLowerCase()
   const color = REC_COLOR[type] ?? (tint ? 'var(--teal)' : 'var(--text-dim)')
   const icon  = REC_ICON[type]  ?? (tint ? '🧑‍💼' : '💡')
@@ -377,7 +377,7 @@ function RecCard({ rec, i, tint = false }) {
     <div style={{
       background: tint ? 'rgba(45,212,191,0.04)' : 'var(--surface2)',
       border: `1px solid ${tint ? 'rgba(45,212,191,0.14)' : 'var(--border)'}`,
-      borderRadius:12, padding:'16px 18px', display:'flex', gap:14, alignItems:'flex-start',
+      borderRadius:12, padding: compact ? '18px 20px' : '16px 18px', display:'flex', gap:14, alignItems:'flex-start',
       animation:'profileFadeUp 0.3s ease',
     }}>
       <div style={{ width:38, height:38, borderRadius:10, background:`${color}18`, border:`1px solid ${color}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>
@@ -385,10 +385,10 @@ function RecCard({ rec, i, tint = false }) {
       </div>
       <div style={{ flex:1 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5, flexWrap:'wrap' }}>
-          <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.88rem' }}>
+          <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize: compact ? '1rem' : '1rem' }}>
             {title}
           </span>
-          {rec.type && (
+          {!compact && rec.type && (
             <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', padding:'2px 8px', borderRadius:6, background:`${color}18`, color, border:`1px solid ${color}30`, textTransform:'uppercase', letterSpacing:'0.07em' }}>
               {rec.type}
             </span>
@@ -399,14 +399,14 @@ function RecCard({ rec, i, tint = false }) {
             </span>
           )}
         </div>
-        {body && <div style={{ fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.65 }}>{body}</div>}
-        {rationale && rationale !== body && (
-          <div style={{ marginTop:8, fontSize:'0.75rem', color:'var(--text-faint)', lineHeight:1.6 }}>
+        {body && <div style={{ fontSize: compact ? '0.92rem' : '0.92rem', color:'var(--text-dim)', lineHeight: compact ? 1.75 : 1.75 }}>{body}</div>}
+        {!compact && rationale && rationale !== body && (
+          <div style={{ marginTop:8, fontSize:'0.82rem', color:'var(--text-faint)', lineHeight:1.68 }}>
             {rationale}
           </div>
         )}
         {rec.symbol && rec.title && (
-          <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--teal)', marginTop:6 }}>{rec.symbol}</div>
+          <div style={{ fontFamily:'var(--font-mono)', fontSize: compact ? '0.74rem' : '0.74rem', color:'var(--teal)', marginTop:6 }}>{rec.symbol}</div>
         )}
       </div>
     </div>
@@ -435,6 +435,8 @@ export default function Profile() {
   const [gptRecs,    setGptRecs]    = useState(null)
   const [gptLoading, setGptLoading] = useState(false)
   const [gptError,   setGptError]   = useState('')
+  const [analysisMode, setAnalysisMode] = useState('lite')
+  const [selectedScenario, setSelectedScenario] = useState('base_case')
 
   // ── Initial data fetch ────────────────────────────────────────────────────
   useEffect(() => {
@@ -543,6 +545,33 @@ export default function Profile() {
   const gptNextSteps = toArray(gptPayload?.immediate_next_steps)
   const ruleRecs = toArray(gptRecs?.rule_based?.recommendations)
   const leadRuleRec = ruleRecs[0] ?? null
+  const scenarioCards = [
+    { key:'bullish_case', label:'Bullish Case', text:gptScenarios?.bullish_case, color:'var(--green)' },
+    { key:'base_case', label:'Base Case', text:gptScenarios?.base_case, color:'var(--gold)' },
+    { key:'bearish_case', label:'Bearish Case', text:gptScenarios?.bearish_case, color:'var(--red)' },
+  ].filter(item => toText(item.text))
+  const activeScenario = scenarioCards.find(item => item.key === selectedScenario) ?? scenarioCards[0] ?? null
+  const visibleTopRecs = analysisMode === 'lite' ? gptTopRecs.slice(0, 2) : gptTopRecs
+  const visibleInsightTiles = [
+    {
+      label:'Wellness score',
+      value:Math.round(wellnessScore),
+      valueColor:insightTone(wellnessScore).color,
+      sub:insightTone(wellnessScore).label,
+    },
+    {
+      label:'Top driver',
+      value:leadRuleRec?.title ?? 'No dominant driver',
+      valueColor:'var(--text)',
+      sub:leadRuleRec?.category ? startCase(leadRuleRec.category) : 'Derived from current profile',
+    },
+    {
+      label:'Action count',
+      value:gptTopRecs.length || gptNextSteps.length || 0,
+      valueColor:'var(--teal)',
+      sub:'Recommended near-term moves',
+    },
+  ]
   const gptText = !gptSummary && gptTopRecs.length === 0 && !gptScenarios && gptNextSteps.length === 0 && gptRecs
     ? (typeof gptPayload === 'string'
         ? gptPayload
@@ -618,7 +647,6 @@ export default function Profile() {
           </div>
           <div style={{ display:'flex', gap:14, alignItems:'center' }}>
             {!loading && profile && <div style={{ ...s.badgePill, borderColor:'rgba(201,168,76,0.25)', color:'var(--gold)' }}>Wellness {Math.round(wellnessScore)}/100</div>}
-            {!loading && stressIndex != null && <div style={{ ...s.badgePill, borderColor:'rgba(248,113,113,0.25)', color:'var(--red)' }}>Stress {Math.round(stressIndex)}</div>}
           </div>
         </div>
 
@@ -920,18 +948,40 @@ export default function Profile() {
               Curated AI Recommendations
               <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:'rgba(45,212,191,0.1)', color:'var(--teal)', border:'1px solid rgba(45,212,191,0.25)' }}>WealthSphere AI</span>
             </span>
-            <button
-              onClick={fetchGptRecs}
-              disabled={gptLoading}
-              style={{ ...s.btnTeal, display:'flex', alignItems:'center', gap:6, opacity: gptLoading ? 0.6 : 1 }}
-            >
-              {gptLoading
-                ? <><Spinner size={12} color="#080c14" /> Generating…</>
-                : gptRecs ? '↻ Refresh Analysis' : '✦ Generate Analysis'}
-            </button>
+            <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', justifyContent:'flex-end' }}>
+              {gptRecs && (
+                <div style={s.modeSwitch}>
+                  {[
+                    ['lite', 'Lite'],
+                    ['comprehensive', 'Comprehensive'],
+                  ].map(([key, label]) => {
+                    const active = analysisMode === key
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setAnalysisMode(key)}
+                        style={{ ...s.modeTab, ...(active ? s.modeTabActive : null) }}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              <button
+                onClick={fetchGptRecs}
+                disabled={gptLoading}
+                style={{ ...s.btnTeal, display:'flex', alignItems:'center', gap:6, opacity: gptLoading ? 0.6 : 1 }}
+              >
+                {gptLoading
+                  ? <><Spinner size={12} color="#080c14" /> Generating…</>
+                  : gptRecs ? '↻ Refresh Analysis' : '✦ Generate Analysis'}
+              </button>
+            </div>
           </div>
 
-          <p style={{ fontSize:'0.83rem', color:'var(--text-dim)', lineHeight:1.65, marginBottom:20 }}>
+          <p style={{ fontSize:'0.9rem', color:'var(--text-dim)', lineHeight:1.72, marginBottom:20, maxWidth:900 }}>
             Uses your portfolio context, risk profile, and financial wellness signals to generate curated insights and next-step guidance.
           </p>
 
@@ -972,7 +1022,7 @@ export default function Profile() {
                 background:'linear-gradient(135deg, rgba(45,212,191,0.08), rgba(59,91,219,0.08))',
                 border:'1px solid rgba(45,212,191,0.16)',
                 borderRadius:16,
-                padding:'18px 20px',
+                padding: analysisMode === 'lite' ? '22px 24px' : '18px 20px',
               }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap', marginBottom:12 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -985,11 +1035,6 @@ export default function Profile() {
                     <span style={{ ...s.inlineStat, color:insightTone(wellnessScore).color, borderColor:'rgba(255,255,255,0.08)' }}>
                       Wellness {Math.round(wellnessScore)} · {insightTone(wellnessScore).label}
                     </span>
-                    {stressIndex != null && (
-                      <span style={{ ...s.inlineStat, color:insightTone(100 - stressIndex).color, borderColor:'rgba(255,255,255,0.08)' }}>
-                        Stress {Math.round(stressIndex)}
-                      </span>
-                    )}
                     {profile?.risk_profile && (
                       <span style={{ ...s.inlineStat, color:'var(--gold)', borderColor:'rgba(201,168,76,0.2)' }}>
                         Risk {profile.risk_profile}
@@ -997,11 +1042,11 @@ export default function Profile() {
                     )}
                   </div>
                 </div>
-                <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', marginBottom:gptSummary ? 8 : 0 }}>
+                <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize: analysisMode === 'lite' ? '1.12rem' : '1.2rem', marginBottom:gptSummary ? 10 : 0 }}>
                   Portfolio outlook
                 </div>
                 {gptSummary ? (
-                  <div style={{ fontSize:'0.85rem', color:'var(--text-dim)', lineHeight:1.75 }}>{gptSummary}</div>
+                  <div style={{ fontSize: analysisMode === 'lite' ? '1rem' : '1rem', color:'var(--text-dim)', lineHeight: analysisMode === 'lite' ? 1.82 : 1.82, maxWidth: 1080 }}>{gptSummary}</div>
                 ) : (
                   <div style={{ fontSize:'0.82rem', color:'var(--text-faint)', lineHeight:1.7 }}>
                     The system returned structured actions without a written summary, so the key insights are broken out below.
@@ -1009,79 +1054,78 @@ export default function Profile() {
                 )}
               </div>
 
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(170px, 1fr))', gap:12 }}>
-                <div style={s.insightTile}>
-                  <div style={s.insightLabel}>Wellness score</div>
-                  <div style={{ ...s.insightValue, color:insightTone(wellnessScore).color }}>{Math.round(wellnessScore)}</div>
-                  <div style={s.insightSub}>{insightTone(wellnessScore).label}</div>
-                </div>
-                <div style={s.insightTile}>
-                  <div style={s.insightLabel}>Stress index</div>
-                  <div style={{ ...s.insightValue, color:insightTone(100 - (stressIndex ?? 0)).color }}>
-                    {stressIndex != null ? Math.round(stressIndex) : '—'}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:12 }}>
+                {(analysisMode === 'lite'
+                  ? visibleInsightTiles.filter(tile => tile.label !== 'Top driver')
+                  : visibleInsightTiles
+                ).map(tile => (
+                  <div key={tile.label} style={s.insightTile}>
+                    <div style={s.insightLabel}>{tile.label}</div>
+                    <div style={{ ...s.insightValue, fontSize: tile.label === 'Top driver' ? '1rem' : '1.55rem', color:tile.valueColor }}>
+                      {tile.value}
+                    </div>
+                    <div style={s.insightSub}>{tile.sub}</div>
                   </div>
-                  <div style={s.insightSub}>
-                    {stressIndex != null ? (stressIndex >= 60 ? 'High pressure' : stressIndex >= 40 ? 'Moderate pressure' : 'Contained') : 'Unavailable'}
-                  </div>
-                </div>
-                <div style={s.insightTile}>
-                  <div style={s.insightLabel}>Top driver</div>
-                  <div style={{ ...s.insightValue, fontSize:'1rem', color:'var(--text)' }}>
-                    {leadRuleRec?.title ?? 'No dominant driver'}
-                  </div>
-                  <div style={s.insightSub}>
-                    {leadRuleRec?.category ? startCase(leadRuleRec.category) : 'Derived from current profile'}
-                  </div>
-                </div>
-                <div style={s.insightTile}>
-                  <div style={s.insightLabel}>Action count</div>
-                  <div style={{ ...s.insightValue, color:'var(--teal)' }}>{gptTopRecs.length || gptNextSteps.length || 0}</div>
-                  <div style={s.insightSub}>Recommended near-term moves</div>
-                </div>
+                ))}
               </div>
 
-              {gptTopRecs.length > 0 && (
+              {visibleTopRecs.length > 0 && (
                 <div>
-                  <div style={s.secSubhead}>Top Recommendations</div>
+                  <div style={s.secSubhead}>{analysisMode === 'lite' ? 'Top Priorities' : 'Top Recommendations'}</div>
                   <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                    {gptTopRecs.map((rec, i) => <RecCard key={i} rec={rec} i={i} tint />)}
+                    {visibleTopRecs.map((rec, i) => <RecCard key={i} rec={rec} i={i} tint compact={analysisMode === 'lite'} />)}
                   </div>
+                  {analysisMode === 'lite' && gptTopRecs.length > visibleTopRecs.length && (
+                    <div style={s.liteHint}>Switch to comprehensive mode to view {gptTopRecs.length - visibleTopRecs.length} more recommendations.</div>
+                  )}
                 </div>
               )}
 
-              {gptScenarios && (
+              {analysisMode === 'comprehensive' && activeScenario && (
                 <div>
                   <div style={s.secSubhead}>Scenario Insights</div>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))', gap:12 }}>
-                    {[
-                      ['Bullish Case', gptScenarios.bullish_case, 'var(--green)'],
-                      ['Base Case', gptScenarios.base_case, 'var(--gold)'],
-                      ['Bearish Case', gptScenarios.bearish_case, 'var(--red)'],
-                    ].map(([label, text, color]) => (
-                      <div key={label} style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:14, padding:'16px 16px 15px' }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-                          <div style={{ width:9, height:9, borderRadius:'50%', background:color, boxShadow:`0 0 10px ${color}` }} />
-                          <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.86rem', color }}>{label}</div>
-                        </div>
-                        <div style={{ fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.7 }}>
-                          {toText(text) || 'No scenario detail returned.'}
-                        </div>
+                  <div style={{ display:'grid', gap:14 }}>
+                    <div style={s.modeSwitch}>
+                      {scenarioCards.map(item => {
+                        const active = selectedScenario === item.key
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => setSelectedScenario(item.key)}
+                            style={{
+                              ...s.modeTab,
+                              ...(active ? { ...s.modeTabActive, color:item.color, borderColor:`${item.color}40` } : null),
+                            }}
+                          >
+                            {item.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <div style={{ ...s.scenarioCardLite, borderColor:`${activeScenario.color}26` }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                        <div style={{ width:10, height:10, borderRadius:'50%', background:activeScenario.color, boxShadow:`0 0 10px ${activeScenario.color}` }} />
+                        <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.02rem', color:activeScenario.color }}>{activeScenario.label}</div>
                       </div>
-                    ))}
+                      <div style={{ fontSize:'1rem', color:'var(--text-dim)', lineHeight:1.82 }}>
+                        {toText(activeScenario.text) || 'No scenario detail returned.'}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {gptNextSteps.length > 0 && (
-                <div style={{ background:'rgba(255,255,255,0.02)', border:'1px solid var(--border)', borderRadius:14, padding:'16px 18px' }}>
+              {analysisMode === 'comprehensive' && gptNextSteps.length > 0 && (
+                <div style={{ background:'rgba(255,255,255,0.02)', border:'1px solid var(--border)', borderRadius:14, padding:'18px 20px' }}>
                   <div style={s.secSubhead}>Next 30 Days</div>
                   <div style={{ display:'grid', gap:10 }}>
                     {gptNextSteps.map((step, i) => (
                       <div key={`${step}-${i}`} style={{ display:'flex', alignItems:'flex-start', gap:10 }}>
-                        <div style={{ width:22, height:22, borderRadius:'50%', background:'rgba(45,212,191,0.12)', border:'1px solid rgba(45,212,191,0.22)', color:'var(--teal)', fontFamily:'var(--font-mono)', fontSize:'0.68rem', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
+                        <div style={{ width:24, height:24, borderRadius:'50%', background:'rgba(45,212,191,0.12)', border:'1px solid rgba(45,212,191,0.22)', color:'var(--teal)', fontFamily:'var(--font-mono)', fontSize:'0.72rem', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
                           {i + 1}
                         </div>
-                        <div style={{ fontSize:'0.82rem', color:'var(--text-dim)', lineHeight:1.7 }}>{step}</div>
+                        <div style={{ fontSize:'0.92rem', color:'var(--text-dim)', lineHeight:1.76 }}>{step}</div>
                       </div>
                     ))}
                   </div>
@@ -1099,7 +1143,7 @@ export default function Profile() {
                   WealthSphere Analyst AI · {new Date().toLocaleTimeString()}
                 </span>
               </div>
-              <div style={{ fontSize:'0.86rem', color:'var(--text-dim)', lineHeight:1.85, whiteSpace:'pre-wrap', background:'var(--surface2)', borderRadius:12, padding:'18px 20px', border:'1px solid var(--border)' }}>
+              <div style={{ fontSize: analysisMode === 'lite' ? '0.98rem' : '0.86rem', color:'var(--text-dim)', lineHeight: analysisMode === 'lite' ? 1.9 : 1.85, whiteSpace:'pre-wrap', background:'var(--surface2)', borderRadius:12, padding:'18px 20px', border:'1px solid var(--border)' }}>
                 {gptText}
               </div>
             </div>
@@ -1217,8 +1261,34 @@ const s = {
     boxShadow:'0 8px 20px rgba(139,92,246,0.14)',
   },
   secSubhead: {
-    fontFamily:'var(--font-display)', fontSize:'0.92rem', fontWeight:700,
+    fontFamily:'var(--font-display)', fontSize:'1.02rem', fontWeight:700,
     marginBottom:12,
+  },
+  modeSwitch: {
+    display:'inline-flex',
+    alignItems:'center',
+    gap:6,
+    padding:4,
+    borderRadius:999,
+    background:'var(--surface2)',
+    border:'1px solid var(--border)',
+  },
+  modeTab: {
+    border:'1px solid transparent',
+    background:'transparent',
+    color:'var(--text-dim)',
+    padding:'7px 12px',
+    borderRadius:999,
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    letterSpacing:'0.06em',
+    cursor:'pointer',
+    transition:'all 0.2s',
+  },
+  modeTabActive: {
+    background:'var(--surface)',
+    color:'var(--text)',
+    boxShadow:'0 6px 16px rgba(15,23,42,0.08)',
   },
   inlineStat: {
     fontFamily:'var(--font-mono)', fontSize:'0.64rem',
@@ -1238,6 +1308,43 @@ const s = {
   },
   insightSub: {
     marginTop:5, fontSize:'0.74rem', color:'var(--text-faint)', lineHeight:1.5,
+  },
+  driverStrip: {
+    background:'rgba(255,255,255,0.55)',
+    border:'1px solid var(--border)',
+    borderRadius:14,
+    padding:'18px 20px',
+  },
+  driverEyebrow: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.66rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.1em',
+    marginBottom:6,
+  },
+  driverTitle: {
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    fontSize:'1rem',
+    marginBottom:4,
+  },
+  driverBody: {
+    fontSize:'0.84rem',
+    color:'var(--text-dim)',
+    lineHeight:1.65,
+  },
+  scenarioCardLite: {
+    background:'var(--surface2)',
+    border:'1px solid var(--border)',
+    borderRadius:14,
+    padding:'18px 20px',
+  },
+  liteHint: {
+    fontSize:'0.78rem',
+    color:'var(--text-faint)',
+    fontFamily:'var(--font-mono)',
+    marginTop:8,
   },
   errBox: {
     background:'rgba(248,113,113,0.07)', border:'1px solid rgba(248,113,113,0.2)',

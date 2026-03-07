@@ -512,6 +512,17 @@ function hexRgba(hex, a) {
   return `rgba(${r},${g},${b},${a})`
 }
 
+function wrapAngle(angle) {
+  return Math.atan2(Math.sin(angle), Math.cos(angle))
+}
+
+function getRotationForLatLng(lat, lng) {
+  return {
+    rotY: wrapAngle((-90 - lng) * Math.PI / 180),
+    rotX: Math.max(-0.5, Math.min(0.5, lat * Math.PI / 180)),
+  }
+}
+
 // Kept only as ZONE_DEFS for hover detection — no longer used for canvas drawing
 const GLOBE_ZONES = [
   {
@@ -550,6 +561,14 @@ const GLOBE_ZONES = [
     color:'#fbbf24',
   },
 ]
+
+const ZONE_ROTATION_TARGETS = {
+  Equities: getRotationForLatLng(38, -95),
+  Bonds: getRotationForLatLng(52, -25),
+  'Real Assets': getRotationForLatLng(18, 35),
+  Digital: getRotationForLatLng(34, 118),
+  Commodities: getRotationForLatLng(-18, 22),
+}
 
 // ─── Per-theme palette for the 2D canvas texture ────────────────────────────
 // base: THREE hex integer used to tint the globe material colour
@@ -732,9 +751,12 @@ export default function Globe() {
   const [riskPct,       setRiskPct]     = useState(50)
   const [hoverZone,     setHoverZone]   = useState(null)
   const [zonePos,        setZonePos]     = useState({ x:0, y:0 })
+  const [selectedZone, setSelectedZone] = useState(null)
+  const [legendHoverZone, setLegendHoverZone] = useState(null)
   const riskLevel = RISK_DEFS.find(r => riskPct >= r.min && riskPct <= r.max) || RISK_DEFS[1]
   const riskTrackRef  = useRef(null)
   const riskDragRef   = useRef(false)
+  const rotationTargetRef = useRef(null)
 
   // Wellness score + portfolio nodes for logged-in hero
   const [userProfile, setUserProfile] = useState(null)
@@ -812,6 +834,13 @@ export default function Globe() {
   const closeDashboard = useCallback(() => {
     setDashShow(false)
     setTimeout(() => setDashNode(null), 420)
+  }, [])
+
+  const rotateToZone = useCallback((zoneLabel) => {
+    const target = ZONE_ROTATION_TARGETS[zoneLabel]
+    if (!target) return
+    rotationTargetRef.current = target
+    setSelectedZone(zoneLabel)
   }, [])
 
   // ═══ 2D CANVAS GLOBE ════════════════════════════════════════
@@ -990,10 +1019,26 @@ export default function Globe() {
     // ── Animation loop
     const loop = now => {
       if (!isDragRef.current) {
-        // Gradually ease velY back toward the idle spin rate after a drag
-        velY += (IDLE_VEL_Y - velY) * 0.012
-        rotY += velY
-        rotX += velX; velX *= 0.94
+        const target = rotationTargetRef.current
+        if (target) {
+          const dy = wrapAngle(target.rotY - rotY)
+          const dx = target.rotX - rotX
+          rotY = wrapAngle(rotY + dy * 0.09)
+          rotX += dx * 0.09
+          velY *= 0.82
+          velX *= 0.82
+
+          if (Math.abs(dy) < 0.003 && Math.abs(dx) < 0.003) {
+            rotY = target.rotY
+            rotX = target.rotX
+            rotationTargetRef.current = null
+          }
+        } else {
+          // Gradually ease velY back toward the idle spin rate after a drag
+          velY += (IDLE_VEL_Y - velY) * 0.012
+          rotY = wrapAngle(rotY + velY)
+          rotX += velX; velX *= 0.94
+        }
         rotX = Math.max(-0.5, Math.min(0.5, rotX))
       }
       frame(now)
@@ -1004,6 +1049,7 @@ export default function Globe() {
     let prev = { x: 0, y: 0 }, lastDx = 0, lastDy = 0
     const onDown = e => {
       isDragRef.current = true
+      rotationTargetRef.current = null
       prev = { x: e.clientX, y: e.clientY }
       velY = 0; velX = 0
       canvas.style.cursor = 'grabbing'
@@ -1028,7 +1074,7 @@ export default function Globe() {
     const onMove = e => {
       if (isDragRef.current) {
         const dx = e.clientX - prev.x, dy = e.clientY - prev.y
-        rotY += dx * 0.004; rotX += dy * 0.004
+        rotY = wrapAngle(rotY + dx * 0.004); rotX += dy * 0.004
         rotX = Math.max(-0.6, Math.min(0.6, rotX))
         lastDx = dx; lastDy = dy
         prev = { x: e.clientX, y: e.clientY }
@@ -1221,9 +1267,18 @@ export default function Globe() {
         {/* Legend — highlights on zone hover */}
         <div style={S.legend}>
           {GLOBE_ZONES.map(z => {
-            const active = hoverZone === z.label
+            const active = (legendHoverZone ?? selectedZone) === z.label
             return (
-              <div key={z.label} style={{
+              <button
+                key={z.label}
+                type="button"
+                onClick={() => rotateToZone(z.label)}
+                onMouseEnter={() => setLegendHoverZone(z.label)}
+                onMouseLeave={() => setLegendHoverZone(null)}
+                style={{
+                background:'transparent',
+                border:'none',
+                padding:0,
                 display:'flex', alignItems:'center', gap:7,
                 fontFamily:'var(--font-mono)',
                 fontSize: active ? '0.76rem' : '0.7rem',
@@ -1231,6 +1286,7 @@ export default function Globe() {
                 color: active ? '#fff' : 'var(--text-dim)',
                 textShadow: active ? `0 0 16px ${z.color}, 0 0 6px ${z.color}` : 'none',
                 transition:'all 0.18s ease',
+                cursor:'pointer',
               }}>
                 <div style={{
                   width: active ? 10 : 8, height: active ? 10 : 8,
@@ -1239,7 +1295,7 @@ export default function Globe() {
                   transition:'all 0.18s ease', flexShrink:0,
                 }} />
                 {z.label}
-              </div>
+              </button>
             )
           })}
         </div>
