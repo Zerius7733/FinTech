@@ -13,6 +13,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 USER_JSON_PATH = BASE_DIR / "json_data" / "user.json"
+USER_PORTFOLIO_DIR = BASE_DIR / "json_data" / "user_portfolio"
 CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
 LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
 ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
@@ -122,6 +123,14 @@ def _read_users_data() -> Dict[str, Any]:
 def _write_users_data(data: Dict[str, Any]) -> None:
     with open(USER_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(api.normalize_users_data(data), f, indent=2)
+
+
+def _read_user_portfolio_history(user_id: str) -> Dict[str, Any]:
+    history_path = USER_PORTFOLIO_DIR / f"{user_id}.json"
+    if not history_path.exists():
+        raise HTTPException(status_code=404, detail=f"portfolio history for user_id '{user_id}' not found")
+    with open(history_path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 def _parse_market_query(query: str) -> Dict[str, str]:
@@ -865,6 +874,35 @@ def get_portfolio_by_user_id(user_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read portfolio failed: {exc}") from exc
+
+
+@app.get(
+    "/portfolio/{user_id}/history",
+    tags=["Portfolio"],
+    summary="Get daily portfolio history by user ID",
+)
+def get_portfolio_history_by_user_id(user_id: str) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        history = _read_user_portfolio_history(user_id)
+        daily_points = history.get("daily_values", [])
+        if not isinstance(daily_points, list):
+            raise HTTPException(status_code=500, detail="invalid portfolio history format")
+
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "history": history,
+            "count": len(daily_points),
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"read portfolio history failed: {exc}") from exc
 
 
 @app.get(

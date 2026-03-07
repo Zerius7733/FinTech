@@ -25,55 +25,80 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
 }
 
-function createSeededRandom(seed) {
-  let state = seed % 2147483647
-  if (state <= 0) state += 2147483646
-  return () => {
-    state = state * 16807 % 2147483647
-    return (state - 1) / 2147483646
-  }
+function formatTrendDate(value) {
+  if (!value) return '—'
+  const date = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('en-US', { month:'short', day:'numeric' })
 }
 
-function buildNetWorthSeries({ currentValue, periodKey, trendPct, volatility, seedSource }) {
-  const configs = {
-    '1M': { points: 24, scale: 0.35, labels: ['4 Weeks Ago', 'Today'] },
-    '3M': { points: 28, scale: 0.6, labels: ['3 Months Ago', 'Today'] },
-    '6M': { points: 34, scale: 1, labels: ['6 Months Ago', 'Today'] },
-    '1Y': { points: 40, scale: 1.35, labels: ['1 Year Ago', 'Today'] },
-    'ALL': { points: 48, scale: 1.7, labels: ['Start', 'Today'] },
+function buildTrendSeriesFromHistory({ history, periodKey, viewKey, fallbackCurrent }) {
+  const fieldMap = {
+    combined: 'total_net_worth',
+    stocks: 'stocks_value',
+    commodities: 'commodities_value',
+    crypto: 'crypto_value',
+  }
+  const rangeMap = {
+    '1M': 30,
+    '3M': 90,
+    '6M': 180,
+    '1Y': 365,
+    'ALL': Infinity,
+  }
+  const field = fieldMap[viewKey] ?? fieldMap.combined
+  const points = Array.isArray(history)
+    ? history
+        .map(entry => ({
+          date: entry?.date,
+          value: Number(entry?.[field] ?? 0),
+        }))
+        .filter(entry => entry.date && Number.isFinite(entry.value))
+    : []
+
+  if (!points.length) {
+    return {
+      points: [
+        { date: null, value: fallbackCurrent },
+        { date: null, value: fallbackCurrent },
+      ],
+      change: 0,
+      labels: ['Start', 'Today'],
+      latest: fallbackCurrent,
+    }
   }
 
-  const config = configs[periodKey] ?? configs['6M']
-  const random = createSeededRandom(seedSource)
-  const adjustedTrend = clamp(trendPct * config.scale, -0.32, 0.4)
-  const startValue = currentValue >= 0
-    ? currentValue / (1 + adjustedTrend)
-    : currentValue * (1 + adjustedTrend)
-  const noiseBase = Math.max(Math.abs(currentValue) * (0.016 + volatility * 0.02), 900)
-
-  const values = Array.from({ length: config.points }, (_, index) => {
-    if (index === config.points - 1) return currentValue
-    const ratio = index / (config.points - 1)
-    const baseline = startValue + (currentValue - startValue) * ratio
-    const wave = Math.sin(ratio * Math.PI * 3.2 + random() * 0.8) * noiseBase * 0.7
-    const noise = (random() - 0.5) * noiseBase
-    return baseline + wave + noise
-  })
-
-  values[config.points - 1] = currentValue
+  const pointLimit = rangeMap[periodKey] ?? rangeMap['6M']
+  const sliced = Number.isFinite(pointLimit) ? points.slice(-pointLimit) : points
+  const first = sliced[0]
+  const last = sliced[sliced.length - 1]
 
   return {
-    values,
-    change: currentValue - values[0],
-    labels: config.labels,
+    points: sliced,
+    change: last.value - first.value,
+    labels: [formatTrendDate(first.date), formatTrendDate(last.date)],
+    latest: last.value,
   }
 }
 
-function TrendChart({ values, tone = 'up' }) {
+function TrendChart({ points = [], tone = 'up', valueLabel = 'Value' }) {
+  const series = points.length >= 2
+    ? points
+    : [
+        { date: null, value: points[0]?.value ?? 0 },
+        { date: null, value: points[0]?.value ?? 0 },
+      ]
+  const [hoverIndex, setHoverIndex] = useState(series.length - 1)
+  const [isHovered, setIsHovered] = useState(false)
+  useEffect(() => {
+    setHoverIndex(series.length - 1)
+    setIsHovered(false)
+  }, [series.length, tone, valueLabel])
   const width = 760
   const height = 260
   const padX = 18
   const padY = 18
+  const values = series.map(point => point.value)
   const min = Math.min(...values)
   const max = Math.max(...values)
   const span = Math.max(max - min, 1)
@@ -81,18 +106,43 @@ function TrendChart({ values, tone = 'up' }) {
   const fillTop = tone === 'up' ? 'rgba(167,139,250,0.34)' : 'rgba(248,113,113,0.28)'
   const fillBottom = tone === 'up' ? 'rgba(167,139,250,0.02)' : 'rgba(248,113,113,0.02)'
 
-  const points = values.map((value, index) => {
-    const x = padX + (index / (values.length - 1)) * (width - padX * 2)
-    const y = height - padY - ((value - min) / span) * (height - padY * 2)
-    return { x, y, value }
+  const chartPoints = series.map((point, index) => {
+    const x = padX + (index / (series.length - 1)) * (width - padX * 2)
+    const y = height - padY - ((point.value - min) / span) * (height - padY * 2)
+    return { x, y, value: point.value, date: point.date }
   })
 
-  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
-  const areaPath = `${linePath} L ${points[points.length - 1].x} ${height - padY} L ${points[0].x} ${height - padY} Z`
-  const endPoint = points[points.length - 1]
+  const linePath = chartPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
+  const areaPath = `${linePath} L ${chartPoints[chartPoints.length - 1].x} ${height - padY} L ${chartPoints[0].x} ${height - padY} Z`
+  const activePoint = chartPoints[clamp(hoverIndex, 0, chartPoints.length - 1)]
+  const dateText = formatTrendDate(activePoint.date) || 'Current'
+  const valueText = `${valueLabel}: ${fmt$(activePoint.value)}`
+  const tooltipWidth = Math.max(196, Math.min(320, Math.max(dateText.length * 10 + 34, valueText.length * 8.4 + 54)))
+  const tooltipHeight = 72
+  const prefersLeft = activePoint.x > width * 0.58
+  const rawTooltipX = prefersLeft ? activePoint.x - tooltipWidth - 18 : activePoint.x + 18
+  const tooltipX = clamp(rawTooltipX, 14, width - tooltipWidth - 12)
+  const tooltipY = clamp(activePoint.y - 96, 12, height - tooltipHeight - 10)
+
+  const handlePointerMove = event => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    const relativeX = ((event.clientX - rect.left) / rect.width) * width
+    const closestIndex = chartPoints.reduce((best, point, index) => (
+      Math.abs(point.x - relativeX) < Math.abs(chartPoints[best].x - relativeX) ? index : best
+    ), 0)
+    setHoverIndex(closestIndex)
+  }
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} style={{ display:'block' }}>
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      width="100%"
+      height={height}
+      style={{ display:'block', overflow:'visible' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseMove={event => { setIsHovered(true); handlePointerMove(event) }}
+      onMouseLeave={() => { setHoverIndex(chartPoints.length - 1); setIsHovered(false) }}
+    >
       <defs>
         <linearGradient id="netWorthFill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={fillTop} />
@@ -112,7 +162,38 @@ function TrendChart({ values, tone = 'up' }) {
       ))}
       <path d={areaPath} fill="url(#netWorthFill)" />
       <path d={linePath} fill="none" stroke={lineColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={endPoint.x} cy={endPoint.y} r="5.5" fill="#fff" stroke={lineColor} strokeWidth="3" />
+      {isHovered && (
+        <>
+          <line
+            x1={activePoint.x}
+            x2={activePoint.x}
+            y1={padY}
+            y2={height - padY}
+            stroke="rgba(124,58,237,0.18)"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+          />
+          <circle cx={activePoint.x} cy={activePoint.y} r="5.5" fill="#fff" stroke={lineColor} strokeWidth="3" />
+          <g transform={`translate(${tooltipX}, ${tooltipY})`}>
+            <rect
+              width={tooltipWidth}
+              height={tooltipHeight}
+              rx="14"
+              fill="#0f172a"
+              stroke="rgba(139,92,246,0.38)"
+              strokeWidth="1"
+              style={{ filter:'drop-shadow(0 16px 26px rgba(15,23,42,0.28))' }}
+            />
+            <text x="16" y="24" fill="#ffffff" style={{ fontFamily:'var(--font-display)', fontSize:'13px', fontWeight:700 }}>
+              {dateText}
+            </text>
+            <circle cx="18" cy="48" r="4.5" fill={lineColor} />
+            <text x="32" y="52" fill="rgba(241,245,249,0.98)" style={{ fontFamily:'var(--font-body)', fontSize:'12px', fontWeight:600 }}>
+              {valueText}
+            </text>
+          </g>
+        </>
+      )}
     </svg>
   )
 }
@@ -288,6 +369,7 @@ export default function Profile() {
 
   const [profile,   setProfile]   = useState(null)
   const [portfolio, setPortfolio] = useState(null)
+  const [portfolioHistory, setPortfolioHistory] = useState([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState('')
 
@@ -309,9 +391,10 @@ export default function Profile() {
     async function fetchAll() {
       setLoading(true); setError('')
       try {
-        const [profRes, portRes] = await Promise.all([
+        const [profRes, portRes, historyRes] = await Promise.all([
           fetch(`${API}/users/${authUser.user_id}`),
           fetch(`${API}/portfolio/${authUser.user_id}`),
+          fetch(`${API}/portfolio/${authUser.user_id}/history`),
         ])
         if (cancelled) return
         if (profRes.ok) {
@@ -321,6 +404,12 @@ export default function Profile() {
           if (d.user?.risk_profile) setSelectedRisk(d.user.risk_profile.toLowerCase())
         }
         if (portRes.ok) { const d = await portRes.json(); setPortfolio(d.portfolio) }
+        if (historyRes.ok) {
+          const d = await historyRes.json()
+          setPortfolioHistory(Array.isArray(d?.history?.daily_values) ? d.history.daily_values : [])
+        } else {
+          setPortfolioHistory([])
+        }
       } catch { if (!cancelled) setError('Could not reach the server. Is the backend running?') }
       finally  { if (!cancelled) setLoading(false) }
     }
@@ -361,27 +450,34 @@ export default function Profile() {
 
   // ── Derived values ────────────────────────────────────────────────────────
   const stocks         = portfolio?.stocks  ?? []
+  const commodities    = portfolio?.commodities ?? []
   const cryptos        = portfolio?.cryptos ?? []
-  const allHoldings    = [...stocks.map(h => ({ ...h, type:'Stock' })), ...cryptos.map(h => ({ ...h, type:'Crypto' }))]
+  const allHoldings    = [
+    ...stocks.map(h => ({ ...h, type:'Stock' })),
+    ...commodities.map(h => ({ ...h, type:'Commodity' })),
+    ...cryptos.map(h => ({ ...h, type:'Crypto' })),
+  ]
   const stocksValue    = stocks.reduce((s,h)  => s + (h.market_value ?? 0), 0)
+  const commoditiesValue = commodities.reduce((s,h) => s + (h.market_value ?? 0), 0)
   const cryptosValue   = cryptos.reduce((s,h) => s + (h.market_value ?? 0), 0)
-  const portfolioValue = stocksValue + cryptosValue
+  const portfolioValue = stocksValue + commoditiesValue + cryptosValue
   const totalAUM       = portfolioValue + (profile?.cash_balance ?? 0)
-  const positionCount  = stocks.length + cryptos.length
+  const positionCount  = stocks.length + commodities.length + cryptos.length
   const wellness       = profile?.wellness_metrics ?? {}
   const wellnessScore  = profile?.financial_wellness_score ?? 0
   const stressIndex    = profile?.financial_stress_index   ?? null
   const netWorth       = profile?.net_worth ?? null
   const [trendRange, setTrendRange] = useState('6M')
+  const [trendView, setTrendView] = useState('combined')
 
   const COMPOSITION_REAL = [
     portfolioValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / portfolioValue * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
+    portfolioValue > 0 && commoditiesValue > 0 && { icon:'🪙', name:'Commodities', pct:Math.round(commoditiesValue / portfolioValue * 100), val:fmt$(commoditiesValue), color:'#d4a63a' },
     portfolioValue > 0 && { icon:'₿',  name:'Digital Assets',    pct:Math.round(cryptosValue / portfolioValue * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
   ].filter(Boolean)
   const COMPOSITION_FUTURE = [
     { icon:'🏠', name:'Real Estate',  color:'var(--gold)'   },
     { icon:'🏛️', name:'Fixed Income', color:'var(--purple)' },
-    { icon:'🪙', name:'Commodities',  color:'#fbbf24'       },
   ]
 
   const gptPayload = gptRecs?.gpt_recommendations ?? gptRecs?.recommendations ?? gptRecs ?? null
@@ -401,38 +497,34 @@ export default function Profile() {
         : gptPayload?.message ?? gptPayload?.recommendation ?? gptPayload?.content ?? JSON.stringify(gptPayload, null, 2))
     : null
 
-  const aggregateGainPct = portfolioValue > 0
-    ? allHoldings.reduce((sum, holding) => {
-        const gain = gainPct(holding.current_price, holding.avg_price)
-        const weight = holding.market_value ?? 0
-        return sum + ((gain ?? 0) * weight)
-      }, 0) / portfolioValue
-    : 0
-
-  const trendSeed = useMemo(() => {
-    const source = `${authUser?.username ?? ''}${profile?.name ?? ''}${profile?.risk_profile ?? ''}${Math.round(totalAUM)}`
-    return Array.from(source).reduce((sum, char) => sum + char.charCodeAt(0), 0) || 97
-  }, [authUser?.username, profile?.name, profile?.risk_profile, totalAUM])
-
   const trendPayload = useMemo(() => {
-    const trendDriver = clamp(
-      (aggregateGainPct / 100) * 0.8 +
-      ((wellnessScore - 50) / 240) -
-      (((stressIndex ?? 50) - 50) / 420),
-      -0.18,
-      0.24
-    )
-    const volatility = clamp(Math.abs(aggregateGainPct) / 50 + ((stressIndex ?? 50) / 140), 0.2, 0.95)
-    return buildNetWorthSeries({
-      currentValue: netWorth ?? totalAUM,
+    const currentMap = {
+      combined: netWorth ?? totalAUM,
+      stocks: stocksValue,
+      commodities: commoditiesValue,
+      crypto: cryptosValue,
+    }
+    return buildTrendSeriesFromHistory({
+      history: portfolioHistory,
       periodKey: trendRange,
-      trendPct: trendDriver,
-      volatility,
-      seedSource: trendSeed,
+      viewKey: trendView,
+      fallbackCurrent: currentMap[trendView] ?? (netWorth ?? totalAUM),
     })
-  }, [aggregateGainPct, wellnessScore, stressIndex, netWorth, totalAUM, trendRange, trendSeed])
+  }, [portfolioHistory, trendRange, trendView, netWorth, totalAUM, stocksValue, commoditiesValue, cryptosValue])
 
   const trendTone = trendPayload.change >= 0 ? 'up' : 'down'
+  const trendTitleMap = {
+    combined: 'Combined Net Worth',
+    stocks: 'Stocks Value',
+    commodities: 'Commodities Value',
+    crypto: 'Crypto Value',
+  }
+  const trendDescMap = {
+    combined: 'Daily combined net worth across cash, liabilities, and invested assets.',
+    stocks: 'Daily equity value across your stock holdings.',
+    commodities: 'Daily commodity exposure value across your commodity positions.',
+    crypto: 'Daily digital-asset value across your crypto holdings.',
+  }
 
   // Is current selection different from what's saved?
   const riskChanged = selectedRisk && selectedRisk !== (profile?.risk_profile ?? '').toLowerCase()
@@ -522,36 +614,52 @@ export default function Profile() {
         <div style={{ ...s.card, marginBottom:24, padding:'22px 24px 18px' }}>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, flexWrap:'wrap', marginBottom:18 }}>
             <div>
-              <div style={s.secLabel}>Net Worth Trend</div>
+              <div style={s.secLabel}>{trendTitleMap[trendView]} Trend</div>
               <div style={{ display:'flex', alignItems:'baseline', gap:14, flexWrap:'wrap', marginTop:6 }}>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'2rem', lineHeight:1 }}>
-                  {fmt$(netWorth ?? totalAUM)}
+                  {fmt$(trendPayload.latest)}
                 </div>
                 <div style={{ color:trendTone === 'up' ? 'var(--purple)' : 'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.8rem' }}>
                   {trendPayload.change >= 0 ? '+' : ''}{fmt$(trendPayload.change)} · {trendRange}
                 </div>
               </div>
               <div style={{ marginTop:8, fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.6, maxWidth:560 }}>
-                A portfolio-style view of your wealth direction, combining current balances, liabilities, and portfolio posture.
+                {trendDescMap[trendView]}
+              </div>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:18 }}>
+                {['1M', '3M', '6M', '1Y', 'ALL'].map(range => (
+                  <button
+                    key={range}
+                    onClick={() => setTrendRange(range)}
+                    style={{ ...s.rangeTab, ...(trendRange === range ? s.rangeTabActive : {}) }}
+                  >
+                    {range}
+                  </button>
+                ))}
               </div>
             </div>
-            <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-              {['1M', '3M', '6M', '1Y', 'ALL'].map(range => (
+            <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'flex-end' }}>
+              {[
+                ['combined', 'Combined'],
+                ['stocks', 'Stocks'],
+                ['commodities', 'Commodities'],
+                ['crypto', 'Crypto'],
+              ].map(([key, label]) => (
                 <button
-                  key={range}
-                  onClick={() => setTrendRange(range)}
-                  style={{ ...s.rangeTab, ...(trendRange === range ? s.rangeTabActive : {}) }}
+                  key={key}
+                  onClick={() => setTrendView(key)}
+                  style={{ ...s.rangeTab, ...(trendView === key ? s.rangeTabActive : {}) }}
                 >
-                  {range}
+                  {label}
                 </button>
               ))}
             </div>
           </div>
 
           <div style={s.trendPanel}>
-            <TrendChart values={trendPayload.values} tone={trendTone} />
+            <TrendChart points={trendPayload.points} tone={trendTone} valueLabel={trendTitleMap[trendView]} />
             <div style={s.trendFooter}>
-              <span>{trendPayload.labels[0]}</span>
+              <span>{trendTitleMap[trendView]} · {trendPayload.labels[0]}</span>
               <span>{trendPayload.labels[1]}</span>
             </div>
           </div>

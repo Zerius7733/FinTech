@@ -1,87 +1,128 @@
 {
   "u001": {
     "name": "Alice Tan",
-    "age": 33,
-    "cash_balance": 16600.5,
-    "liability": 475000.0,
+    "age": 40,
+    "cash_balance": 58620.45,
+    "liability": 145000.0,
     "portfolio": {
       "stocks": [
         {
           "symbol": "AAPL",
-          "qty": 12.0,
+          "qty": 25.0,
           "avg_price": 182.4,
-          "market_value": 3072.42,
+          "market_value": 6400.88,
           "current_price": 256.035
         },
         {
           "symbol": "MSFT",
-          "qty": 6.0,
-          "avg_price": 410.2,
-          "market_value": 2460.0,
+          "qty": 18.0,
+          "avg_price": 320.0,
+          "market_value": 7380.0,
           "current_price": 410.0
+        },
+        {
+          "symbol": "CSPX",
+          "qty": 140.0,
+          "avg_price": 455.0,
+          "market_value": 85743.0,
+          "current_price": 612.45
+        },
+        {
+          "symbol": "ES3.SI",
+          "qty": 3500.0,
+          "avg_price": 3.05,
+          "market_value": 11970.0,
+          "current_price": 3.42,
+          "name": "STI ETF"
+        },
+        {
+          "symbol": "D05.SI",
+          "qty": 900.0,
+          "avg_price": 31.8,
+          "market_value": 40590.0,
+          "current_price": 45.1,
+          "name": "DBS Group"
+        },
+        {
+          "symbol": "VWRA",
+          "qty": 65.0,
+          "avg_price": 112.5,
+          "market_value": 8918.0,
+          "current_price": 137.2,
+          "name": "Vanguard FTSE All-World"
         }
       ],
       "cryptos": [
         {
           "symbol": "BTC-USD",
-          "qty": 0.01,
-          "avg_price": 45000.0,
+          "qty": 0.08,
+          "avg_price": 42000.0,
           "current_price": 68347.9297,
-          "market_value": 683.48
+          "market_value": 5467.83,
+          "name": "Bitcoin"
         },
         {
           "symbol": "ETH-USD",
-          "qty": 2.0,
-          "avg_price": 2078.15,
+          "qty": 4.0,
+          "avg_price": 1785.0,
           "current_price": 1978.5734,
-          "name": "Ethereum",
-          "market_value": 3957.15
+          "market_value": 7914.29,
+          "name": "Ethereum"
         },
         {
-          "symbol": "DOGE-USD",
-          "qty": 23456.0,
-          "avg_price": 0.09314,
-          "current_price": 0.0907,
-          "name": "Dogecoin",
-          "market_value": 2127.46
-        },
-        {
-          "symbol": "BCH-USD",
-          "qty": 3.0,
-          "avg_price": 457.81,
-          "current_price": 450.0366,
-          "name": "Bitcoin Cash",
-          "market_value": 1350.11
+          "symbol": "SOL-USD",
+          "qty": 65.0,
+          "avg_price": 101.0,
+          "current_price": 143.6,
+          "market_value": 9334.0,
+          "name": "Solana"
         },
         {
           "symbol": "BNB-USD",
-          "qty": 2.0,
-          "avg_price": 648.09,
+          "qty": 6.0,
+          "avg_price": 512.0,
           "current_price": 631.4469,
-          "name": "BNB",
-          "market_value": 1262.89
+          "market_value": 3788.68,
+          "name": "BNB"
         }
       ],
-      "commodities": []
+      "commodities": [
+        {
+          "symbol": "GLD",
+          "qty": 80.0,
+          "avg_price": 241.6,
+          "current_price": 282.4,
+          "market_value": 22592.0,
+          "name": "SPDR Gold Shares"
+        },
+        {
+          "symbol": "SLV",
+          "qty": 120.0,
+          "avg_price": 25.4,
+          "current_price": 31.85,
+          "market_value": 3822.0,
+          "name": "iShares Silver Trust"
+        }
+      ]
     },
-    "portfolio_value": 14913.51,
-    "total_balance": 31514.01,
-    "net_worth": -443485.99,
-    "income": 5000.0,
-    "mortgage": 300000.0,
-    "estate": 500000.0,
+    "portfolio_value": 213920.68,
+    "total_balance": 272541.13,
+    "net_worth": 127541.13,
+    "income": 9800.0,
+    "mortgage": 145000.0,
+    "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 3.32,
-      "liquidity_score": 55.34,
-      "diversification_hhi": 0.1779,
-      "diversification_score": 95.91,
-      "debt_income_ratio": 7.9167,
-      "debt_income_score": 1.19
+      "liquidity_months": 13.96,
+      "liquidity_score": 92.0,
+      "diversification_hhi": 0.138,
+      "diversification_score": 91.4,
+      "debt_income_ratio": 1.23,
+      "debt_income_score": 69.8
     },
-    "risk_profile": "High",
-    "financial_wellness_score": 59.38,
-    "financial_stress_index": 58.21,
-    "expenses": 0.0
+    "risk_profile": "Moderate",
+    "financial_wellness_score": 84.4,
+    "financial_stress_index": 27.6,
+    "expenses": 4200.0
   },
   "u002": {
     "name": "Brandon Lim",
@@ -95,14 +136,14 @@
           "qty": 0.0,
           "avg_price": 228.5,
           "market_value": 0.0,
-          "current_price": 399.29
+          "current_price": 396.73
         },
         {
           "symbol": "NVDA",
           "qty": 0.0,
           "avg_price": 870.0,
           "market_value": 0.0,
-          "current_price": 181.085
+          "current_price": 177.82
         }
       ],
       "cryptos": [
@@ -110,7 +151,7 @@
           "symbol": "XLM-USD",
           "qty": 0.0,
           "avg_price": 0.155,
-          "current_price": 0.1522,
+          "current_price": 0.1516,
           "name": "Stellar",
           "market_value": 0.0
         }
@@ -120,14 +161,14 @@
           "symbol": "GC=F",
           "qty": 0.0,
           "avg_price": 2180.0,
-          "current_price": 5165.2002,
+          "current_price": 5146.1001,
           "market_value": 0.0
         },
         {
           "symbol": "SI=F",
           "qty": 0.0,
           "avg_price": 24.5,
-          "current_price": 84.49,
+          "current_price": 83.816,
           "market_value": 0.0
         }
       ]
@@ -162,15 +203,15 @@
           "symbol": "TSLA",
           "qty": 4,
           "avg_price": 228.5,
-          "market_value": 1597.16,
-          "current_price": 399.29
+          "market_value": 1586.92,
+          "current_price": 396.73
         },
         {
           "symbol": "NVDA",
           "qty": 3,
           "avg_price": 870.0,
-          "market_value": 543.25,
-          "current_price": 181.085
+          "market_value": 533.46,
+          "current_price": 177.82
         }
       ],
       "cryptos": [
@@ -178,15 +219,15 @@
           "symbol": "BTC-USD",
           "qty": 0.03,
           "avg_price": 45000.0,
-          "current_price": 68347.9297,
-          "market_value": 2050.44
+          "current_price": 67744.1484,
+          "market_value": 2032.32
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.18,
           "avg_price": 2500.0,
-          "current_price": 1978.5734,
-          "market_value": 356.14
+          "current_price": 1976.8615,
+          "market_value": 355.84
         }
       ],
       "commodities": [
@@ -194,35 +235,35 @@
           "symbol": "GC=F",
           "qty": 0.35,
           "avg_price": 2200.0,
-          "current_price": 5165.2002,
-          "market_value": 1807.82
+          "current_price": 5146.1001,
+          "market_value": 1801.14
         },
         {
           "symbol": "SI=F",
           "qty": 10.0,
           "avg_price": 24.8,
-          "current_price": 84.49,
-          "market_value": 844.9
+          "current_price": 83.816,
+          "market_value": 838.16
         }
       ]
     },
-    "portfolio_value": 7199.71,
-    "total_balance": 16199.91,
-    "net_worth": 7199.71,
+    "portfolio_value": 7147.84,
+    "total_balance": 16148.04,
+    "net_worth": 7147.84,
     "income": 3000.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 3.0,
       "liquidity_score": 50.0,
-      "diversification_hhi": 0.3471,
-      "diversification_score": 87.05,
+      "diversification_hhi": 0.3473,
+      "diversification_score": 87.02,
       "debt_income_ratio": 0.25,
       "debt_income_score": 100.0
     },
     "risk_profile": "High",
-    "financial_wellness_score": 83.53,
-    "financial_stress_index": 22.59,
+    "financial_wellness_score": 83.51,
+    "financial_stress_index": 22.6,
     "expenses": 0.0
   },
   "u004": {
@@ -236,15 +277,15 @@
           "symbol": "META",
           "qty": 4,
           "avg_price": 495.0,
-          "market_value": 2582.16,
-          "current_price": 645.54
+          "market_value": 2579.44,
+          "current_price": 644.86
         },
         {
           "symbol": "GOOGL",
           "qty": 7,
           "avg_price": 152.3,
-          "market_value": 2094.26,
-          "current_price": 299.18
+          "market_value": 2089.64,
+          "current_price": 298.52
         }
       ],
       "cryptos": [
@@ -252,35 +293,35 @@
           "symbol": "BTC-USD",
           "qty": 0.04,
           "avg_price": 45000.0,
-          "current_price": 68347.9297,
-          "market_value": 2733.92
+          "current_price": 67744.1484,
+          "market_value": 2709.77
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.19,
           "avg_price": 2500.0,
-          "current_price": 1978.5734,
-          "market_value": 375.93
+          "current_price": 1976.8615,
+          "market_value": 375.6
         }
       ]
     },
-    "portfolio_value": 7786.27,
-    "total_balance": 15136.67,
-    "net_worth": 7786.27,
+    "portfolio_value": 7754.45,
+    "total_balance": 15104.85,
+    "net_worth": 7754.45,
     "income": 4500.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.63,
       "liquidity_score": 27.22,
-      "diversification_hhi": 0.3079,
-      "diversification_score": 92.27,
+      "diversification_hhi": 0.3077,
+      "diversification_score": 92.3,
       "debt_income_ratio": 0.1361,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 72.21,
-    "financial_stress_index": 30.66,
+    "financial_wellness_score": 72.22,
+    "financial_stress_index": 30.65,
     "expenses": 0.0
   },
   "u005": {
@@ -294,15 +335,15 @@
           "symbol": "SPY",
           "qty": 10,
           "avg_price": 520.4,
-          "market_value": 6741.85,
-          "current_price": 674.185
+          "market_value": 6723.8,
+          "current_price": 672.38
         },
         {
           "symbol": "AVGO",
           "qty": 2,
           "avg_price": 1320.0,
-          "market_value": 680.0,
-          "current_price": 340.0
+          "market_value": 660.96,
+          "current_price": 330.48
         }
       ],
       "cryptos": [
@@ -310,35 +351,35 @@
           "symbol": "BTC-USD",
           "qty": 0.05,
           "avg_price": 45000.0,
-          "current_price": 68347.9297,
-          "market_value": 3417.4
+          "current_price": 67744.1484,
+          "market_value": 3387.21
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.2,
           "avg_price": 2500.0,
-          "current_price": 1978.5734,
-          "market_value": 395.71
+          "current_price": 1976.8615,
+          "market_value": 395.37
         }
       ]
     },
-    "portfolio_value": 11234.96,
-    "total_balance": 23835.21,
-    "net_worth": 11234.96,
+    "portfolio_value": 11167.34,
+    "total_balance": 23767.59,
+    "net_worth": 11167.34,
     "income": 4600.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 2.74,
       "liquidity_score": 45.65,
-      "diversification_hhi": 0.4575,
-      "diversification_score": 72.33,
+      "diversification_hhi": 0.4593,
+      "diversification_score": 72.1,
       "debt_income_ratio": 0.2283,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 72.68,
-    "financial_stress_index": 27.27,
+    "financial_wellness_score": 72.61,
+    "financial_stress_index": 27.32,
     "expenses": 0.0
   },
   "u006": {
@@ -352,15 +393,15 @@
           "symbol": "NFLX",
           "qty": 3,
           "avg_price": 640.0,
-          "market_value": 295.61,
-          "current_price": 98.5382
+          "market_value": 297.06,
+          "current_price": 99.02
         },
         {
           "symbol": "AMD",
           "qty": 10,
           "avg_price": 165.3,
-          "market_value": 1971.35,
-          "current_price": 197.135
+          "market_value": 1924.3,
+          "current_price": 192.43
         }
       ],
       "cryptos": [
@@ -368,35 +409,35 @@
           "symbol": "BTC-USD",
           "qty": 0.06,
           "avg_price": 45000.0,
-          "current_price": 68347.9297,
-          "market_value": 4100.88
+          "current_price": 67744.1484,
+          "market_value": 4064.65
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.21,
           "avg_price": 2500.0,
-          "current_price": 1978.5734,
-          "market_value": 415.5
+          "current_price": 1976.8615,
+          "market_value": 415.14
         }
       ]
     },
-    "portfolio_value": 6783.34,
-    "total_balance": 15273.44,
-    "net_worth": 6783.34,
+    "portfolio_value": 6701.15,
+    "total_balance": 15191.25,
+    "net_worth": 6701.15,
     "income": 4750.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.79,
       "liquidity_score": 29.79,
-      "diversification_hhi": 0.4556,
-      "diversification_score": 72.59,
+      "diversification_hhi": 0.4562,
+      "diversification_score": 72.51,
       "debt_income_ratio": 0.1489,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 67.2,
-    "financial_stress_index": 33.57,
+    "financial_wellness_score": 67.18,
+    "financial_stress_index": 33.58,
     "expenses": 0.0
   },
   "u007": {
@@ -410,15 +451,15 @@
           "symbol": "INTC",
           "qty": 20,
           "avg_price": 41.2,
-          "market_value": 894.3,
-          "current_price": 44.715
+          "market_value": 868.4,
+          "current_price": 43.42
         },
         {
           "symbol": "BAC",
           "qty": 25,
           "avg_price": 34.5,
-          "market_value": 1203.12,
-          "current_price": 48.125
+          "market_value": 1216.0,
+          "current_price": 48.64
         }
       ],
       "cryptos": [
@@ -426,35 +467,35 @@
           "symbol": "BTC-USD",
           "qty": 0.07,
           "avg_price": 45000.0,
-          "current_price": 68347.9297,
-          "market_value": 4784.36
+          "current_price": 67744.1484,
+          "market_value": 4742.09
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.22,
           "avg_price": 2500.0,
-          "current_price": 1978.5734,
-          "market_value": 435.29
+          "current_price": 1976.8615,
+          "market_value": 434.91
         }
       ]
     },
-    "portfolio_value": 7317.07,
-    "total_balance": 10667.82,
-    "net_worth": 7317.07,
+    "portfolio_value": 7261.4,
+    "total_balance": 10612.15,
+    "net_worth": 7261.4,
     "income": 4800.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 0.7,
       "liquidity_score": 11.63,
-      "diversification_hhi": 0.473,
-      "diversification_score": 70.26,
+      "diversification_hhi": 0.4724,
+      "diversification_score": 70.34,
       "debt_income_ratio": 0.0582,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 60.15,
-    "financial_stress_index": 41.3,
+    "financial_wellness_score": 60.17,
+    "financial_stress_index": 41.28,
     "expenses": 0.0
   },
   "u008": {
@@ -468,15 +509,15 @@
           "symbol": "JPM",
           "qty": 9,
           "avg_price": 191.0,
-          "market_value": 2582.28,
-          "current_price": 286.92
+          "market_value": 2605.32,
+          "current_price": 289.48
         },
         {
           "symbol": "V",
           "qty": 4,
           "avg_price": 275.4,
-          "market_value": 1253.8,
-          "current_price": 313.45
+          "market_value": 1269.44,
+          "current_price": 317.36
         }
       ],
       "cryptos": [
@@ -484,35 +525,35 @@
           "symbol": "BTC-USD",
           "qty": 0.08,
           "avg_price": 45000.0,
-          "current_price": 68347.9297,
-          "market_value": 5467.83
+          "current_price": 67744.1484,
+          "market_value": 5419.53
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.23,
           "avg_price": 2500.0,
-          "current_price": 1978.5734,
-          "market_value": 455.07
+          "current_price": 1976.8615,
+          "market_value": 454.68
         }
       ]
     },
-    "portfolio_value": 9758.98,
-    "total_balance": 18909.48,
-    "net_worth": 9758.98,
+    "portfolio_value": 9748.97,
+    "total_balance": 18899.47,
+    "net_worth": 9748.97,
     "income": 5200.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.76,
       "liquidity_score": 29.33,
-      "diversification_hhi": 0.4026,
-      "diversification_score": 79.65,
+      "diversification_hhi": 0.3996,
+      "diversification_score": 80.06,
       "debt_income_ratio": 0.1466,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 69.16,
-    "financial_stress_index": 32.34,
+    "financial_wellness_score": 69.28,
+    "financial_stress_index": 32.26,
     "expenses": 0.0
   },
   "u009": {
@@ -526,15 +567,15 @@
           "symbol": "KO",
           "qty": 14,
           "avg_price": 61.2,
-          "market_value": 1075.9,
-          "current_price": 76.85
+          "market_value": 1078.56,
+          "current_price": 77.04
         },
         {
           "symbol": "PEP",
           "qty": 6,
           "avg_price": 171.3,
-          "market_value": 946.59,
-          "current_price": 157.765
+          "market_value": 956.58,
+          "current_price": 159.43
         }
       ],
       "cryptos": [
@@ -542,35 +583,35 @@
           "symbol": "BTC-USD",
           "qty": 0.09,
           "avg_price": 45000.0,
-          "current_price": 68347.9297,
-          "market_value": 6151.31
+          "current_price": 67744.1484,
+          "market_value": 6096.97
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.24,
           "avg_price": 2500.0,
-          "current_price": 1978.5734,
-          "market_value": 474.86
+          "current_price": 1976.8615,
+          "market_value": 474.45
         }
       ]
     },
-    "portfolio_value": 8648.66,
-    "total_balance": 11588.91,
-    "net_worth": 8648.66,
+    "portfolio_value": 8606.56,
+    "total_balance": 11546.81,
+    "net_worth": 8606.56,
     "income": 3500.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 0.84,
       "liquidity_score": 14.0,
-      "diversification_hhi": 0.5363,
-      "diversification_score": 61.82,
+      "diversification_hhi": 0.5329,
+      "diversification_score": 62.27,
       "debt_income_ratio": 0.07,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 58.45,
-    "financial_stress_index": 42.04,
+    "financial_wellness_score": 58.58,
+    "financial_stress_index": 41.95,
     "expenses": 0.0
   },
   "u010": {
@@ -584,15 +625,15 @@
           "symbol": "BABA",
           "qty": 15.0,
           "avg_price": 86.2,
-          "market_value": 1979.85,
-          "current_price": 131.99
+          "market_value": 1961.85,
+          "current_price": 130.79
         },
         {
           "symbol": "PDD",
           "qty": 5.0,
           "avg_price": 148.5,
-          "market_value": 509.15,
-          "current_price": 101.83
+          "market_value": 509.85,
+          "current_price": 101.97
         }
       ],
       "cryptos": [
@@ -600,61 +641,61 @@
           "symbol": "BTC-USD",
           "qty": 0.1,
           "avg_price": 45000.0,
-          "current_price": 68347.9297,
-          "market_value": 6834.79
+          "current_price": 67744.1484,
+          "market_value": 6774.41
         },
         {
           "symbol": "ETH-USD",
           "qty": 7.25,
           "avg_price": 2092.696552,
-          "current_price": 1978.5734,
-          "market_value": 14344.66,
+          "current_price": 1976.8615,
+          "market_value": 14332.25,
           "name": "Ethereum"
         },
         {
           "symbol": "DOGE-USD",
           "qty": 70368.0,
           "avg_price": 0.09314,
-          "current_price": 0.0907,
+          "current_price": 0.0906,
           "name": "Dogecoin",
-          "market_value": 6382.38
+          "market_value": 6375.34
         },
         {
           "symbol": "BCH-USD",
           "qty": 9.0,
           "avg_price": 457.81,
-          "current_price": 450.0366,
+          "current_price": 448.0481,
           "name": "Bitcoin Cash",
-          "market_value": 4050.33
+          "market_value": 4032.43
         },
         {
           "symbol": "BNB-USD",
           "qty": 6.0,
           "avg_price": 648.09,
-          "current_price": 631.4469,
+          "current_price": 626.8687,
           "name": "BNB",
-          "market_value": 3788.68
+          "market_value": 3761.21
         }
       ],
       "commodities": []
     },
-    "portfolio_value": 37889.84,
-    "total_balance": 45589.84,
-    "net_worth": 37889.84,
+    "portfolio_value": 37747.34,
+    "total_balance": 45447.34,
+    "net_worth": 37747.34,
     "income": 4900.0,
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 1.57,
       "liquidity_score": 26.19,
-      "diversification_hhi": 0.2286,
-      "diversification_score": 90.0,
+      "diversification_hhi": 0.2291,
+      "diversification_score": 89.94,
       "debt_income_ratio": 0.131,
       "debt_income_score": 100.0
     },
     "risk_profile": "Moderate",
-    "financial_wellness_score": 71.17,
-    "financial_stress_index": 31.52,
+    "financial_wellness_score": 71.15,
+    "financial_stress_index": 31.54,
     "expenses": 0.0
   }
 }
