@@ -606,7 +606,7 @@ export default function SettingsModal({ onClose }) {
                       <div style={{ fontWeight: 600, fontSize: '0.87rem', marginBottom: 2 }}>{l.title}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{l.desc}</div>
                     </div>
-                    <span style={{ color: 'var(--text-faint)', fontSize: '0.9rem' }}>-></span>
+                      <span style={{ color: 'var(--text-faint)', fontSize: '0.9rem' }}>{'->'}</span>
                   </a>
                 ))}
               </Card>
@@ -835,7 +835,6 @@ const s = {
     whiteSpace:'nowrap',
   },
 }
-
 
 
 

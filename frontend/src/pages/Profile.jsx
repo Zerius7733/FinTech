@@ -2679,7 +2679,7 @@ export default function Profile() {
             </div>
           </div>
 
-          <div style={{ ...s.card, ...s.featureCard, background:'linear-gradient(180deg, rgba(109,141,247,0.06), rgba(42,184,163,0.04) 100%)' }}>
+          <div style={{ ...s.card, background:'linear-gradient(180deg, rgba(109,141,247,0.06), rgba(42,184,163,0.04) 100%)' }}>
             <div style={s.secLabel}>
               Retirement Outlook
               <span style={{ ...s.inlineStat, color:retirementSummary.tone, borderColor:'rgba(109,141,247,0.18)' }}>
@@ -2687,7 +2687,6 @@ export default function Profile() {
               </span>
             </div>
 
-            <div style={s.featureCardBody}>
             {!retirementOpen ? (
               <div style={s.retirementPreview}>
                 <div style={s.retirementPreviewBadge}>🌅</div>
@@ -2840,7 +2839,6 @@ export default function Profile() {
                 </div>
               </>
             )}
-            </div>
           </div>
         </div>
 
@@ -3191,10 +3189,7 @@ const s = {
   retirementPreview: {
     display:'flex',
     alignItems:'center',
-    justifyContent:'center',
-    flexWrap:'wrap',
     gap:18,
-    width:'100%',
   },
   retirementPreviewBadge: {
     width:72,
@@ -3949,4 +3944,3 @@ const yw = {
     cursor:'pointer',
   },
 }
-
