@@ -235,7 +235,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
     <div style={{ width:'100%', maxWidth:'100%', overflow:'auto' }}>
       <div style={cs.eyebrow}>Step 5 of 5 · Optional</div>
       <h3 style={{ ...cs.heading, fontSize:'1.4rem' }}>Import your <em style={{ fontStyle:'normal', color:'var(--teal)' }}>portfolio</em></h3>
-      <p style={{ ...cs.subtext, fontSize:'0.8rem' }}>Upload a screenshot from your brokerage. GPT-4o will read your holdings.</p>
+      <p style={{ ...cs.subtext, fontSize:'0.8rem' }}>Upload a screenshot from your brokerage. Our System will process your image for you.</p>
 
       <div
         onDragOver={e => { e.preventDefault(); setDragging(true) }}
@@ -262,10 +262,10 @@ function PortfolioImportStep({ onBack, onComplete }) {
       {error && <div style={imp.errorBox}>{error}</div>}
 
       <div style={{ display:'flex', justifyContent:'space-between', gap:12, marginTop:20 }}>
-        <button style={cs.btnBack} onClick={onBack}>← Back</button>
+        <button style={S.btnBack} onClick={onBack}>← Back</button>
         <div style={{ display:'flex', gap:8 }}>
-          <button style={{ ...cs.btnBack, color:'var(--text-faint)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => onComplete([])}>Skip</button>
-          <button style={{ ...cs.btnNext, opacity: preview ? 1 : 0.4, cursor: preview ? 'pointer' : 'not-allowed', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => preview && parse()}>
+          <button style={{ ...S.btnBack, color:'var(--text-faint)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => onComplete([])}>Skip</button>
+          <button style={{ ...S.submit, opacity: preview ? 1 : 0.4, cursor: preview ? 'pointer' : 'not-allowed', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => preview && parse()}>
             Extract →
           </button>
         </div>
@@ -309,7 +309,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
         <button style={cs.btnBack} onClick={() => setPhase('upload')}>← Back</button>
         <div style={{ display:'flex', gap:8 }}>
           <button style={{ ...cs.btnBack, color:'var(--text-faint)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => onComplete([])}>Skip</button>
-          <button style={{ ...cs.btnNext, background:'linear-gradient(135deg,var(--green),#059669)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={confirm}>
+          <button style={{ ...S.submit, background:'linear-gradient(135deg,var(--green),#059669)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={confirm}>
             Confirm ✦
           </button>
         </div>
@@ -357,7 +357,7 @@ export default function SurveyModal({ open, onClose }) {
     <div style={S.backdrop} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ ...S.card, maxWidth:500, maxHeight:'90vh', overflowY:'auto' }}>
         <button onClick={onClose} style={S.closeBtn} type="button">✕</button>
-        <div style={{ textAlign:'center', animation:'fadeUp 0.5s ease' }}>
+        <div style={{ textAlign:'center', animation:'fadeUp 0.5s ease' ,paddingTop:50, paddingBottom:50 }}>
           <div style={S.completeRing}>✦</div>
           <h2 style={{ fontFamily:'var(--font-display)', fontSize:'1.4rem', fontWeight:800, marginBottom:10 }}>
             You're set, <span style={{ color:'var(--green)' }}>{firstName || user?.username}</span>
@@ -470,7 +470,7 @@ export default function SurveyModal({ open, onClose }) {
 
   return (
     <div style={S.backdrop} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ ...S.card, maxWidth:900, maxHeight:'90vh', overflowY:'auto', padding:'48px 54px 42px' }}>
+      <div style={{ ...S.card, maxWidth:720, maxHeight:'90vh', overflowY:'auto', padding:'38px 43px 34px' }}>
         <button onClick={onClose} style={S.closeBtn} type="button">✕</button>
 
         {step === 1 && (
@@ -621,15 +621,15 @@ const S = {
   },
   closeBtn: {
     position: 'absolute',
-    top: 24,
-    right: 24,
-    width: 48,
-    height: 48,
+    top: 19,
+    right: 19,
+    width: 38,
+    height: 38,
     borderRadius: '50%',
     background: 'rgba(255,255,255,0.08)',
     border: '1px solid rgba(255,255,255,0.12)',
     color: 'var(--text-dim)',
-    fontSize: '1.5rem',
+    fontSize: '1.2rem',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -639,8 +639,8 @@ const S = {
   ageCard: {
     background: 'var(--surface)',
     border: '1.5px solid var(--border)',
-    borderRadius: 15,
-    padding: '18px 12px',
+    borderRadius: 12,
+    padding: '14px 10px',
     textAlign: 'center',
     cursor: 'pointer',
     transition: 'all 0.2s',
@@ -649,61 +649,61 @@ const S = {
   assetCard: {
     background: 'var(--surface)',
     border: '1.5px solid var(--border)',
-    borderRadius: 18,
-    padding: '21px',
+    borderRadius: 14,
+    padding: '17px',
     cursor: 'pointer',
     transition: 'all 0.25s',
     position: 'relative',
   },
   assetCheck: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 27,
-    height: 27,
+    top: 10,
+    right: 10,
+    width: 22,
+    height: 22,
     borderRadius: '50%',
     background: 'var(--surface2)',
     border: '1.5px solid var(--border)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '0.9rem',
+    fontSize: '0.72rem',
     color: 'transparent',
     transition: 'all 0.2s',
   },
   goalCard: {
     background: 'var(--surface)',
     border: '1.5px solid var(--border)',
-    borderRadius: 15,
-    padding: '18px',
+    borderRadius: 12,
+    padding: '14px',
     cursor: 'pointer',
     transition: 'all 0.25s',
     display: 'flex',
     alignItems: 'flex-start',
-    gap: 15,
+    gap: 12,
   },
   goalCardActive: { borderColor: 'var(--teal)', background: 'rgba(45,212,191,0.05)' },
   goalIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     background: 'var(--surface2)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '1.3rem',
+    fontSize: '1.04rem',
     flexShrink: 0,
   },
   horizonBtn: {
     background: 'var(--surface)',
     border: '1.5px solid var(--border)',
-    borderRadius: 12,
-    padding: '15px 9px',
+    borderRadius: 10,
+    padding: '12px 7px',
     textAlign: 'center',
     cursor: 'pointer',
     transition: 'all 0.2s',
     fontFamily: 'var(--font-mono)',
-    fontSize: '1rem',
+    fontSize: '0.8rem',
     color: 'var(--text-dim)',
   },
   horizonActive: { borderColor: 'var(--teal)', color: 'var(--teal)', background: 'rgba(45,212,191,0.07)' },
@@ -711,20 +711,20 @@ const S = {
     background: 'transparent',
     border: '1px solid var(--border)',
     color: 'var(--text-dim)',
-    padding: '13px 27px',
-    borderRadius: 12,
-    fontSize: '1.2rem',
+    padding: '10px 22px',
+    borderRadius: 10,
+    fontSize: '0.95rem',
     fontWeight: 600,
     cursor: 'pointer',
   },
   submit: {
-    padding: '15px 36px',
+    padding: '12px 29px',
     background: 'var(--gold)',
     border: 'none',
-    borderRadius: 12,
+    borderRadius: 10,
     color: '#ffffff',
     fontWeight: 700,
-    fontSize: '1.2rem',
+    fontSize: '0.96rem',
     cursor: 'pointer',
     transition: 'opacity 0.2s',
   },
@@ -737,27 +737,27 @@ const S = {
     color: 'var(--text-dim)',
   },
   completeRing: {
-    width: 120,
-    height: 120,
+    width: 96,
+    height: 96,
     borderRadius: '50%',
     background: 'linear-gradient(135deg,rgba(52,211,153,0.15),rgba(45,212,191,0.1))',
     border: '2px solid rgba(52,211,153,0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '3.3rem',
-    margin: '0 auto 24px',
+    fontSize: '2.64rem',
+    margin: '0 auto 19px',
     boxShadow: '0 0 32px rgba(52,211,153,0.2)',
   },
 }
 
 const cs = {
-  eyebrow: { fontFamily: 'var(--font-mono)', fontSize: '0.975rem', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 15 },
-  heading: { fontFamily: 'var(--font-display)', fontWeight: 800, lineHeight: 1.1, marginBottom: 12 },
-  subtext: { color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: 30 },
-  formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 30 },
-  formLabel: { fontFamily: 'var(--font-mono)', fontSize: '0.945rem', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 },
-  formInput: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 15px', color: 'var(--text)', fontSize: '1.2rem', outline: 'none', width: '100%' },
+  eyebrow: { fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 12 },
+  heading: { fontFamily: 'var(--font-display)', fontWeight: 800, lineHeight: 1.1, marginBottom: 10 },
+  subtext: { color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: 24 },
+  formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 },
+  formLabel: { fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 5 },
+  formInput: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', color: 'var(--text)', fontSize: '0.96rem', outline: 'none', width: '100%' },
 }
 
 const imp = {
