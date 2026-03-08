@@ -273,41 +273,6 @@ export default function SettingsModal({ onClose }) {
     if (didPersist) refreshPage()
   }
 
-  const downloadCsv = (filename, text) => {
-    const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
-  }
-
-  const handleExportPortfolio = async () => {
-    if (!user?.user_id || dangerBusy) return
-    setDangerBusy('export')
-    setDangerMsg('')
-    try {
-      const res = await fetch(`${API}/users/${user.user_id}/danger/export`)
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err?.detail || `export failed (${res.status})`)
-      }
-      const contentDisposition = res.headers.get('content-disposition') || ''
-      const filenameMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i)
-      const filename = filenameMatch?.[1] || `${user.user_id}_portfolio_export.csv`
-      const text = await res.text()
-      downloadCsv(filename, text)
-      setDangerMsg('Portfolio CSV exported.')
-    } catch (err) {
-      setDangerMsg(err?.message || 'Portfolio export failed.')
-    } finally {
-      setDangerBusy('')
-    }
-  }
-
   const handleDeletePortfolio = async () => {
     if (!user?.user_id || dangerBusy) return
     if (!window.confirm('Delete all portfolio data for this account? This cannot be undone.')) return
@@ -543,7 +508,6 @@ export default function SettingsModal({ onClose }) {
               <p style={s.pageSub}>Manage your account security, 2FA, and data privacy preferences.</p>
               <Card title="Danger Zone" icon="⚠️">
                 {[
-                  { key: 'export', title: 'Export portfolio data', desc: 'Download a full CSV export of your current portfolio holdings.', btn: 'Export CSV', red: false, onClick: handleExportPortfolio },
                   { key: 'delete', title: 'Delete all portfolio data', desc: 'Permanently erase all portfolio holdings and history. Cannot be undone.', btn: 'Delete Data', red: true, onClick: handleDeletePortfolio },
                   { key: 'close', title: 'Close account', desc: 'Permanently delete your Unova account and all data.', btn: 'Close Account', red: true, onClick: handleCloseAccount },
                 ].map(d => (
@@ -908,7 +872,6 @@ const s = {
     whiteSpace:'nowrap',
   },
 }
-
 
 
 
