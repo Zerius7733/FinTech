@@ -1,0 +1,215 @@
+{
+  "type": "stock",
+  "symbol": "ADBE",
+  "updated_at": "2026-03-08T18:24:34.368683+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "ADBE",
+      "name": "Adobe Inc.",
+      "period": {
+        "months": 3,
+        "start": "2025-12-08",
+        "end": "2026-03-08"
+      },
+      "metrics": {
+        "start_price": 339.12,
+        "end_price": 283.62,
+        "return_pct": -16.3659,
+        "volatility_annualized": 0.33748,
+        "max_drawdown_pct": -31.0044,
+        "avg_daily_volume": 5199996.7213,
+        "volume_change_pct": 34.2979
+      },
+      "notable_moves": [
+        {
+          "date": "2026-03-03",
+          "move_pct": 3.8753,
+          "close": 270.99,
+          "volume": 6206600.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-24",
+          "move_pct": 3.4417,
+          "close": 255.17,
+          "volume": 5529100.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-03",
+          "move_pct": -7.3113,
+          "close": 271.93,
+          "volume": 8324900.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-13",
+          "move_pct": -5.4082,
+          "close": 309.93,
+          "volume": 7217300.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2025-12-11",
+          "move_pct": 2.1275,
+          "close": 350.43,
+          "volume": 10158700.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-02-11",
+          "move_pct": -2.8375,
+          "close": 257.16,
+          "volume": 8759900.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-03-03",
+          "headline": "Adobe to Announce Q1 FY2026 Earnings Results on March 12, 2026 | Nasdaq",
+          "source": "",
+          "url": "https://www.nasdaq.com/press-release/adobe-announce-q1-fy2026-earnings-results-march-12-2026-2026-03-02?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Piper Sandler Maintains Neutral on Adobe Inc. (ADBE) March 2026 | Meyka",
+          "source": "",
+          "url": "https://meyka.com/blog/piper-sandler-maintains-neutral-on-adobe-inc-adbe-march-2026-0503/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Adobe Soars to 69th-Highest Trading Volume on Earnings Anticipation and AI Strategic Moves",
+          "source": "",
+          "url": "https://www.ainvest.com/news/adobe-soars-69th-highest-trading-volume-earnings-anticipation-ai-strategic-moves-2603/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Adobe Revenue 2026: 26.55 B USD (+11.7%) | Eulerpool",
+          "source": "",
+          "url": "https://eulerpool.com/stock/Adobe-Stock-US00724F1012/Revenue?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Barclays Issues Pessimistic Forecast for Adobe (NASDAQ:ADBE) Stock Price - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2026/03/06/barclays-issues-pessimistic-forecast-for-adobe-nasdaqadbe-stock-price.html?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Adobe (ADBE) Earnings Dates, Call Summary & Reports - TipRanks.com",
+          "source": "",
+          "url": "https://www.tipranks.com/stocks/adbe/earnings?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Adobe to Announce Q1 FY2026 Earnings Results on March 12, 2026 | Morningstar",
+          "source": "",
+          "url": "https://www.morningstar.com/news/business-wire/20260302269687/adobe-to-announce-q1-fy2026-earnings-results-on-march-12-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Adobe Inc. Shares Purchased by First Trust Advisors LP - San Jose Today",
+          "source": "",
+          "url": "https://nationaltoday.com/us/ca/san-jose/news/2026/03/08/adobe-inc-shares-purchased-by-first-trust-advisors-lp/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "CI Investments Inc. Has $23.31 Million Position in Adobe Inc. $ADBE - American Market News",
+          "source": "",
+          "url": "https://www.americanbankingnews.com/2026/03/04/ci-investments-inc-has-23-31-million-position-in-adobe-inc-adbe.html?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Dimensional Fund Advisors Trims Adobe Stake - San Jose Today",
+          "source": "",
+          "url": "https://nationaltoday.com/us/ca/san-jose/news/2026/03/04/dimensional-fund-advisors-trims-adobe-stake/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Arete Wealth Advisors LLC Reduces Stake in Adobe Inc. $ADBE - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2026/03/03/arete-wealth-advisors-llc-reduces-stake-in-adobe-inc-adbe.html?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Sen. Markwayne Mullin Discloses Adobe Inc. Stock Purchase - Stilwell Today",
+          "source": "",
+          "url": "https://nationaltoday.com/us/ok/stilwell/news/2026/03/05/sen-markwayne-mullin-discloses-adobe-inc-stock-purchase/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Class Calls Adobe Systems\u2019 Security \u2018Shoddy\u2019 | Courthouse News Service",
+          "source": "",
+          "url": "https://www.courthousenews.com/class-calls-adobe-systems-security-shoddy/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Adobe Could Face Monetary Costs Related to FTC Investigation",
+          "source": "",
+          "url": "https://news.bloomberglaw.com/tech-and-telecom-law/adobe-could-face-monetary-costs-related-to-ftc-investigation?utm_source=openai"
+        },
+        {
+          "date": "2026-03-03",
+          "headline": "Southern District Of New York Grants Motion To Dismiss Putative Securities Class Action Against Software Company | A&O Shearman - JDSupra",
+          "source": "",
+          "url": "https://www.jdsupra.com/legalnews/southern-district-of-new-york-grants-1355325/?utm_source=openai"
+        }
+      ],
+      "narrative": "Adobe's stock price declined from a start price of 339.12 to an end price of 283.62, resulting in a total return of -16.3659% over the period. The stock exhibited an annualized volatility of 0.33748 and experienced a maximum drawdown of -31.0044%, indicating significant price fluctuations and downside risk during this timeframe. The largest upward movement occurred on 2026-03-03, when the stock rose by 3.8753% to close at 270.99 on a volume of 6,206,600 shares, coinciding with multiple news items including anticipation of Q1 FY2026 earnings results scheduled for March 12, 2026, and reports of strategic moves related to AI, which may have contributed to the positive price action [1][3]. Conversely, the largest downward day was on 2026-02-03, with a decline of -7.3113% closing at 271.93 on a notably high volume of 8,324,900 shares, though no specific driver from the provided data directly aligns with this date. A high volume day on 2025-12-11 saw a 2.1275% price increase to 350.43 with 10,158,700 shares traded, reflecting heightened market activity. Other notable news around early March includes mixed analyst sentiment such as Piper Sandler maintaining a neutral stance [2], as well as institutional trading activity with some funds purchasing shares and others trimming positions [8][10][11]. Additionally, regulatory and legal concerns were reported, including potential monetary costs related to an FTC investigation and a securities class action dismissal, which may have influenced market perceptions [15][16]. Overall, the stock's performance and volatility were shaped by a combination of earnings anticipation, strategic developments, institutional trading, and regulatory news.",
+      "tldr": [
+        "Period return: -16.37% with annualized volatility 0.337.",
+        "Largest up day: 2026-03-03 (3.88%), largest down day: 2026-02-03 (-7.31%).",
+        "Highest volume spike was on 2025-12-11 with volume 10,158,700."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-16.37%) with peak drawdown of -31.00%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.nasdaq.com/press-release/adobe-announce-q1-fy2026-earnings-results-march-12-2026-2026-03-02?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://meyka.com/blog/piper-sandler-maintains-neutral-on-adobe-inc-adbe-march-2026-0503/?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.ainvest.com/news/adobe-soars-69th-highest-trading-volume-earnings-anticipation-ai-strategic-moves-2603/?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://nationaltoday.com/us/ca/san-jose/news/2026/03/08/adobe-inc-shares-purchased-by-first-trust-advisors-lp/?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://www.americanbankingnews.com/2026/03/04/ci-investments-inc-has-23-31-million-position-in-adobe-inc-adbe.html?utm_source=openai"
+        },
+        {
+          "id": 6,
+          "url": "https://nationaltoday.com/us/ca/san-jose/news/2026/03/04/dimensional-fund-advisors-trims-adobe-stake/?utm_source=openai"
+        },
+        {
+          "id": 7,
+          "url": "https://www.defenseworld.net/2026/03/03/arete-wealth-advisors-llc-reduces-stake-in-adobe-inc-adbe.html?utm_source=openai"
+        },
+        {
+          "id": 8,
+          "url": "https://www.courthousenews.com/class-calls-adobe-systems-security-shoddy/?utm_source=openai"
+        },
+        {
+          "id": 9,
+          "url": "https://news.bloomberglaw.com/tech-and-telecom-law/adobe-could-face-monetary-costs-related-to-ftc-investigation?utm_source=openai"
+        },
+        {
+          "id": 10,
+          "url": "https://www.jdsupra.com/legalnews/southern-district-of-new-york-grants-1355325/?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

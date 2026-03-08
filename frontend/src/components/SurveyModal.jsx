@@ -1,5 +1,7 @@
-import { useState, useRef, useCallback } from 'react'
+﻿import { useState, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
 import RiskSlider from './RiskSlider.jsx'
 
 const API = 'http://localhost:8000'
@@ -23,34 +25,34 @@ const STEPS = [
 ]
 
 const AGE_GROUPS = [
-  { emoji:'🌱', label:'18–29' },
-  { emoji:'📈', label:'30–44' },
-  { emoji:'🏦', label:'45–59' },
-  { emoji:'🌅', label:'60+' }
+  { emoji:'ðŸŒ±', label:'18â€“29' },
+  { emoji:'ðŸ“ˆ', label:'30â€“44' },
+  { emoji:'ðŸ¦', label:'45â€“59' },
+  { emoji:'ðŸŒ…', label:'60+' }
 ]
 
 const ASSET_CLASSES = [
-  { icon:'📈', name:'Equities', desc:'Stocks, ETFs, and equity funds.', color:'#60a5fa', bg:'rgba(96,165,250,0.08)' },
-  { icon:'🏛️', name:'Fixed Income', desc:'Government & corporate bonds.', color:'#a78bfa', bg:'rgba(167,139,250,0.08)' },
-  { icon:'🏠', name:'Real Estate', desc:'Direct property and REITs.', color:'#c9a84c', bg:'rgba(201,168,76,0.08)' },
-  { icon:'₿', name:'Digital Assets', desc:'Crypto, DeFi, and tokenised assets.', color:'#2dd4bf', bg:'rgba(45,212,191,0.08)' },
-  { icon:'🪙', name:'Commodities', desc:'Gold, silver, oil, and resources.', color:'#fbbf24', bg:'rgba(251,191,36,0.08)' },
-  { icon:'🔐', name:'Private Assets', desc:'PE, venture, hedge funds.', color:'#f87171', bg:'rgba(248,113,113,0.08)' },
+  { icon:'ðŸ“ˆ', name:'Equities', desc:'Stocks, ETFs, and equity funds.', color:'#60a5fa', bg:'rgba(96,165,250,0.08)' },
+  { icon:'ðŸ›ï¸', name:'Fixed Income', desc:'Government & corporate bonds.', color:'#a78bfa', bg:'rgba(167,139,250,0.08)' },
+  { icon:'ðŸ ', name:'Real Estate', desc:'Direct property and REITs.', color:'#c9a84c', bg:'rgba(201,168,76,0.08)' },
+  { icon:'â‚¿', name:'Digital Assets', desc:'Crypto, DeFi, and tokenised assets.', color:'#2dd4bf', bg:'rgba(45,212,191,0.08)' },
+  { icon:'ðŸª™', name:'Commodities', desc:'Gold, silver, oil, and resources.', color:'#fbbf24', bg:'rgba(251,191,36,0.08)' },
+  { icon:'ðŸ”', name:'Private Assets', desc:'PE, venture, hedge funds.', color:'#f87171', bg:'rgba(248,113,113,0.08)' },
 ]
 
 const GOALS = [
-  { icon:'🌱', title:'Wealth Growth', desc:'Compound and grow wealth aggressively.' },
-  { icon:'🏖️', title:'Retirement Planning', desc:'Build a nest egg for financial independence.' },
-  { icon:'💰', title:'Passive Income', desc:'Generate regular cash flow from yields.' },
-  { icon:'🏠', title:'Property Purchase', desc:'Save and invest toward buying real estate.' },
-  { icon:'🛡️', title:'Capital Preservation', desc:'Protect wealth against inflation and loss.' },
-  { icon:'🎓', title:'Education / Legacy', desc:'Fund education or create a legacy.' },
+  { icon:'ðŸŒ±', title:'Wealth Growth', desc:'Compound and grow wealth aggressively.' },
+  { icon:'ðŸ–ï¸', title:'Retirement Planning', desc:'Build a nest egg for financial independence.' },
+  { icon:'ðŸ’°', title:'Passive Income', desc:'Generate regular cash flow from yields.' },
+  { icon:'ðŸ ', title:'Property Purchase', desc:'Save and invest toward buying real estate.' },
+  { icon:'ðŸ›¡ï¸', title:'Capital Preservation', desc:'Protect wealth against inflation and loss.' },
+  { icon:'ðŸŽ“', title:'Education / Legacy', desc:'Fund education or create a legacy.' },
 ]
 
 const HORIZONS = [
-  { num:'1–2', label:'Short Term' },
-  { num:'3–5', label:'Medium Term' },
-  { num:'5–10', label:'Long Term' },
+  { num:'1â€“2', label:'Short Term' },
+  { num:'3â€“5', label:'Medium Term' },
+  { num:'5â€“10', label:'Long Term' },
   { num:'10+', label:'Generational' }
 ]
 
@@ -124,13 +126,13 @@ function HoldingRow({ holding, index, onChange, onDelete }) {
         {field('price','number')}
         <div onClick={() => onChange(index,'dir',holding.dir==='up'?'dn':'up')}
           style={{ ...es.cell, textAlign:'center', cursor:'pointer', background: holding.dir==='up' ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)', color: holding.dir==='up' ? 'var(--green)' : 'var(--red)', fontWeight:700 }}>
-          {holding.dir==='up' ? '▲ up' : '▼ dn'}
+          {holding.dir==='up' ? 'â–² up' : 'â–¼ dn'}
         </div>
         <select value={holding.type ?? 'unknown'} onChange={e => onChange(index,'type',e.target.value)}
           style={{ ...es.cell, padding:'6px 8px', background:'var(--surface2)' }}>
           {Object.keys(TYPE_COLOR).map(t => <option key={t} value={t}>{t}</option>)}
         </select>
-        <button onClick={() => onDelete(index)} style={es.deleteBtn} title="Remove">✕</button>
+        <button onClick={() => onDelete(index)} style={es.deleteBtn} title="Remove">âœ•</button>
       </div>
     </div>
   )
@@ -233,7 +235,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
 
   if (phase === 'upload') return (
     <div style={{ width:'100%', maxWidth:'100%', overflow:'auto' }}>
-      <div style={cs.eyebrow}>Step 5 of 5 · Optional</div>
+      <div style={cs.eyebrow}>Step 5 of 5 Â· Optional</div>
       <h3 style={{ ...cs.heading, fontSize:'1.4rem' }}>Import your <em style={{ fontStyle:'normal', color:'var(--teal)' }}>portfolio</em></h3>
       <p style={{ ...cs.subtext, fontSize:'0.8rem' }}>Upload a screenshot from your brokerage. Our System will process your image for you.</p>
 
@@ -248,13 +250,13 @@ function PortfolioImportStep({ onBack, onComplete }) {
         {preview ? (
           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
             <img src={preview} alt="Preview" style={{ maxHeight:150, maxWidth:'100%', borderRadius:10, border:'1px solid var(--border)' }} />
-            <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--teal)' }}>✓ Loaded</span>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--teal)' }}>âœ“ Loaded</span>
           </div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
-            <div style={imp.uploadIcon}>📸</div>
+            <div style={imp.uploadIcon}>ðŸ“¸</div>
             <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem' }}>Drag & drop or click</div>
-            <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--text-faint)' }}>PNG · JPG · WEBP</div>
+            <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--text-faint)' }}>PNG Â· JPG Â· WEBP</div>
           </div>
         )}
       </div>
@@ -262,11 +264,11 @@ function PortfolioImportStep({ onBack, onComplete }) {
       {error && <div style={imp.errorBox}>{error}</div>}
 
       <div style={{ display:'flex', justifyContent:'space-between', gap:12, marginTop:20 }}>
-        <button style={S.btnBack} onClick={onBack}>← Back</button>
+        <button style={S.btnBack} onClick={onBack}>â† Back</button>
         <div style={{ display:'flex', gap:8 }}>
           <button style={{ ...S.btnBack, color:'var(--text-faint)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => onComplete([])}>Skip</button>
           <button style={{ ...S.submit, opacity: preview ? 1 : 0.4, cursor: preview ? 'pointer' : 'not-allowed', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => preview && parse()}>
-            Extract →
+            Extract â†’
           </button>
         </div>
       </div>
@@ -277,7 +279,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20 }}>
       <div style={imp.spinner} />
       <div style={{ textAlign:'center' }}>
-        <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', marginBottom:6 }}>Reading portfolio…</div>
+        <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', marginBottom:6 }}>Reading portfolioâ€¦</div>
         <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:'var(--text-faint)' }}>Scanning for holdings</div>
       </div>
     </div>
@@ -285,7 +287,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
 
   if (phase === 'review') return (
     <div style={{ width:'100%', maxWidth:'100%' }}>
-      <div style={cs.eyebrow}>Step 5 of 5 · Review</div>
+      <div style={cs.eyebrow}>Step 5 of 5 Â· Review</div>
       <h3 style={{ ...cs.heading, fontSize:'1.2rem', marginBottom:12 }}><em style={{ fontStyle:'normal', color:'var(--green)' }}>{holdings.length}</em> holdings</h3>
 
       {preview && (
@@ -306,11 +308,11 @@ function PortfolioImportStep({ onBack, onComplete }) {
       <button onClick={addHolding} style={{ ...imp.addRowBtn, padding:'6px 12px', fontSize:'0.7rem', marginBottom:12 }}>+ Add row</button>
 
       <div style={{ display:'flex', justifyContent:'space-between', gap:12 }}>
-        <button style={cs.btnBack} onClick={() => setPhase('upload')}>← Back</button>
+        <button style={cs.btnBack} onClick={() => setPhase('upload')}>â† Back</button>
         <div style={{ display:'flex', gap:8 }}>
           <button style={{ ...cs.btnBack, color:'var(--text-faint)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => onComplete([])}>Skip</button>
           <button style={{ ...S.submit, background:'linear-gradient(135deg,var(--green),#059669)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={confirm}>
-            Confirm ✦
+            Confirm âœ¦
           </button>
         </div>
       </div>
@@ -321,21 +323,26 @@ function PortfolioImportStep({ onBack, onComplete }) {
 }
 
 export default function SurveyModal({ open, onClose }) {
+  const navigate = useNavigate()
   const { user, login } = useAuth()
+  const { activeTheme } = useTheme()
   const [step, setStep] = useState(1)
   const [done, setDone] = useState(false)
   const [importedHoldings, setImportedHoldings] = useState([])
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [country, setCountry] = useState('Singapore')
   const [age, setAge] = useState('')
-  const [ageGroup, setAgeGroup] = useState('30–44')
+  const [ageGroup, setAgeGroup] = useState('30â€“44')
   const [selectedAssets, setSelectedAssets] = useState(new Set(['Equities','Fixed Income']))
   const [selectedGoals, setSelectedGoals] = useState(new Set(['Wealth Growth']))
-  const [horizon, setHorizon] = useState('3–5')
+  const [horizon, setHorizon] = useState('3â€“5')
   const [riskLevel, setRiskLevel] = useState(50)
   const [submitErr, setSubmitErr] = useState('')
+  const headingAccentColor = activeTheme?.id === 'silent-night' ? '#e9dfcf' : 'var(--gold)'
 
   if (!open) return null
 
@@ -343,8 +350,8 @@ export default function SurveyModal({ open, onClose }) {
   const goBack = () => setStep(s => s-1)
   const toggleSet = (set, setter, val) => setter(prev => { const n=new Set(prev); n.has(val)?n.delete(val):n.add(val); return n })
   const goNextFromProfile = () => {
-    if (!firstName.trim() || !email.trim()) {
-      setSubmitErr('First name and email are required.')
+    if (!firstName.trim() || !email.trim() || !password.trim()) {
+      setSubmitErr('First name, email, and password are required.')
       return
     }
     setSubmitErr('')
@@ -356,9 +363,9 @@ export default function SurveyModal({ open, onClose }) {
   if (done) return (
     <div style={S.backdrop} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ ...S.card, maxWidth:500, maxHeight:'90vh', overflowY:'auto' }}>
-        <button onClick={onClose} style={S.closeBtn} type="button">✕</button>
+        <button onClick={onClose} style={S.closeBtn} type="button">âœ•</button>
         <div style={{ textAlign:'center', animation:'fadeUp 0.5s ease' ,paddingTop:50, paddingBottom:50 }}>
-          <div style={S.completeRing}>✦</div>
+          <div style={S.completeRing}>âœ¦</div>
           <h2 style={{ fontFamily:'var(--font-display)', fontSize:'1.4rem', fontWeight:800, marginBottom:10 }}>
             You're set, <span style={{ color:'var(--green)' }}>{firstName || user?.username}</span>
           </h2>
@@ -370,7 +377,7 @@ export default function SurveyModal({ open, onClose }) {
           </div>
           {importedHoldings.length > 0 && (
             <div style={{ background:'rgba(52,211,153,0.08)', border:'1px solid rgba(52,211,153,0.25)', borderRadius:10, padding:'10px 14px', marginBottom:16, fontSize:'0.75rem', color:'var(--green)' }}>
-              📂 {importedHoldings.length} holdings imported
+              ðŸ“‚ {importedHoldings.length} holdings imported
             </div>
           )}
           <button style={{...S.submit, background:'linear-gradient(135deg,var(--gold),var(--amber-600))'}} onClick={async () => {
@@ -378,14 +385,15 @@ export default function SurveyModal({ open, onClose }) {
             try {
               let activeUser = user
               if (!activeUser?.user_id) {
-                if (!firstName.trim() || !email.trim()) {
+                if (!firstName.trim() || !email.trim() || !password.trim()) {
                   setSubmitErr('Missing profile data. Please go back to step 1.')
                   return
                 }
+                const finalPassword = password.trim()
                 const regRes = await fetch(`${API}/auth/register`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ username: email, password: Math.random().toString(36).slice(2) }),
+                  body: JSON.stringify({ username: email, password: finalPassword }),
                 })
                 if (!regRes.ok && regRes.status !== 409) {
                   const regErr = await regRes.json().catch(() => ({}))
@@ -394,7 +402,7 @@ export default function SurveyModal({ open, onClose }) {
                 const loginRes = await fetch(`${API}/auth/login`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ username: email, password: Math.random().toString(36).slice(2) }),
+                  body: JSON.stringify({ username: email, password: finalPassword }),
                 })
                 if (!loginRes.ok) {
                   const loginErr = await loginRes.json().catch(() => ({}))
@@ -416,6 +424,7 @@ export default function SurveyModal({ open, onClose }) {
                   email,
                   country,
                   age_group: ageGroup,
+                  password: password.trim(),
                 }),
               })
               if (!profileRes.ok) {
@@ -458,10 +467,11 @@ export default function SurveyModal({ open, onClose }) {
               }
 
               onClose()
+              navigate('/profile')
             } catch (err) {
               setSubmitErr(err?.message || 'Failed. Please try again.')
             }
-          }}>Launch WealthSphere →</button>
+          }}>Launch WealthSphere â†’</button>
           {submitErr && <div style={{ color:'var(--red)', fontSize:'0.7rem', marginTop:10 }}>{submitErr}</div>}
         </div>
       </div>
@@ -471,12 +481,12 @@ export default function SurveyModal({ open, onClose }) {
   return (
     <div style={S.backdrop} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ ...S.card, maxWidth:720, maxHeight:'90vh', overflowY:'auto', padding:'38px 43px 34px' }}>
-        <button onClick={onClose} style={S.closeBtn} type="button">✕</button>
+        <button onClick={onClose} style={S.closeBtn} type="button">âœ•</button>
 
         {step === 1 && (
           <div>
             <div style={cs.eyebrow}>Step 1 of 5</div>
-            <h3 style={{ ...cs.heading, fontSize:'1.3rem' }}>Tell us about <em style={{ fontStyle:'normal', color:'var(--gold)' }}>yourself</em></h3>
+            <h3 style={{ ...cs.heading, fontSize:'1.3rem' }}>Tell us about <em style={{ fontStyle:'normal', color: headingAccentColor }}>yourself</em></h3>
             <p style={{ ...cs.subtext, fontSize:'0.82rem' }}>This helps us tailor your experience.</p>
             <div style={cs.formGrid}>
               <div>
@@ -490,6 +500,27 @@ export default function SurveyModal({ open, onClose }) {
               <div style={{ gridColumn:'1/-1' }}>
                 <label style={cs.formLabel}>Email</label>
                 <input style={cs.formInput} placeholder="alex@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+              </div>
+              <div style={{ gridColumn:'1/-1' }}>
+                <label style={cs.formLabel}>Password</label>
+                <div style={cs.passwordWrap}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    style={{ ...cs.formInput, paddingRight: 44 }}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    style={cs.passwordToggle}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
               <div>
                 <label style={cs.formLabel}>Country</label>
@@ -511,7 +542,7 @@ export default function SurveyModal({ open, onClose }) {
             {submitErr && <div style={{ color:'var(--red)', fontSize:'0.73rem', marginBottom:12 }}>{submitErr}</div>}
             <div style={{ display:'flex', justifyContent:'flex-end', gap:10 }}>
               <button style={S.btnBack} onClick={onClose}>Cancel</button>
-              <button style={S.submit} onClick={goNextFromProfile}>Continue →</button>
+              <button style={S.submit} onClick={goNextFromProfile}>Continue â†’</button>
             </div>
           </div>
         )}
@@ -525,8 +556,8 @@ export default function SurveyModal({ open, onClose }) {
               <RiskSlider initialPct={50} onChange={(l) => setRiskLevel(Number(l.value ?? 50))} />
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', gap:10 }}>
-              <button style={S.btnBack} onClick={goBack}>← Back</button>
-              <button style={S.submit} onClick={goNext}>Continue →</button>
+              <button style={S.btnBack} onClick={goBack}>â† Back</button>
+              <button style={S.submit} onClick={goNext}>Continue â†’</button>
             </div>
           </div>
         )}
@@ -541,7 +572,7 @@ export default function SurveyModal({ open, onClose }) {
                 const sel = selectedAssets.has(a.name)
                 return (
                   <div key={a.name} style={{ ...S.assetCard, ...(sel?{borderColor:a.color,background:a.bg}:{}) }} onClick={() => toggleSet(selectedAssets,setSelectedAssets,a.name)}>
-                    <div style={{ ...S.assetCheck, ...(sel?{background:a.color,borderColor:a.color,color:'#fff'}:{}) }}>✓</div>
+                    <div style={{ ...S.assetCheck, ...(sel?{background:a.color,borderColor:a.color,color:'#fff'}:{}) }}>âœ“</div>
                     <div style={{ fontSize:'1.3rem', marginBottom:6 }}>{a.icon}</div>
                     <div style={{ fontWeight:700, fontSize:'0.8rem', marginBottom:2 }}>{a.name}</div>
                     <div style={{ fontSize:'0.7rem', color:'var(--text-dim)', lineHeight:1.4 }}>{a.desc}</div>
@@ -550,8 +581,8 @@ export default function SurveyModal({ open, onClose }) {
               })}
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', gap:10 }}>
-              <button style={S.btnBack} onClick={goBack}>← Back</button>
-              <button style={S.submit} onClick={goNext}>Continue →</button>
+              <button style={S.btnBack} onClick={goBack}>â† Back</button>
+              <button style={S.submit} onClick={goNext}>Continue â†’</button>
             </div>
           </div>
         )}
@@ -587,8 +618,8 @@ export default function SurveyModal({ open, onClose }) {
               </div>
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', gap:10 }}>
-              <button style={S.btnBack} onClick={goBack}>← Back</button>
-              <button style={S.submit} onClick={goNext}>Continue →</button>
+              <button style={S.btnBack} onClick={goBack}>â† Back</button>
+              <button style={S.submit} onClick={goNext}>Continue â†’</button>
             </div>
           </div>
         )}
@@ -758,6 +789,26 @@ const cs = {
   formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 },
   formLabel: { fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 5 },
   formInput: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', color: 'var(--text)', fontSize: '0.96rem', outline: 'none', width: '100%' },
+  passwordWrap: { position: 'relative' },
+  passwordToggle: {
+    position: 'absolute',
+    right: 8,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    border: '1px solid var(--border)',
+    background: 'var(--surface2)',
+    color: 'var(--text-dim)',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '0.85rem',
+    lineHeight: 1,
+    padding: 0,
+  },
 }
 
 const imp = {
@@ -767,3 +818,4 @@ const imp = {
   spinner: { width: 36, height: 36, border: '3px solid rgba(255,255,255,0.08)', borderTopColor: 'var(--teal)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   addRowBtn: { background: 'transparent', border: '1.5px dashed rgba(255,255,255,0.12)', borderRadius: 8, padding: '8px 12px', color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', cursor: 'pointer', width: '100%' },
 }
+

@@ -1,0 +1,199 @@
+{
+  "type": "crypto",
+  "symbol": "BTC",
+  "updated_at": "2026-03-08T19:00:52.441825+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "crypto",
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "period": {
+        "months": 3,
+        "start": "2025-12-08",
+        "end": "2026-03-08"
+      },
+      "metrics": {
+        "start_price": 90618.0535,
+        "end_price": 66856.9518,
+        "return_pct": -26.2212,
+        "volatility_annualized": 0.473409,
+        "max_drawdown_pct": -35.2076,
+        "avg_daily_volume": 47869709775.9619,
+        "volume_change_pct": 7.1089
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-07",
+          "move_pct": 12.2034,
+          "close": 70523.9542,
+          "volume": 128662818793.56021,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-03-05",
+          "move_pct": 6.3642,
+          "close": 72669.7702,
+          "volume": 81081561357.69708,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": -14.1018,
+          "close": 62853.6904,
+          "volume": 142403234254.4544,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-01",
+          "move_pct": -6.4367,
+          "close": 78725.8585,
+          "volume": 78488542272.81866,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": -14.1018,
+          "close": 62853.6904,
+          "volume": 142403234254.4544,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-02-07",
+          "move_pct": 12.2034,
+          "close": 70523.9542,
+          "volume": 128662818793.56021,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-07",
+          "headline": "News item",
+          "source": "",
+          "url": "https://investor.wedbush.com/wedbush/article/marketminute-2026-2-6-microstrategy-leads-nasdaq-gains-with-a-25-surge-as-bitcoin-reclaims-70000-floor?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "BTC Price Prediction: Bitcoin Targets $110,000 by February 2026 Despite Short-Term Consolidation",
+          "source": "",
+          "url": "https://blockchain.news/news/20260104-price-prediction-btc-bitcoin-targets-110000-by-february-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Bitcoin Price Forecast February 2026: BTC Near $88K Targeting $98K",
+          "source": "",
+          "url": "https://www.tradingnews.com/news/bitcoin-price-forecast-btc-usd-around-88k-usd-february-target-near-98k-usd?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "ChatGPT, Claude Agree on BTC, ETH, XRP February Prediction",
+          "source": "",
+          "url": "https://www.ccn.com/analysis/crypto/btc-xrp-eth-crash-chatgpt-claude-feb-2026-price-prediction/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Bitcoin fell 15 percent in Feb 2026: Seasonality falters - a liquidity mirage",
+          "source": "",
+          "url": "https://www.coin-views.com/2026/03/bitcoin-fell-15-percent-in-feb-2026.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Bitcoin Price Today (Feb 7, 2026): BTC Reclaims $68,800",
+          "source": "",
+          "url": "https://swikblog.com/bitcoin-price-today-february-7-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Crypto Market Recap: BTC Crashes Below $76K; U.S. Sanctions UK Exchanges; SEC and CFTC Launch \u201cProject Crypto\u201d; and More (Jan 25\u201331, 2026) | BanklessTimes",
+          "source": "",
+          "url": "https://www.banklesstimes.com/articles/2026/02/01/crypto-market-recap-btc-crashes-below-78k-u-s-sanctions-uk-exchanges-sec-and-cftc-launch-project-crypto-and-more-jan-18-24-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Paul Atkins Confirmed As A Bitcoin 2026 Speaker",
+          "source": "",
+          "url": "https://bitcoinmagazine.com/conference/paul-atkins-confirmed-as-a-bitcoin-2026-speaker?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "U.S. Strategic Bitcoin Reserve",
+          "source": "",
+          "url": "https://en.wikipedia.org/wiki/U.S._Strategic_Bitcoin_Reserve?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "US Judge Freezes 70.6 Bitcoin Linked to BlockFills in Dominion Capital Lawsuit - FinanceFeeds",
+          "source": "",
+          "url": "https://financefeeds.com/us-judge-freezes-70-6-bitcoin-linked-to-blockfills-in-dominion-capital-lawsuit/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Bitcoin, Ethereum and Solana rally as analysts flag pause in \u201810 a.m. dump\u2019 after Jane Street lawsuit | The Block",
+          "source": "",
+          "url": "https://www.theblock.co/post/391353/bitcoin-ethereum-solana-rally-analysts-flag-pause-dump-jane-street-lawsuit?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Best Crypto Presale February 2026: Pudgy Penguins Hit With",
+          "source": "",
+          "url": "https://www.openpr.com/news/4416227/best-crypto-presale-february-2026-pudgy-penguins-hit-with?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Coinbase Lawsuit Twist: SEC Seeks 28-Day Extension",
+          "source": "",
+          "url": "https://www.tronweekly.com/coinbase-twist-sec-seeks-28-day-extension/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-05",
+          "headline": "Current price of Bitcoin for March 5, 2026 | Fortune",
+          "source": "",
+          "url": "https://fortune.com/article/price-of-bitcoin-03-05-2026//?utm_source=openai"
+        },
+        {
+          "date": "2026-03-05",
+          "headline": "Bitcoin Holds Above $72,000 on 5 March 2026 as Crypto Market Cap Nears $2.44 Trillion",
+          "source": "",
+          "url": "https://bingx.com/pt-br/news/post/bitcoin-holds-above-on-march-as-crypto-market-cap-nears-trillion?utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 90,618.0535 to an ending price of 66,856.9518, the asset experienced a negative return of -26.2212%. The period was marked by significant volatility, with an annualized volatility of 0.473409 and a maximum drawdown of -35.2076%. The largest single-day gain occurred on 2026-02-07, with a 12.2034% increase closing at 70,523.9542, coinciding with high volume of 128,662,818,793.56021 and news highlighting Bitcoin reclaiming the $70,000 floor and positive price forecasts around that date [1][2][3]. Conversely, the largest single-day loss was on 2026-02-06, with a -14.1018% drop to 62,853.6904, also accompanied by very high volume of 142,403,234,254.4544, and news reporting a 15% fall in Bitcoin during February 2026 and liquidity concerns [4][5]. Another notable down day was on 2026-02-01 with a -6.4367% move to 78,725.8585 amid reports of regulatory actions and market sanctions [6]. Average daily volume was 47,869,709,775.9619, with a volume increase of 7.1089%, indicating heightened trading activity during this period. The high volume days on 2026-02-06 and 2026-02-07 suggest strong market reactions possibly linked to regulatory developments, price volatility, and market sentiment shifts. Overall, the price trajectory and volatility were influenced by a mix of market dynamics and news events, including regulatory actions, legal cases, and optimistic price forecasts, though direct causality remains complex.",
+      "tldr": [
+        "Period return: -26.22% with annualized volatility 0.473.",
+        "Largest up day: 2026-02-07 (12.20%), largest down day: 2026-02-06 (-14.10%).",
+        "Highest volume spike was on 2026-02-06 with volume 142,403,234,254."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-26.22%) with peak drawdown of -35.21%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://investor.wedbush.com/wedbush/article/marketminute-2026-2-6-microstrategy-leads-nasdaq-gains-with-a-25-surge-as-bitcoin-reclaims-70000-floor?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://blockchain.news/news/20260104-price-prediction-btc-bitcoin-targets-110000-by-february-2026?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.tradingnews.com/news/bitcoin-price-forecast-btc-usd-around-88k-usd-february-target-near-98k-usd?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://www.coin-views.com/2026/03/bitcoin-fell-15-percent-in-feb-2026.html?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://swikblog.com/bitcoin-price-today-february-7-2026/?utm_source=openai"
+        },
+        {
+          "id": 6,
+          "url": "https://www.banklesstimes.com/articles/2026/02/01/crypto-market-recap-btc-crashes-below-78k-u-s-sanctions-uk-exchanges-sec-and-cftc-launch-project-crypto-and-more-jan-18-24-2026/?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

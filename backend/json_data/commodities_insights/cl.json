@@ -1,0 +1,191 @@
+{
+  "type": "commodity",
+  "symbol": "CL",
+  "updated_at": "2026-03-08T18:58:47.000543+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "commodity",
+      "symbol": "CL",
+      "name": "Crude Oil",
+      "period": {
+        "months": 3,
+        "start": "2025-12-08",
+        "end": "2026-03-08"
+      },
+      "metrics": {
+        "start_price": 58.88,
+        "end_price": 90.9,
+        "return_pct": 54.3818,
+        "volatility_annualized": 0.446296,
+        "max_drawdown_pct": -6.1311,
+        "avg_daily_volume": 336270.2787,
+        "volume_change_pct": 116.5488
+      },
+      "notable_moves": [
+        {
+          "date": "2026-03-06",
+          "move_pct": 12.2084,
+          "close": 90.9,
+          "volume": 954254.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-03-05",
+          "move_pct": 8.5052,
+          "close": 81.01,
+          "volume": 707030.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-02",
+          "move_pct": -4.7079,
+          "close": 62.14,
+          "volume": 414083.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-15",
+          "move_pct": -4.563,
+          "close": 59.19,
+          "volume": 113642.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-03-03",
+          "move_pct": 4.675,
+          "close": 74.56,
+          "volume": 1009753.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-03-06",
+          "move_pct": 12.2084,
+          "close": 90.9,
+          "volume": 954254.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-03-06",
+          "headline": "BC-Crude Oil Futures",
+          "source": "",
+          "url": "https://apnews.com/article/89fdc7993a5332265b6d6f970051cf60?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Crude Oil Apr 26 (CL=F) Stock Price, News, Quote & History - Yahoo Finance",
+          "source": "",
+          "url": "https://finance.yahoo.com/quote/CL%3DF//?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Oil Prices Hit 12-Month High Amid Escalating Middle East Supply Fears - TradingGPT Pro",
+          "source": "",
+          "url": "https://www.tradinggpt.pro/market/news/82126?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Oil Price Forecast: Brent at $84, WTI at $78 \u2014 Goldman Raises Q2 to $76",
+          "source": "",
+          "url": "https://www.tradingnews.com/news/oil-price-forecast-brent-at84-usd-goldman-raises-q2target-by-10-usd?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "BC-Crude Oil Futures",
+          "source": "",
+          "url": "https://apnews.com/article/bb1909c9c737eba8c18958d633dee6c4?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "BC-Crude Oil Futures",
+          "source": "",
+          "url": "https://apnews.com/article/416ff6919435cafb3f463b6c01337958?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "WTI Crude Oil Price Forecast: $100 This Week, $150 if Hormuz Stays Shut",
+          "source": "",
+          "url": "https://www.tradingnews.com/news/wti-oil-price-forecast-cl-f-goldman-sachs-warns-100-usd-is-days-away-hormuz-wipes-20m-wipes-barrels?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "MLQ.ai | AI for investors",
+          "source": "",
+          "url": "https://mlq.ai/prediction/news/crude-oil-prediction-market-80-odds-for-100-by-march-end-202603071130/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "CBOT corn higher as crude oil rallies",
+          "source": "",
+          "url": "https://www.sahmcapital.com/news/content/cbot-corn-higher-as-crude-oil-rallies-2026-03-06?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Market Surveillance",
+          "source": "",
+          "url": "https://www.cmegroup.com/content/dam/cmegroup/notices/market-regulation/2026/02/msn02-09-26.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "SAN PATRICIO COUNTY APPRAISAL DISTRICT v. GUNVOR USA LLC (2026) | FindLaw",
+          "source": "",
+          "url": "https://caselaw.findlaw.com/court/tx-court-of-appeals/118086894.html?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "BP & Shell Fixed North Sea Oil|Prices for a Decade, Trader Says | Courthouse News Service",
+          "source": "",
+          "url": "https://www.courthousenews.com/bp-shell-fixed-north-sea-oilprices-for-a-decade-trader-says/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Kazakhstan Drags Big Oil to Swiss Court in $166 Billion Lawsuit - Bitumen Price",
+          "source": "",
+          "url": "https://bitumenprice.org/kazakhstan-drags-big-oil-to-swiss-court-in-166-billion-lawsuit/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-05",
+          "headline": "Brent Crude Oil prices climb to $83 as Iran war keeps markets on edge- Daily Market Update 5th March 2026 | Globe Capital Market LTD.",
+          "source": "",
+          "url": "https://globecapital.com/research-reports/daily-market-update-5th-march-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-05",
+          "headline": "FX.co - Trading Signals for CRUDE OIL (CL) on March 5-7, 2026: sell below $78.12 (+1/8 Murray - 21 SMA)",
+          "source": "",
+          "url": "https://www.fx.co/en/analysis/401770?utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of $58.88 to an ending price of $90.90, the asset experienced a total return of 54.38% over the period. The annualized volatility was relatively high at 0.4463, while the maximum drawdown was limited to -6.13%, indicating some downside risk but contained losses. The largest upward price movement occurred on 2026-03-06, with a 12.21% gain closing at $90.90 on a volume of 954,254 shares, coinciding with multiple news headlines about crude oil futures and escalating Middle East supply fears, including reports of oil prices hitting a 12-month high and forecasts of WTI crude oil reaching $100 soon [1][3][7]. Another notable large up day was on 2026-03-05, with an 8.51% increase closing at $81.01 and volume of 707,030, which aligned with news of Brent crude oil prices climbing to $83 amid geopolitical tensions [16]. The largest down day was on 2026-02-02, with a 4.71% decline closing at $62.14 on volume of 414,083, though no specific driver was directly linked to this date. A high volume day on 2026-03-03 saw a 4.68% price increase closing at $74.56 with volume exceeding one million shares, suggesting strong market interest preceding the large gains in early March. Overall, the volume increased by 116.55% compared to average daily volume, reflecting heightened trading activity likely related to geopolitical and market supply concerns impacting crude oil prices during this timeframe.",
+      "tldr": [
+        "Period return: 54.38% with annualized volatility 0.446.",
+        "Largest up day: 2026-03-06 (12.21%), largest down day: 2026-02-02 (-4.71%).",
+        "Highest volume spike was on 2026-03-03 with volume 1,009,753."
+      ],
+      "conclusion": "Over this period, the asset ended higher (54.38%) with peak drawdown of -6.13%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://apnews.com/article/89fdc7993a5332265b6d6f970051cf60?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.tradinggpt.pro/market/news/82126?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.tradingnews.com/news/wti-oil-price-forecast-cl-f-goldman-sachs-warns-100-usd-is-days-away-hormuz-wipes-20m-wipes-barrels?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://globecapital.com/research-reports/daily-market-update-5th-march-2026/?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

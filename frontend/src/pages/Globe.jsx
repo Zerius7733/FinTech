@@ -244,7 +244,7 @@ function WellnessRing({ score, size = 84 }) {
   )
 }
 
-function BentoDashboard({ node, show, onClose }) {
+function BentoDashboard({ node, show, onClose, themeId = 'default' }) {
   const [entered, setEntered] = useState(false)
   useEffect(() => {
     if (show) { const t = setTimeout(() => setEntered(true), 30); return () => clearTimeout(t) }
@@ -254,6 +254,41 @@ function BentoDashboard({ node, show, onClose }) {
   if (!node) return null
   const hex   = '#' + node.color.toString(16).padStart(6,'0')
   const isPos = node.mtd >= 0
+  const isSilentNight = themeId === 'silent-night'
+  const panelSurface = isSilentNight
+    ? 'linear-gradient(180deg, rgba(18,20,24,0.97), rgba(12,14,18,0.98))'
+    : 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))'
+  const panelBorder = isSilentNight ? '1px solid rgba(190,183,164,0.2)' : '1px solid rgba(15,23,42,0.08)'
+  const panelShadow = isSilentNight
+    ? '0 34px 90px rgba(0,0,0,0.58), 0 18px 40px rgba(0,0,0,0.36)'
+    : '0 34px 90px rgba(15,23,42,0.18), 0 18px 40px rgba(15,23,42,0.1)'
+  const cardSurface = isSilentNight
+    ? 'linear-gradient(180deg, rgba(22,25,32,0.95), rgba(16,19,26,0.97))'
+    : 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))'
+  const cardBorder = isSilentNight ? '1px solid rgba(190,183,164,0.16)' : '1px solid rgba(15,23,42,0.08)'
+  const tileSurface = isSilentNight ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.5)'
+  const tileBorder = isSilentNight ? '1px solid rgba(190,183,164,0.12)' : '1px solid rgba(15,23,42,0.06)'
+  const chipSurface = isSilentNight ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)'
+  const closeSurface = isSilentNight ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.86)'
+  const closeBorder = isSilentNight ? '1px solid rgba(190,183,164,0.16)' : '1px solid rgba(15,23,42,0.08)'
+  const BC_LOCAL = {
+    background: cardSurface,
+    border: cardBorder,
+    borderRadius: 16,
+    padding: '18px 20px',
+    boxShadow: isSilentNight ? '0 14px 28px rgba(0,0,0,0.24)' : '0 14px 28px rgba(15,23,42,0.06)',
+  }
+  const BL_LOCAL = {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.64rem',
+    color: 'var(--text-faint)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.13em',
+    marginBottom: 14,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  }
 
   return (
     <>
@@ -283,11 +318,11 @@ function BentoDashboard({ node, show, onClose }) {
         <div style={{
           width: '100%', maxWidth: 980,
           maxHeight: '92vh', overflowY: 'auto',
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
-          border: '1px solid rgba(15,23,42,0.08)',
+          background: panelSurface,
+          border: panelBorder,
           borderTop: `2px solid ${hex}`,
           borderRadius: 24,
-          boxShadow: `0 34px 90px rgba(15,23,42,0.18), 0 18px 40px rgba(15,23,42,0.1)`,
+          boxShadow: panelShadow,
           transform: entered ? 'scale(1) translateY(0)' : 'scale(0.86) translateY(50px)',
           transition: 'transform 0.45s cubic-bezier(0.16,1,0.3,1)',
           overflow: 'hidden',
@@ -304,11 +339,13 @@ function BentoDashboard({ node, show, onClose }) {
               <div style={{ display:'flex', gap:16, alignItems:'center' }}>
                 <div style={{
                   width:56, height:56, borderRadius:16,
-                  background:`linear-gradient(135deg,rgba(255,255,255,0.92),${hex}12)`,
+                  background: isSilentNight
+                    ? `linear-gradient(135deg,rgba(255,255,255,0.08),${hex}18)`
+                    : `linear-gradient(135deg,rgba(255,255,255,0.92),${hex}12)`,
                   border:`1px solid ${hex}30`,
                   display:'flex', alignItems:'center', justifyContent:'center',
                   fontSize:'1.9rem', flexShrink:0,
-                  boxShadow:'0 12px 24px rgba(15,23,42,0.08)',
+                  boxShadow: isSilentNight ? '0 12px 24px rgba(0,0,0,0.28)' : '0 12px 24px rgba(15,23,42,0.08)',
                 }}>
                   {node.flag}
                 </div>
@@ -331,7 +368,7 @@ function BentoDashboard({ node, show, onClose }) {
                 </div>
               </div>
               <button onClick={onClose} style={{
-                background:'rgba(255,255,255,0.86)', border:'1px solid rgba(15,23,42,0.08)',
+                background: closeSurface, border: closeBorder,
                 color:'var(--text-faint)', width:38, height:38, borderRadius:10,
                 fontSize:'1rem', display:'flex', alignItems:'center', justifyContent:'center',
                 cursor:'pointer', transition:'all 0.2s', flexShrink:0,
@@ -353,8 +390,8 @@ function BentoDashboard({ node, show, onClose }) {
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gridTemplateRows:'auto auto', gap:14, marginBottom:14 }}>
 
               {/* Cell A — Price chart (2 cols) */}
-              <div style={{ ...BC, gridColumn:'1/3' }}>
-                <div style={BL}>
+                  <div style={{ ...BC_LOCAL, gridColumn:'1/3' }}>
+                <div style={BL_LOCAL}>
                   <span>{h0?.name || node.label} — Price Trend</span>
                   <span style={{ fontFamily:'var(--font-display)', fontSize:'0.88rem', letterSpacing:0, color: isPos?'var(--green)':'var(--red)' }}>
                     {node.returnPct} return
@@ -364,7 +401,7 @@ function BentoDashboard({ node, show, onClose }) {
               </div>
 
               {/* Cell B — Return ring */}
-              <div style={{ ...BC, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, background:'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98))' }}>
+               <div style={{ ...BC_LOCAL, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10 }}>
                 <WellnessRing score={Math.min(100, Math.max(0, 50 + node.mtd))} size={90} />
                 <div style={{ textAlign:'center' }}>
                   <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', color: isPos?'var(--green)':'var(--red)', marginBottom:2 }}>
@@ -375,8 +412,8 @@ function BentoDashboard({ node, show, onClose }) {
               </div>
 
               {/* Cell C — Position details (2 cols) */}
-              <div style={{ ...BC, gridColumn:'1/3' }}>
-                <div style={BL}><span>Position Details</span></div>
+               <div style={{ ...BC_LOCAL, gridColumn:'1/3' }}>
+                <div style={BL_LOCAL}><span>Position Details</span></div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                   {[
                     { label:'Current Price', val: h0 ? `$${h0.price.toLocaleString()}` : '—', c: 'var(--text)' },
@@ -384,7 +421,7 @@ function BentoDashboard({ node, show, onClose }) {
                     { label:'Quantity',      val: h0 ? h0.shares.toLocaleString() : '—',        c: 'var(--teal)' },
                     { label:'Unrealised P&L',val: `${gainAbs >= 0 ? '+' : ''}$${Math.round(gainAbs).toLocaleString()}`, c: gainAbs >= 0 ? 'var(--green)' : 'var(--red)' },
                   ].map(s => (
-                    <div key={s.label} style={{ background:'rgba(255,255,255,0.5)', borderRadius:10, padding:'10px 14px', border:'1px solid rgba(15,23,42,0.06)' }}>
+                    <div key={s.label} style={{ background: tileSurface, borderRadius:10, padding:'10px 14px', border: tileBorder }}>
                       <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:5 }}>{s.label}</div>
                       <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', color:s.c }}>{s.val}</div>
                     </div>
@@ -393,8 +430,8 @@ function BentoDashboard({ node, show, onClose }) {
               </div>
 
               {/* Cell D — P&L summary */}
-              <div style={{ ...BC, background:'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(243,247,251,0.98))' }}>
-                <div style={BL}><span>Summary</span></div>
+               <div style={{ ...BC_LOCAL }}>
+                <div style={BL_LOCAL}><span>Summary</span></div>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.7rem', color: isPos?'var(--green)':'var(--red)', lineHeight:1, marginBottom:4 }}>
                   {isPos?'+':''}{node.mtd}%
                 </div>
@@ -416,22 +453,22 @@ function BentoDashboard({ node, show, onClose }) {
             })()}
 
             {/* Holdings grid */}
-            <div style={BL}><span>Price Action</span><span style={{ letterSpacing:0, fontSize:'0.7rem', color:'var(--text-dim)' }}>{node.label}</span></div>
+            <div style={BL_LOCAL}><span>Price Action</span><span style={{ letterSpacing:0, fontSize:'0.7rem', color:'var(--text-dim)' }}>{node.label}</span></div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(195px,1fr))', gap:12 }}>
               {node.holdings.map(h => {
                 const hc  = h.change >= 0 ? 'var(--green)' : 'var(--red)'
                 const dir = h.dir || (h.change >= 0 ? 'up' : 'dn')
                 return (
                   <div key={h.ticker} style={{
-                    background:'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,250,252,0.96))',
-                    border:'1px solid rgba(15,23,42,0.08)',
+                    background: cardSurface,
+                    border: cardBorder,
                     borderRadius:14, padding:'15px 17px', cursor:'pointer', transition:'all 0.2s',
                   }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.16)'; e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 14px 28px rgba(15,23,42,0.08)' }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.08)'; e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor=isSilentNight ? 'rgba(190,183,164,0.28)' : 'rgba(15,23,42,0.16)'; e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=isSilentNight ? '0 14px 28px rgba(0,0,0,0.26)' : '0 14px 28px rgba(15,23,42,0.08)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor=isSilentNight ? 'rgba(190,183,164,0.16)' : 'rgba(15,23,42,0.08)'; e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none' }}
                   >
                     <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
-                      <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', background:'rgba(15,23,42,0.05)', padding:'2px 8px', borderRadius:6, color:'var(--text-faint)' }}>
+                      <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', background: chipSurface, padding:'2px 8px', borderRadius:6, color:'var(--text-faint)' }}>
                         {h.ticker}
                       </span>
                       <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:hc }}>
@@ -803,6 +840,19 @@ export default function Globe() {
   const [selectedZone, setSelectedZone] = useState(null)
   const [legendHoverZone, setLegendHoverZone] = useState(null)
   const riskLevel = RISK_DEFS.find(r => riskPct >= r.min && riskPct <= r.max) || RISK_DEFS[1]
+  const heroNameStyle = activeTheme?.id === 'silent-night'
+    ? {
+        fontStyle: 'normal',
+        background: 'linear-gradient(135deg,#fefcf7,#e9dfcf 58%,#cdb89c)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+      }
+    : {
+        fontStyle: 'normal',
+        background: 'linear-gradient(135deg,var(--gold-light),var(--gold))',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+      }
   const riskTrackRef  = useRef(null)
   const riskDragRef   = useRef(false)
   const rotationTargetRef = useRef(null)
@@ -1244,7 +1294,7 @@ export default function Globe() {
               <h1 style={{ ...S.heroTitle, marginBottom: 10 }}>
                 <span style={{ whiteSpace:'nowrap' }}>Welcome back,</span>
                 <br />
-                <em style={{ fontStyle:'normal', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+                <em style={heroNameStyle}>
                   {userProfile?.name?.split(' ')[0] ?? user.username}
                 </em>
               </h1>
@@ -1465,7 +1515,7 @@ export default function Globe() {
       </section>
       )} {/* /!user features */}
       {/* ══ LAYER 4 — BENTO DASHBOARD ══ */}
-      <BentoDashboard node={dashNode} show={dashShow} onClose={closeDashboard} />
+      <BentoDashboard node={dashNode} show={dashShow} onClose={closeDashboard} themeId={activeTheme?.id} />
 
       {/* ══ LOGIN MODAL ══ */}
       <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} onOpenSurvey={() => setSurveyModalOpen(true)} />

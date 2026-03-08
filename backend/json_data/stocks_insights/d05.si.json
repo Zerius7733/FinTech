@@ -1,0 +1,195 @@
+{
+  "type": "stock",
+  "symbol": "D05.SI",
+  "updated_at": "2026-03-08T19:00:34.241949+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "D05.SI",
+      "name": "DBS",
+      "period": {
+        "months": 3,
+        "start": "2025-12-08",
+        "end": "2026-03-08"
+      },
+      "metrics": {
+        "start_price": 53.97,
+        "end_price": 55.0,
+        "return_pct": 1.9085,
+        "volatility_annualized": 0.137357,
+        "max_drawdown_pct": -8.0114,
+        "avg_daily_volume": 4760003.9016,
+        "volume_change_pct": 102.2562
+      },
+      "notable_moves": [
+        {
+          "date": "2026-01-06",
+          "move_pct": 2.2595,
+          "close": 57.93,
+          "volume": 5428000.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-27",
+          "move_pct": 1.6812,
+          "close": 59.27,
+          "volume": 5131900.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-03-02",
+          "move_pct": -2.6085,
+          "close": 55.63,
+          "volume": 13699013.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-09",
+          "move_pct": -1.8718,
+          "close": 58.19,
+          "volume": 11429900.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-03-02",
+          "move_pct": -2.6085,
+          "close": 55.63,
+          "volume": 13699013.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-02-09",
+          "move_pct": -1.8718,
+          "close": 58.19,
+          "volume": 11429900.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-01-06",
+          "headline": "DBS shares drop after Q4 profit falls 10%, missing forecast | The Straits Times",
+          "source": "",
+          "url": "https://www.straitstimes.com/business/banking/dbs-q4-profit-falls-10-to-2-26-billion-below-forecasts-to-pay-81-cents-in-dividends?utm_source=openai"
+        },
+        {
+          "date": "2026-01-06",
+          "headline": "DBS profit misses estimates, bank says earnings this year to dip",
+          "source": "",
+          "url": "https://sg.finance.yahoo.com/news/dbs-profit-misses-estimates-bank-153401242.html/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-06",
+          "headline": "DBS capital return plans remain bright spot even with weaker earnings ahead: analysts - The Business Times",
+          "source": "",
+          "url": "https://www.businesstimes.com.sg/companies-markets/dbs-capital-return-plans-remain-bright-spot-even-weaker-earnings-ahead-analysts?utm_source=openai"
+        },
+        {
+          "date": "2026-01-06",
+          "headline": "DBS Profit Misses Estimates, Bank Says Earnings This Year to Dip - Bloomberg",
+          "source": "",
+          "url": "https://www.bloomberg.com/news/articles/2026-02-08/dbs-profit-misses-estimates-bank-says-earnings-this-year-to-dip?utm_source=openai"
+        },
+        {
+          "date": "2026-01-06",
+          "headline": "DBS Group Earnings Call Signals Resilient Yet Cautious Outlook - TipRanks.com",
+          "source": "",
+          "url": "https://www.tipranks.com/news/company-announcements/dbs-group-earnings-call-signals-resilient-yet-cautious-outlook?utm_source=openai"
+        },
+        {
+          "date": "2026-01-06",
+          "headline": "DBS Group Holdings Ltd \u2013 Capital return dividends until FY27 - StocksBNB",
+          "source": "",
+          "url": "https://www.stocksbnb.com/reports/dbs-group-holdings-ltd-capital-return-dividends-until-fy27/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-06",
+          "headline": "D05.SI Stock Today: January 6 - DBS Sets Record High on Fee Growth, Payouts | Meyka",
+          "source": "",
+          "url": "https://meyka.com/blog/d05si-stock-today-january-6-dbs-sets-record-high-on-fee-growth-payouts-0601/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-06",
+          "headline": "The Bull Case For DBS Group Holdings (SGX:D05) Could Change Following Strong Q3 Profit And Diversified Earnings \u2013 Learn Why - Simply Wall St News",
+          "source": "",
+          "url": "https://simplywall.st/stocks/sg/banks/sgx-d05/dbs-group-holdings-shares/news/the-bull-case-for-dbs-group-holdings-sgxd05-could-change-fol/amp?utm_source=openai"
+        },
+        {
+          "date": "2026-01-06",
+          "headline": "DBS\u2019 RMB Clearing Role And S$8 Billion Capital Return Might Change The Case For Investing In DBS Group Holdings (SGX:D05) - Simply Wall St News",
+          "source": "",
+          "url": "https://simplywall.st/stocks/sg/banks/sgx-d05/dbs-group-holdings-shares/news/dbs-rmb-clearing-role-and-s8-billion-capital-return-might-ch/amp?utm_source=openai"
+        },
+        {
+          "date": "2026-01-06",
+          "headline": "Southern District of New York dismisses Deutsche Bank from FDIC RMBS lawsuit | ABA Banking Journal",
+          "source": "",
+          "url": "https://bankingjournal.aba.com/2026/03/southern-district-of-new-york-dismisses-deutsche-bank-from-fdic-rmbs-lawsuit/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-06",
+          "headline": "Cedar Lane Technologies Inc. v. DBS Vickers Securities Holdings Pte. Ltd. 2:2025cv01154 | U.S. District Court for the Eastern District of Texas | Justia",
+          "source": "",
+          "url": "https://dockets.justia.com/docket/texas/txedce/2%3A2025cv01154/242050?utm_source=openai"
+        },
+        {
+          "date": "2026-01-27",
+          "headline": "DBS Group Holdings Ltd (DBSDY) Q4 2025 Earnings Call Transcript | Seeking Alpha",
+          "source": "",
+          "url": "https://seekingalpha.com/article/4867703-dbs-group-holdings-ltd-dbsdy-q4-2025-earnings-call-transcript?utm_source=openai"
+        },
+        {
+          "date": "2026-01-27",
+          "headline": "DBS 4QFY2025 earnings down 10% to $2.36 bil; full-year earnings reach $11 bil",
+          "source": "",
+          "url": "https://sg.finance.yahoo.com/news/dbs-4qfy2025-earnings-down-10-145656652.html/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-27",
+          "headline": "DBS Group Holdings (DB:DEVL) Stock Forecast & Analyst Predictions - Simply Wall St",
+          "source": "",
+          "url": "https://simplywall.st/stocks/de/banks/fra-devl/dbs-group-holdings-shares/future?utm_source=openai"
+        },
+        {
+          "date": "2026-01-27",
+          "headline": "DBS Group Holdings (SGX:D05) Dividend History, Dates & Yield",
+          "source": "",
+          "url": "https://stockanalysis.com/quote/sgx/D05/dividend/?utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 53.97, the stock ended the period at 55.00, reflecting a total return of 1.9085%. The annualized volatility was measured at 0.137357, with a maximum drawdown of -8.0114% during the timeframe. The largest upward price movement occurred on 2026-01-06, with a 2.2595% increase closing at 57.93 on a volume of 5,428,000 shares. This day coincided with multiple reports highlighting DBS's Q4 profit falling 10% and missing forecasts, alongside commentary on capital return plans remaining a bright spot despite weaker earnings ahead [1][2][3]. Another notable large up day was on 2026-01-27, with a 1.6812% gain closing at 59.27 on volume of 5,131,900 shares, around the time of Q4 2025 earnings call transcripts and earnings reports showing a 10% decline in quarterly earnings [14][15]. The largest downward price movement was on 2026-03-02, with a -2.6085% drop closing at 55.63 on a very high volume day of 13,699,013 shares, which was also the highest volume day recorded. Another significant down day was 2026-02-09, with a -1.8718% move on volume of 11,429,900 shares. These high volume down days may have contributed to the overall volatility and drawdown observed. The average daily volume increased by 102.2562%, indicating heightened trading activity during this period. Overall, the price movements and volume spikes appear to coincide with earnings announcements and related news about profit misses and cautious outlooks for DBS Group Holdings [1][2][3][14][15].",
+      "tldr": [
+        "Period return: 1.91% with annualized volatility 0.137.",
+        "Largest up day: 2026-01-06 (2.26%), largest down day: 2026-03-02 (-2.61%).",
+        "Highest volume spike was on 2026-03-02 with volume 13,699,013."
+      ],
+      "conclusion": "Over this period, the asset ended higher (1.91%) with peak drawdown of -8.01%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.straitstimes.com/business/banking/dbs-q4-profit-falls-10-to-2-26-billion-below-forecasts-to-pay-81-cents-in-dividends?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://sg.finance.yahoo.com/news/dbs-profit-misses-estimates-bank-153401242.html/?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.businesstimes.com.sg/companies-markets/dbs-capital-return-plans-remain-bright-spot-even-weaker-earnings-ahead-analysts?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://seekingalpha.com/article/4867703-dbs-group-holdings-ltd-dbsdy-q4-2025-earnings-call-transcript?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://sg.finance.yahoo.com/news/dbs-4qfy2025-earnings-down-10-145656652.html/?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

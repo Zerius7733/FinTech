@@ -1,0 +1,191 @@
+{
+  "type": "commodity",
+  "symbol": "NG=F",
+  "updated_at": "2026-03-08T19:18:53.803598+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "commodity",
+      "symbol": "NG=F",
+      "name": "Natural Gas",
+      "period": {
+        "months": 3,
+        "start": "2025-12-08",
+        "end": "2026-03-08"
+      },
+      "metrics": {
+        "start_price": 4.912,
+        "end_price": 3.186,
+        "return_pct": -35.1384,
+        "volatility_annualized": 1.657375,
+        "max_drawdown_pct": -62.1046,
+        "avg_daily_volume": 188588.0,
+        "volume_change_pct": -10.5154
+      },
+      "notable_moves": [
+        {
+          "date": "2026-01-26",
+          "move_pct": 28.91,
+          "close": 6.8,
+          "volume": 99498.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-20",
+          "move_pct": 25.9104,
+          "close": 3.907,
+          "volume": 410520.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-29",
+          "move_pct": -47.4799,
+          "close": 3.918,
+          "volume": 234642.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-02",
+          "move_pct": -25.6546,
+          "close": 3.237,
+          "volume": 554857.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-02",
+          "move_pct": -25.6546,
+          "close": 3.237,
+          "volume": 554857.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-01-20",
+          "move_pct": 25.9104,
+          "close": 3.907,
+          "volume": 410520.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-01-26",
+          "headline": "News item",
+          "source": "",
+          "url": "https://investor.wedbush.com/wedbush/article/barchart-2026-1-26-nat-gas-prices-spike-to-325-year-high?utm_source=openai"
+        },
+        {
+          "date": "2026-01-26",
+          "headline": "National Fuel Reports First Quarter Fiscal 2026 Earnings | National Fuel Gas Company",
+          "source": "",
+          "url": "https://www.nationalfuel.com/news/national-fuel-reports-first-quarter-fiscal-2026-earnings/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-26",
+          "headline": "DAILY MARKET UPDATE - January 26, 2026",
+          "source": "",
+          "url": "https://www.nrg.com/assets/daily-market-update/01-26-26/update.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-01-26",
+          "headline": "EIA Press Release (02/10/2026): EIA raises natural gas price forecast following increased heating demand amid severe winter weather",
+          "source": "",
+          "url": "https://www.eia.gov/pressroom/releases/press583.php?utm_source=openai"
+        },
+        {
+          "date": "2026-01-26",
+          "headline": "Range Announces Fourth Quarter 2025 Results and 2026",
+          "source": "",
+          "url": "https://rss.globenewswire.com/news-release/2026/02/24/3244065/0/en/Range-Announces-Fourth-Quarter-2025-Results-and-2026-Guidance.html?utm_source=openai"
+        },
+        {
+          "date": "2026-01-26",
+          "headline": "Vol. 91 \nMonday, \nNo. 16 \nJanuary 26, 2026 \nPages",
+          "source": "",
+          "url": "https://www.govinfo.gov/content/pkg/FR-2026-01-26/pdf/FR-2026-01-26.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-01-26",
+          "headline": "Historic 25% Daily Surge: Arctic Blast Sends Natural Gas Markets into a Frenzy",
+          "source": "",
+          "url": "https://markets.financialcontent.com/wral/article/marketminute-2026-1-22-historic-25-daily-surge-arctic-blast-sends-natural-gas-markets-into-a-frenzy?utm_source=openai"
+        },
+        {
+          "date": "2026-01-26",
+          "headline": "Nat-Gas Prices Settle Sharply Higher as Feb Nymex Contract Expires | FinancialContent",
+          "source": "",
+          "url": "https://www.financialcontent.com/article/barchart-2026-1-28-nat-gas-prices-settle-sharply-higher-as-feb-nymex-contract-expires?utm_source=openai"
+        },
+        {
+          "date": "2026-01-26",
+          "headline": "Western States Wholesale Natural Gas Settlement",
+          "source": "",
+          "url": "https://naturalgasantitrustsettlement.com/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-20",
+          "headline": "Natural Gas Mar 26 (NG=F) stock historical prices and data \u2013 Yahoo Finance",
+          "source": "",
+          "url": "https://uk.finance.yahoo.com/quote/NG%3DF/history/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-20",
+          "headline": "Natural Gas Jan \u201926 Futures Surge Above $5 as Cold Snap, LNG Exports and Coal Switching Drive Three\u2011Year High",
+          "source": "",
+          "url": "https://ts2.tech/en/natural-gas-jan-26-futures-surge-above-5-as-cold-snap-lng-exports-and-coal-switching-drive-three-year-high/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-20",
+          "headline": "United States Natural Gas Fund posts $252M income | UNG SEC Filing - Form 8-K",
+          "source": "",
+          "url": "https://www.stocktitan.net/sec-filings/UNG/8-k-united-states-natural-gas-fund-lp-reports-material-event-46744b220ecf.html?utm_source=openai"
+        },
+        {
+          "date": "2026-01-20",
+          "headline": "February 26, 2026 - 10-K: Annual report [Section 13 and 15(d), not S-K Item 405] | Diversified Energy Company PLC (DEC)",
+          "source": "",
+          "url": "https://ir.div.energy/financial-information/sec-filings/content/0001922446-26-000020/dec-20251231.htm?utm_source=openai"
+        },
+        {
+          "date": "2026-01-20",
+          "headline": "User | thepilotnews.com - Historic 25% Daily Surge: Arctic Blast Sends Natural Gas Markets into a Frenzy",
+          "source": "",
+          "url": "https://business.thepilotnews.com/thepilotnews/article/marketminute-2026-1-22-historic-25-daily-surge-arctic-blast-sends-natural-gas-markets-into-a-frenzy?utm_source=openai"
+        },
+        {
+          "date": "2026-01-20",
+          "headline": "All Civil Penalty Actions - 2025 | Federal Energy Regulatory Commission",
+          "source": "",
+          "url": "https://www.ferc.gov/all-civil-penalty-actions-2025?utm_source=openai"
+        }
+      ],
+      "narrative": "The asset started at a price of 4.912 and ended at 3.186, resulting in a negative return of -35.1384%. Over the period, it experienced an annualized volatility of 1.657375 and a maximum drawdown of -62.1046%, indicating significant price fluctuations and a substantial peak-to-trough decline. The largest upward move occurred on 2026-01-26, with a 28.91% increase closing at 6.8, coinciding with several news items including a spike in natural gas prices to a 3.25-year high and first quarter fiscal 2026 earnings reports from National Fuel, which may have contributed to this surge [1][2]. Another notable large upward day was on 2026-01-20, with a 25.9104% gain closing at 3.907, accompanied by high volume of 410,520 shares, during a period marked by a historic 25% daily surge in natural gas markets driven by an Arctic blast [3]. The largest downward move was on 2026-01-29, with a -47.4799% drop closing at 3.918, followed by another significant decline on 2026-02-02 of -25.6546% closing at 3.237, which was also a high volume day with 554,857 shares traded [4]. The average daily volume was 188,588 shares, with a volume decrease of -10.5154% over the period, suggesting some reduction in trading activity. The price movements and volume spikes appear to be closely linked to natural gas market dynamics and weather-related demand changes, as reflected in multiple news releases and market updates during late January and early February 2026 [1][3][4].",
+      "tldr": [
+        "Period return: -35.14% with annualized volatility 1.657.",
+        "Largest up day: 2026-01-26 (28.91%), largest down day: 2026-01-29 (-47.48%).",
+        "Highest volume spike was on 2026-02-02 with volume 554,857."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-35.14%) with peak drawdown of -62.10%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://investor.wedbush.com/wedbush/article/barchart-2026-1-26-nat-gas-prices-spike-to-325-year-high?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.nationalfuel.com/news/national-fuel-reports-first-quarter-fiscal-2026-earnings/?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://markets.financialcontent.com/wral/article/marketminute-2026-1-22-historic-25-daily-surge-arctic-blast-sends-natural-gas-markets-into-a-frenzy?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://www.eia.gov/pressroom/releases/press583.php?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

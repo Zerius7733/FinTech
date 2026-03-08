@@ -5,7 +5,7 @@ import { jsPDF } from 'jspdf'
 import { useAuth } from '../context/AuthContext.jsx'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
-import AssetInsightsPanel from '../components/AssetInsightsPanel.jsx'
+import AssetInsightsPanel, { getCachedInsight } from '../components/AssetInsightsPanel.jsx'
 import { refreshPage } from '../utils/refreshPage.js'
 import { convertCurrency, formatCurrency, normalizeCurrencyCode } from '../utils/currency.js'
 
@@ -969,6 +969,18 @@ function LoadingPulse() {
 }
 
 function HoldingInsightModal({ holding, onClose, userId }) {
+  const insightAssetType = holding?.type === 'Crypto' ? 'crypto' : holding?.type === 'Commodity' ? 'commodity' : 'stock'
+  const cachedInsight = getCachedInsight(insightAssetType, holding?.symbol, 3)
+  const [liveNarrative, setLiveNarrative] = useState(() => {
+    if (typeof cachedInsight?.narrative === 'string' && cachedInsight.narrative.trim()) return cachedInsight.narrative.trim()
+    if (typeof cachedInsight?.conclusion === 'string' && cachedInsight.conclusion.trim()) return cachedInsight.conclusion.trim()
+    if (Array.isArray(cachedInsight?.tldr)) {
+      const first = cachedInsight.tldr.find(v => typeof v === 'string' && v.trim())
+      if (first) return first.trim()
+    }
+    return ''
+  })
+
   useEffect(() => {
     if (!holding) return
     const onKey = e => { if (e.key === 'Escape') onClose() }
@@ -976,9 +988,29 @@ function HoldingInsightModal({ holding, onClose, userId }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [holding, onClose])
 
+  useEffect(() => {
+    if (typeof cachedInsight?.narrative === 'string' && cachedInsight.narrative.trim()) {
+      setLiveNarrative(cachedInsight.narrative.trim())
+      return
+    }
+    if (typeof cachedInsight?.conclusion === 'string' && cachedInsight.conclusion.trim()) {
+      setLiveNarrative(cachedInsight.conclusion.trim())
+      return
+    }
+    if (Array.isArray(cachedInsight?.tldr)) {
+      const first = cachedInsight.tldr.find(v => typeof v === 'string' && v.trim())
+      if (first) {
+        setLiveNarrative(first.trim())
+        return
+      }
+    }
+    setLiveNarrative('')
+  }, [holding?.symbol, holding?.type])
+
   if (!holding) return null
   const gain = gainPct(holding.current_price, holding.avg_price)
   const assetType = holding.type === 'Crypto' ? 'crypto' : holding.type === 'Commodity' ? 'commodity' : 'stock'
+  const suggestedText = liveNarrative || 'Generate Market Insight to view a narrative read for this holding.'
 
   return (
     <div onClick={e => e.target === e.currentTarget && onClose()} style={hm.backdrop}>
@@ -1012,7 +1044,27 @@ function HoldingInsightModal({ holding, onClose, userId }) {
           ))}
         </div>
 
-        <AssetInsightsPanel assetType={assetType} symbol={holding.symbol} months={3} userId={userId} />
+        <AssetInsightsPanel
+          assetType={assetType}
+          symbol={holding.symbol}
+          months={3}
+          userId={userId}
+          prefaceText={suggestedText}
+          onInsightLoaded={insight => {
+            if (typeof insight?.narrative === 'string' && insight.narrative.trim()) {
+              setLiveNarrative(insight.narrative.trim())
+              return
+            }
+            if (typeof insight?.conclusion === 'string' && insight.conclusion.trim()) {
+              setLiveNarrative(insight.conclusion.trim())
+              return
+            }
+            if (Array.isArray(insight?.tldr)) {
+              const first = insight.tldr.find(v => typeof v === 'string' && v.trim())
+              if (first) setLiveNarrative(first.trim())
+            }
+          }}
+        />
       </div>
     </div>
   )
@@ -3218,7 +3270,7 @@ const s = {
   },
   btnTeal: {
     background:'linear-gradient(135deg,var(--teal),#0e9f84)',
-    border:'none', color:'#080c14', padding:'8px 18px', borderRadius:8,
+    border:'none', color:'#ffffff', padding:'8px 18px', borderRadius:8,
     fontFamily:'var(--font-display)', fontSize:'0.78rem', fontWeight:700,
     boxShadow:'0 4px 14px rgba(45,212,191,0.22)', cursor:'pointer', transition:'opacity 0.2s',
   },
@@ -3228,6 +3280,7 @@ const s = {
     width:'100%',
     textAlign:'left',
     cursor:'pointer',
+    color:'var(--text)',
     background:'linear-gradient(135deg, rgba(109,141,247,0.05), rgba(139,92,246,0.04) 52%, rgba(42,184,163,0.05))',
     boxShadow:'0 18px 44px rgba(15,23,42,0.06)',
   },
@@ -3579,10 +3632,10 @@ const hm = {
   panel: {
     width:'min(920px, 100%)',
     margin:'0 auto',
-    background:'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
-    border:'1px solid rgba(15,23,42,0.08)',
+    background:'var(--surface)',
+    border:'1px solid var(--border)',
     borderRadius:24,
-    boxShadow:'0 36px 90px rgba(15,23,42,0.2)',
+    boxShadow:'0 36px 90px rgba(0,0,0,0.35)',
     overflow:'hidden',
   },
   topBar: { height:2, background:'linear-gradient(90deg, var(--teal), #7c3aed, var(--gold))' },
@@ -3620,7 +3673,7 @@ const hm = {
     height:40,
     borderRadius:10,
     border:'1px solid var(--border)',
-    background:'rgba(255,255,255,0.9)',
+    background:'var(--surface2)',
     color:'var(--text-faint)',
     cursor:'pointer',
     flexShrink:0,
@@ -3632,9 +3685,9 @@ const hm = {
     padding:'0 28px 18px',
   },
   metricCard: {
-    border:'1px solid rgba(15,23,42,0.08)',
+    border:'1px solid var(--border)',
     borderRadius:14,
-    background:'rgba(255,255,255,0.72)',
+    background:'var(--surface2)',
     padding:'14px 14px 12px',
   },
   metricLabel: {
