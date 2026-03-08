@@ -554,7 +554,7 @@ const cs = {
   stepItem: { display:'flex', alignItems:'flex-start', gap:14, marginBottom:8, cursor:'pointer', padding:'8px 4px', borderRadius:10 },
   stepActive: {}, stepInactive: { opacity:0.35 },
   stepBullet: { width:34, height:34, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-mono)', fontSize:'0.78rem', border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text-faint)', flexShrink:0, marginTop:2 },
-  bulletActive: { background:'var(--gold)', borderColor:'transparent', color:'#ffffff', fontWeight:700, boxShadow:'0 8px 18px rgba(17,24,39,0.18)' },
+  bulletActive: { background:'var(--gold)', borderColor:'transparent', color:'var(--btn-text-on-gold)', fontWeight:700, boxShadow:'0 8px 18px rgba(17,24,39,0.18)' },
   bulletDone:   { background:'rgba(52,211,153,0.12)', borderColor:'var(--green)', color:'var(--green)' },
   stepTitle: { fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.88rem', marginBottom:2 },
   stepDesc:  { fontSize:'0.76rem', color:'var(--text-dim)', lineHeight:1.5 },
@@ -582,10 +582,10 @@ const cs = {
   horizonBtn:{ background:'var(--surface)', border:'1.5px solid var(--border)', borderRadius:10, padding:'14px 8px', textAlign:'center', cursor:'pointer', transition:'all 0.2s', fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' },
   horizonActive: { borderColor:'var(--teal)', color:'var(--teal)', background:'rgba(45,212,191,0.07)' },
   btnBack:  { background:'transparent', border:'1px solid var(--border)', color:'var(--text-dim)', padding:'11px 22px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.87rem', fontWeight:600, cursor:'pointer' },
-  btnNext:  { background:'var(--gold)', border:'none', color:'#ffffff', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.88rem', fontWeight:700, boxShadow:'0 10px 24px rgba(17,24,39,0.16)', cursor:'pointer' },
+  btnNext:  { background:'var(--gold)', border:'none', color:'var(--btn-text-on-gold)', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.88rem', fontWeight:700, boxShadow:'0 10px 24px rgba(17,24,39,0.16)', cursor:'pointer' },
   completeRing: { width:110, height:110, borderRadius:'50%', background:'linear-gradient(135deg,rgba(52,211,153,0.15),rgba(45,212,191,0.1))', border:'2px solid rgba(52,211,153,0.4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.8rem', margin:'0 auto 28px', boxShadow:'0 0 40px rgba(52,211,153,0.2)', animation:'pulseScale 2s ease-in-out infinite' },
   pill:     { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:24, padding:'7px 16px', fontFamily:'var(--font-mono)', fontSize:'0.73rem', color:'var(--text-dim)' },
-  btnLaunch:{ background:'var(--gold)', border:'none', color:'#ffffff', padding:'15px 44px', borderRadius:12, fontFamily:'var(--font-display)', fontSize:'0.98rem', fontWeight:700, boxShadow:'0 12px 28px rgba(17,24,39,0.18)', cursor:'pointer' },
+  btnLaunch:{ background:'var(--gold)', border:'none', color:'var(--btn-text-on-gold)', padding:'15px 44px', borderRadius:12, fontFamily:'var(--font-display)', fontSize:'0.98rem', fontWeight:700, boxShadow:'0 12px 28px rgba(17,24,39,0.18)', cursor:'pointer' },
 }
 
 const imp = {

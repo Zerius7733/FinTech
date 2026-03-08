@@ -662,7 +662,7 @@ export default function Profile() {
     const lines = [
       'WealthSphere Comprehensive Portfolio Analysis',
       '',
-      `Generated for: ${profile?.name ?? authUser.username}`,
+      `Generated for: ${profile?.name ?? authUser?.username}`,
       `Wellness Score: ${Math.round(wellnessScore)} (${insightTone(wellnessScore).label})`,
       `Risk Profile: ${profile?.risk_profile ?? 'Unavailable'}`,
       '',
@@ -701,10 +701,10 @@ export default function Profile() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `wealthsphere-analysis-${(profile?.name ?? authUser.username).toLowerCase().replace(/\s+/g, '-')}.pdf`
+    link.download = `wealthsphere-analysis-${(profile?.name ?? authUser?.username ?? 'user').toLowerCase().replace(/\s+/g, '-')}.pdf`
     link.click()
     URL.revokeObjectURL(url)
-  }, [authUser.username, gptNextSteps, gptSummary, gptTopRecs, profile?.name, profile?.risk_profile, scenarioCards, wellnessScore])
+  }, [authUser?.username, gptNextSteps, gptSummary, gptTopRecs, profile?.name, profile?.risk_profile, scenarioCards, wellnessScore])
   const gptText = !gptSummary && gptTopRecs.length === 0 && !gptScenarios && gptNextSteps.length === 0 && gptRecs
     ? (typeof gptPayload === 'string'
         ? gptPayload
@@ -767,12 +767,151 @@ export default function Profile() {
   const riskChanged = selectedRisk && selectedRisk !== (profile?.risk_profile ?? '').toLowerCase()
 
   if (!authUser) {
+    const DEMO_HOLDINGS = [
+      { name:'Apple Inc.',       symbol:'AAPL',  type:'Stock',     value: 42800, pct: 17.3, change:+2.14, color:'#60a5fa' },
+      { name:'Microsoft Corp.',  symbol:'MSFT',  type:'Stock',     value: 38500, pct: 15.6, change:+0.87, color:'#60a5fa' },
+      { name:'Costco Wholesale', symbol:'COST',  type:'Stock',     value: 31200, pct: 12.6, change:-0.43, color:'#60a5fa' },
+      { name:'Bitcoin',          symbol:'BTC',   type:'Crypto',    value: 28900, pct: 11.7, change:+4.22, color:'#2dd4bf' },
+      { name:'Ethereum',         symbol:'ETH',   type:'Crypto',    value: 19400, pct:  7.8, change:+2.91, color:'#2dd4bf' },
+      { name:'Gold (XAU)',       symbol:'XAU',   type:'Commodity', value: 35600, pct: 14.4, change:+0.31, color:'#fbbf24' },
+      { name:'Silver (XAG)',     symbol:'XAG',   type:'Commodity', value: 21400, pct:  8.6, change:-0.19, color:'#fbbf24' },
+    ]
+    const DEMO_ALLOC = [
+      { label:'Stocks',     pct:45.5, color:'#60a5fa' },
+      { label:'Commodities',pct:23.0, color:'#fbbf24' },
+      { label:'Crypto',     pct:19.5, color:'#2dd4bf' },
+      { label:'Cash',       pct:12.0, color:'#94a3b8' },
+    ]
     return (
-      <div style={{ minHeight:'100vh', background:'var(--bg)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <div style={{ textAlign:'center' }}>
-          <p style={{ color:'var(--text-dim)', marginBottom:16 }}>Sign in to view your portfolio.</p>
-          <button style={{ background:'var(--gold)', border:'none', borderRadius:8, padding:'10px 24px', fontWeight:700, cursor:'pointer', color:'#0d0d0d' }} onClick={() => navigate('/login')}>Sign In</button>
-        </div>
+      <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
+        <style>{`@keyframes profileFadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }`}</style>
+        <Navbar />
+        <main style={{ paddingTop:110, paddingBottom:60, paddingLeft:48, paddingRight:48, maxWidth:1400, margin:'0 auto' }}>
+
+          {/* Demo banner */}
+          <div style={{ display:'flex', alignItems:'center', gap:14, background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.28)', borderRadius:12, padding:'12px 20px', marginBottom:28, animation:'profileFadeUp 0.5s ease both' }}>
+            <span style={{ fontSize:'1.1rem' }}>👁️</span>
+            <div style={{ flex:1, fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:'var(--text-dim)' }}>
+              You're viewing a <strong style={{ color:'var(--gold)' }}>demo portfolio</strong>. Sign in or create an account to see your real holdings.
+            </div>
+            <button
+              onClick={() => navigate('/login')}
+              style={{ background:'var(--gold)', border:'none', color:'var(--btn-text-on-gold)', padding:'8px 20px', borderRadius:8, fontFamily:'var(--font-display)', fontSize:'0.82rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}
+            >
+              Sign In →
+            </button>
+          </div>
+
+          {/* Hero card */}
+          <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'28px 32px', display:'flex', alignItems:'center', gap:28, marginBottom:24, flexWrap:'wrap', animation:'profileFadeUp 0.5s ease 0.05s both' }}>
+            <div style={{ position:'relative', flexShrink:0 }}>
+              <div style={{ width:72, height:72, borderRadius:'50%', background:'linear-gradient(135deg,var(--gold),var(--teal))', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.4rem', color:'var(--btn-text-on-gold)' }}>JD</div>
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.4rem', marginBottom:6 }}>Jamie Demo</div>
+              <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+                <span style={{ background:'var(--surface2)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--gold)' }}>⚖️ Balanced Risk</span>
+                <span style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--text-dim)' }}>7 Positions</span>
+                <span style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--text-dim)' }}>3 Asset Classes</span>
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:32, flexWrap:'wrap' }}>
+              {[['$247,500','Total AUM','var(--gold)'],['$235,800','Portfolio Value','var(--green)'],['$11,700','Cash Balance','var(--teal)']].map(([v,l,c]) => (
+                <div key={l} style={{ textAlign:'right' }}>
+                  <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.15rem', color:c }}>{v}</div>
+                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Two-column: stats + allocation */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:24, animation:'profileFadeUp 0.5s ease 0.1s both' }}>
+            {/* Wellness / stats */}
+            <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'24px 28px' }}>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', textTransform:'uppercase', letterSpacing:'0.14em', color:'var(--teal)', marginBottom:16 }}>Wellness Score</div>
+              <div style={{ display:'flex', alignItems:'baseline', gap:10, marginBottom:12 }}>
+                <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'2.8rem', color:'var(--gold)' }}>74</span>
+                <span style={{ color:'var(--text-faint)', fontSize:'1rem' }}>/ 100</span>
+                <span style={{ marginLeft:8, background:'rgba(212,166,58,0.12)', border:'1px solid rgba(212,166,58,0.3)', borderRadius:20, padding:'3px 10px', fontSize:'0.74rem', color:'#d4a63a' }}>On Track</span>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:16 }}>
+                {[['Unrealised P&L','+$18,240','var(--green)'],['P&L %','+7.96%','var(--green)'],['Positions','7','var(--gold)'],['Stress Index','32 / 100','var(--teal)']].map(([l,v,c]) => (
+                  <div key={l} style={{ background:'var(--surface2)', borderRadius:10, padding:'12px 14px' }}>
+                    <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:4 }}>{l}</div>
+                    <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem', color:c }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Allocation */}
+            <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'24px 28px' }}>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', textTransform:'uppercase', letterSpacing:'0.14em', color:'var(--teal)', marginBottom:16 }}>Allocation Breakdown</div>
+              {DEMO_ALLOC.map(a => (
+                <div key={a.label} style={{ marginBottom:14 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
+                    <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.75rem', color:'var(--text-dim)' }}>{a.label}</span>
+                    <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.75rem', color:a.color, fontWeight:700 }}>{a.pct}%</span>
+                  </div>
+                  <div style={{ height:6, borderRadius:99, background:'var(--surface2)', overflow:'hidden' }}>
+                    <div style={{ height:'100%', width:`${a.pct}%`, background:a.color, borderRadius:99 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Holdings table */}
+          <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, overflow:'hidden', animation:'profileFadeUp 0.5s ease 0.15s both' }}>
+            <div style={{ padding:'20px 28px 16px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', textTransform:'uppercase', letterSpacing:'0.14em', color:'var(--teal)' }}>Holdings</div>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--text-faint)' }}>Demo data</span>
+            </div>
+            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom:'1px solid var(--border)' }}>
+                  {['Asset','Type','Market Value','Allocation','24h Change'].map(h => (
+                    <th key={h} style={{ padding:'10px 24px', textAlign: h==='Asset'?'left':'right', fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:400 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {DEMO_HOLDINGS.map((h, i) => (
+                  <tr key={h.symbol} style={{ borderBottom: i < DEMO_HOLDINGS.length-1 ? '1px solid var(--border)' : 'none', opacity: 0.92 }}>
+                    <td style={{ padding:'13px 24px' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                        <div style={{ width:34, height:34, borderRadius:10, background:`${h.color}18`, border:`1px solid ${h.color}44`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-mono)', fontSize:'0.65rem', color:h.color, fontWeight:700 }}>{h.symbol.slice(0,3)}</div>
+                        <div>
+                          <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.88rem' }}>{h.symbol}</div>
+                          <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.65rem', color:'var(--text-faint)' }}>{h.name}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding:'13px 24px', textAlign:'right' }}>
+                      <span style={{ background:`${h.color}18`, border:`1px solid ${h.color}44`, borderRadius:20, padding:'3px 10px', fontFamily:'var(--font-mono)', fontSize:'0.65rem', color:h.color }}>{h.type}</span>
+                    </td>
+                    <td style={{ padding:'13px 24px', textAlign:'right', fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.9rem' }}>${h.value.toLocaleString()}</td>
+                    <td style={{ padding:'13px 24px', textAlign:'right', fontFamily:'var(--font-mono)', fontSize:'0.8rem', color:'var(--text-dim)' }}>{h.pct}%</td>
+                    <td style={{ padding:'13px 24px', textAlign:'right', fontFamily:'var(--font-mono)', fontSize:'0.8rem', fontWeight:700, color: h.change >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                      {h.change >= 0 ? '+' : ''}{h.change}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* CTA footer */}
+          <div style={{ textAlign:'center', marginTop:40, padding:'36px 32px', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, animation:'profileFadeUp 0.5s ease 0.2s both' }}>
+            <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.3rem', marginBottom:10 }}>Ready to track your <span style={{ background:'linear-gradient(135deg,var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>real portfolio?</span></div>
+            <div style={{ color:'var(--text-dim)', fontSize:'0.88rem', marginBottom:24 }}>Sign in to connect your holdings and get personalised insights.</div>
+            <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
+              <button onClick={() => navigate('/login')} style={{ background:'var(--gold)', border:'none', color:'var(--btn-text-on-gold)', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.9rem', fontWeight:700, cursor:'pointer', boxShadow:'0 10px 24px rgba(17,24,39,0.16)' }}>Sign In</button>
+              <button onClick={() => navigate('/survey')} style={{ background:'transparent', border:'1px solid rgba(45,212,191,0.4)', color:'var(--teal)', padding:'12px 28px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.9rem', fontWeight:600, cursor:'pointer' }}>Start Onboarding →</button>
+            </div>
+          </div>
+
+        </main>
       </div>
     )
   }
@@ -813,11 +952,11 @@ export default function Profile() {
         {/* Hero card */}
         <div style={{ ...s.heroCard, animation:'sectionIn 0.5s ease both', animationDelay:'0.08s' }}>
           <div style={s.avatarWrap}>
-            <div style={s.avatar}>{profile ? initials(profile.name) : initials(authUser.username)}</div>
+            <div style={s.avatar}>{profile ? initials(profile.name) : initials(authUser?.username)}</div>
             <div style={s.avatarRing} />
           </div>
           <div style={{ flex:1 }}>
-            <div style={s.userName}>{profile?.name ?? authUser.username}</div>
+            <div style={s.userName}>{profile?.name ?? authUser?.username}</div>
             <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:12 }}>
               {[['var(--teal)','Individual Investor'],['var(--gold)', profile?.risk_profile ? `Risk: ${profile.risk_profile}` : 'Risk: —']].map(([c,t]) => (
                 <span key={t} style={{ display:'flex', alignItems:'center', gap:6, fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' }}>
@@ -1590,7 +1729,7 @@ const s = {
   },
   btnGold: {
     background:'var(--gold)',
-    border:'none', color:'#ffffff', padding:'10px 22px', borderRadius:10,
+    border:'none', color:'var(--btn-text-on-gold)', padding:'10px 22px', borderRadius:10,
     fontFamily:'var(--font-display)', fontSize:'0.84rem', fontWeight:700,
     boxShadow:'0 10px 24px rgba(17,24,39,0.16)', cursor:'pointer', transition:'opacity 0.2s',
   },

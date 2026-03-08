@@ -526,28 +526,14 @@ function getRotationForLatLng(lat, lng) {
 // Kept only as ZONE_DEFS for hover detection — no longer used for canvas drawing
 const GLOBE_ZONES = [
   {
-    label:'Equities',    cx:360,  cy:330, rx:265, ry:198,
+    label:'Stock Market', cx:360,  cy:330, rx:265, ry:198,
     core:[{cx:360,cy:330,rx:265,ry:198,rot:0.08},{cx:395,cy:348,rx:185,ry:140,rot:-0.05}],
     dr:10,  dg:38,  db:98,    // very dark blue fill
     lr:96,  lg:165, lb:250,   // light edge #60a5fa
     color:'#60a5fa',
   },
   {
-    label:'Bonds',       cx:850,  cy:210, rx:188, ry:142,
-    core:[{cx:850,cy:210,rx:188,ry:142,rot:0},{cx:875,cy:228,rx:132,ry:100,rot:0.07}],
-    dr:48,  dg:20,  db:112,   // very dark purple
-    lr:167, lg:139, lb:250,
-    color:'#a78bfa',
-  },
-  {
-    label:'Real Assets', cx:1250, cy:430, rx:202, ry:158,
-    core:[{cx:1250,cy:430,rx:202,ry:158,rot:0.06},{cx:1272,cy:450,rx:148,ry:114,rot:-0.06}],
-    dr:10,  dg:68,  db:48,    // very dark emerald
-    lr:52,  lg:211, lb:153,   // light edge #34d399
-    color:'#34d399',
-  },
-  {
-    label:'Digital',     cx:1680, cy:280, rx:182, ry:152,
+    label:'Crypto',      cx:1680, cy:280, rx:182, ry:152,
     core:[{cx:1680,cy:280,rx:182,ry:152,rot:-0.07},{cx:1660,cy:300,rx:128,ry:108,rot:0.05}],
     dr:6,   dg:68,  db:65,    // very dark teal
     lr:45,  lg:212, lb:191,
@@ -563,10 +549,8 @@ const GLOBE_ZONES = [
 ]
 
 const ZONE_ROTATION_TARGETS = {
-  Equities: getRotationForLatLng(38, -95),
-  Bonds: getRotationForLatLng(52, -25),
-  'Real Assets': getRotationForLatLng(18, 35),
-  Digital: getRotationForLatLng(34, 118),
+  'Stock Market': getRotationForLatLng(38, -95),
+  Crypto: getRotationForLatLng(34, 118),
   Commodities: getRotationForLatLng(-18, 22),
 }
 
@@ -699,14 +683,14 @@ function buildGlobeNodes(profile) {
   const activeStocks = stocks.filter(h => (h.qty ?? 0) > 0)
   const stockPos = spreadPositions(activeStocks.length, 38, -95, 16, 28)
   activeStocks.forEach((h, i) =>
-    nodes.push(makeNode(h, 'stocks', stockPos[i].lat, stockPos[i].lng, 0x60a5fa, 'Equities', '📈'))
+    nodes.push(makeNode(h, 'stocks', stockPos[i].lat, stockPos[i].lng, 0x60a5fa, 'Stock Market', '📈'))
   )
 
   // Crypto — spread across East Asia / Pacific
   const activeCryptos = cryptos.filter(h => (h.qty ?? 0) > 0)
   const cryptoPos = spreadPositions(activeCryptos.length, 32, 118, 14, 22)
   activeCryptos.forEach((h, i) =>
-    nodes.push(makeNode(h, 'cryptos', cryptoPos[i].lat, cryptoPos[i].lng, 0x2dd4bf, 'Digital Assets', '₿'))
+    nodes.push(makeNode(h, 'cryptos', cryptoPos[i].lat, cryptoPos[i].lng, 0x2dd4bf, 'Crypto', '₿'))
   )
 
   // Commodities — spread across Africa / Middle East
@@ -1307,8 +1291,10 @@ export default function Globe() {
         {/* Stats bar */}
         <div style={S.statsBar}>
           {[
-            { label:'Total Portfolio', val:`$${aum.toLocaleString()}`,
+            { label:'Total Portfolio',
+              val: user ? `$${aum.toLocaleString()}` : '$247,500',
               sub: (() => {
+                if (!user) return '3 asset classes · Stocks, Crypto, Commodities'
                 if (!userProfile?.portfolio) return 'loading…'
                 const { stocks=[], cryptos=[], commodities=[] } = userProfile.portfolio
                 const types = [
@@ -1320,14 +1306,17 @@ export default function Globe() {
               })(),
               c:'var(--gold)' },
             { label:'Unrealised P&L',
-              val: userProfile ? `${plSign >= 0 ? '+' : '-'}$${pl.toLocaleString()}` : '—',
-              sub: userProfile ? `${plSign >= 0 ? '+' : ''}${plPct.toFixed(2)}% vs avg cost` : 'loading…',
-              c:   userProfile ? (plSign >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--text-faint)' },
+              val: user ? (userProfile ? `${plSign >= 0 ? '+' : '-'}$${pl.toLocaleString()}` : '—') : '+$18,240',
+              sub: user ? (userProfile ? `${plSign >= 0 ? '+' : ''}${plPct.toFixed(2)}% vs avg cost` : 'loading…') : '+7.96% vs avg cost',
+              c:   user ? (userProfile ? (plSign >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--text-faint)') : 'var(--green)' },
             { label:'Wellness Score',
-              val: userProfile?.financial_wellness_score != null ? `${Math.round(userProfile.financial_wellness_score)} / 100` : '— / 100',
-              sub: userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'Excellent':userProfile.financial_wellness_score>=55?'On Track':userProfile.financial_wellness_score>=35?'Needs Work':'At Risk') : 'diversification',
-              c:   userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'var(--green)':userProfile.financial_wellness_score>=55?'#d4a63a':userProfile.financial_wellness_score>=35?'var(--orange)':'var(--red)') : 'var(--teal)' },
-            { label:'Active Positions', val: String(activePositions), sub: userProfile ? `${activePositions} holdings` : 'across 12 portfolios', c:'var(--gold)' },
+              val: user ? (userProfile?.financial_wellness_score != null ? `${Math.round(userProfile.financial_wellness_score)} / 100` : '— / 100') : '74 / 100',
+              sub: user ? (userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'Excellent':userProfile.financial_wellness_score>=55?'On Track':userProfile.financial_wellness_score>=35?'Needs Work':'At Risk') : 'diversification') : 'On Track',
+              c:   user ? (userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'var(--green)':userProfile.financial_wellness_score>=55?'#d4a63a':userProfile.financial_wellness_score>=35?'var(--orange)':'var(--red)') : 'var(--teal)') : '#d4a63a' },
+            { label:'Active Positions',
+              val: user ? String(activePositions) : '12',
+              sub: user ? (userProfile ? `${activePositions} holdings` : 'across 12 portfolios') : 'across 3 asset classes',
+              c:'var(--gold)' },
           ].map((s,i) => (
             <div key={s.label} style={{ ...S.statItem, borderRight: i<3 ? '1px solid var(--border)' : 'none' }}>
               <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:4 }}>{s.label}</div>
@@ -1418,7 +1407,7 @@ export default function Globe() {
               <div style={{ fontSize:'0.8rem', color:'var(--text-dim)' }}>{riskLevel.desc}</div>
             </div>
           </div>
-          <button style={{ background:'var(--gold)', border:'none', color:'#ffffff', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.9rem', fontWeight:700, cursor:'pointer', boxShadow:'0 10px 24px rgba(17,24,39,0.16)' }} onClick={() => navigate('/survey')}>
+          <button style={{ background:'var(--gold)', border:'none', color:'var(--btn-text-on-gold)', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.9rem', fontWeight:700, cursor:'pointer', boxShadow:'0 10px 24px rgba(17,24,39,0.16)' }} onClick={() => navigate('/survey')}>
             Continue to Full Onboarding →
           </button>
         </div>
@@ -1578,7 +1567,7 @@ const S = {
   },
   btnCta: {
     background:'var(--gold)',
-    border:'none', color:'#ffffff', padding:'14px 36px', borderRadius:10,
+    border:'none', color:'var(--btn-text-on-gold)', padding:'14px 36px', borderRadius:10,
     fontFamily:'var(--font-display)', fontSize:'0.95rem', fontWeight:700,
     cursor:'pointer', boxShadow:'0 12px 28px rgba(17,24,39,0.18)',
   },

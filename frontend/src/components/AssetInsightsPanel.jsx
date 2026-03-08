@@ -324,7 +324,7 @@ const S = {
   triggerBtn: {
     background: 'var(--gold)',
     border: 'none',
-    color: '#ffffff',
+    color: 'var(--btn-text-on-gold)',
     padding: '10px 16px',
     borderRadius: 10,
     fontFamily: 'var(--font-display)',

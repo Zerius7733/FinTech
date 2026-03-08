@@ -184,6 +184,93 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
       onClick={e => e.target === e.currentTarget && onClose()}
       style={MD.backdrop}
     >
+      <style>{`
+        .heart-container {
+          --heart-color: rgb(255, 91, 137);
+          position: relative;
+          width: 32px;
+          height: 32px;
+          transition: .3s;
+        }
+
+        .heart-container .checkbox {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          opacity: 0;
+          z-index: 20;
+          cursor: pointer;
+        }
+
+        .heart-container .svg-container {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .heart-container .svg-outline,
+        .heart-container .svg-filled {
+          fill: var(--heart-color);
+          position: absolute;
+        }
+
+        .heart-container .svg-filled {
+          animation: keyframes-svg-filled 1s;
+          display: none;
+        }
+
+        .heart-container .svg-celebrate {
+          position: absolute;
+          animation: keyframes-svg-celebrate .5s;
+          animation-fill-mode: forwards;
+          display: none;
+          stroke: var(--heart-color);
+          fill: var(--heart-color);
+          stroke-width: 2px;
+        }
+
+        .heart-container .checkbox:checked~.svg-container .svg-filled {
+          display: block
+        }
+
+        .heart-container .checkbox:checked~.svg-container .svg-celebrate {
+          display: block
+        }
+
+        @keyframes keyframes-svg-filled {
+          0% {
+            transform: scale(0);
+          }
+
+          25% {
+            transform: scale(1.2);
+          }
+
+          50% {
+            transform: scale(1);
+            filter: brightness(1.5);
+          }
+        }
+
+        @keyframes keyframes-svg-celebrate {
+          0% {
+            transform: scale(0);
+          }
+
+          50% {
+            opacity: 1;
+            filter: brightness(1.5);
+          }
+
+          100% {
+            transform: scale(1.4);
+            opacity: 0;
+            display: none;
+          }
+        }
+      `}</style>
       <div style={MD.panel}>
         <div style={MD.topBar} />
 
@@ -206,13 +293,33 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
             </div>
           </div>
 
-          <button
-            onClick={() => onToggleFavourite?.()}
-            style={{ ...MD.closeBtn, fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isFavourited ? '#f43f5e' : 'var(--text-faint)', background: isFavourited ? 'rgba(244,63,94,0.1)' : 'rgba(255,255,255,0.9)', border: `1px solid ${isFavourited ? 'rgba(244,63,94,0.35)' : 'var(--border)'}`, transition: 'all 0.2s' }}
-            title={isFavourited ? 'Remove from favourites' : 'Add to favourites'}
-          >
-            {isFavourited ? '♥' : '♡'}
-          </button>
+          <div className="heart-container" title={isFavourited ? 'Remove from favourites' : 'Add to favourites'}>
+            <input 
+              type="checkbox" 
+              className="checkbox" 
+              id={`fav-switch-${item.symbol}`}
+              checked={isFavourited}
+              onChange={() => onToggleFavourite?.()}
+            />
+            <div className="svg-container">
+              <svg viewBox="0 0 24 24" className="svg-outline" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.5,1.917a6.4,6.4,0,0,0-5.5,3.3,6.4,6.4,0,0,0-5.5-3.3A6.8,6.8,0,0,0,0,8.967c0,4.547,4.786,9.513,8.8,12.88a4.974,4.974,0,0,0,6.4,0C19.214,18.48,24,13.514,24,8.967A6.8,6.8,0,0,0,17.5,1.917Zm-3.585,18.4a2.973,2.973,0,0,1-3.83,0C4.947,16.006,2,11.87,2,8.967a4.8,4.8,0,0,1,4.5-5.05A4.8,4.8,0,0,1,11,8.967a1,1,0,0,0,2,0,4.8,4.8,0,0,1,4.5-5.05A4.8,4.8,0,0,1,22,8.967C22,11.87,19.053,16.006,13.915,20.313Z">
+                </path>
+              </svg>
+              <svg viewBox="0 0 24 24" className="svg-filled" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.5,1.917a6.4,6.4,0,0,0-5.5,3.3,6.4,6.4,0,0,0-5.5-3.3A6.8,6.8,0,0,0,0,8.967c0,4.547,4.786,9.513,8.8,12.88a4.974,4.974,0,0,0,6.4,0C19.214,18.48,24,13.514,24,8.967A6.8,6.8,0,0,0,17.5,1.917Z">
+                </path>
+              </svg>
+              <svg className="svg-celebrate" width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="10,10 20,20"></polygon>
+                <polygon points="10,50 20,50"></polygon>
+                <polygon points="20,80 30,70"></polygon>
+                <polygon points="90,10 80,20"></polygon>
+                <polygon points="90,50 80,50"></polygon>
+                <polygon points="80,80 70,70"></polygon>
+              </svg>
+            </div>
+          </div>
         </div>
 
         <div style={MD.grid}>
@@ -430,7 +537,6 @@ function FavouritesView({ favourites, onSelect }) {
     return (
       <div style={{ margin: '0 48px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.3)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 20px', gap: 16 }}>
-          <div style={{ fontSize: '3rem', lineHeight: 1 }}>♡</div>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem' }}>No favourites yet</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)', maxWidth: 380, textAlign: 'center', lineHeight: 1.7 }}>
             Open any asset detail panel and tap the heart icon to save it here.
@@ -811,7 +917,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
                       style={{
                         ...PS.pageNum,
                         background: p === page ? 'var(--gold)' : 'rgba(255,255,255,0.05)',
-                        color: p === page ? '#ffffff' : 'var(--text-dim)',
+                        color: p === page ? 'var(--btn-text-on-gold)' : 'var(--text-dim)',
                         border: p === page ? 'none' : '1px solid rgba(255,255,255,0.08)',
                         fontWeight: p === page ? 700 : 400,
                         opacity: (!hasMore && p > page) || loading ? 0.3 : 1,
@@ -829,7 +935,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
                 style={{
                   ...PS.pageBtn,
                   background: hasMore && !loading ? 'var(--gold)' : 'rgba(255,255,255,0.05)',
-                  color: hasMore && !loading ? '#ffffff' : 'var(--text-dim)',
+                  color: hasMore && !loading ? 'var(--btn-text-on-gold)' : 'var(--text-dim)',
                   border: hasMore && !loading ? 'none' : '1px solid rgba(255,255,255,0.08)',
                   opacity: !hasMore || loading ? 0.4 : 1,
                   cursor: !hasMore || loading ? 'not-allowed' : 'pointer',
@@ -899,14 +1005,14 @@ const PS = {
     display: 'flex', gap: 10, margin: '0 48px 22px', flexWrap: 'wrap',
   },
   tab: {
-    background: 'rgba(255,255,255,0.55)', border: '1px solid var(--border)',
-    color: 'var(--text-dim)', padding: '9px 16px', borderRadius: 999,
+    background: 'var(--surface2)', border: '1px solid var(--border)',
+    color: 'var(--text)', padding: '9px 16px', borderRadius: 999,
     fontFamily: 'var(--font-mono)', fontSize: '0.72rem', textTransform: 'uppercase',
-    letterSpacing: '0.1em', cursor: 'pointer',
+    letterSpacing: '0.1em', cursor: 'pointer', fontWeight: 600,
   },
   tabActive: {
     background: 'var(--gold)',
-    color: '#ffffff',
+    color: 'var(--btn-text-on-gold)',
     borderColor: 'transparent',
     boxShadow: '0 10px 24px rgba(17,24,39,0.16)',
   },
@@ -945,7 +1051,7 @@ const PS = {
   retryBtn: {
     background: 'var(--gold)',
     border: 'none',
-    color: '#ffffff',
+    color: 'var(--btn-text-on-gold)',
     padding: '10px 28px',
     borderRadius: 8,
     fontFamily: 'var(--font-display)',
@@ -986,8 +1092,8 @@ const MD = {
   panel: {
     width: 'min(980px, 100%)',
     overflow: 'visible',
-    background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
-    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
     borderRadius: 24,
     boxShadow: '0 36px 90px rgba(15,23,42,0.2)',
     margin: '0 auto',
@@ -1011,7 +1117,7 @@ const MD = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'rgba(15,23,42,0.05)',
+    background: 'var(--surface2)',
     fontFamily: 'var(--font-mono)',
     fontSize: '0.82rem',
     color: 'var(--text-faint)',
@@ -1045,7 +1151,7 @@ const MD = {
     height: 40,
     borderRadius: 10,
     border: '1px solid var(--border)',
-    background: 'rgba(255,255,255,0.9)',
+    background: 'var(--surface2)',
     color: 'var(--text-faint)',
     cursor: 'pointer',
     flexShrink: 0,
@@ -1057,8 +1163,8 @@ const MD = {
     padding: '0 28px 28px',
   },
   card: {
-    background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
-    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'var(--surface2)',
+    border: '1px solid var(--border)',
     borderRadius: 18,
     padding: 20,
     boxShadow: '0 14px 28px rgba(15,23,42,0.06)',
@@ -1138,8 +1244,8 @@ const MD = {
   },
   metricCard: {
     borderRadius: 14,
-    border: '1px solid rgba(15,23,42,0.08)',
-    background: 'rgba(255,255,255,0.72)',
+    border: '1px solid var(--border)',
+    background: 'var(--surface3)',
     padding: '14px 14px 12px',
   },
   metricLabel: {

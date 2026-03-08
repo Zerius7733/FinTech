@@ -439,7 +439,7 @@ const s = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
   btnSave: {
-    background: 'var(--gold)', border: 'none', color: '#fff',
+    background: 'var(--gold)', border: 'none', color: 'var(--btn-text-on-gold)',
     padding: '9px 18px', borderRadius: 10, fontFamily: 'var(--font-display)',
     fontSize: '0.84rem', fontWeight: 700, cursor: 'pointer',
   },
