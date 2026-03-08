@@ -1,5 +1,7 @@
-﻿import { useEffect, useState, useCallback, useMemo } from 'react'
+﻿import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 import { useAuth } from '../context/AuthContext.jsx'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
@@ -1840,27 +1842,79 @@ export default function Profile() {
     allHoldings,
     year: wrappedYear,
   }), [authUser?.user_id, profile, stocks, allHoldings, wrappedYear])
-  const exportWrappedPdf = useCallback(() => {
-    const printWindow = window.open('', '_blank', 'width=1100,height=900')
-    if (!printWindow) return
-
+  const exportWrappedPdf = useCallback(async () => {
     const ownerName = profile?.name ?? authUser.username
     const html = buildWrappedPrintHtml({
       ownerName,
       year: wrappedData.year,
       slides: wrappedData.slides,
     })
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    printWindow.location.href = url
+    const parsed = new DOMParser().parseFromString(html, 'text/html')
+    const styleMarkup = parsed.head.innerHTML
+    const bodyMarkup = parsed.body.innerHTML
 
-    const triggerPrint = () => {
-      printWindow.focus()
-      printWindow.print()
-      setTimeout(() => URL.revokeObjectURL(url), 2000)
+    const host = document.createElement('div')
+    host.style.position = 'fixed'
+    host.style.left = '-10000px'
+    host.style.top = '0'
+    host.style.width = '794px'
+    host.style.background = '#eef2ff'
+    host.style.zIndex = '-1'
+    host.innerHTML = `${styleMarkup}${bodyMarkup}`
+    document.body.appendChild(host)
+
+    try {
+      if (document.fonts?.ready) await document.fonts.ready
+      await new Promise(resolve => window.requestAnimationFrame(() => resolve()))
+
+      const canvas = await html2canvas(host, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#eef2ff',
+        width: host.scrollWidth,
+        height: host.scrollHeight,
+        windowWidth: host.scrollWidth,
+        windowHeight: host.scrollHeight,
+      })
+
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pageWidthMm = 210
+      const pageHeightMm = 297
+      const pageHeightPx = Math.floor((canvas.width * pageHeightMm) / pageWidthMm)
+      let offsetY = 0
+      let pageIndex = 0
+
+      while (offsetY < canvas.height) {
+        const sliceHeight = Math.min(pageHeightPx, canvas.height - offsetY)
+        const pageCanvas = document.createElement('canvas')
+        pageCanvas.width = canvas.width
+        pageCanvas.height = sliceHeight
+        const pageContext = pageCanvas.getContext('2d')
+        if (!pageContext) break
+        pageContext.drawImage(
+          canvas,
+          0,
+          offsetY,
+          canvas.width,
+          sliceHeight,
+          0,
+          0,
+          canvas.width,
+          sliceHeight,
+        )
+
+        const imageData = pageCanvas.toDataURL('image/png')
+        const imageHeightMm = (sliceHeight * pageWidthMm) / canvas.width
+        if (pageIndex > 0) pdf.addPage()
+        pdf.addImage(imageData, 'PNG', 0, 0, pageWidthMm, imageHeightMm)
+        offsetY += sliceHeight
+        pageIndex += 1
+      }
+
+      pdf.save(`unova-wrapped-${wrappedData.year}-${ownerName.toLowerCase().replace(/\s+/g, '-')}.pdf`)
+    } finally {
+      document.body.removeChild(host)
     }
-
-    printWindow.onload = () => setTimeout(triggerPrint, 300)
   }, [authUser.username, profile?.name, wrappedData])
   const openFinancialModal = useCallback((tab) => {
     setFinancialTab(tab)
