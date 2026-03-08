@@ -163,5 +163,5 @@ def update_stock_listings_cache_prices_file(
 if __name__ == "__main__":
     result = update_stock_prices_file()
     update_stock_listings_cache_prices_file()
-    result = update_assets_file(json_path="json_data/user.json", csv_path="csv_data/users_assets.csv")
+    result = update_assets_file(json_path="json_data/user.json", csv_path="csv_data/users.csv")
     print("stock and asset updates complete")

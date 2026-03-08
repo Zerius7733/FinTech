@@ -77,7 +77,7 @@ def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, An
     return updated
 
 def update_assets_file(
-    json_path: str = "json_data/user.json", csv_path: str = "csv_data/users_assets.csv"
+    json_path: str = "json_data/user.json", csv_path: str = "csv_data/users.csv"
 ) -> Dict[str, Any]:
     print(f"[assets] syncing from {csv_path} -> {json_path}")
     with open(json_path, "r", encoding="utf-8") as f:

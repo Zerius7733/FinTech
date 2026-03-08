@@ -139,6 +139,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
   const [preview,  setPreview]  = useState(null)
   const [fileData, setFileData] = useState(null)
   const [holdings, setHoldings] = useState([])
+  const [importId, setImportId] = useState('')
   const [error,    setError]    = useState(null)
   const [dragging, setDragging] = useState(false)
   const fileRef = useRef(null)
@@ -146,6 +147,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
   const handleFile = async (file) => {
     if (!file.type.startsWith('image/')) { setError('Please upload an image file (PNG, JPG, WEBP).'); return }
     setError(null)
+    setImportId('')
     setPreview(URL.createObjectURL(file))
     setFileData({ base64: await fileToBase64(file), mimeType: file.type })
   }
@@ -158,7 +160,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
     if (!user?.user_id) return setError('User not logged in');
     setPhase('parsing'); setError(null);
     try {
-      const res = await fetch(`/api/users/${user.user_id}/imports/screenshot/parse`, {
+      const res = await fetch(`${API}/users/${user.user_id}/imports/screenshot/parse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -167,10 +169,16 @@ function PortfolioImportStep({ onBack, onComplete }) {
           page_text: null,
         })
       });
-      if (!res.ok) throw new Error(`Parse failed: ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail || `Parse failed: ${res.status}`)
+      }
       const data = await res.json();
-      if (!Array.isArray(data.holdings)) throw new Error('No holdings found');
-      setHoldings(data.holdings);
+      const parsedHoldings = data?.parsed?.holdings
+      const receivedImportId = data?.import_id
+      if (!Array.isArray(parsedHoldings) || !receivedImportId) throw new Error('No holdings found');
+      setImportId(receivedImportId)
+      setHoldings(parsedHoldings);
       setPhase('review');
     } catch (e) {
       setError(e.message || 'Parse error');
@@ -181,16 +189,21 @@ function PortfolioImportStep({ onBack, onComplete }) {
   // Confirm holdings using backend endpoint
   const confirm = async () => {
     if (!user?.user_id) return setError('User not logged in');
+    if (!importId) return setError('Missing import id. Please parse the screenshot again.');
     setError(null);
     try {
-      const res = await fetch(`/api/users/${user.user_id}/imports/screenshot/confirm`, {
+      const res = await fetch(`${API}/users/${user.user_id}/imports/screenshot/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          import_id: importId,
           holdings,
         })
       });
-      if (!res.ok) throw new Error(`Confirm failed: ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail || `Confirm failed: ${res.status}`)
+      }
       onComplete(holdings);
     } catch (e) {
       setError(e.message || 'Confirm error');
@@ -345,9 +358,14 @@ function PortfolioImportStep({ onBack, onComplete }) {
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Survey() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [step, setStep] = useState(1)
   const [done, setDone] = useState(false)
   const [importedHoldings, setImportedHoldings] = useState([])
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
+  const [country, setCountry] = useState('Singapore')
   const [ageGroup,       setAgeGroup]       = useState('30–44')
   const [selectedAssets, setSelectedAssets] = useState(new Set(['Equities','Fixed Income']))
   const [selectedGoals,  setSelectedGoals]  = useState(new Set(['Wealth Growth']))
@@ -366,7 +384,7 @@ export default function Survey() {
       <div style={{ textAlign:'center', maxWidth:520, padding:40, animation:'fadeUp 0.5s ease' }}>
         <div style={cs.completeRing}>✦</div>
         <h2 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:800, marginBottom:12 }}>
-          You're all set, <span style={{ color:'var(--green)' }}>Alex</span>
+          You're all set, <span style={{ color:'var(--green)' }}>{firstName || user?.username || 'Investor'}</span>
         </h2>
         <p style={{ color:'var(--text-dim)', fontSize:'0.92rem', lineHeight:1.7, marginBottom:20 }}>Your WealthSphere is calibrated. Your personalised globe awaits.</p>
         <div style={{ display:'flex', flexWrap:'wrap', gap:10, justifyContent:'center', marginBottom:16 }}>
@@ -386,6 +404,22 @@ export default function Survey() {
           </div>
         )}
         <button style={cs.btnLaunch} onClick={async () => {
+          if (user?.user_id) {
+            try {
+              await fetch(`${API}/users/survey/profile`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  user_id: user.user_id,
+                  first_name: firstName,
+                  last_name: lastName,
+                  email,
+                  country,
+                  age_group: ageGroup,
+                }),
+              })
+            } catch (_) {}
+          }
           if (user?.user_id && riskLevel != null) {
             try {
               await fetch(`${API}/users/risk`, {
@@ -439,14 +473,24 @@ export default function Survey() {
             <h1 style={cs.heading}>Tell us about <em style={{ fontStyle:'normal', color:'var(--gold)' }}>yourself</em></h1>
             <p style={cs.subtext}>This helps us benchmark your portfolio against peers and tailor your wellness insights.</p>
             <div style={cs.formGrid}>
-              {[['First Name','Alex'],['Last Name','Chen'],['Email Address','alex@example.com']].map(([label,ph]) => (
-                <div key={label} style={{ ...(label==='Email Address'?{gridColumn:'1/-1'}:{}) }}>
-                  <label style={cs.formLabel}>{label}</label><input style={cs.formInput} placeholder={ph} />
-                </div>
-              ))}
-              {[['Investor Type',['Individual Investor','HNWI','Family Office','Institutional']],['Primary Currency',['SGD — Singapore Dollar','USD — US Dollar','GBP — British Pound']],['Country',['Singapore','United Kingdom','United States','Australia','Japan']]].map(([label,opts]) => (
-                <div key={label}><label style={cs.formLabel}>{label}</label><select style={cs.formInput}>{opts.map(o=><option key={o}>{o}</option>)}</select></div>
-              ))}
+              <div>
+                <label style={cs.formLabel}>First Name</label>
+                <input style={cs.formInput} placeholder="Alex" value={firstName} onChange={e => setFirstName(e.target.value)} />
+              </div>
+              <div>
+                <label style={cs.formLabel}>Last Name</label>
+                <input style={cs.formInput} placeholder="Chen" value={lastName} onChange={e => setLastName(e.target.value)} />
+              </div>
+              <div style={{ gridColumn:'1/-1' }}>
+                <label style={cs.formLabel}>Email Address</label>
+                <input style={cs.formInput} placeholder="alex@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+              </div>
+                            <div>
+                <label style={cs.formLabel}>Country</label>
+                <select style={cs.formInput} value={country} onChange={e => setCountry(e.target.value)}>
+                  {['Singapore','United Kingdom','United States','Australia','Japan'].map(o => <option key={o}>{o}</option>)}
+                </select>
+              </div>
             </div>
             <div style={cs.formLabel}>Age Group</div>
             <div style={cs.ageGrid}>
@@ -595,3 +639,5 @@ const imp = {
   spinner:   { width:44, height:44, border:'3px solid rgba(255,255,255,0.08)', borderTopColor:'var(--teal)', borderRadius:'50%', animation:'spin 0.8s linear infinite' },
   addRowBtn: { background:'transparent', border:'1.5px dashed rgba(255,255,255,0.12)', borderRadius:10, padding:'10px 20px', color:'var(--text-faint)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', cursor:'pointer', width:'100%', marginBottom:16 },
 }
+
+

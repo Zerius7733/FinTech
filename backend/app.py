@@ -18,9 +18,9 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
 USER_JSON_PATH = BASE_DIR / "json_data" / "user.json"
 USER_PORTFOLIO_DIR = BASE_DIR / "json_data" / "user_portfolio"
-CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
-LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
-ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
+CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
+LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
+ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
 STOCK_LISTINGS_CACHE_PATH = BASE_DIR / "json_data" / "stock_listings_cache.json"
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
 STOCK_MARKET_REFRESH_INTERVAL_SECONDS = 30 * 60
@@ -324,7 +324,21 @@ def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
 def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
     csv_path = ASSETS_CSV_PATH
     default_headers = [
-        "user_id", "name", "dbs", "uob", "ocbc", "other_banks", "liability", "income", "estate", "expense"
+        "user_id",
+        "username",
+        "password",
+        "email",
+        "name",
+        "dbs",
+        "uob",
+        "ocbc",
+        "other_banks",
+        "liability",
+        "income",
+        "estate",
+        "expense",
+        "age_group",
+        "country",
     ]
 
     if csv_path.exists():
@@ -339,7 +353,7 @@ def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
     if "other_banks" not in fieldnames and "other_bank" not in fieldnames:
         fieldnames.append("other_banks")
 
-    for required in ("user_id", "name", "liability", "income", "estate"):
+    for required in ("user_id", "name", "liability", "income", "estate", "username", "password", "email"):
         if required not in fieldnames:
             fieldnames.append(required)
 
@@ -360,6 +374,11 @@ def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
         row = {key: "" for key in fieldnames}
         row["user_id"] = user_id
         row["name"] = str(user.get("name", "") or "")
+        row.setdefault("username", "")
+        row.setdefault("password", "")
+        row.setdefault("email", "")
+        row.setdefault("age_group", "")
+        row.setdefault("country", "")
         row.setdefault("dbs", "0")
         row.setdefault("uob", "0")
         row.setdefault("ocbc", "0")
@@ -380,6 +399,44 @@ def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
         for row in rows:
             clean_row = {key: row.get(key, "") for key in fieldnames}
             writer.writerow(clean_row)
+
+
+def _update_user_csv_profile(user_id: str, updates: Dict[str, Any]) -> None:
+    csv_path = ASSETS_CSV_PATH
+    if csv_path.exists():
+        with open(csv_path, "r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            rows = [dict(row) for row in reader]
+            fieldnames = list(reader.fieldnames or [])
+    else:
+        rows = []
+        fieldnames = [
+            "user_id", "username", "password", "email", "name",
+            "dbs", "uob", "ocbc", "other_banks", "liability", "income", "estate", "expense",
+            "age_group", "country",
+        ]
+
+    if "user_id" not in fieldnames:
+        fieldnames.insert(0, "user_id")
+
+    for key in updates.keys():
+        if key not in fieldnames:
+            fieldnames.append(key)
+
+    target = next((row for row in rows if (row.get("user_id") or "").strip() == user_id), None)
+    if target is None:
+        target = {key: "" for key in fieldnames}
+        target["user_id"] = user_id
+        rows.append(target)
+
+    for key, value in updates.items():
+        target[key] = "" if value is None else str(value)
+
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({key: row.get(key, "") for key in fieldnames})
 
 
 class UserRiskUpdateRequest(BaseModel):
@@ -433,6 +490,15 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+
+class SurveyProfileUpdateRequest(BaseModel):
+    user_id: str
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str | None = None
+    country: str | None = None
+    age_group: str | None = None
 
 
 class CoinListingResponse(BaseModel):
@@ -666,7 +732,7 @@ def get_commodity_listings(
         raise HTTPException(status_code=502, detail=f"commodity fetch failed: {exc}") from exc
 
 
-@app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
+@app.post("/auth/register", tags=["Users"], summary="Register login user into users.csv")
 def register_user(payload: RegisterRequest) -> Dict[str, Any]:
     try:
         result = api.register_login_user(
@@ -691,6 +757,41 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
+
+
+@app.post("/users/survey/profile", tags=["Users"], summary="Persist survey profile fields into users.csv")
+def update_survey_profile(payload: SurveyProfileUpdateRequest) -> Dict[str, Any]:
+    try:
+        user_id = payload.user_id.strip()
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        first = (payload.first_name or "").strip()
+        last = (payload.last_name or "").strip()
+        full_name = " ".join(part for part in (first, last) if part).strip()
+
+        updates = {
+            "email": (payload.email or "").strip(),
+            "country": (payload.country or "").strip(),
+            "age_group": (payload.age_group or "").strip(),
+        }
+        if full_name:
+            updates["name"] = full_name
+
+        _update_user_csv_profile(user_id=user_id, updates=updates)
+
+        users = _read_users_data()
+        user = users.get(user_id)
+        if isinstance(user, dict) and full_name:
+            user["name"] = full_name
+            users[user_id] = user
+            _write_users_data(users)
+
+        return {"status": "ok", "user_id": user_id, "updates": updates}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"survey profile update failed: {exc}") from exc
 
 
 @app.get("/users", tags=["Users"], summary="Get all users")

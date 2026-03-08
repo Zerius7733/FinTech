@@ -779,11 +779,17 @@
         "label": "dbs",
         "category": "banks",
         "value": 10000.0
+      },
+      {
+        "id": "64e0d725-a86e-411b-add8-c8f20e7bd5d6",
+        "label": "house",
+        "category": "real_estate",
+        "value": 100000.0
       }
     ],
     "portfolio_value": 134126.91,
-    "total_balance": 144226.91,
-    "net_worth": 134226.91,
+    "total_balance": 244226.91,
+    "net_worth": 234226.91,
     "income": 5000.0,
     "expenses": 0.0,
     "income_streams": [
@@ -794,7 +800,7 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 100000.0,
     "wellness_metrics": {
       "liquidity_months": 2.02,
       "liquidity_score": 33.67,
@@ -806,5 +812,37 @@
     "risk_profile": 15.0,
     "financial_wellness_score": 50.03,
     "financial_stress_index": 46.53
+  },
+  "u012": {
+    "name": "Zerius_2",
+    "age": null,
+    "cash_balance": 0.0,
+    "liability": 0.0,
+    "liability_items": [],
+    "portfolio": {
+      "stocks": [],
+      "cryptos": [],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 0.0,
+    "total_balance": 0.0,
+    "net_worth": 0.0,
+    "income": 0.0,
+    "expenses": 0.0,
+    "income_streams": [],
+    "mortgage": 0.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 0.0,
+      "liquidity_score": 0.0,
+      "diversification_hhi": 0.0,
+      "diversification_score": 0.0,
+      "debt_income_ratio": 999.0,
+      "debt_income_score": 0.0
+    },
+    "risk_profile": 50.0,
+    "financial_wellness_score": 0.0,
+    "financial_stress_index": 100.0
   }
 }

@@ -2,6 +2,24 @@ import csv
 from pathlib import Path
 from typing import Dict
 
+USER_CSV_FIELDS = [
+    "user_id",
+    "username",
+    "password",
+    "email",
+    "name",
+    "dbs",
+    "uob",
+    "ocbc",
+    "other_banks",
+    "liability",
+    "income",
+    "estate",
+    "expense",
+    "age_group",
+    "country",
+]
+
 
 class RegisterValidationError(Exception):
     pass
@@ -31,7 +49,7 @@ def _ensure_login_csv_exists(login_csv_path: Path) -> None:
     if login_csv_path.exists():
         return
     with open(login_csv_path, "w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["user_id", "username", "password"])
+        writer = csv.DictWriter(f, fieldnames=USER_CSV_FIELDS)
         writer.writeheader()
 
 
@@ -73,12 +91,24 @@ def register_login_user(
         final_user_id = _next_user_id(rows)
 
     with open(login_csv_path, "a", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["user_id", "username", "password"])
+        writer = csv.DictWriter(f, fieldnames=USER_CSV_FIELDS)
         writer.writerow(
             {
                 "user_id": final_user_id,
                 "username": normalized_username,
                 "password": normalized_password,
+                "email": f"{normalized_username.lower()}@example.com",
+                "name": normalized_username,
+                "dbs": "0",
+                "uob": "0",
+                "ocbc": "0",
+                "other_banks": "0",
+                "liability": "0",
+                "income": "0",
+                "estate": "0",
+                "expense": "0",
+                "age_group": "",
+                "country": "",
             }
         )
 
