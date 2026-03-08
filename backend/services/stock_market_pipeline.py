@@ -201,8 +201,10 @@ class StockMarketIngestionService:
         built_at = meta.get("built_at_epoch")
         items = rankings_payload.get("items", []) if isinstance(rankings_payload, dict) else []
 
-        is_stale = not isinstance(built_at, int) or (time.time() - built_at) > max_age_seconds
-        if not isinstance(items, list) or not items or is_stale:
+        # Serve cached rankings immediately when available, even if stale,
+        # to avoid blocking API responses on a full market refresh.
+        # Fresh data is handled by background refresh/update endpoints.
+        if not isinstance(items, list) or not items:
             rankings_payload = self.refresh()
             items = rankings_payload.get("items", [])
 

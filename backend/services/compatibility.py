@@ -437,6 +437,62 @@ def _extract_openai_content(data: Any) -> str:
     return ""
 
 
+def _build_portfolio_context(user: Dict[str, Any]) -> Dict[str, Any]:
+    portfolio = user.get("portfolio", {})
+    bucket_summaries: Dict[str, Dict[str, float]] = {}
+    total_positions = 0
+
+    if isinstance(portfolio, dict):
+        for bucket in ("stocks", "cryptos", "commodities"):
+            entries = portfolio.get(bucket, [])
+            if not isinstance(entries, list):
+                continue
+            total_positions += len(entries)
+            bucket_summaries[bucket] = {
+                "positions": float(len(entries)),
+                "market_value": round(
+                    sum(float(row.get("market_value", 0.0) or 0.0) for row in entries if isinstance(row, dict)),
+                    2,
+                ),
+            }
+    elif isinstance(portfolio, list):
+        total_positions = len(portfolio)
+        bucket_summaries["stocks"] = {
+            "positions": float(len(portfolio)),
+            "market_value": round(
+                sum(float(row.get("market_value", 0.0) or 0.0) for row in portfolio if isinstance(row, dict)),
+                2,
+            ),
+        }
+
+    return {
+        "portfolio_value": round(float(user.get("portfolio_value", 0.0) or 0.0), 2),
+        "cash_balance": round(float(user.get("cash_balance", 0.0) or 0.0), 2),
+        "net_worth": round(float(user.get("net_worth", 0.0) or 0.0), 2),
+        "total_positions": total_positions,
+        "bucket_summaries": bucket_summaries,
+    }
+
+
+def _fallback_why_it_fits_bullets(compatibility: Dict[str, Any]) -> list[str]:
+    factors = compatibility.get("factors", {}) if isinstance(compatibility, dict) else {}
+    risk_fit = float(factors.get("risk_fit", 0.0) or 0.0)
+    liquidity_fit = float(factors.get("liquidity_fit", 0.0) or 0.0)
+    concentration_impact = float(factors.get("concentration_impact", 0.0) or 0.0)
+    warnings = compatibility.get("warnings", []) if isinstance(compatibility, dict) else []
+
+    bullets = [
+        f"Risk-fit matrix: {risk_fit:.1f}/100 based on your risk profile versus the target asset risk.",
+        f"Liquidity matrix: {liquidity_fit:.1f}/100 based on your cash buffer against expected volatility.",
+        f"Concentration matrix: {concentration_impact:.1f}/100 based on diversification impact if you add/scale this position.",
+    ]
+    if isinstance(warnings, list):
+        warning = next((str(item).strip() for item in warnings if str(item).strip()), "")
+        if warning:
+            bullets.append(warning)
+    return bullets[:4]
+
+
 def synthesize_compatibility_with_llm(
     user_id: str,
     user: Dict[str, Any],
@@ -454,6 +510,12 @@ def synthesize_compatibility_with_llm(
         "financial_wellness_score": user.get("financial_wellness_score"),
         "financial_stress_index": user.get("financial_stress_index"),
         "wellness_metrics": user.get("wellness_metrics", {}),
+        "portfolio_context": _build_portfolio_context(user),
+        "compatibility_matrices": {
+            "risk_fit": compatibility.get("factors", {}).get("risk_fit"),
+            "liquidity_fit": compatibility.get("factors", {}).get("liquidity_fit"),
+            "concentration_impact": compatibility.get("factors", {}).get("concentration_impact"),
+        },
         "compatibility": compatibility,
     }
 
@@ -461,11 +523,17 @@ def synthesize_compatibility_with_llm(
         "You are a cautious financial compatibility explainer. "
         "Use only provided inputs. "
         "Do not guarantee outcomes. "
+        "Return plain JSON only. "
         "Always include this disclaimer: "
         "'AI can make mistakes. Please DYOR. Not financial advice.'"
     )
     user_prompt = (
-        "Return strict JSON with keys: summary, rationale, action_guidance, risk_notes, disclaimer. "
+        "Return strict JSON with keys: "
+        "why_it_fits_bullets, summary, rationale, action_guidance, risk_notes, disclaimer. "
+        "why_it_fits_bullets must be an array with 1 to 4 bullet strings max. "
+        "Each bullet must be concise and grounded in risk_fit, liquidity_fit, concentration_impact, stress_guardrail, "
+        "and the provided portfolio_context. "
+        "You must explicitly use the three compatibility matrices: risk_fit, liquidity_fit, concentration_impact. "
         "summary should be 1-2 sentences. "
         "rationale should explain risk_fit, liquidity_fit, concentration_impact, stress_guardrail in plain terms. "
         "action_guidance should be short and practical. "
@@ -512,6 +580,16 @@ def synthesize_compatibility_with_llm(
         parsed = json.loads(text)
     except json.JSONDecodeError:
         parsed = {"summary_text": text}
+
+    bullets = parsed.get("why_it_fits_bullets")
+    if isinstance(bullets, list):
+        cleaned = [str(item).strip() for item in bullets if str(item).strip()]
+        parsed["why_it_fits_bullets"] = cleaned[:4]
+    else:
+        parsed["why_it_fits_bullets"] = []
+
+    if not parsed.get("why_it_fits_bullets"):
+        parsed["why_it_fits_bullets"] = _fallback_why_it_fits_bullets(compatibility)
 
     return {
         "model": model,

@@ -140,6 +140,22 @@ function getCompatibilityAnalysis(item, endpoint, userProfile, fallbackRank) {
   }
 }
 
+function endpointToCompatibilityType(endpoint) {
+  if (endpoint === 'stocks') return 'stock'
+  if (endpoint === 'cryptos') return 'crypto'
+  return 'commodity'
+}
+
+function parseWhyItFitsBullets(payload) {
+  const synthesis = payload?.llm_synthesis
+  const bullets = synthesis?.why_it_fits_bullets
+  if (!Array.isArray(bullets)) return []
+  return bullets
+    .map(line => String(line ?? '').trim())
+    .filter(Boolean)
+    .slice(0, 4)
+}
+
 function MiniSparkline({ positive, seed = 0 }) {
   const pts = []
   let v = 0.5
@@ -213,19 +229,54 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
   const insightAssetType = endpoint === 'stocks' ? 'stock' : endpoint === 'cryptos' ? 'crypto' : 'commodity'
   const cachedInsight = getCachedInsight(insightAssetType, item?.symbol, 3)
   const [liveInsightNarrative, setLiveInsightNarrative] = useState(() => insightNarrativeText(cachedInsight))
+  const [llmWhyItFits, setLlmWhyItFits] = useState([])
+  const [whyItFitsLoading, setWhyItFitsLoading] = useState(false)
   useEffect(() => {
     setLiveInsightNarrative(insightNarrativeText(cachedInsight))
   }, [endpoint, item?.symbol])
+  useEffect(() => {
+    setLlmWhyItFits([])
+    setWhyItFitsLoading(false)
+  }, [endpoint, item?.symbol, userId])
 
-  if (!item) return null
-
-  const displayRank = item.market_cap_rank ?? item.__displayRank ?? null
+  const displayRank = item?.market_cap_rank ?? item?.__displayRank ?? null
   const hasUserContext = Boolean(userId && profile)
-  const analysis = hasUserContext ? getCompatibilityAnalysis(item, endpoint, profile, displayRank) : null
-  const positive24 = (item.price_change_percentage_24h ?? 0) >= 0
-  const positive7 = (item.price_change_percentage_7d ?? 0) >= 0
+  const analysis = hasUserContext && item ? getCompatibilityAnalysis(item, endpoint, profile, displayRank) : null
+  const positive24 = ((item?.price_change_percentage_24h) ?? 0) >= 0
+  const positive7 = ((item?.price_change_percentage_7d) ?? 0) >= 0
   const suggestedReadText = liveInsightNarrative
     || 'Generate Market Insight to view a narrative read for this asset.'
+
+  useEffect(() => {
+    if (!hasUserContext || !item?.symbol) return undefined
+    const targetType = endpointToCompatibilityType(endpoint)
+    const controller = new AbortController()
+    setWhyItFitsLoading(true)
+
+    fetch(
+      `${API_BASE}/users/${encodeURIComponent(userId)}/compatibility?target_type=${encodeURIComponent(targetType)}&symbol=${encodeURIComponent(item.symbol)}&_ts=${Date.now()}`,
+      {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+        signal: controller.signal,
+      }
+    )
+      .then(async res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
+      .then(data => {
+        const bullets = parseWhyItFitsBullets(data)
+        if (bullets.length) setLlmWhyItFits(bullets)
+      })
+      .catch(() => {})
+      .finally(() => setWhyItFitsLoading(false))
+
+    return () => controller.abort()
+  }, [hasUserContext, userId, endpoint, item?.symbol])
+
+  if (!item) return null
 
   return (
     <div
@@ -317,9 +368,14 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
 
           <div style={MD.card}>
             <div style={MD.cardLabel}>Why It Fits</div>
+            {hasUserContext && whyItFitsLoading ? (
+              <div style={{ ...MD.metricLabel, marginBottom: 8, color: 'var(--text-faint)' }}>
+                Updating from AI...
+              </div>
+            ) : null}
             {hasUserContext ? (
               <div style={MD.reasonList}>
-                {analysis.reasons.map(reason => (
+                {(llmWhyItFits.length ? llmWhyItFits : analysis.reasons).map(reason => (
                   <div key={reason} style={MD.reasonRow}>
                     <span style={MD.reasonDot} />
                     <span>{reason}</span>
