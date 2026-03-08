@@ -83,10 +83,10 @@ function riskLabel(value) {
 }
 
 function scoreTone(score) {
-  if (score >= 80) return { label: 'Strong fit', color: 'var(--green)', bg: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.22)' }
-  if (score >= 65) return { label: 'Aligned', color: 'var(--teal)', bg: 'rgba(45,212,191,0.12)', border: 'rgba(45,212,191,0.22)' }
-  if (score >= 45) return { label: 'Watchlist fit', color: 'var(--orange)', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.22)' }
-  return { label: 'Cautious fit', color: 'var(--red)', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.22)' }
+  if (score >= 80) return { label: 'Strong fit', color: 'var(--detail-score-strong)', bg: 'var(--detail-score-strong-bg)', border: 'var(--detail-score-strong-border)' }
+  if (score >= 65) return { label: 'Aligned', color: 'var(--detail-score-mid)', bg: 'var(--detail-score-mid-bg)', border: 'var(--detail-score-mid-border)' }
+  if (score >= 45) return { label: 'Watchlist fit', color: 'var(--detail-score-watch)', bg: 'var(--detail-score-watch-bg)', border: 'var(--detail-score-watch-border)' }
+  return { label: 'Cautious fit', color: 'var(--detail-score-caution)', bg: 'var(--detail-score-caution-bg)', border: 'var(--detail-score-caution-border)' }
 }
 
 function getAssetClassBase(endpoint, riskProfile) {
@@ -182,16 +182,18 @@ function DetailSparkline({ item }) {
   const W = 520
   const H = 160
   const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${(i / (pts.length - 1)) * W},${H - p * (H - 24)}`).join(' ')
+  const stroke = positive ? 'var(--detail-chart-up)' : 'var(--detail-chart-down)'
+  const glow = positive ? 'var(--detail-chart-up-fill)' : 'var(--detail-chart-down-fill)'
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 180, display: 'block' }} preserveAspectRatio="none">
       <defs>
         <linearGradient id={`detail-${item.id ?? item.symbol}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+          <stop offset="0%" stopColor={glow} stopOpacity="0.42" />
+          <stop offset="100%" stopColor={glow} stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={`${path} L${W},${H} L0,${H} Z`} fill={`url(#detail-${item.id ?? item.symbol})`} />
-      <path d={path} stroke="#7c3aed" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d={path} stroke={stroke} strokeWidth="3" fill="none" strokeLinecap="round" />
     </svg>
   )
 }
@@ -1059,7 +1061,7 @@ const MD = {
     position: 'fixed',
     inset: 0,
     zIndex: 300,
-    background: 'rgba(15,23,42,0.26)',
+    background: 'var(--detail-overlay)',
     backdropFilter: 'blur(14px)',
     WebkitBackdropFilter: 'blur(14px)',
     display: 'flex',
@@ -1073,15 +1075,15 @@ const MD = {
   panel: {
     width: 'min(980px, 100%)',
     overflow: 'visible',
-    background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
-    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'var(--detail-panel-bg)',
+    border: '1px solid var(--detail-panel-border)',
     borderRadius: 24,
-    boxShadow: '0 36px 90px rgba(15,23,42,0.2)',
+    boxShadow: 'var(--detail-panel-shadow)',
     margin: '0 auto',
   },
   topBar: {
     height: 2,
-    background: 'linear-gradient(90deg, var(--teal), #7c3aed, var(--gold))',
+    background: 'var(--detail-topbar)',
   },
   header: {
     display: 'flex',
@@ -1098,16 +1100,16 @@ const MD = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'rgba(15,23,42,0.05)',
+    background: 'var(--detail-avatar-bg)',
     fontFamily: 'var(--font-mono)',
     fontSize: '0.82rem',
-    color: 'var(--text-faint)',
+    color: 'var(--detail-avatar-text)',
     flexShrink: 0,
   },
   eyebrow: {
     fontFamily: 'var(--font-mono)',
     fontSize: '0.65rem',
-    color: 'var(--teal)',
+    color: 'var(--detail-eyebrow)',
     textTransform: 'uppercase',
     letterSpacing: '0.14em',
     marginBottom: 4,
@@ -1132,8 +1134,8 @@ const MD = {
     height: 40,
     borderRadius: 10,
     border: '1px solid var(--border)',
-    background: 'rgba(255,255,255,0.9)',
-    color: 'var(--text-faint)',
+    background: 'var(--surface)',
+    color: 'var(--detail-avatar-text)',
     cursor: 'pointer',
     flexShrink: 0,
   },
@@ -1144,16 +1146,16 @@ const MD = {
     padding: '0 28px 28px',
   },
   card: {
-    background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
-    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'var(--detail-card-bg)',
+    border: '1px solid var(--detail-card-border)',
     borderRadius: 18,
     padding: 20,
-    boxShadow: '0 14px 28px rgba(15,23,42,0.06)',
+    boxShadow: 'var(--detail-card-shadow)',
   },
   cardLabel: {
     fontFamily: 'var(--font-mono)',
     fontSize: '0.65rem',
-    color: 'var(--text-faint)',
+    color: 'var(--detail-card-label)',
     textTransform: 'uppercase',
     letterSpacing: '0.12em',
     marginBottom: 10,
@@ -1170,6 +1172,7 @@ const MD = {
     fontFamily: 'var(--font-mono)',
     fontSize: '0.74rem',
     fontWeight: 600,
+    border: '1px solid var(--detail-pill-border)',
   },
   scoreCard: {
     display: 'flex',
@@ -1216,7 +1219,7 @@ const MD = {
     borderRadius: '50%',
     marginTop: 7,
     flexShrink: 0,
-    background: 'var(--teal)',
+    background: 'var(--detail-reason-dot)',
   },
   metricsGrid: {
     display: 'grid',
@@ -1225,14 +1228,14 @@ const MD = {
   },
   metricCard: {
     borderRadius: 14,
-    border: '1px solid rgba(15,23,42,0.08)',
-    background: 'rgba(255,255,255,0.72)',
+    border: '1px solid var(--detail-metric-border)',
+    background: 'var(--detail-metric-bg)',
     padding: '14px 14px 12px',
   },
   metricLabel: {
     fontFamily: 'var(--font-mono)',
     fontSize: '0.62rem',
-    color: 'var(--text-faint)',
+    color: 'var(--detail-card-label)',
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
     marginBottom: 6,
