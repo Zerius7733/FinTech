@@ -1531,6 +1531,7 @@ export default function Profile() {
   const [benchmarkLoading, setBenchmarkLoading] = useState(false)
   const [benchmarkError, setBenchmarkError] = useState('')
   const [benchmarkOpen, setBenchmarkOpen] = useState(false)
+  const [priceRefreshing, setPriceRefreshing] = useState(false)
 
   // ── Initial data fetch ────────────────────────────────────────────────────
   useEffect(() => {
@@ -1930,6 +1931,25 @@ export default function Profile() {
     }
   }, [authUser?.user_id])
 
+  const refreshPortfolioPrices = useCallback(async () => {
+    if (!authUser?.user_id || priceRefreshing) return
+    setPriceRefreshing(true)
+    setError('')
+    try {
+      const res = await fetch(`${API}/update/prices/portfolio`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      await fetch(`${API}/update/wellness`).catch(() => null)
+      refreshPage()
+    } catch (err) {
+      setError(err.message || 'Could not refresh live prices.')
+    } finally {
+      setPriceRefreshing(false)
+    }
+  }, [authUser?.user_id, priceRefreshing])
+
   const fetchRetirementPlan = useCallback(async () => {
     if (!authUser?.user_id || !retirementInitialized) return
     setRetirementLoading(true)
@@ -2227,7 +2247,17 @@ export default function Profile() {
 
         {/* Holdings Table */}
         <div style={{ ...s.card, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.32s' }}>
-          <div style={s.secLabel}>Live Holdings</div>
+          <div style={s.secLabel}>
+            <span>Live Holdings</span>
+            <button
+              type="button"
+              onClick={refreshPortfolioPrices}
+              disabled={priceRefreshing || loading}
+              style={{ ...s.holdingsRefreshBtn, opacity:(priceRefreshing || loading) ? 0.6 : 1, cursor:(priceRefreshing || loading) ? 'not-allowed' : 'pointer' }}
+            >
+              {priceRefreshing ? 'Refreshing…' : 'Refresh Prices'}
+            </button>
+          </div>
           {loading ? <LoadingPulse /> : allHoldings.length === 0 ? (
             <p style={{ color:'var(--text-faint)', fontSize:'0.85rem' }}>No holdings found for this account.</p>
           ) : (
@@ -2889,6 +2919,21 @@ const s = {
     color:'var(--text-faint)', textTransform:'uppercase',
     letterSpacing:'0.13em', marginBottom:16,
     display:'flex', justifyContent:'space-between', alignItems:'center',
+  },
+  holdingsRefreshBtn: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    border:'1px solid var(--border-act)',
+    background:'var(--surface2)',
+    color:'var(--text)',
+    borderRadius:999,
+    padding:'6px 12px',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    fontWeight:700,
+    letterSpacing:'0.08em',
+    textTransform:'uppercase',
+    outline:'none',
   },
   rangeTab: {
     appearance:'none',

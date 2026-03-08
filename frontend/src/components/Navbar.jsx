@@ -244,7 +244,7 @@ export default function Navbar() {
               onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
               onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
             >
-              My Portfolio
+              Portfolio
             </button>
             <button
               style={S.btnGhost}
