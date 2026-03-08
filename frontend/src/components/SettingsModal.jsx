@@ -11,6 +11,8 @@ const RISK_KEY_TO_INFO = {
   High:     { label: 'Aggressive Portfolio',    factor: '0.5' },
 }
 const SLIDER_KEY_TO_RISK = { conservative: 'Low', balanced: 'Moderate', aggressive: 'High' }
+const GLOBE_PREFS_KEY = 'ws_globe_prefs'
+const GLOBE_PREFS_EVENT = 'ws:globe-prefs'
 
 const SECTIONS = [
   { key: 'risk',     icon: '⚖️',  label: 'Risk Profile'       },
@@ -57,6 +59,25 @@ function Row({ name, desc, children }) {
   )
 }
 
+function SliderField({ value, min = 0, max = 100, step = 1, onChange, leftLabel, rightLabel }) {
+  return (
+    <div style={{ minWidth: 220 }}>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        style={{ width: '100%', accentColor: 'var(--teal)', cursor: 'pointer' }}
+      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: '0.68rem', color: 'var(--text-faint)' }}>
+        <span>{leftLabel}</span>
+        <span>{rightLabel}</span>
+      </div>
+    </div>
+  )
+}
 function Card({ title, icon, children }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 18, padding: '20px 22px', marginBottom: 16 }}>
@@ -82,12 +103,33 @@ export default function SettingsModal({ onClose }) {
   const [profileLoaded, setProfileLoaded] = useState(false)
   const [toggles, setToggles]           = useState({ twofa: true, biometric: true, bgSync: true, labels: true, pulses: true })
   const [selects, setSelects]           = useState({ sessionTimeout: '1 hour', syncFreq: 'Every 15 minutes', currency: 'SGD', numFmt: '$1,234,567' })
+  const [displayPrefs, setDisplayPrefs] = useState(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(GLOBE_PREFS_KEY) || '{}')
+      return {
+        rotationSpeed: Number.isFinite(parsed.rotationSpeed) ? parsed.rotationSpeed : 40,
+        nodeScale: Number.isFinite(parsed.nodeScale) ? parsed.nodeScale : 50,
+      }
+    } catch {
+      return { rotationSpeed: 40, nodeScale: 50 }
+    }
+  })
   const [extensionGuideOpen, setExtensionGuideOpen] = useState(false)
   const [extensionStatus, setExtensionStatus] = useState('')
 
   const mark = () => setUnsaved(true)
   const setToggle = (k, v) => { setToggles(p => ({ ...p, [k]: v })); mark() }
   const setSelect = (k, v) => { setSelects(p => ({ ...p, [k]: v })); mark() }
+  const updateDisplayPref = (key, value) => {
+    const nextValue = Math.max(0, Math.min(100, Number(value) || 0))
+    setDisplayPrefs(prev => {
+      const next = { ...prev, [key]: nextValue }
+      localStorage.setItem(GLOBE_PREFS_KEY, JSON.stringify(next))
+      window.dispatchEvent(new CustomEvent(GLOBE_PREFS_EVENT, { detail: next }))
+      return next
+    })
+    mark()
+  }
 
   // Load user's current risk profile
   useEffect(() => {
@@ -258,36 +300,38 @@ export default function SettingsModal({ onClose }) {
             </div>
           )}
 
-          {/* ── APPEARANCE ── */}
+                    {/* Appearance */}
           {active === 'display' && (
             <div style={s.content}>
-              <p style={s.pageSub}>Customise how WealthSphere looks and behaves.</p>
-              <Card title="Globe View" icon="🌍">
+              <p style={s.pageSub}>Customize how the globe behaves in real time.</p>
+              <Card title="Globe View" icon="Globe">
                 <Row name="Show satellite labels" desc="Display asset class labels floating next to globe nodes.">
                   <Toggle on={toggles.labels} onChange={v => setToggle('labels', v)} />
                 </Row>
                 <Row name="Animate node pulses" desc="Animated pulsing rings around active portfolio nodes.">
                   <Toggle on={toggles.pulses} onChange={v => setToggle('pulses', v)} />
                 </Row>
-                <Row name="Globe rotation speed">
-                  <SelInput value={selects.globeSpeed ?? 'Normal'} opts={['Off','Slow','Normal','Fast']} onChange={v => setSelect('globeSpeed', v)} />
+                <Row name="Globe rotation speed" desc={`Current: ${displayPrefs.rotationSpeed}%`}>
+                  <SliderField
+                    value={displayPrefs.rotationSpeed}
+                    onChange={v => updateDisplayPref('rotationSpeed', v)}
+                    leftLabel="Stopped"
+                    rightLabel="Fast"
+                  />
                 </Row>
-                <Row name="Node size scaling">
-                  <SelInput value={selects.nodeScale ?? 'Scale by AUM'} opts={['Scale by AUM','Equal size','Scale by performance']} onChange={v => setSelect('nodeScale', v)} />
-                </Row>
-              </Card>
-              <Card title="Currency & Numbers" icon="💰">
-                <Row name="Display currency" desc="All portfolio values converted to this currency.">
-                  <SelInput value={selects.currency} opts={['SGD','USD','GBP','EUR']} onChange={v => setSelect('currency', v)} />
-                </Row>
-                <Row name="Number format">
-                  <SelInput value={selects.numFmt} opts={['$1,234,567','$1.23M','$1.2m']} onChange={v => setSelect('numFmt', v)} />
+                <Row name="Node size scaling" desc={`Current: ${displayPrefs.nodeScale}%`}>
+                  <SliderField
+                    value={displayPrefs.nodeScale}
+                    onChange={v => updateDisplayPref('nodeScale', v)}
+                    leftLabel="Smaller"
+                    rightLabel="Larger"
+                  />
                 </Row>
               </Card>
             </div>
           )}
 
-          {/* ── SECURITY & PRIVACY ── */}
+          {/* Security & Privacy */}
           {active === 'security' && (
             <div style={s.content}>
               <p style={s.pageSub}>Manage your account security, 2FA, and data privacy preferences.</p>
@@ -618,3 +662,15 @@ const s = {
     whiteSpace:'nowrap',
   },
 }
+
+
+
+
+
+
+
+
+
+
+
+

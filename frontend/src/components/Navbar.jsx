@@ -6,7 +6,7 @@ import SettingsModal from './SettingsModal.jsx'
 
 const API = 'http://localhost:8000'
 const NAV_LINKS = [
-  { label: 'Globe',      path: '/' },
+  { label: 'Finance Universe',      path: '/' },
   { label: 'Markets',    path: '/stocks' },
 ]
 

@@ -590,6 +590,31 @@ const ZONE_ROTATION_TARGETS = {
   Commodities: getRotationForLatLng(-18, 22),
 }
 
+const GLOBE_PREFS_KEY = 'ws_globe_prefs'
+const GLOBE_PREFS_EVENT = 'ws:globe-prefs'
+
+function readGlobePrefs() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(GLOBE_PREFS_KEY) || '{}')
+    return {
+      rotationSpeed: Number.isFinite(parsed.rotationSpeed) ? parsed.rotationSpeed : 40,
+      nodeScale: Number.isFinite(parsed.nodeScale) ? parsed.nodeScale : 50,
+    }
+  } catch {
+    return { rotationSpeed: 40, nodeScale: 50 }
+  }
+}
+
+function rotationSpeedToIdle(speedPct) {
+  const value = Math.max(0, Math.min(100, Number(speedPct) || 0))
+  return (value / 100) * 0.004
+}
+
+function nodeScaleFactor(scalePct) {
+  const value = Math.max(0, Math.min(100, Number(scalePct) || 0))
+  return 0.6 + (value / 100) * 0.8
+}
+
 // ─── Per-theme palette for the 2D canvas texture ────────────────────────────
 // base: THREE hex integer used to tint the globe material colour
 // bg:   CSS solid colour for the canvas texture fill
@@ -752,6 +777,7 @@ export default function Globe() {
   const activeThemeRef   = useRef(activeTheme)  // read inside rAF without stale closure
   const globeNodesRef     = useRef(MOCK_NODES)  // live portfolio nodes (updated when profile loads)
   const buildParticlesRef = useRef(null)         // exposed by canvas effect so profile effect can rebuild
+  const globePrefsRef     = useRef(readGlobePrefs())
 
   // UI state
   const [aum,           setAum]         = useState(0)
@@ -836,6 +862,32 @@ export default function Globe() {
   // Keep activeThemeRef in sync so the rAF loop always reads the latest theme
   useEffect(() => { activeThemeRef.current = activeTheme }, [activeTheme])
 
+  // Keep globe runtime preferences (rotation speed / node scaling) in sync.
+  useEffect(() => {
+    const onPrefs = (event) => {
+      const detail = event?.detail
+      if (detail && typeof detail === 'object') {
+        globePrefsRef.current = {
+          rotationSpeed: Number.isFinite(detail.rotationSpeed) ? detail.rotationSpeed : globePrefsRef.current.rotationSpeed,
+          nodeScale: Number.isFinite(detail.nodeScale) ? detail.nodeScale : globePrefsRef.current.nodeScale,
+        }
+      } else {
+        globePrefsRef.current = readGlobePrefs()
+      }
+    }
+    const onStorage = (event) => {
+      if (event.key === GLOBE_PREFS_KEY) {
+        globePrefsRef.current = readGlobePrefs()
+      }
+    }
+    window.addEventListener(GLOBE_PREFS_EVENT, onPrefs)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener(GLOBE_PREFS_EVENT, onPrefs)
+      window.removeEventListener('storage', onStorage)
+    }
+  }, [])
+
   // Open dashboard
   const openDashboard = useCallback((node) => {
     setCardLocked(false)
@@ -869,8 +921,7 @@ export default function Globe() {
 
     // ── Rotation + velocity state (mutable, lives outside React)
     let rotY = 0.5, rotX = 0.12
-    let velY = 0.0016, velX = 0
-    const IDLE_VEL_Y = 0.0016  // default auto-spin rate the globe always returns to
+    let velY = rotationSpeedToIdle(globePrefsRef.current.rotationSpeed), velX = 0
     let W = 0, H = 0, CX = 0, CY = 0, R = 0
 
     // ── Particle arrays
@@ -953,12 +1004,13 @@ export default function Globe() {
       })
 
       dots.sort((a, b) => a.z - b.z)
+      const nodeScale = nodeScaleFactor(globePrefsRef.current.nodeScale)
 
       dots.forEach(d => {
         ctx.save()
         if (d.isCluster && d.z > 0) { ctx.shadowBlur = 10; ctx.shadowColor = d.glowColor }
         ctx.beginPath()
-        ctx.arc(d.sx, d.sy, Math.max(0.5, d.r * (0.4 + 0.6 * Math.max(0, d.z + 0.5))), 0, Math.PI * 2)
+        ctx.arc(d.sx, d.sy, Math.max(0.5, d.r * nodeScale * (0.4 + 0.6 * Math.max(0, d.z + 0.5))), 0, Math.PI * 2)
         ctx.fillStyle = d.color + `,${d.alpha})`
         ctx.fill()
         ctx.restore()
@@ -1004,7 +1056,7 @@ export default function Globe() {
         for (let w = 0; w < 2; w++) {
           const tp = ((now + w * 1200) % 2400) / 2400
           ctx.save()
-          ctx.beginPath(); ctx.arc(sx, sy, 14 + tp * 36, 0, Math.PI * 2)
+          ctx.beginPath(); ctx.arc(sx, sy, (14 + tp * 36) * nodeScale, 0, Math.PI * 2)
           ctx.strokeStyle = hexRgba(hex, (1 - tp) * 0.65 * fade)
           ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore()
         }
@@ -1012,11 +1064,11 @@ export default function Globe() {
         // Core glow dot — bigger
         ctx.save()
         ctx.shadowBlur = 28; ctx.shadowColor = hex
-        const cg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 14)
+        const cg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 14 * nodeScale)
         cg.addColorStop(0, hexRgba(hex, fade)); cg.addColorStop(1, hexRgba(hex, 0))
-        ctx.beginPath(); ctx.arc(sx, sy, 9 + 0.9 * Math.sin(now * 0.003), 0, Math.PI * 2)
+        ctx.beginPath(); ctx.arc(sx, sy, (9 + 0.9 * Math.sin(now * 0.003)) * nodeScale, 0, Math.PI * 2)
         ctx.fillStyle = cg; ctx.fill()
-        ctx.beginPath(); ctx.arc(sx, sy, 5.5, 0, Math.PI * 2)
+        ctx.beginPath(); ctx.arc(sx, sy, 5.5 * nodeScale, 0, Math.PI * 2)
         ctx.fillStyle = '#ffffff'; ctx.globalAlpha = fade * 0.92; ctx.fill()
         ctx.restore()
 
@@ -1052,7 +1104,8 @@ export default function Globe() {
           }
         } else {
           // Gradually ease velY back toward the idle spin rate after a drag
-          velY += (IDLE_VEL_Y - velY) * 0.012
+          const idleVelY = rotationSpeedToIdle(globePrefsRef.current.rotationSpeed)
+          velY += (idleVelY - velY) * 0.012
           rotY = wrapAngle(rotY + velY)
           rotX += velX; velX *= 0.94
         }
@@ -1080,9 +1133,10 @@ export default function Globe() {
       if (dist < 5) {
         const rect = canvas.getBoundingClientRect()
         const mx = e.clientX - rect.left, my = e.clientY - rect.top
+        const clickRadius = 44 * nodeScaleFactor(globePrefsRef.current.nodeScale)
         for (const node of globeNodesRef.current) {
           const p = clusterScreenRef.current[node.id]
-          if (p && p.vis && Math.hypot(mx - p.x, my - p.y) < 44) {
+          if (p && p.vis && Math.hypot(mx - p.x, my - p.y) < clickRadius) {
             openDashboard(node); break
           }
         }
@@ -1100,9 +1154,10 @@ export default function Globe() {
       const rect = canvas.getBoundingClientRect()
       const mx = e.clientX - rect.left, my = e.clientY - rect.top
       let found = null
+      const hoverRadius = 34 * nodeScaleFactor(globePrefsRef.current.nodeScale)
       for (const node of globeNodesRef.current) {
         const p = clusterScreenRef.current[node.id]
-        if (p && p.vis && Math.hypot(mx - p.x, my - p.y) < 34) { found = node; break }
+        if (p && p.vis && Math.hypot(mx - p.x, my - p.y) < hoverRadius) { found = node; break }
       }
       if (found) {
         setHoverNode(found)
@@ -1165,10 +1220,10 @@ export default function Globe() {
         <div style={S.heroSplit}>
 
           {/* ── LEFT column ── */}
-          <div style={S.heroLeft}>
+          <div style={{ ...S.heroLeft, alignItems: user ? 'center' : 'flex-start' }}>
 
         {/* Hero text */}
-        <div style={S.heroText}>
+        <div style={{ ...S.heroText, textAlign: user ? 'center' : 'left' }}>
           {user ? (
             /* ── LOGGED-IN HERO ── */
             <>
