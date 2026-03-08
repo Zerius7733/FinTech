@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import AssetInsightsPanel from './AssetInsightsPanel.jsx'
+import { convertCurrency, formatCompactCurrency, formatCurrency, normalizeCurrencyCode } from '../utils/currency.js'
 
 const API_BASE = 'http://127.0.0.1:8000'
 const PAGE_SIZE = 100
@@ -28,27 +29,34 @@ async function fetchMarketPage(endpoint, page) {
   return res.json()
 }
 
-const fmt = {
-  price: v => {
-    if (v == null) return '—'
-    if (v >= 1) return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    if (v >= 0.01) return '$' + v.toFixed(4)
-    return '$' + v.toFixed(8)
-  },
-  cap: v => {
-    if (v == null) return '—'
-    if (v >= 1e12) return '$' + (v / 1e12).toFixed(2) + 'T'
-    if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B'
-    if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'
-    return '$' + v.toLocaleString()
-  },
-  vol: v => fmt.cap(v),
-  pct: v => {
-    if (v == null) return '—'
-    return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'
-  },
+function buildFmt(currencyCode) {
+  return {
+    price: v => {
+      if (v == null) return '—'
+      const converted = convertCurrency(v, 'USD', currencyCode)
+      if (converted == null) return '—'
+      if (Math.abs(converted) >= 1) return formatCurrency(converted, currencyCode, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      if (Math.abs(converted) >= 0.01) return formatCurrency(converted, currencyCode, { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+      return formatCurrency(converted, currencyCode, { minimumFractionDigits: 8, maximumFractionDigits: 8 })
+    },
+    cap: v => {
+      if (v == null) return '—'
+      const converted = convertCurrency(v, 'USD', currencyCode)
+      if (converted == null) return '—'
+      return formatCompactCurrency(converted, currencyCode)
+    },
+    vol: v => {
+      if (v == null) return '—'
+      const converted = convertCurrency(v, 'USD', currencyCode)
+      if (converted == null) return '—'
+      return formatCompactCurrency(converted, currencyCode)
+    },
+    pct: v => {
+      if (v == null) return '—'
+      return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'
+    },
+  }
 }
-
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
 
 function normalizeRiskBucket(value) {
@@ -188,7 +196,7 @@ function DetailSparkline({ item }) {
   )
 }
 
-function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, isFavourited, onToggleFavourite }) {
+function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, isFavourited, onToggleFavourite, fmt }) {
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -342,7 +350,7 @@ const SK = {
   circle: { borderRadius: '50%', background: 'rgba(255,255,255,0.06)', flexShrink: 0 },
 }
 
-const MarketRow = forwardRef(function MarketRow({ item, rank, style, onClick, highlightState }, ref) {
+const MarketRow = forwardRef(function MarketRow({ item, rank, style, onClick, highlightState, fmt }, ref) {
   const [hovered, setHovered] = useState(false)
   const p24 = item.price_change_percentage_24h
   const p7 = item.price_change_percentage_7d
@@ -448,7 +456,7 @@ const R = {
   },
 }
 
-function FavouritesView({ favourites, onSelect }) {
+function FavouritesView({ favourites, onSelect, fmt }) {
   if (favourites.length === 0) {
     return (
       <div style={{ margin: '0 48px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.3)' }}>
@@ -483,6 +491,7 @@ function FavouritesView({ favourites, onSelect }) {
                 item={item}
                 rank={item.market_cap_rank ?? '—'}
                 style={i % 2 === 1 ? { background: 'rgba(255,255,255,0.015)' } : {}}
+                fmt={fmt}
                 onClick={() => onSelect(item)}
               />
             ))}
@@ -529,6 +538,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
   const [sort, setSort] = useState({ field: 'market_cap_rank', dir: 'asc' })
   const [profile, setProfile] = useState(null)
   const [selectedItem, setSelectedItem] = useState(null)
+  const [displayCurrency, setDisplayCurrency] = useState('USD')
   const [favourites, setFavourites] = useState(() => loadFaves())
   const [showFavourites, setShowFavourites] = useState(false)
   const [highlightedItemKey, setHighlightedItemKey] = useState(null)
@@ -558,6 +568,19 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
       .then(data => setProfile(data?.user ?? null))
       .catch(() => {})
   }, [user?.user_id])
+
+  useEffect(() => {
+    if (!user?.user_id) {
+      setDisplayCurrency('USD')
+      return
+    }
+    fetch(`${API_BASE}/users/profile/details/${user.user_id}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => setDisplayCurrency(normalizeCurrencyCode(data?.profile?.currency || 'USD')))
+      .catch(() => setDisplayCurrency('USD'))
+  }, [user?.user_id])
+
+  const fmt = buildFmt(displayCurrency)
 
   const load = useCallback(async (pg) => {
     setLoading(true)
@@ -660,7 +683,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
               {title} <em style={{ fontStyle: 'normal', background: 'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Markets</em>
             </h1>
             <p style={PS.sub}>
-              {loading ? 'Loading market data…' : description}
+              {loading ? 'Loading market data...' : description}
             </p>
           </div>
 
@@ -669,7 +692,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder={`Search ${title.toLowerCase()} by name or symbol…`}
+              placeholder={`Search ${title.toLowerCase()} by name or symbol...`}
               style={PS.searchInput}
             />
             {search && (
@@ -744,6 +767,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
           <FavouritesView
             favourites={favourites}
             onSelect={item => setSelectedItem(item)}
+            fmt={fmt}
           />
         ) : (
         <div style={PS.tableWrap}>
@@ -774,10 +798,11 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
 
             {!loading && !error && displayed.map((item, i) => (
               <MarketRow
-                key={item.id ?? i}
+                key={item.id ?? item.symbol ?? i}
                 item={item}
                 rank={startRank + i}
                 style={i % 2 === 1 ? { background: 'rgba(255,255,255,0.015)' } : {}}
+                fmt={fmt}
                 highlightState={
                   highlightedItemKey === (item.id ?? item.symbol)
                     ? 'active'
@@ -807,7 +832,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
 
           <div style={PS.pagination}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-faint)' }}>
-              {loading ? 'Loading…' : `Showing ${startRank}–${endRank}`}
+              {loading ? 'Loading...' : `Showing ${startRank}–${endRank}`}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -862,7 +887,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
                 {loading ? (
                   <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                     <span style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid #ffffff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                    Loading…
+                    Loading...
                   </span>
                 ) : hasMore ? 'Next →' : 'End of list'}
               </button>
@@ -881,6 +906,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
         onClose={() => setSelectedItem(null)}
         isFavourited={!!selectedItem && favourites.some(f => f.__id === (selectedItem.id ?? selectedItem.symbol))}
         onToggleFavourite={() => selectedItem && toggleFavourite(selectedItem, selectedItem.__endpoint || endpoint)}
+        fmt={fmt}
       />
 
       <style>{`
@@ -1184,3 +1210,5 @@ const MD = {
     color: 'var(--text-dim)',
   },
 }
+
+

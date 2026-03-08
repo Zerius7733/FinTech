@@ -137,7 +137,9 @@
     },
     "risk_profile": 29.0,
     "financial_wellness_score": 97.79,
-    "financial_stress_index": 2.18
+    "financial_stress_index": 2.18,
+    "email": "alice@gmail.com",
+    "country": "Singapore"
   },
   "u002": {
     "name": "Brandon Lim",
@@ -657,7 +659,9 @@
     },
     "risk_profile": 50.0,
     "financial_wellness_score": 60.62,
-    "financial_stress_index": 39.7
+    "financial_stress_index": 39.7,
+    "email": "isabella@example.com",
+    "country": "Singapore"
   },
   "u010": {
     "name": "Jason Teo",
@@ -760,7 +764,16 @@
       }
     ],
     "portfolio": {
-      "stocks": [],
+      "stocks": [
+        {
+          "symbol": "AAPL",
+          "qty": 2.0,
+          "avg_price": 257.46,
+          "current_price": 257.46,
+          "market_value": 514.92,
+          "name": "AAPL"
+        }
+      ],
       "cryptos": [
         {
           "symbol": "BTC-USD",
@@ -787,9 +800,9 @@
         "value": 100000.0
       }
     ],
-    "portfolio_value": 134126.91,
-    "total_balance": 244226.91,
-    "net_worth": 234226.91,
+    "portfolio_value": 134641.83,
+    "total_balance": 244741.83,
+    "net_worth": 234741.83,
     "income": 5000.0,
     "expenses": 0.0,
     "income_streams": [
@@ -804,14 +817,16 @@
     "wellness_metrics": {
       "liquidity_months": 2.02,
       "liquidity_score": 33.67,
-      "diversification_hhi": 1.0,
-      "diversification_score": 0.0,
+      "diversification_hhi": 0.9924,
+      "diversification_score": 1.6,
       "debt_income_ratio": 0.1667,
       "debt_income_score": 100.0
     },
     "risk_profile": 15.0,
-    "financial_wellness_score": 50.03,
-    "financial_stress_index": 46.53
+    "financial_wellness_score": 50.2,
+    "financial_stress_index": 46.21,
+    "email": "zerius@example.com",
+    "country": "Singapore"
   },
   "u012": {
     "name": "orangi juice",
@@ -852,23 +867,34 @@
     },
     "risk_profile": 80.0,
     "financial_wellness_score": 0.0,
-    "financial_stress_index": 100.0
+    "financial_stress_index": 100.0,
+    "email": "Zerius@awd.drg",
+    "country": "Singapore"
   },
   "u013": {
-    "name": "orangi juice",
+    "name": "ahbeng heng",
     "age": null,
     "cash_balance": 0.0,
     "liability": 0.0,
     "liability_items": [],
     "portfolio": {
       "stocks": [],
-      "cryptos": [],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 20.0,
+          "avg_price": 67768.87,
+          "current_price": 67916.63,
+          "name": "Bitcoin",
+          "market_value": 1358332.6
+        }
+      ],
       "commodities": []
     },
     "manual_assets": [],
-    "portfolio_value": 0,
-    "total_balance": 0.0,
-    "net_worth": 0.0,
+    "portfolio_value": 1358332.6,
+    "total_balance": 1358332.6,
+    "net_worth": 1358332.6,
     "income": 0.0,
     "expenses": 0.0,
     "income_streams": [],
@@ -877,12 +903,12 @@
     "wellness_metrics": {
       "liquidity_months": 0.0,
       "liquidity_score": 0.0,
-      "diversification_hhi": 0.0,
+      "diversification_hhi": 1.0,
       "diversification_score": 0.0,
       "debt_income_ratio": 999.0,
       "debt_income_score": 0.0
     },
-    "risk_profile": 50.0,
+    "risk_profile": 100.0,
     "financial_wellness_score": 0.0,
     "financial_stress_index": 100.0
   }

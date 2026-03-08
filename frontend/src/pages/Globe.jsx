@@ -599,9 +599,11 @@ function readGlobePrefs() {
     return {
       rotationSpeed: Number.isFinite(parsed.rotationSpeed) ? parsed.rotationSpeed : 40,
       nodeScale: Number.isFinite(parsed.nodeScale) ? parsed.nodeScale : 50,
+      labels: parsed.labels !== false,
+      pulses: parsed.pulses !== false,
     }
   } catch {
-    return { rotationSpeed: 40, nodeScale: 50 }
+    return { rotationSpeed: 40, nodeScale: 50, labels: true, pulses: true }
   }
 }
 
@@ -870,6 +872,8 @@ export default function Globe() {
         globePrefsRef.current = {
           rotationSpeed: Number.isFinite(detail.rotationSpeed) ? detail.rotationSpeed : globePrefsRef.current.rotationSpeed,
           nodeScale: Number.isFinite(detail.nodeScale) ? detail.nodeScale : globePrefsRef.current.nodeScale,
+          labels: typeof detail.labels === 'boolean' ? detail.labels : globePrefsRef.current.labels,
+          pulses: typeof detail.pulses === 'boolean' ? detail.pulses : globePrefsRef.current.pulses,
         }
       } else {
         globePrefsRef.current = readGlobePrefs()
@@ -1005,6 +1009,8 @@ export default function Globe() {
 
       dots.sort((a, b) => a.z - b.z)
       const nodeScale = nodeScaleFactor(globePrefsRef.current.nodeScale)
+      const showLabels = globePrefsRef.current.labels !== false
+      const showPulses = globePrefsRef.current.pulses !== false
 
       dots.forEach(d => {
         ctx.save()
@@ -1053,12 +1059,14 @@ export default function Globe() {
         const fade = Math.min(1, (r3.z - 0.05) / 0.15)
 
         // Dual pulse rings — bigger
-        for (let w = 0; w < 2; w++) {
-          const tp = ((now + w * 1200) % 2400) / 2400
-          ctx.save()
-          ctx.beginPath(); ctx.arc(sx, sy, (14 + tp * 36) * nodeScale, 0, Math.PI * 2)
-          ctx.strokeStyle = hexRgba(hex, (1 - tp) * 0.65 * fade)
-          ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore()
+        if (showPulses) {
+          for (let w = 0; w < 2; w++) {
+            const tp = ((now + w * 1200) % 2400) / 2400
+            ctx.save()
+            ctx.beginPath(); ctx.arc(sx, sy, (14 + tp * 36) * nodeScale, 0, Math.PI * 2)
+            ctx.strokeStyle = hexRgba(hex, (1 - tp) * 0.65 * fade)
+            ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore()
+          }
         }
 
         // Core glow dot — bigger
@@ -1073,7 +1081,7 @@ export default function Globe() {
         ctx.restore()
 
         // Label — always show ticker, show market value below
-        if (r3.z > 0.12) {
+        if (showLabels && r3.z > 0.12) {
           ctx.save(); ctx.globalAlpha = fade * 0.92
           ctx.font = "bold 10px 'DM Mono',monospace"; ctx.fillStyle = hex
           ctx.fillText(node.label.toUpperCase(), sx + 16, sy + 1)

@@ -1,21 +1,28 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+﻿import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
 import AssetInsightsPanel from '../components/AssetInsightsPanel.jsx'
 import { refreshPage } from '../utils/refreshPage.js'
+import { convertCurrency, formatCurrency, normalizeCurrencyCode } from '../utils/currency.js'
 
 const API = 'http://localhost:8000'
+let DISPLAY_CURRENCY = 'USD'
+function setDisplayCurrency(code) {
+  DISPLAY_CURRENCY = normalizeCurrencyCode(code || 'USD')
+}
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function fmt$(n) {
   if (n == null) return '—'
-  return new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:2 }).format(n)
+  const converted = convertCurrency(n, 'USD', DISPLAY_CURRENCY)
+  return converted == null ? '—' : formatCurrency(converted, DISPLAY_CURRENCY, { maximumFractionDigits: 2 })
 }
 function fmtSgd(n) {
   if (n == null) return '—'
-  return new Intl.NumberFormat('en-SG', { style:'currency', currency:'SGD', maximumFractionDigits:0 }).format(n)
+  const converted = convertCurrency(n, 'SGD', DISPLAY_CURRENCY)
+  return converted == null ? '—' : formatCurrency(converted, DISPLAY_CURRENCY, { maximumFractionDigits: 0 })
 }
 function fmtPct(n) { return n == null ? '—' : `${n >= 0 ? '+' : ''}${n.toFixed(2)}%` }
 function initials(name) {
@@ -284,12 +291,12 @@ function escapePdfText(text) {
 
 function fmtCompactCurrency(n) {
   if (n == null) return '—'
-  return new Intl.NumberFormat('en-US', {
-    style:'currency',
-    currency:'USD',
+  const converted = convertCurrency(n, 'USD', DISPLAY_CURRENCY)
+  if (converted == null) return '—'
+  return formatCurrency(converted, DISPLAY_CURRENCY, {
     notation:'compact',
     maximumFractionDigits:1,
-  }).format(n)
+  })
 }
 
 function retirementStatus(plan) {
@@ -856,7 +863,7 @@ function buildFinancialWrapped({ userId, profile, stocks, allHoldings, year }) {
         eyebrow: 'Fun fact',
         title: newStocks.length ? `You added ${newStocks.length} new stock${newStocks.length === 1 ? '' : 's'}` : 'No new stock names this year',
         body: newStocks.length
-          ? `This year you expanded beyond your previous stock list with ${newStocks.map(stock => stock.symbol).slice(0, 4).join(', ')}${newStocks.length > 4 ? '…' : ''}.`
+          ? `This year you expanded beyond your previous stock list with ${newStocks.map(stock => stock.symbol).slice(0, 4).join(', ')}${newStocks.length > 4 ? '...' : ''}.`
           : 'Your stock roster stayed consistent, which usually signals a conviction year over an exploration year.',
         support: highestValueHolding ? `${highestValueHolding.symbol} finished as your largest current position by market value at ${fmt$(highestValueHolding.market_value)}.` : 'No position-size comparison was available.',
         stats: [
@@ -895,7 +902,7 @@ function buildFinancialWrapped({ userId, profile, stocks, allHoldings, year }) {
       },
       {
         key: 'summary',
-        icon: '🪩',
+        icon: '🧭',
         eyebrow: `${year} summary`,
         title: `${profile?.name ?? 'Your portfolio'} wrapped up`,
         body: `Your year was defined by ${fmtPct(incomeGrowthPct)} income growth, ${newStocks.length} new stock additions, and a strongest holding gain from ${returnLeader?.symbol ?? 'your top return leader'}.`,
@@ -937,7 +944,7 @@ function FutureBar({ label, onHoverChange }) {
     >
       <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'var(--text-faint)', marginBottom:4 }}>
         <span>{label} <FutureTag /></span>
-        <span style={{ fontFamily:'var(--font-mono)' }}>—</span>
+        <span style={{ fontFamily:'var(--font-mono)' }}>?</span>
       </div>
       <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
         <div style={{ height:'100%', width:'40%', background:'rgba(96,165,250,0.25)', borderRadius:3 }} />
@@ -983,7 +990,7 @@ function HoldingInsightModal({ holding, onClose, userId }) {
               Qty {holding.qty} · Market Value {fmt$(holding.market_value)} · Gain/Loss {gain != null ? fmtPct(gain) : '—'}
             </div>
           </div>
-          <button onClick={onClose} style={hm.closeBtn}>✕</button>
+          <button onClick={onClose} style={hm.closeBtn}>×</button>
         </div>
 
         <div style={hm.metrics}>
@@ -1034,7 +1041,7 @@ function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, 
               <span style={yw.countPill}>{index + 1} / {slides.length}</span>
             </div>
           </div>
-          <button onClick={onClose} style={yw.closeBtn}>✕</button>
+          <button onClick={onClose} style={yw.closeBtn}>×</button>
         </div>
 
         <div style={yw.dots}>
@@ -1228,7 +1235,7 @@ function FinancialManagerModal({
             <h2 style={fm.title}>Assets, liabilities, and income</h2>
             <div style={fm.subline}>Changes recalculate net worth and wellness immediately.</div>
           </div>
-          <button onClick={onClose} style={fm.closeBtn}>✕</button>
+          <button onClick={onClose} style={fm.closeBtn}>×</button>
         </div>
 
         <div style={fm.tabs}>
@@ -1340,7 +1347,7 @@ function FinancialManagerModal({
               </>
             )}
             <button type="submit" style={fm.submitBtn} disabled={busy}>
-              {busy ? 'Saving…' : `Add ${activeTab === 'income' ? 'Income' : activeTab === 'liabilities' ? 'Liability' : 'Asset'}`}
+              {busy ? 'Saving...' : `Add ${activeTab === 'income' ? 'Income' : activeTab === 'liabilities' ? 'Liability' : 'Asset'}`}
             </button>
           </form>
 
@@ -1401,7 +1408,7 @@ function Spinner({ size = 16, color = 'var(--teal)' }) {
   )
 }
 
-// ── small chart helper ────────────────────────────────────────────────────────
+// â”€â”€ small chart helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function WellnessRing({ score }) {
   const r = 42, circ = 2 * Math.PI * r
   return (
@@ -1427,14 +1434,14 @@ function WellnessRing({ score }) {
   )
 }
 
-// ── Risk option definitions ───────────────────────────────────────────────────
+// â”€â”€ Risk option definitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const RISK_OPTIONS = [
   { key:'Low', label:'Low', icon:'🛡️', desc:'Capital preservation. Low volatility, steady income.',       color:'#34d399', glow:'rgba(52,211,153,0.35)'  },
   { key:'Medium',     label:'Medium',     icon:'⚖️', desc:'Mix of growth and stability. Moderate risk tolerance.',      color:'#c9a84c', glow:'rgba(201,168,76,0.35)'  },
   { key:'High',   label:'High',   icon:'🚀', desc:'Maximum growth. High volatility accepted for high returns.', color:'#f87171', glow:'rgba(248,113,113,0.35)' },
 ]
 
-// ── Rec card shared between sections 2 & 3 ───────────────────────────────────
+// â”€â”€ Rec card shared between sections 2 & 3 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const REC_ICON  = { buy:'📈', sell:'📉', hold:'⏸', rebalance:'🔄', warning:'⚠️' }
 const REC_COLOR = { buy:'var(--green)', sell:'var(--red)', hold:'var(--gold)', rebalance:'var(--teal)', warning:'#fbbf24' }
 
@@ -1487,7 +1494,7 @@ function RecCard({ rec, i, tint = false, compact = false }) {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function Profile() {
   const navigate = useNavigate()
   const { user: authUser } = useAuth()
@@ -1499,13 +1506,13 @@ export default function Profile() {
   const [error,     setError]     = useState('')
   const [selectedHolding, setSelectedHolding] = useState(null)
 
-  // ── Section 1: Risk profile update state ─────────────────────────────────
+  // â”€â”€ Section 1: Risk profile update state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [selectedRisk, setSelectedRisk] = useState('')
   const [riskSaving,   setRiskSaving]   = useState(false)
   const [riskSaved,    setRiskSaved]    = useState(false)
   const [riskError,    setRiskError]    = useState('')
 
-  // ── GPT recommendations state ─────────────────────────────────────────────
+  // â”€â”€ GPT recommendations state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [gptRecs,    setGptRecs]    = useState(null)
   const [gptLoading, setGptLoading] = useState(false)
   const [gptError,   setGptError]   = useState('')
@@ -1533,7 +1540,7 @@ export default function Profile() {
   const [benchmarkOpen, setBenchmarkOpen] = useState(false)
   const [priceRefreshing, setPriceRefreshing] = useState(false)
 
-  // ── Initial data fetch ────────────────────────────────────────────────────
+  // â”€â”€ Initial data fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!authUser?.user_id) { setLoading(false); return }
     let cancelled = false
@@ -1583,7 +1590,7 @@ export default function Profile() {
     setRetirementInitialized(true)
   }, [profile, retirementInitialized])
 
-  // ── Section 1: PATCH /users/risk ─────────────────────────────────────────
+  // â”€â”€ Section 1: PATCH /users/risk â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const saveRiskProfile = useCallback(async () => {
     if (!selectedRisk || !authUser?.user_id) return
     setRiskSaving(true); setRiskError(''); setRiskSaved(false)
@@ -1603,7 +1610,7 @@ export default function Profile() {
     finally     { setRiskSaving(false) }
   }, [selectedRisk, authUser?.user_id])
 
-  // ── GET /users/:id/recommendations/gpt?limit=3&model=gpt-4.1-mini ───────────
+  // â”€â”€ GET /users/:id/recommendations/gpt?limit=3&model=gpt-4.1-mini â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const fetchGptRecs = useCallback(async () => {
     if (!authUser?.user_id) return
     setGptLoading(true); setGptError(''); setGptRecs(null)
@@ -1632,7 +1639,7 @@ export default function Profile() {
     }
   }, [authUser?.user_id])
 
-  // ── Derived values ────────────────────────────────────────────────────────
+  // â”€â”€ Derived values â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const stocks         = portfolio?.stocks  ?? []
   const commodities    = portfolio?.commodities ?? []
   const cryptos        = portfolio?.cryptos ?? []
@@ -1929,6 +1936,22 @@ export default function Profile() {
     }
   }, [authUser?.user_id])
 
+  useEffect(() => {
+    if (!authUser?.user_id) {
+      setDisplayCurrency('USD')
+      return
+    }
+    fetch(`${API}/users/profile/details/${authUser.user_id}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        const code = normalizeCurrencyCode(data?.profile?.currency || 'USD')
+        setDisplayCurrency(code)
+      })
+      .catch(() => {
+        setDisplayCurrency('USD')
+      })
+  }, [authUser?.user_id])
+
   const refreshPortfolioPrices = useCallback(async () => {
     if (!authUser?.user_id || priceRefreshing) return
     setPriceRefreshing(true)
@@ -2052,15 +2075,15 @@ export default function Profile() {
               ))}
             </div>
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-              {riskLabelFromValue(profile?.risk_profile) && <span style={{ background:'var(--surface2)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--gold)' }}>⚖️ {riskLabelFromValue(profile?.risk_profile)} Risk</span>}
+              {riskLabelFromValue(profile?.risk_profile) && <span style={{ background:'var(--surface2)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--gold)' }}>{riskLabelFromValue(profile?.risk_profile)} Risk</span>}
               <span style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--text-dim)' }}>{positionCount} Position{positionCount !== 1 ? 's' : ''}</span>
             </div>
           </div>
           <div style={{ display:'flex', gap:28, flexWrap:'wrap' }}>
             {[
-              [loading ? '…' : fmt$(totalAUM),                               'Total AUM',       'var(--gold)'],
-              [loading ? '…' : fmt$(profile?.portfolio_value ?? portfolioValue),'Portfolio Value','var(--green)'],
-              [loading ? '…' : fmt$(profile?.cash_balance),                   'Cash Balance',   'var(--teal)'],
+              [loading ? '...' : fmt$(totalAUM),                               'Total AUM',       'var(--gold)'],
+              [loading ? '...' : fmt$(profile?.portfolio_value ?? portfolioValue),'Portfolio Value','var(--green)'],
+              [loading ? '...' : fmt$(profile?.cash_balance),                   'Cash Balance',   'var(--teal)'],
             ].map(([v,l,c]) => (
               <div key={l} style={{ textAlign:'right' }}>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.15rem', color:c }}>{v}</div>
@@ -2314,10 +2337,10 @@ export default function Profile() {
           )}
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             AI Recommendations
             POST /users/:id/recommendations/gpt
-        ══════════════════════════════════════════════════════════════════ */}
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <div style={{ ...s.card, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.44s' }}>
           <div style={s.secLabel}>
             <span style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -2366,8 +2389,8 @@ export default function Profile() {
                 style={{ ...s.btnTeal, display:'flex', alignItems:'center', gap:6, opacity: gptLoading ? 0.6 : 1 }}
               >
                 {gptLoading
-                  ? <><Spinner size={12} color="#080c14" /> Generating…</>
-                  : gptRecs ? '↻ Refresh Analysis' : '✦ Generate Analysis'}
+                  ? <><Spinner size={12} color="#080c14" /> Generating...</>
+                  : gptRecs ? '↻ Refresh Analysis' : 'Generate Analysis'}
               </button>
             </div>
           </div>
@@ -2376,17 +2399,17 @@ export default function Profile() {
             Uses your portfolio context, risk profile, and financial wellness signals to generate curated insights and next-step guidance.
           </p>
 
-          {gptError && <div style={s.errBox}>⚠ {gptError}</div>}
+          {gptError && <div style={s.errBox}>Warning: {gptError}</div>}
 
           {/* Thinking state */}
           {gptLoading && (
             <div style={{ background:'rgba(45,212,191,0.04)', border:'1px solid rgba(45,212,191,0.14)', borderRadius:14, padding:'24px 20px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
                 <Spinner size={18} color="var(--teal)" />
-                <span style={{ fontFamily:'var(--font-display)', fontWeight:600, fontSize:'0.9rem', color:'var(--teal)' }}>Our analyst AI is reviewing your portfolio…</span>
+                <span style={{ fontFamily:'var(--font-display)', fontWeight:600, fontSize:'0.9rem', color:'var(--teal)' }}>Our analyst AI is reviewing your portfolio...</span>
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
-                {['Reading holdings and risk profile…','Evaluating portfolio composition…','Generating personalised recommendations…'].map((t,i) => (
+                {['Reading holdings and risk profile...','Evaluating portfolio composition...','Generating personalised recommendations...'].map((t,i) => (
                   <div key={t} style={{ display:'flex', alignItems:'center', gap:8, animation:`profilePulse 1.5s ease-in-out ${i*0.4}s infinite` }}>
                     <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--teal)', flexShrink:0 }} />
                     <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' }}>{t}</span>
@@ -2399,7 +2422,7 @@ export default function Profile() {
           {/* Empty / prompt state */}
           {!gptLoading && !gptError && gptRecs === null && (
             <div style={{ textAlign:'center', padding:'36px 20px' }}>
-              <div style={{ fontSize:'2.2rem', marginBottom:12 }}>✦</div>
+              <div style={{ fontSize:'2.2rem', marginBottom:12 }}>*</div>
               <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem', marginBottom:8 }}>Curated Portfolio Analysis</div>
               <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.76rem', color:'var(--text-faint)', maxWidth:380, margin:'0 auto', lineHeight:1.7 }}>
                 Generate a tailored review based on your current holdings, financial wellness, and risk profile.
@@ -2522,7 +2545,7 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Result — free-text / markdown */}
+          {/* Result ? free-text / markdown */}
           {!gptLoading && gptText && (
             <div style={{ animation:'profileFadeUp 0.4s ease' }}>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14, padding:'10px 14px', background:'rgba(45,212,191,0.05)', border:'1px solid rgba(45,212,191,0.15)', borderRadius:10 }}>
@@ -2606,7 +2629,7 @@ export default function Profile() {
                     }}
                     style={{ ...s.btnTeal, minWidth:170, alignSelf:'center' }}
                   >
-                    {benchmarkLoading ? 'Loading…' : 'View Benchmarking'}
+                    {benchmarkLoading ? 'Loading...' : 'View Benchmarking'}
                   </button>
                 </div>
               ) : benchmarkError ? (
@@ -2641,7 +2664,7 @@ export default function Profile() {
                       disabled={benchmarkLoading}
                       style={{ ...s.retirementSecondaryBtn, opacity:benchmarkLoading ? 0.6 : 1 }}
                     >
-                      {benchmarkLoading ? 'Refreshing…' : 'Refresh'}
+                      {benchmarkLoading ? 'Refreshing...' : 'Refresh'}
                     </button>
                     <button
                       type="button"
@@ -2660,7 +2683,7 @@ export default function Profile() {
             <div style={s.secLabel}>
               Retirement Outlook
               <span style={{ ...s.inlineStat, color:retirementSummary.tone, borderColor:'rgba(109,141,247,0.18)' }}>
-                {retirementLoading ? 'Updating…' : `${retirementPlan?.years_to_retirement ?? '—'} years left`}
+                {retirementLoading ? 'Updating...' : `${retirementPlan?.years_to_retirement ?? '—'} years left`}
               </span>
             </div>
 
@@ -2697,8 +2720,8 @@ export default function Profile() {
                     {retirementError}
                   </div>
                 )}
-                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, marginBottom:14 }}>
-                  <div>
+                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:16, marginBottom:14, width:'100%' }}>
+                  <div style={{ flex:'1 1 320px', minWidth:0 }}>
                     <div style={{ fontFamily:'var(--font-display)', fontSize:'1.35rem', fontWeight:800, marginBottom:6 }}>
                       {retirementSummary.title}
                     </div>
@@ -2710,7 +2733,7 @@ export default function Profile() {
                       ) : 'Use your current profile, spending, and portfolio to estimate whether your retirement path is on track.'}
                     </div>
                   </div>
-                  <div style={{ minWidth:128, textAlign:'right' }}>
+                  <div style={{ flex:'0 1 220px', minWidth:160, marginLeft:'auto', textAlign:'right' }}>
                     <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.66rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:6 }}>
                       Target age
                     </div>
@@ -2803,7 +2826,7 @@ export default function Profile() {
                     disabled={retirementLoading}
                     style={{ ...s.btnTeal, minWidth:130, opacity:retirementLoading ? 0.6 : 1, alignSelf:'end' }}
                   >
-                    {retirementLoading ? 'Updating…' : 'Refresh Plan'}
+                    {retirementLoading ? 'Updating...' : 'Refresh Plan'}
                   </button>
                 </div>
                 <div style={{ marginTop:12, display:'flex', justifyContent:'flex-end' }}>
@@ -2892,7 +2915,7 @@ const s = {
     animation:'spinSlow 20s linear infinite', pointerEvents:'none',
   },
   userName:  { fontFamily:'var(--font-display)', fontSize:'1.45rem', fontWeight:800, marginBottom:6 },
-  twoCol:    { display:'grid', gridTemplateColumns:'1fr 1fr', gap:22, marginBottom:22 },
+  twoCol:    { display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(360px, 1fr))', gap:22, marginBottom:22 },
   card:      { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, padding:24 },
   featureCard: {
     minHeight:320,
@@ -2903,6 +2926,7 @@ const s = {
     flex:1,
     display:'flex',
     alignItems:'center',
+    minWidth:0,
   },
   featureCardBodyExpanded: {
     display:'block',
@@ -3168,6 +3192,7 @@ const s = {
     display:'flex',
     alignItems:'center',
     justifyContent:'center',
+    flexWrap:'wrap',
     gap:18,
     width:'100%',
   },
@@ -3213,7 +3238,7 @@ const s = {
   },
   retirementStatGrid: {
     display:'grid',
-    gridTemplateColumns:'repeat(3, minmax(0, 1fr))',
+    gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',
     gap:12,
     marginBottom:18,
   },
@@ -3222,6 +3247,7 @@ const s = {
     border:'1px solid var(--border)',
     borderRadius:14,
     padding:'14px 15px',
+    minWidth:0,
   },
   retirementStatLabel: {
     fontFamily:'var(--font-mono)',
@@ -3237,6 +3263,8 @@ const s = {
     fontWeight:800,
     lineHeight:1.15,
     marginBottom:5,
+    overflowWrap:'anywhere',
+    wordBreak:'break-word',
   },
   retirementStatHint: {
     fontSize:'0.76rem',
@@ -3245,7 +3273,7 @@ const s = {
   },
   retirementControls: {
     display:'grid',
-    gridTemplateColumns:'repeat(4, minmax(0, 1fr))',
+    gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))',
     gap:10,
     alignItems:'end',
   },
@@ -3921,3 +3949,4 @@ const yw = {
     cursor:'pointer',
   },
 }
+

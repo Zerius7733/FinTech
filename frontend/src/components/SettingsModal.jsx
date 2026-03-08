@@ -7,6 +7,7 @@ import { refreshPage } from '../utils/refreshPage.js'
 const API = 'http://localhost:8000'
 const GLOBE_PREFS_KEY = 'ws_globe_prefs'
 const GLOBE_PREFS_EVENT = 'ws:globe-prefs'
+const YOUTUBE_EMBED_KEY = 'ws_youtube_embed_url'
 
 function normalizeRiskProfileValue(value) {
   if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, Math.min(100, value))
@@ -19,13 +20,38 @@ function normalizeRiskProfileValue(value) {
   return 50
 }
 
+function toYouTubeEmbedUrl(rawUrl) {
+  const value = String(rawUrl || '').trim()
+  if (!value) return ''
+  try {
+    const url = new URL(value)
+    const host = url.hostname.replace(/^www\./i, '').toLowerCase()
+    if (host === 'youtu.be') {
+      const id = url.pathname.split('/').filter(Boolean)[0]
+      return id ? `https://www.youtube.com/embed/${id}` : ''
+    }
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      if (url.pathname === '/watch') {
+        const id = url.searchParams.get('v')
+        return id ? `https://www.youtube.com/embed/${id}` : ''
+      }
+      const parts = url.pathname.split('/').filter(Boolean)
+      if (parts[0] === 'embed' && parts[1]) return `https://www.youtube.com/embed/${parts[1]}`
+      if (parts[0] === 'shorts' && parts[1]) return `https://www.youtube.com/embed/${parts[1]}`
+    }
+  } catch {
+    return ''
+  }
+  return ''
+}
+
 const SECTIONS = [
-  { key: 'risk',     icon: '⚖️',  label: 'Risk Profile'       },
-  { key: 'profile',  icon: '👤',  label: 'Profile Details'    },
-  { key: 'display',  icon: '🎨',  label: 'Appearance'         },
-  { key: 'security', icon: '🔐',  label: 'Security & Privacy' },
-  { key: 'data',     icon: '📡',  label: 'Data & API'         },
-  { key: 'help',     icon: '❓',  label: 'Help Centre'        },
+  { key: 'risk',     icon: '\u2696\uFE0F', label: 'Risk Profile' },
+  { key: 'profile',  icon: '\u{1F464}', label: 'Profile Details' },
+  { key: 'display',  icon: '\u{1F3A8}', label: 'Appearance' },
+  { key: 'security', icon: '\u{1F510}', label: 'Security & Privacy' },
+  { key: 'data',     icon: '\u{1F4E1}', label: 'Data & API' },
+  { key: 'help',     icon: '\u2753', label: 'Help Centre' },
 ]
 
 function Toggle({ on, onChange }) {
@@ -114,15 +140,34 @@ export default function SettingsModal({ onClose }) {
       return {
         rotationSpeed: Number.isFinite(parsed.rotationSpeed) ? parsed.rotationSpeed : 40,
         nodeScale: Number.isFinite(parsed.nodeScale) ? parsed.nodeScale : 50,
+        labels: parsed.labels !== false,
+        pulses: parsed.pulses !== false,
       }
     } catch {
-      return { rotationSpeed: 40, nodeScale: 50 }
+      return { rotationSpeed: 40, nodeScale: 50, labels: true, pulses: true }
     }
   })
-  const [extensionGuideOpen, setExtensionGuideOpen] = useState(false)
-  const [extensionStatus, setExtensionStatus] = useState('')
+  const [extensionStatus, setExtensionStatus] = useState(
+    'Automatic install is not supported by the browser, so use the guide below to load the extension manually.'
+  )
+  const [youtubeUrl, setYoutubeUrl] = useState(() => localStorage.getItem(YOUTUBE_EMBED_KEY) || '')
+  const [showPassword, setShowPassword] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [profileForm, setProfileForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    country: 'Singapore',
+    investorType: 'Individual Investor',
+    currency: 'SGD',
+    password: '',
+  })
 
   const mark = () => setUnsaved(true)
+  const setProfileField = (key, value) => {
+    setProfileForm(prev => ({ ...prev, [key]: value }))
+    mark()
+  }
   const setToggle = (k, v) => { setToggles(p => ({ ...p, [k]: v })); mark() }
   const setSelect = (k, v) => { setSelects(p => ({ ...p, [k]: v })); mark() }
   const updateDisplayPref = (key, value) => {
@@ -135,13 +180,52 @@ export default function SettingsModal({ onClose }) {
     })
     mark()
   }
+  const updateGlobeTogglePref = (key, value) => {
+    setToggles(p => ({ ...p, [key]: value }))
+    setDisplayPrefs(prev => {
+      const next = { ...prev, [key]: Boolean(value) }
+      localStorage.setItem(GLOBE_PREFS_KEY, JSON.stringify(next))
+      window.dispatchEvent(new CustomEvent(GLOBE_PREFS_EVENT, { detail: next }))
+      return next
+    })
+    mark()
+  }
+
+  useEffect(() => {
+    setToggles(prev => ({
+      ...prev,
+      labels: displayPrefs.labels !== false,
+      pulses: displayPrefs.pulses !== false,
+    }))
+  }, [displayPrefs.labels, displayPrefs.pulses])
+
+  useEffect(() => {
+    localStorage.setItem(YOUTUBE_EMBED_KEY, youtubeUrl)
+  }, [youtubeUrl])
 
   // Load user's current risk profile
   useEffect(() => {
     if (!user?.user_id) { setProfileLoaded(true); return }
-    fetch(`${API}/users/${user.user_id}`)
-      .then(r => r.json())
-      .then(d => { if (d.user?.risk_profile != null) setProfileRisk(normalizeRiskProfileValue(d.user.risk_profile)) })
+    Promise.all([
+      fetch(`${API}/users/${user.user_id}`).then(r => r.json()).catch(() => ({})),
+      fetch(`${API}/users/profile/details/${user.user_id}`).then(r => r.json()).catch(() => ({})),
+    ])
+      .then(([jsonData, csvData]) => {
+        if (jsonData?.user?.risk_profile != null) setProfileRisk(normalizeRiskProfileValue(jsonData.user.risk_profile))
+        const fullName = String(csvData?.profile?.name || jsonData?.user?.name || user?.username || '').trim()
+        const [firstName = '', ...lastParts] = fullName ? fullName.split(/\s+/) : ['']
+        const lastName = lastParts.join(' ')
+        setProfileForm(prev => ({
+          ...prev,
+          firstName: firstName || prev.firstName,
+          lastName: lastName || prev.lastName,
+          email: String(csvData?.profile?.email || jsonData?.user?.email || prev.email || ''),
+          country: String(csvData?.profile?.country || jsonData?.user?.country || prev.country || 'Singapore'),
+          investorType: String(csvData?.profile?.investor_type || jsonData?.user?.investor_type || prev.investorType || 'Individual Investor'),
+          currency: String(csvData?.profile?.currency || jsonData?.user?.currency || prev.currency || 'SGD'),
+          password: String(csvData?.profile?.password || prev.password || ''),
+        }))
+      })
       .catch(() => {})
       .finally(() => setProfileLoaded(true))
   }, [user?.user_id])
@@ -160,8 +244,36 @@ export default function SettingsModal({ onClose }) {
   }, [])
 
   const handleSave = async () => {
+    setSaveError('')
     let didPersist = false
+    let profileSaved = false
     if (user?.user_id) {
+      try {
+        const profileRes = await fetch(`${API}/users/profile/details`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.user_id,
+            first_name: profileForm.firstName,
+            last_name: profileForm.lastName,
+            email: profileForm.email,
+            country: profileForm.country,
+            investor_type: profileForm.investorType,
+            currency: profileForm.currency,
+            password: profileForm.password || undefined,
+          }),
+        })
+        if (!profileRes.ok) {
+          const err = await profileRes.json().catch(() => ({}))
+          throw new Error(err?.detail || `profile save failed (${profileRes.status})`)
+        }
+        setProfileForm(prev => ({ ...prev, password: '' }))
+        didPersist = true
+        profileSaved = true
+      } catch (err) {
+        setSaveError(err?.message || 'Could not save profile details.')
+      }
+
       const riskValue = normalizeRiskProfileValue(riskLevel?.value ?? profileRisk ?? 50)
       try {
         const res = await fetch(`${API}/users/risk`, {
@@ -174,26 +286,15 @@ export default function SettingsModal({ onClose }) {
         didPersist = true
       } catch (_) {}
     }
-    setSaved(true); setUnsaved(false)
-    setTimeout(() => setSaved(false), 2000)
+    if (profileSaved) {
+      setSaved(true)
+      setUnsaved(false)
+      setTimeout(() => setSaved(false), 2000)
+    }
     if (didPersist) refreshPage()
   }
 
   const extensionPath = 'FinTech/chrome-extension'
-
-  const handleInstallExtension = () => {
-    let opened = false
-    try {
-      const popup = window.open('chrome://extensions', '_blank')
-      opened = !!popup
-    } catch {
-      opened = false
-    }
-    setExtensionGuideOpen(true)
-    setExtensionStatus(opened
-      ? 'Chrome extensions opened. Use Load unpacked and select the WealthSphere extension folder.'
-      : 'Automatic install is not supported by the browser, so use the guide below to load the extension manually.')
-  }
 
   const handleCopyExtensionPath = async () => {
     try {
@@ -217,7 +318,7 @@ export default function SettingsModal({ onClose }) {
     <div style={s.overlay} onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={s.modal}>
 
-        {/* ── Left tab rail ── */}
+        {/* â”€â”€ Left tab rail â”€â”€ */}
         <aside style={s.rail}>
           <div style={s.railTitle}>Settings</div>
           {SECTIONS.map(sec => (
@@ -229,7 +330,7 @@ export default function SettingsModal({ onClose }) {
           ))}
         </aside>
 
-        {/* ── Right content ── */}
+        {/* â”€â”€ Right content â”€â”€ */}
         <div style={s.body}>
 
           {/* Header bar */}
@@ -238,16 +339,19 @@ export default function SettingsModal({ onClose }) {
               <div style={s.eyebrow}>{SECTIONS.find(s => s.key === active)?.icon} {SECTIONS.find(s => s.key === active)?.label}</div>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              {saveError && (
+                <div style={{ color:'var(--red)', fontSize:'0.75rem', maxWidth:260, textAlign:'right' }}>{saveError}</div>
+              )}
               {unsaved && (
                 <button style={s.btnSave} onClick={handleSave}>
-                  {saved ? '✓ Saved!' : 'Save Changes'}
+                  {saved ? 'Saved!' : 'Save Changes'}
                 </button>
               )}
-              <button style={s.btnClose} onClick={onClose}>✕</button>
+              <button style={s.btnClose} onClick={onClose}>X</button>
             </div>
           </div>
 
-          {/* ── RISK PROFILE ── */}
+          {/* â”€â”€ RISK PROFILE â”€â”€ */}
           {active === 'risk' && (
             <div style={s.content}>
               <p style={s.pageSub}>Your risk tolerance shapes wellness scoring, recommendations, and suggested allocations.</p>
@@ -261,11 +365,11 @@ export default function SettingsModal({ onClose }) {
                     <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.95rem', marginBottom: 2 }}>{riskInfo.label}</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--teal)' }}>Wellness ratio: {riskInfo.ratio}</div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: 3 }}>
-                      {profileRisk ? 'Saved to your profile' : 'Default — not yet saved'}
+                      {profileRisk ? 'Saved to your profile' : 'Default - not yet saved'}
                     </div>
                   </div>
                   <button style={s.btnGhost} onClick={() => { setRiskOpen(r => !r); mark() }}>
-                    {riskOpen ? 'Close ↑' : 'Adjust →'}
+                    {riskOpen ? 'Close' : 'Adjust'}
                   </button>
                 </div>
                 {riskOpen && (
@@ -273,7 +377,7 @@ export default function SettingsModal({ onClose }) {
                     {profileLoaded
                       ? <RiskSlider key={profileRisk ?? 'default'} initialPct={normalizeRiskProfileValue(profileRisk ?? 50)}
                           onChange={l => { setRiskLevel(l); mark() }} />
-                      : <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>Loading…</div>
+                      : <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>Loading...</div>
                     }
                   </div>
                 )}
@@ -282,42 +386,80 @@ export default function SettingsModal({ onClose }) {
             </div>
           )}
 
-          {/* ── PROFILE DETAILS ── */}
+          {/* â”€â”€ PROFILE DETAILS â”€â”€ */}
           {active === 'profile' && (
             <div style={s.content}>
               <p style={s.pageSub}>Update your personal information and display preferences.</p>
-              <Card title="Personal Info" icon="👤">
-                {[['First Name','Alex'],['Last Name','Chen'],['Email Address','alex@example.com']].map(([label, ph]) => (
-                  <div key={label} style={{ marginBottom: 14 }}>
-                    <div style={s.formLabel}>{label}</div>
-                    <input style={s.formInput} defaultValue={ph} onChange={mark} />
+              <Card title="Personal Info" icon={'\u{1F464}'}>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={s.formLabel}>First Name</div>
+                  <input style={s.formInput} value={profileForm.firstName} onChange={e => setProfileField('firstName', e.target.value)} />
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={s.formLabel}>Last Name</div>
+                  <input style={s.formInput} value={profileForm.lastName} onChange={e => setProfileField('lastName', e.target.value)} />
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={s.formLabel}>Email Address</div>
+                  <input style={s.formInput} value={profileForm.email} onChange={e => setProfileField('email', e.target.value)} />
+                </div>
+                <div style={{ marginBottom: 0 }}>
+                  <div style={s.formLabel}>Password</div>
+                  <div style={s.passwordWrap}>
+                    <input
+                      style={{ ...s.formInput, paddingRight: 44 }}
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Leave blank to keep current password"
+                      value={profileForm.password}
+                      onChange={e => setProfileField('password', e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      style={s.passwordToggle}
+                      onClick={() => setShowPassword(v => !v)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? '\u{1F648}' : '\u{1F441}'}
+                    </button>
                   </div>
-                ))}
+                </div>
               </Card>
-              <Card title="Preferences" icon="🌐">
-                {[
-                  ['Investor Type', ['Individual Investor','HNWI','Family Office','Institutional'], 'investorType'],
-                  ['Primary Currency', ['SGD','USD','GBP','EUR'], 'currency'],
-                  ['Country', ['Singapore','United Kingdom','United States','Australia','Japan'], 'country'],
-                ].map(([label, opts, key]) => (
-                  <Row key={label} name={label}>
-                    <SelInput value={selects[key] ?? opts[0]} opts={opts} onChange={v => setSelect(key, v)} />
-                  </Row>
-                ))}
+              <Card title="Preferences" icon={'\u{1F310}'}>
+                <Row name="Investor Type">
+                  <SelInput
+                    value={profileForm.investorType}
+                    opts={['Individual Investor','HNWI','Family Office','Institutional']}
+                    onChange={v => setProfileField('investorType', v)}
+                  />
+                </Row>
+                <Row name="Primary Currency">
+                  <SelInput
+                    value={profileForm.currency}
+                    opts={['SGD','USD','GBP','EUR']}
+                    onChange={v => setProfileField('currency', v)}
+                  />
+                </Row>
+                <Row name="Country">
+                  <SelInput
+                    value={profileForm.country}
+                    opts={['Singapore','United Kingdom','United States','Australia','Japan']}
+                    onChange={v => setProfileField('country', v)}
+                  />
+                </Row>
               </Card>
             </div>
           )}
 
-                    {/* Appearance */}
           {active === 'display' && (
             <div style={s.content}>
               <p style={s.pageSub}>Customize how the globe behaves in real time.</p>
-              <Card title="Globe View" icon="Globe">
+              <Card title="Globe View" icon="🌍">
                 <Row name="Show satellite labels" desc="Display asset class labels floating next to globe nodes.">
-                  <Toggle on={toggles.labels} onChange={v => setToggle('labels', v)} />
+                  <Toggle on={toggles.labels} onChange={v => updateGlobeTogglePref('labels', v)} />
                 </Row>
                 <Row name="Animate node pulses" desc="Animated pulsing rings around active portfolio nodes.">
-                  <Toggle on={toggles.pulses} onChange={v => setToggle('pulses', v)} />
+                  <Toggle on={toggles.pulses} onChange={v => updateGlobeTogglePref('pulses', v)} />
                 </Row>
                 <Row name="Globe rotation speed" desc={`Current: ${displayPrefs.rotationSpeed}%`}>
                   <SliderField
@@ -376,13 +518,13 @@ export default function SettingsModal({ onClose }) {
             </div>
           )}
 
-          {/* ── DATA & API ── */}
+          {/* â”€â”€ DATA & API â”€â”€ */}
           {active === 'data' && (
             <div style={s.content}>
-              <p style={s.pageSub}>Control how WealthSphere syncs and connects to external services.</p>
-              <Card title="Browser Extension" icon="🧩">
+              <p style={s.pageSub}>Control browser extension setup and import workflow.</p>
+              <Card title="Browser Extension" icon={'\u{1F9E9}'}>
                 <div style={s.extensionHero}>
-                  <div style={s.extensionIcon}>↗</div>
+                  <div style={s.extensionIcon}>{'\u{1F4F8}'}</div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', marginBottom:6 }}>
                       Install the WealthSphere importer
@@ -391,68 +533,70 @@ export default function SettingsModal({ onClose }) {
                       Capture broker screenshots, parse holdings, and send them straight into your WealthSphere portfolio.
                     </div>
                   </div>
-                  <button style={s.btnInstall} onClick={handleInstallExtension}>Install Extension</button>
                 </div>
                 {extensionStatus && (
                   <div style={s.extensionNotice}>{extensionStatus}</div>
                 )}
-                {extensionGuideOpen && (
-                  <div style={s.extensionGuide}>
-                    <div style={s.extensionGuideTitle}>Manual install guide</div>
-                    <div style={s.extensionSteps}>
-                      {[
-                        'Open chrome://extensions in Chrome.',
-                        'Turn on Developer mode in the top-right corner.',
-                        'Click Load unpacked.',
-                        'Select the WealthSphere extension folder.',
-                        'Pin the extension and sign in before using imports.',
-                      ].map((step, index) => (
-                        <div key={step} style={s.extensionStep}>
-                          <div style={s.extensionStepNum}>{index + 1}</div>
-                          <div>{step}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={s.extensionPathRow}>
-                      <div style={s.extensionPathBox}>{extensionPath}</div>
-                      <button style={s.btnGhost} onClick={handleCopyExtensionPath}>Copy path</button>
-                    </div>
+                <div style={s.extensionGuide}>
+                  <div style={s.extensionGuideTitle}>Manual install guide</div>
+                  <div style={s.extensionSteps}>
+                    {[
+                      'Open chrome://extensions in Chrome.',
+                      'Turn on Developer mode in the top-right corner.',
+                      'Click Load unpacked.',
+                      'Select the WealthSphere extension folder.',
+                      'Pin the extension and sign in before using imports.',
+                    ].map((step, index) => (
+                      <div key={step} style={s.extensionStep}>
+                        <div style={s.extensionStepNum}>{index + 1}</div>
+                        <div>{step}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={s.extensionPathRow}>
+                    <div style={s.extensionPathBox}>{extensionPath}</div>
+                    <button style={s.btnGhost} onClick={handleCopyExtensionPath}>Copy path</button>
+                  </div>
+                </div>
+              </Card>
+              <Card title="YouTube Embed" icon={'\u{1F4FA}'}>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={s.formLabel}>YouTube Link</div>
+                  <input
+                    style={s.formInput}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={youtubeUrl}
+                    onChange={e => { setYoutubeUrl(e.target.value); mark() }}
+                  />
+                </div>
+                {toYouTubeEmbedUrl(youtubeUrl) ? (
+                  <div style={{ border:'1px solid var(--border)', borderRadius:12, overflow:'hidden', background:'var(--surface2)' }}>
+                    <iframe
+                      title="youtube-embed-preview"
+                      src={toYouTubeEmbedUrl(youtubeUrl)}
+                      style={{ width:'100%', height:280, border:'none' }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : (
+                  <div style={{ fontSize:'0.78rem', color:'var(--text-faint)' }}>
+                    Paste a valid YouTube watch, youtu.be, shorts, or embed link to preview.
                   </div>
                 )}
-              </Card>
-              <Card title="Sync Settings" icon="⚙️">
-                <Row name="Auto-sync frequency" desc="How often WealthSphere pulls fresh data from connected sources.">
-                  <SelInput value={selects.syncFreq} opts={['Every 5 minutes','Every 15 minutes','Every hour','Manual only']} onChange={v => setSelect('syncFreq', v)} />
-                </Row>
-                <Row name="Background sync" desc="Allow WealthSphere to sync data even when the app is not open.">
-                  <Toggle on={toggles.bgSync} onChange={v => setToggle('bgSync', v)} />
-                </Row>
-              </Card>
-              <Card title="API Access" icon="🔑">
-                <Row name="Personal API key" desc="Use this key to access your WealthSphere data programmatically.">
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', background: 'var(--surface2)', border: '1px solid var(--border)',
-                      borderRadius: 8, padding: '8px 12px', color: 'var(--text-faint)', letterSpacing: '0.05em' }}>ws_••••••••••••••••</div>
-                    <button style={s.btnGhost} onClick={mark}>Reveal</button>
-                  </div>
-                </Row>
-                <Row name="Webhook URL" desc="POST portfolio events to this endpoint when changes are detected.">
-                  <input placeholder="https://your-endpoint.com/hook" style={{ ...s.formInput, minWidth: 220, marginBottom: 0 }} onChange={mark} />
-                </Row>
               </Card>
             </div>
           )}
 
-          {/* ── HELP CENTRE ── */}
+          {/* â”€â”€ HELP CENTRE â”€â”€ */}
           {active === 'help' && (
             <div style={s.content}>
               <p style={s.pageSub}>Find answers, read documentation, or get in touch with our team.</p>
-              <Card title="Quick Links" icon="🔗">
+              <Card title="Quick Links" icon={'\u{1F517}'}>
                 {[
-                  { icon: '📖', title: 'Documentation',       desc: 'Full guides for every WealthSphere feature.',       href: '#' },
-                  { icon: '🎥', title: 'Video Tutorials',      desc: 'Step-by-step walkthroughs for new users.',          href: '#' },
-                  { icon: '💬', title: 'Community Forum',      desc: 'Ask questions and share ideas with other users.',   href: '#' },
-                  { icon: '📮', title: 'Contact Support',      desc: 'Reach our team — we reply within 24 hours.',        href: '#' },
+                  { icon: '\u{1F4D6}', title: 'Documentation',       desc: 'Full guides for every WealthSphere feature.',       href: '#' },
+                  { icon: '\u{1F3A5}', title: 'Video Tutorials',      desc: 'Step-by-step walkthroughs for new users.',          href: '#' },
+                  { icon: '\u{1F4EE}', title: 'Contact Support',      desc: 'Reach our team - we reply within 24 hours.',        href: '#' },
                 ].map(l => (
                   <a key={l.title} href={l.href} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0',
                     borderBottom: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
@@ -462,12 +606,12 @@ export default function SettingsModal({ onClose }) {
                       <div style={{ fontWeight: 600, fontSize: '0.87rem', marginBottom: 2 }}>{l.title}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{l.desc}</div>
                     </div>
-                    <span style={{ color: 'var(--text-faint)', fontSize: '0.9rem' }}>→</span>
+                    <span style={{ color: 'var(--text-faint)', fontSize: '0.9rem' }}>-></span>
                   </a>
                 ))}
               </Card>
-              <Card title="App Info" icon="ℹ️">
-                {[['Version','1.0.0-beta'],['Last updated','7 March 2026'],['Backend','FastAPI · localhost:8000'],['Frontend','React 18 + Vite']].map(([k,v]) => (
+              <Card title="App Info" icon={'\u2139\uFE0F'}>
+                {[['Version','1.0.0-beta'],['Last updated','10 March 2026'],['Backend','FastAPI - localhost:8000'],['Frontend','React 18 + Vite']].map(([k,v]) => (
                   <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0',
                     borderBottom: '1px solid var(--border)', fontSize: '0.83rem' }}>
                     <span style={{ color: 'var(--text-dim)' }}>{k}</span>
@@ -550,6 +694,27 @@ const s = {
     borderRadius: 10, padding: '10px 14px', color: 'var(--text)',
     fontFamily: 'var(--font-body)', fontSize: '0.87rem', outline: 'none',
     boxSizing: 'border-box', marginBottom: 0,
+  },
+  passwordWrap: {
+    position:'relative',
+  },
+  passwordToggle: {
+    position:'absolute',
+    right:10,
+    top:'50%',
+    transform:'translateY(-50%)',
+    width:28,
+    height:28,
+    borderRadius:8,
+    border:'1px solid var(--border)',
+    background:'var(--surface)',
+    color:'var(--text-dim)',
+    cursor:'pointer',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    padding:0,
+    fontSize:'0.9rem',
   },
   btnClose: {
     width: 34, height: 34, borderRadius: '50%',

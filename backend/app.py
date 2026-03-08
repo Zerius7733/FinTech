@@ -439,6 +439,18 @@ def _update_user_csv_profile(user_id: str, updates: Dict[str, Any]) -> None:
             writer.writerow({key: row.get(key, "") for key in fieldnames})
 
 
+def _read_user_csv_profile(user_id: str) -> Dict[str, Any]:
+    csv_path = ASSETS_CSV_PATH
+    if not csv_path.exists():
+        return {}
+    with open(csv_path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if (row.get("user_id") or "").strip() == user_id:
+                return dict(row)
+    return {}
+
+
 class UserRiskUpdateRequest(BaseModel):
     user_id: str
     risk_profile: float | str = Field(
@@ -499,6 +511,17 @@ class SurveyProfileUpdateRequest(BaseModel):
     email: str | None = None
     country: str | None = None
     age_group: str | None = None
+
+
+class UserProfileDetailsUpdateRequest(BaseModel):
+    user_id: str
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str | None = None
+    country: str | None = None
+    investor_type: str | None = None
+    currency: str | None = None
+    password: str | None = None
 
 
 class ScreenshotMergeRequest(BaseModel):
@@ -626,7 +649,7 @@ def login(payload: LoginRequest) -> Dict[str, Any]:
         return {"status": "ok", **result}
     except api.LoginValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except api.LoginNotFoundError as exc:
+    except api.LoginAuthError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
@@ -796,6 +819,68 @@ def update_survey_profile(payload: SurveyProfileUpdateRequest) -> Dict[str, Any]
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"survey profile update failed: {exc}") from exc
+
+
+@app.post("/users/profile/details", tags=["Users"], summary="Persist profile details into users.csv")
+def update_profile_details(payload: UserProfileDetailsUpdateRequest) -> Dict[str, Any]:
+    try:
+        user_id = (payload.user_id or "").strip()
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        first = (payload.first_name or "").strip()
+        last = (payload.last_name or "").strip()
+        full_name = " ".join(part for part in (first, last) if part).strip()
+
+        updates: Dict[str, Any] = {
+            "email": (payload.email or "").strip(),
+            "country": (payload.country or "").strip(),
+            "investor_type": (payload.investor_type or "").strip(),
+            "currency": (payload.currency or "").strip(),
+        }
+        if full_name:
+            updates["name"] = full_name
+        password = (payload.password or "").strip()
+        if password:
+            updates["password"] = password
+
+        _update_user_csv_profile(user_id=user_id, updates=updates)
+
+        users = _read_users_data()
+        user = users.get(user_id)
+        if isinstance(user, dict):
+            if full_name:
+                user["name"] = full_name
+            user["email"] = updates.get("email", user.get("email", ""))
+            user["country"] = updates.get("country", user.get("country", ""))
+            users[user_id] = user
+            _write_users_data(users)
+
+        safe_updates = dict(updates)
+        if "password" in safe_updates:
+            safe_updates["password"] = "***"
+
+        return {"status": "ok", "user_id": user_id, "updates": safe_updates}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"profile details update failed: {exc}") from exc
+
+
+@app.get("/users/profile/details/{user_id}", tags=["Users"], summary="Read profile details from users.csv")
+def get_profile_details(user_id: str) -> Dict[str, Any]:
+    try:
+        user_id = (user_id or "").strip()
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        row = _read_user_csv_profile(user_id)
+        if not row:
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found in users.csv")
+        return {"status": "ok", "user_id": user_id, "profile": row}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"profile details read failed: {exc}") from exc
 
 
 @app.get("/users", tags=["Users"], summary="Get all users")

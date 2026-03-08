@@ -214,9 +214,9 @@ const S = {
     transition: 'all 0.2s',
   },
   tabActive: {
-    background: 'var(--surface2)',
-    color: 'var(--gold)',
-    boxShadow: '0 0 0 1px rgba(201,168,76,0.25)',
+    background: 'var(--surface)',
+    color: 'var(--btn-primary-bg)',
+    boxShadow: '0 0 0 1px var(--border-act)',
   },
   subtitle: {
     fontSize: '0.82rem',
@@ -260,10 +260,10 @@ const S = {
   submit: {
     marginTop: 4,
     padding: '13px 0',
-    background: 'linear-gradient(135deg, var(--gold), #b8973e)',
-    border: 'none',
+    background: 'var(--btn-primary-bg)',
+    border: '1px solid var(--btn-primary-bg)',
     borderRadius: 'var(--r-sm)',
-    color: '#0d0d0d',
+    color: 'var(--btn-primary-text)',
     fontFamily: 'var(--font-body)',
     fontWeight: 700,
     fontSize: '0.9rem',
