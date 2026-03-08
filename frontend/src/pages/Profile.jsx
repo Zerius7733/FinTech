@@ -1687,6 +1687,7 @@ export default function Profile() {
   const netWorth       = profile?.net_worth ?? null
   const [trendRange, setTrendRange] = useState('6M')
   const [trendView, setTrendView] = useState('combined')
+  const [showTrendInfo, setShowTrendInfo] = useState(false)
 
   const compositionBase = portfolioValue + manualAssetTotal
   const COMPOSITION_REAL = [
@@ -2154,10 +2155,30 @@ export default function Profile() {
           </div>
         </div>
 
-        <div style={{ ...s.card, marginBottom:24, padding:'22px 24px 18px', animation:'sectionIn 0.5s ease both', animationDelay:'0.16s' }}>
+        <div style={{ ...s.card, marginBottom:24, padding:'22px 24px 18px', animation:'sectionIn 0.5s ease both', animationDelay:'0.16s', position:'relative' }}>
+          {showTrendInfo && (
+            <div style={{ ...s.hoverHint, top:90, right:24, maxWidth:340 }}>
+              Real estate is excluded from this trend so large, infrequently updated property values do not flatten the rest of the portfolio movement and skew the chart.
+            </div>
+          )}
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, flexWrap:'wrap', marginBottom:18 }}>
             <div>
-              <div style={s.secLabel}>{trendTitleMap[trendView]} Trend</div>
+              <div style={{ ...s.secLabel, justifyContent:'flex-start', gap:8 }}>
+                <span>{trendTitleMap[trendView]} Trend</span>
+                {trendView === 'combined' && (
+                  <button
+                    type="button"
+                    aria-label="Why real estate is excluded from this chart"
+                    onMouseEnter={() => setShowTrendInfo(true)}
+                    onMouseLeave={() => setShowTrendInfo(false)}
+                    onFocus={() => setShowTrendInfo(true)}
+                    onBlur={() => setShowTrendInfo(false)}
+                    style={s.infoDot}
+                  >
+                    i
+                  </button>
+                )}
+              </div>
               <div style={{ display:'flex', alignItems:'baseline', gap:14, flexWrap:'wrap', marginTop:6 }}>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'2rem', lineHeight:1 }}>
                   {fmt$(trendPayload.latest)}
@@ -3047,6 +3068,28 @@ const s = {
     borderColor:'var(--teal)',
     color:'#0b0f14',
     boxShadow:'var(--glow-teal)',
+  },
+  infoDot: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    width:18,
+    height:18,
+    borderRadius:'50%',
+    border:'1px solid rgba(148,163,184,0.4)',
+    background:'var(--surface2)',
+    color:'var(--text-faint)',
+    display:'inline-flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    fontWeight:700,
+    lineHeight:1,
+    padding:0,
+    cursor:'help',
+    boxShadow:'none',
+    outline:'none',
+    flexShrink:0,
   },
   secSubhead: {
     fontFamily:'var(--font-display)', fontSize:'1.02rem', fontWeight:700,
