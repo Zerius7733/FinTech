@@ -1,5 +1,6 @@
 import csv
 import json
+import csv
 from typing import Any, Dict 
 from backend.services.wealth_wellness.engine import calculate_user_wellness
 
@@ -41,9 +42,11 @@ def _refresh_position_market_values(user: Dict[str, Any]) -> None:
 
 def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, Any]:
     updated = json.loads(json.dumps(users))
-    with open(csv_path, "r", encoding="utf-8", newline="") as f:
+    with open(csv_path, "r", encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
+            if isinstance(row, dict):
+                row = {str(k).lstrip("\ufeff"): v for k, v in row.items()}
             user_id = (row.get("user_id") or "").strip()
             if not user_id or user_id not in updated:
                 continue
@@ -80,7 +83,7 @@ def update_assets_file(
     json_path: str = "json_data/user.json", csv_path: str = "csv_data/users.csv"
 ) -> Dict[str, Any]:
     print(f"[assets] syncing from {csv_path} -> {json_path}")
-    with open(json_path, "r", encoding="utf-8") as f:
+    with open(json_path, "r", encoding="utf-8-sig") as f:
         users = json.load(f)
     updated = update_assets_from_csv(users, csv_path=csv_path)
     with open(json_path, "w", encoding="utf-8") as f:

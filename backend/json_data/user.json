@@ -143,94 +143,9 @@
   },
   "u002": {
     "name": "Brandon Lim",
-    "age": 26,
+    "age": 28,
     "cash_balance": 2300.0,
     "liability": 6400.75,
-    "liability_items": [
-      {
-        "id": "liability-seed",
-        "label": "Existing Liabilities",
-        "amount": 6400.75,
-        "is_mortgage": false
-      }
-    ],
-    "portfolio": {
-      "stocks": [
-        {
-          "symbol": "TSLA",
-          "qty": 2.0,
-          "avg_price": 396.73,
-          "market_value": 793.46,
-          "current_price": 396.73,
-          "name": "TSLA"
-        },
-        {
-          "symbol": "NVDA",
-          "qty": 0.0,
-          "avg_price": 870.0,
-          "market_value": 0.0,
-          "current_price": 177.82
-        }
-      ],
-      "cryptos": [
-        {
-          "symbol": "XLM-USD",
-          "qty": 0.0,
-          "avg_price": 0.155,
-          "current_price": 0.1493,
-          "name": "Stellar",
-          "market_value": 0.0
-        }
-      ],
-      "commodities": [
-        {
-          "symbol": "GC=F",
-          "qty": 0.0,
-          "avg_price": 2180.0,
-          "current_price": 5158.7002,
-          "market_value": 0.0
-        },
-        {
-          "symbol": "SI=F",
-          "qty": 0.0,
-          "avg_price": 24.5,
-          "current_price": 84.311,
-          "market_value": 0.0
-        }
-      ]
-    },
-    "manual_assets": [],
-    "portfolio_value": 793.46,
-    "total_balance": 3093.46,
-    "net_worth": -4807.29,
-    "income": 4000.0,
-    "expenses": 1500.0,
-    "income_streams": [
-      {
-        "id": "income-seed",
-        "label": "Primary Income",
-        "monthly_amount": 4000.0
-      }
-    ],
-    "mortgage": 0,
-    "estate": 0.0,
-    "wellness_metrics": {
-      "liquidity_months": 0.57,
-      "liquidity_score": 9.58,
-      "diversification_hhi": 1.0,
-      "diversification_score": 0.0,
-      "debt_income_ratio": 0.1333,
-      "debt_income_score": 100.0
-    },
-    "risk_profile": 100.0,
-    "financial_wellness_score": 30.0,
-    "financial_stress_index": 56.17
-  },
-  "u003": {
-    "name": "Cheryl Ng",
-    "age": 28,
-    "cash_balance": 9000.2,
-    "liability": 9000.2,
     "liability_items": [],
     "portfolio": {
       "stocks": [
@@ -284,30 +199,30 @@
     },
     "manual_assets": [],
     "portfolio_value": 7129.38,
-    "total_balance": 16129.58,
-    "net_worth": 5129.38,
-    "income": 3000.0,
-    "expenses": 2000.0,
+    "total_balance": 9429.38,
+    "net_worth": 1528.63,
+    "income": 4000.0,
+    "expenses": 1500.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 3.0,
-      "liquidity_score": 50.0,
+      "liquidity_months": 0.57,
+      "liquidity_score": 9.58,
       "diversification_hhi": 0.3473,
       "diversification_score": 100.0,
-      "debt_income_ratio": 0.25,
+      "debt_income_ratio": 0.1333,
       "debt_income_score": 100.0
     },
     "risk_profile": 100.0,
     "financial_wellness_score": 100.0,
-    "financial_stress_index": 20.0
+    "financial_stress_index": 36.17
   },
-  "u004": {
-    "name": "Daniel Koh",
+  "u003": {
+    "name": "Cheryl Ng",
     "age": 23,
-    "cash_balance": 7350.4,
-    "liability": 7350.4,
+    "cash_balance": 9000.2,
+    "liability": 9000.2,
     "liability_items": [],
     "portfolio": {
       "stocks": [
@@ -346,30 +261,30 @@
     },
     "manual_assets": [],
     "portfolio_value": 7719.42,
-    "total_balance": 15069.82,
-    "net_worth": 5219.42,
-    "income": 4500.0,
-    "expenses": 2500.0,
+    "total_balance": 16719.62,
+    "net_worth": 5719.42,
+    "income": 3000.0,
+    "expenses": 2000.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 1.63,
-      "liquidity_score": 27.22,
+      "liquidity_months": 3.0,
+      "liquidity_score": 50.0,
       "diversification_hhi": 0.308,
       "diversification_score": 100.0,
-      "debt_income_ratio": 0.1361,
+      "debt_income_ratio": 0.25,
       "debt_income_score": 100.0
     },
     "risk_profile": 50.0,
-    "financial_wellness_score": 74.53,
-    "financial_stress_index": 29.11
+    "financial_wellness_score": 82.5,
+    "financial_stress_index": 20.0
   },
-  "u005": {
-    "name": "Ethan Lee",
+  "u004": {
+    "name": "Daniel Koh",
     "age": 35,
-    "cash_balance": 12600.25,
-    "liability": 12600.25,
+    "cash_balance": 7350.4,
+    "liability": 7350.4,
     "liability_items": [],
     "portfolio": {
       "stocks": [
@@ -408,30 +323,30 @@
     },
     "manual_assets": [],
     "portfolio_value": 11125.09,
-    "total_balance": 23725.34,
-    "net_worth": 8125.09,
-    "income": 4600.0,
-    "expenses": 3000.0,
+    "total_balance": 18475.49,
+    "net_worth": 8625.09,
+    "income": 4500.0,
+    "expenses": 2500.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 2.74,
-      "liquidity_score": 45.65,
+      "liquidity_months": 1.63,
+      "liquidity_score": 27.22,
       "diversification_hhi": 0.4609,
       "diversification_score": 84.57,
-      "debt_income_ratio": 0.2283,
+      "debt_income_ratio": 0.1361,
       "debt_income_score": 100.0
     },
     "risk_profile": 50.0,
-    "financial_wellness_score": 75.58,
-    "financial_stress_index": 24.83
+    "financial_wellness_score": 69.13,
+    "financial_stress_index": 32.2
   },
-  "u006": {
-    "name": "Farah Aziz",
+  "u005": {
+    "name": "Ethan Lee",
     "age": 37,
-    "cash_balance": 8490.1,
-    "liability": 8490.1,
+    "cash_balance": 12600.25,
+    "liability": 12600.25,
     "liability_items": [],
     "portfolio": {
       "stocks": [
@@ -470,30 +385,30 @@
     },
     "manual_assets": [],
     "portfolio_value": 6651.69,
-    "total_balance": 15141.79,
-    "net_worth": 3151.69,
-    "income": 4750.0,
-    "expenses": 3500.0,
+    "total_balance": 19251.94,
+    "net_worth": 3651.69,
+    "income": 4600.0,
+    "expenses": 3000.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 1.79,
-      "liquidity_score": 29.79,
+      "liquidity_months": 2.74,
+      "liquidity_score": 45.65,
       "diversification_hhi": 0.4554,
       "diversification_score": 85.43,
-      "debt_income_ratio": 0.1489,
+      "debt_income_ratio": 0.2283,
       "debt_income_score": 100.0
     },
     "risk_profile": 50.0,
-    "financial_wellness_score": 70.33,
-    "financial_stress_index": 31.0
+    "financial_wellness_score": 75.88,
+    "financial_stress_index": 24.65
   },
-  "u007": {
-    "name": "Grace Wong",
+  "u006": {
+    "name": "Farah Aziz",
     "age": 55,
-    "cash_balance": 3350.75,
-    "liability": 3350.75,
+    "cash_balance": 8490.1,
+    "liability": 8490.1,
     "liability_items": [],
     "portfolio": {
       "stocks": [
@@ -532,30 +447,30 @@
     },
     "manual_assets": [],
     "portfolio_value": 7204.72,
-    "total_balance": 10555.47,
-    "net_worth": 5204.72,
-    "income": 4800.0,
-    "expenses": 2000.0,
+    "total_balance": 15694.82,
+    "net_worth": 3704.72,
+    "income": 4750.0,
+    "expenses": 3500.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 0.7,
-      "liquidity_score": 11.63,
+      "liquidity_months": 1.79,
+      "liquidity_score": 29.79,
       "diversification_hhi": 0.4711,
       "diversification_score": 82.97,
-      "debt_income_ratio": 0.0582,
+      "debt_income_ratio": 0.1489,
       "debt_income_score": 100.0
     },
     "risk_profile": 50.0,
-    "financial_wellness_score": 63.11,
-    "financial_stress_index": 38.75
+    "financial_wellness_score": 69.47,
+    "financial_stress_index": 31.49
   },
-  "u008": {
-    "name": "Hafiz Rahman",
+  "u007": {
+    "name": "Grace Wong",
     "age": 36,
-    "cash_balance": 9150.5,
-    "liability": 9150.5,
+    "cash_balance": 3350.75,
+    "liability": 3350.75,
     "liability_items": [],
     "portfolio": {
       "stocks": [
@@ -594,30 +509,30 @@
     },
     "manual_assets": [],
     "portfolio_value": 9685.07,
-    "total_balance": 18835.57,
+    "total_balance": 13035.82,
     "net_worth": 7685.07,
-    "income": 5200.0,
+    "income": 4800.0,
     "expenses": 2000.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 1.76,
-      "liquidity_score": 29.33,
+      "liquidity_months": 0.7,
+      "liquidity_score": 11.63,
       "diversification_hhi": 0.3985,
       "diversification_score": 94.35,
-      "debt_income_ratio": 0.1466,
+      "debt_income_ratio": 0.0582,
       "debt_income_score": 100.0
     },
     "risk_profile": 50.0,
-    "financial_wellness_score": 73.29,
-    "financial_stress_index": 29.4
+    "financial_wellness_score": 67.09,
+    "financial_stress_index": 36.48
   },
-  "u009": {
-    "name": "Isabella Goh",
+  "u008": {
+    "name": "Hafiz Rahman",
     "age": 29,
-    "cash_balance": 2940.25,
-    "liability": 2940.25,
+    "cash_balance": 9150.5,
+    "liability": 9150.5,
     "liability_items": [],
     "portfolio": {
       "stocks": [
@@ -656,32 +571,32 @@
     },
     "manual_assets": [],
     "portfolio_value": 8535.44,
-    "total_balance": 11475.69,
-    "net_worth": 7335.44,
-    "income": 3500.0,
-    "expenses": 1200.0,
+    "total_balance": 17685.94,
+    "net_worth": 6535.44,
+    "income": 5200.0,
+    "expenses": 2000.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 0.84,
-      "liquidity_score": 14.0,
+      "liquidity_months": 1.76,
+      "liquidity_score": 29.33,
       "diversification_hhi": 0.5315,
       "diversification_score": 73.49,
-      "debt_income_ratio": 0.07,
+      "debt_income_ratio": 0.1466,
       "debt_income_score": 100.0
     },
     "risk_profile": 50.0,
-    "financial_wellness_score": 60.62,
-    "financial_stress_index": 39.7,
+    "financial_wellness_score": 65.99,
+    "financial_stress_index": 33.57,
     "email": "isabella@example.com",
     "country": "Singapore"
   },
-  "u010": {
-    "name": "Jason Teo",
+  "u009": {
+    "name": "Isabella Goh",
     "age": 21,
-    "cash_balance": 7700.0,
-    "liability": 7700.0,
+    "cash_balance": 2940.25,
+    "liability": 2940.25,
     "liability_items": [],
     "portfolio": {
       "stocks": [
@@ -745,30 +660,30 @@
     },
     "manual_assets": [],
     "portfolio_value": 37162.47,
-    "total_balance": 44862.47,
-    "net_worth": 35362.47,
-    "income": 4900.0,
-    "expenses": 1800.0,
+    "total_balance": 40102.72,
+    "net_worth": 35962.47,
+    "income": 3500.0,
+    "expenses": 1200.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 1.57,
-      "liquidity_score": 26.19,
+      "liquidity_months": 0.84,
+      "liquidity_score": 14.0,
       "diversification_hhi": 0.2279,
       "diversification_score": 100.0,
-      "debt_income_ratio": 0.131,
+      "debt_income_ratio": 0.07,
       "debt_income_score": 100.0
     },
     "risk_profile": 50.0,
-    "financial_wellness_score": 74.17,
-    "financial_stress_index": 29.52
+    "financial_wellness_score": 69.9,
+    "financial_stress_index": 34.4
   },
-  "u011": {
-    "name": "Zerius",
+  "u010": {
+    "name": "Jason Teo",
     "age": null,
-    "cash_balance": 10100.0,
-    "liability": 10000.0,
+    "cash_balance": 7700.0,
+    "liability": 7700.0,
     "liability_items": [
       {
         "id": "ef43a664-30e2-4ba7-ae3c-691bf812dfb6",
@@ -815,10 +730,10 @@
       }
     ],
     "portfolio_value": 1358847.61,
-    "total_balance": 1468947.61,
-    "net_worth": 1458947.61,
-    "income": 5000.0,
-    "expenses": 0.0,
+    "total_balance": 1366547.61,
+    "net_worth": 1357047.61,
+    "income": 4900.0,
+    "expenses": 1800.0,
     "income_streams": [
       {
         "id": "income-seed",
@@ -827,26 +742,26 @@
       }
     ],
     "mortgage": 0,
-    "estate": 100000.0,
+    "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 2.02,
-      "liquidity_score": 33.67,
+      "liquidity_months": 1.57,
+      "liquidity_score": 26.19,
       "diversification_hhi": 0.9992,
       "diversification_score": 0.16,
-      "debt_income_ratio": 0.1667,
+      "debt_income_ratio": 0.131,
       "debt_income_score": 100.0
     },
     "risk_profile": 15.0,
-    "financial_wellness_score": 50.05,
-    "financial_stress_index": 46.5,
+    "financial_wellness_score": 45.6,
+    "financial_stress_index": 49.49,
     "email": "zerius@example.com",
     "country": "Singapore"
   },
-  "u012": {
-    "name": "orangi juice",
+  "u011": {
+    "name": "Zerius",
     "age": null,
-    "cash_balance": 0.0,
-    "liability": 0.0,
+    "cash_balance": 10100.0,
+    "liability": 10000.0,
     "liability_items": [],
     "portfolio": {
       "stocks": [],
@@ -864,31 +779,31 @@
     },
     "manual_assets": [],
     "portfolio_value": 1358332.6,
-    "total_balance": 1358332.6,
-    "net_worth": 1358332.6,
-    "income": 0.0,
+    "total_balance": 1468432.6,
+    "net_worth": 1458432.6,
+    "income": 5000.0,
     "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 100000.0,
     "wellness_metrics": {
-      "liquidity_months": 0.0,
-      "liquidity_score": 0.0,
+      "liquidity_months": 2.02,
+      "liquidity_score": 33.67,
       "diversification_hhi": 1.0,
       "diversification_score": 0.0,
-      "debt_income_ratio": 999.0,
-      "debt_income_score": 0.0
+      "debt_income_ratio": 0.1667,
+      "debt_income_score": 100.0
     },
     "risk_profile": 80.0,
-    "financial_wellness_score": 0.0,
-    "financial_stress_index": 100.0,
+    "financial_wellness_score": 34.71,
+    "financial_stress_index": 46.53,
     "email": "Zerius@awd.drg",
     "country": "Singapore"
   },
-  "u013": {
-    "name": "ahbeng heng",
+  "u012": {
+    "name": "orangi juice",
     "age": null,
-    "cash_balance": 200000.0,
+    "cash_balance": 0.0,
     "liability": 0.0,
     "liability_items": [],
     "portfolio": {
@@ -914,9 +829,9 @@
       }
     ],
     "portfolio_value": 1358332.6,
-    "total_balance": 1558332.6,
-    "net_worth": 1558332.6,
-    "income": 10000.0,
+    "total_balance": 1358332.6,
+    "net_worth": 1358332.6,
+    "income": 0.0,
     "expenses": 0.0,
     "income_streams": [
       {
@@ -928,15 +843,15 @@
     "mortgage": 0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 20.0,
-      "liquidity_score": 100.0,
+      "liquidity_months": 0.0,
+      "liquidity_score": 0.0,
       "diversification_hhi": 1.0,
       "diversification_score": 0.0,
-      "debt_income_ratio": 0.0,
-      "debt_income_score": 100.0
+      "debt_income_ratio": 999.0,
+      "debt_income_score": 0.0
     },
     "risk_profile": 100.0,
-    "financial_wellness_score": 30.0,
-    "financial_stress_index": 20.0
+    "financial_wellness_score": 0.0,
+    "financial_stress_index": 100.0
   }
 }

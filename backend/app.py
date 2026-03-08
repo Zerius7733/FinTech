@@ -140,10 +140,28 @@ def _write_users_data(data: Dict[str, Any]) -> None:
 
 def _read_user_portfolio_history(user_id: str) -> Dict[str, Any]:
     history_path = USER_PORTFOLIO_DIR / f"{user_id}.json"
-    if not history_path.exists():
-        raise HTTPException(status_code=404, detail=f"portfolio history for user_id '{user_id}' not found")
-    with open(history_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    if history_path.exists():
+        with open(history_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    # Backward compatibility for shifted IDs (e.g. u000 now mapped from prior u001 history file).
+    normalized = str(user_id or "").strip().lower()
+    if normalized.startswith("u") and normalized[1:].isdigit():
+        legacy_id = f"u{int(normalized[1:]) + 1:03d}"
+        legacy_path = USER_PORTFOLIO_DIR / f"{legacy_id}.json"
+        if legacy_path.exists():
+            with open(legacy_path, "r", encoding="utf-8") as f:
+                legacy_history = json.load(f)
+            # Best-effort copy so future calls hit the normalized path directly.
+            try:
+                with open(history_path, "w", encoding="utf-8") as f:
+                    json.dump(legacy_history, f, indent=2)
+            except Exception:
+                pass
+            return legacy_history
+
+    # Do not hard-fail the profile page if no history exists yet.
+    return {"daily_values": []}
 
 
 def _parse_market_query(query: str) -> Dict[str, str]:
