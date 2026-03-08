@@ -501,6 +501,10 @@ class SurveyProfileUpdateRequest(BaseModel):
     age_group: str | None = None
 
 
+class ScreenshotMergeRequest(BaseModel):
+    holdings: list[Dict[str, Any]]
+
+
 class CoinListingResponse(BaseModel):
     id: str
     name: str
@@ -1430,6 +1434,30 @@ def parse_screenshot_import(user_id: str, payload: ScreenshotParseRequest) -> Di
 
 
 @app.post(
+    "/imports/screenshot/parse",
+    tags=["Imports"],
+    summary="Parse screenshot into holdings without requiring login",
+)
+def parse_screenshot_import_guest(payload: ScreenshotParseRequest) -> Dict[str, Any]:
+    try:
+        parsed = api.parse_screenshot_with_llm(
+            payload.image_base64,
+            model=payload.model,
+            page_text=payload.page_text,
+        )
+        return {
+            "status": "ok",
+            "parsed": parsed,
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"screenshot parse failed: {exc}") from exc
+
+
+@app.post(
     "/users/{user_id}/imports/screenshot/confirm",
     tags=["Imports"],
     summary="Confirm parsed screenshot holdings and merge into user portfolio",
@@ -1491,6 +1519,29 @@ async def confirm_screenshot_import(user_id: str, request: Request) -> Dict[str,
         raise HTTPException(status_code=400, detail=f"{exc}; raw_holdings_preview={preview}") from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"screenshot confirm failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/imports/screenshot/merge",
+    tags=["Imports"],
+    summary="Merge screenshot-extracted holdings directly into user portfolio",
+)
+def merge_screenshot_holdings_direct(user_id: str, payload: ScreenshotMergeRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        result = api.merge_holdings_into_user(user, payload.holdings)
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+        return {"status": "ok", "user_id": user_id, **result, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"screenshot direct merge failed: {exc}") from exc
 
 
 @app.post(

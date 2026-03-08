@@ -96,6 +96,35 @@ const HORIZONS = [{ num:'1–2', label:'Short Term' },{ num:'3–5', label:'Medi
 const TYPE_COLOR = { equity:'#60a5fa', crypto:'#2dd4bf', etf:'#a78bfa', bond:'#f0abfc', commodity:'#fbbf24', reit:'#c9a84c', unknown:'#94a3b8' }
 const EMPTY_HOLDING = { ticker:'', name:'', shares:0, price:0, change:0, dir:'up', type:'equity' }
 
+function normalizeHoldingType(value) {
+  const raw = String(value || '').trim().toLowerCase()
+  if (!raw) return 'unknown'
+  if (raw === 'stock') return 'equity'
+  if (raw === 'fixed_income') return 'bond'
+  if (raw === 'real_estate') return 'reit'
+  if (['equity', 'crypto', 'etf', 'bond', 'commodity', 'reit', 'unknown'].includes(raw)) return raw
+  return 'unknown'
+}
+
+function normalizeParsedHolding(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const type = normalizeHoldingType(raw.type ?? raw.asset_class)
+  const shares = Number(raw.shares ?? raw.qty ?? raw.quantity ?? 0) || 0
+  const price = Number(raw.price ?? raw.current_price ?? raw.avg_price ?? 0) || 0
+  const change = Number(raw.change ?? raw.change_pct ?? raw.price_change_pct ?? 0) || 0
+  const dir = String(raw.dir || '').toLowerCase() === 'dn' ? 'dn' : (change < 0 ? 'dn' : 'up')
+  return {
+    ...EMPTY_HOLDING,
+    ticker: String(raw.ticker ?? raw.symbol ?? '').trim(),
+    name: String(raw.name ?? raw.asset_name ?? raw.ticker ?? raw.symbol ?? '').trim(),
+    shares,
+    price,
+    change,
+    dir,
+    type,
+  }
+}
+
 // ─── EDITABLE ROW ─────────────────────────────────────────────────────────────
 function HoldingRow({ holding, index, onChange, onDelete }) {
   const [focused, setFocused] = useState(false)
@@ -157,10 +186,12 @@ function PortfolioImportStep({ onBack, onComplete }) {
   // Parse image using backend endpoint
   const parse = async () => {
     if (!fileData) return setError('No file selected');
-    if (!user?.user_id) return setError('User not logged in');
     setPhase('parsing'); setError(null);
     try {
-      const res = await fetch(`${API}/users/${user.user_id}/imports/screenshot/parse`, {
+      const parseUrl = user?.user_id
+        ? `${API}/users/${user.user_id}/imports/screenshot/parse`
+        : `${API}/imports/screenshot/parse`
+      const res = await fetch(parseUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -175,10 +206,12 @@ function PortfolioImportStep({ onBack, onComplete }) {
       }
       const data = await res.json();
       const parsedHoldings = data?.parsed?.holdings
-      const receivedImportId = data?.import_id
-      if (!Array.isArray(parsedHoldings) || !receivedImportId) throw new Error('No holdings found');
-      setImportId(receivedImportId)
-      setHoldings(parsedHoldings);
+      if (!Array.isArray(parsedHoldings)) throw new Error('No holdings found');
+      const normalizedHoldings = parsedHoldings
+        .map(normalizeParsedHolding)
+        .filter(Boolean)
+      setImportId(data?.import_id || '')
+      setHoldings(normalizedHoldings);
       setPhase('review');
     } catch (e) {
       setError(e.message || 'Parse error');
@@ -188,7 +221,10 @@ function PortfolioImportStep({ onBack, onComplete }) {
 
   // Confirm holdings using backend endpoint
   const confirm = async () => {
-    if (!user?.user_id) return setError('User not logged in');
+    if (!user?.user_id) {
+      onComplete(holdings)
+      return
+    }
     if (!importId) return setError('Missing import id. Please parse the screenshot again.');
     setError(null);
     try {
@@ -211,6 +247,17 @@ function PortfolioImportStep({ onBack, onComplete }) {
   }
 
   // ── Upload ──────────────────────────────────────────────
+  const updateHolding = (index, key, value) => {
+    setHoldings(prev => prev.map((item, i) => (i === index ? { ...item, [key]: value } : item)))
+  }
+
+  const deleteHolding = (index) => {
+    setHoldings(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const addHolding = () => {
+    setHoldings(prev => [...prev, { ...EMPTY_HOLDING }])
+  }
   if (phase === 'upload') return (
     <div style={cs.stepPage}>
       <div style={cs.eyebrow}>Step 5 of 5 · Optional</div>
@@ -338,8 +385,6 @@ function PortfolioImportStep({ onBack, onComplete }) {
         ))}
       </div>
 
-      <button onClick={confirm}>Confirm & Launch ✦</button>
-
       <div style={{ display:'flex', justifyContent:'space-between', paddingTop:24, borderTop:'1px solid var(--border)' }}>
         <button style={cs.btnBack} onClick={() => setPhase('upload')}>← Re-upload</button>
         <div style={{ display:'flex', gap:12 }}>
@@ -358,10 +403,12 @@ function PortfolioImportStep({ onBack, onComplete }) {
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Survey() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, login } = useAuth()
   const [step, setStep] = useState(1)
   const [done, setDone] = useState(false)
   const [importedHoldings, setImportedHoldings] = useState([])
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -371,11 +418,20 @@ export default function Survey() {
   const [selectedGoals,  setSelectedGoals]  = useState(new Set(['Wealth Growth']))
   const [horizon,        setHorizon]        = useState('3–5')
   const [riskLevel,      setRiskLevel]      = useState(50)
+  const [submitErr, setSubmitErr] = useState('')
 
   const goNext = () => step < 5 ? setStep(s => s+1) : null
   const goBack = () => setStep(s => s-1)
   const progress = done ? 100 : (step/5)*100
   const toggleSet = (set, setter, val) => setter(prev => { const n=new Set(prev); n.has(val)?n.delete(val):n.add(val); return n })
+  const goNextFromProfile = () => {
+    if (!username.trim() || !password.trim()) {
+      setSubmitErr('Username and password are required.')
+      return
+    }
+    setSubmitErr('')
+    goNext()
+  }
 
   const handleImportComplete = (holdings) => { setImportedHoldings(holdings); setDone(true) }
 
@@ -404,33 +460,111 @@ export default function Survey() {
           </div>
         )}
         <button style={cs.btnLaunch} onClick={async () => {
-          if (user?.user_id) {
-            try {
-              await fetch(`${API}/users/survey/profile`, {
+          setSubmitErr('')
+          try {
+            let activeUser = user
+            const finalUsername = (username || '').trim()
+            const finalPassword = (password || '').trim()
+
+            if (!activeUser?.user_id) {
+              if (!finalUsername || !finalPassword) {
+                setSubmitErr('Username and password are required.')
+                return
+              }
+
+              const regRes = await fetch(`${API}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  user_id: user.user_id,
-                  first_name: firstName,
-                  last_name: lastName,
-                  email,
-                  country,
-                  age_group: ageGroup,
+                  username: finalUsername,
+                  password: finalPassword,
                 }),
               })
-            } catch (_) {}
-          }
-          if (user?.user_id && riskLevel != null) {
-            try {
-              await fetch(`${API}/users/risk`, {
+              if (!regRes.ok && regRes.status !== 409) {
+                const regErr = await regRes.json().catch(() => ({}))
+                throw new Error(regErr?.detail || `register failed (${regRes.status})`)
+              }
+
+              const loginRes = await fetch(`${API}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: user.user_id, risk_profile: Number(riskLevel) }),
+                body: JSON.stringify({
+                  username: finalUsername,
+                  password: finalPassword,
+                }),
               })
-            } catch (_) {}
+              if (!loginRes.ok) {
+                const loginErr = await loginRes.json().catch(() => ({}))
+                throw new Error(loginErr?.detail || `login failed (${loginRes.status})`)
+              }
+              const loginData = await loginRes.json()
+              const authUser = {
+                user_id: loginData?.user_id || loginData?.data?.user_id,
+                username: loginData?.username || loginData?.data?.username || finalUsername,
+              }
+              if (!authUser.user_id) throw new Error('login did not return user_id')
+              login(authUser)
+              activeUser = authUser
+            }
+
+            const profileRes = await fetch(`${API}/users/survey/profile`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                user_id: activeUser.user_id,
+                first_name: firstName,
+                last_name: lastName,
+                email,
+                country,
+                age_group: ageGroup,
+              }),
+            })
+            if (!profileRes.ok) {
+              const profileErr = await profileRes.json().catch(() => ({}))
+              throw new Error(profileErr?.detail || `profile update failed (${profileRes.status})`)
+            }
+
+            const riskRes = await fetch(`${API}/users/risk`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: activeUser.user_id, risk_profile: Number(riskLevel ?? 50) }),
+            })
+            if (!riskRes.ok) {
+              const riskErr = await riskRes.json().catch(() => ({}))
+              throw new Error(riskErr?.detail || `risk update failed (${riskRes.status})`)
+            }
+
+            if (importedHoldings.length > 0) {
+              const normalizedHoldings = importedHoldings.map((h) => ({
+                asset_class: h.asset_class || h.type || 'unknown',
+                symbol: h.symbol || h.ticker || '',
+                qty: Number(h.qty ?? h.shares ?? 0),
+                avg_price: Number(h.avg_price ?? h.price ?? 0),
+                current_price: Number(h.current_price ?? h.price ?? 0),
+                market_value: Number(h.market_value ?? ((Number(h.qty ?? h.shares ?? 0) || 0) * (Number(h.current_price ?? h.price ?? 0) || 0))),
+                name: h.name || h.ticker || h.symbol || '',
+                confidence: h.confidence == null ? undefined : Number(h.confidence),
+              })).filter((h) => h.symbol)
+
+              if (normalizedHoldings.length > 0) {
+                const mergeRes = await fetch(`${API}/users/${activeUser.user_id}/imports/screenshot/merge`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ holdings: normalizedHoldings }),
+                })
+                if (!mergeRes.ok) {
+                  const mergeErr = await mergeRes.json().catch(() => ({}))
+                  throw new Error(mergeErr?.detail || `holdings merge failed (${mergeRes.status})`)
+                }
+              }
+            }
+
+            navigate('/')
+          } catch (err) {
+            setSubmitErr(err?.message || 'Failed to complete setup. Please try again.')
           }
-          navigate('/')
         }}>Enter My WealthSphere →</button>
+        {submitErr && <div style={{ color:'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.74rem', margin:'12px 0 0' }}>{submitErr}</div>}
       </div>
     </div>
   )
@@ -485,13 +619,22 @@ export default function Survey() {
                 <label style={cs.formLabel}>Email Address</label>
                 <input style={cs.formInput} placeholder="alex@example.com" value={email} onChange={e => setEmail(e.target.value)} />
               </div>
-                            <div>
+              <div>
+                <label style={cs.formLabel}>Username</label>
+                <input style={cs.formInput} placeholder="alex123" value={username} onChange={e => setUsername(e.target.value)} />
+              </div>
+              <div>
+                <label style={cs.formLabel}>Password</label>
+                <input type="password" style={cs.formInput} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+              </div>
+              <div>
                 <label style={cs.formLabel}>Country</label>
                 <select style={cs.formInput} value={country} onChange={e => setCountry(e.target.value)}>
                   {['Singapore','United Kingdom','United States','Australia','Japan'].map(o => <option key={o}>{o}</option>)}
                 </select>
               </div>
             </div>
+            {submitErr && <div style={{ color:'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.74rem', margin:'-8px 0 10px' }}>{submitErr}</div>}
             <div style={cs.formLabel}>Age Group</div>
             <div style={cs.ageGrid}>
               {AGE_GROUPS.map(a => (
@@ -501,7 +644,7 @@ export default function Survey() {
                 </div>
               ))}
             </div>
-            <Footer onNext={goNext} showBack={false} />
+            <Footer onNext={goNextFromProfile} showBack={false} />
           </div>
         )}
 
@@ -639,5 +782,7 @@ const imp = {
   spinner:   { width:44, height:44, border:'3px solid rgba(255,255,255,0.08)', borderTopColor:'var(--teal)', borderRadius:'50%', animation:'spin 0.8s linear infinite' },
   addRowBtn: { background:'transparent', border:'1.5px dashed rgba(255,255,255,0.12)', borderRadius:10, padding:'10px 20px', color:'var(--text-faint)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', cursor:'pointer', width:'100%', marginBottom:16 },
 }
+
+
 
 

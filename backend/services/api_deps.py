@@ -36,6 +36,7 @@ from backend.services.screenshot_importer import create_pending_import
 from backend.services.screenshot_importer import DEFAULT_VISION_MODEL
 from backend.services.screenshot_importer import parse_screenshot_with_llm
 from backend.services.screenshot_importer import confirm_import
+from backend.services.screenshot_importer import merge_holdings_into_user
 from backend.services.insights_service import InsightError
 from backend.services.insights_service import build_insights
 from backend.services.retirement import build_retirement_plan
@@ -76,4 +77,5 @@ __all__ = [
     "update_wellness_file",
     "build_insights",
     "build_peer_benchmarks",
+    "merge_holdings_into_user",
 ]

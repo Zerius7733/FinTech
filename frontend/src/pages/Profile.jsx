@@ -1664,7 +1664,6 @@ export default function Profile() {
   }, {})
   const manualAssetRows = Object.values(manualAssetGroups)
   const manualAssetTotal = manualAssetRows.reduce((sum, item) => sum + item.total, 0)
-  const hasRealEstate = manualAssetRows.some(item => item.key === 'real_estate')
   const totalAUM       = portfolioValue + (profile?.cash_balance ?? 0)
   const positionCount  = stocks.length + commodities.length + cryptos.length
   const currentIncome  = incomeStreams.length
@@ -1690,7 +1689,6 @@ export default function Profile() {
       color: item.color,
     })),
     currentIncome > 0 && { icon:'🏛️', name:'Fixed Income', pct:null, val:`${fmt$(currentIncome)} / mo`, color:'var(--purple)', special:'income' },
-    !hasRealEstate && { icon:'🏠', name:'Real Estate', pct:null, val:'To be added', color:'var(--gold)', special:'placeholder' },
   ].filter(Boolean)
 
   const gptPayload = gptRecs?.gpt_recommendations ?? gptRecs?.recommendations ?? gptRecs ?? null
