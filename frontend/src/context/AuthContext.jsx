@@ -7,18 +7,22 @@ export function AuthProvider({ children }) {
     // Rehydrate from sessionStorage on page refresh
     const id       = sessionStorage.getItem('user_id')
     const username = sessionStorage.getItem('username')
-    return id ? { user_id: id, username } : null
+    const createdAt = sessionStorage.getItem('created_at')
+    return id ? { user_id: id, username, created_at: createdAt } : null
   })
 
   function login(data) {
     sessionStorage.setItem('user_id',  data.user_id)
     sessionStorage.setItem('username', data.username)
-    setUser({ user_id: data.user_id, username: data.username })
+    if (data.created_at) sessionStorage.setItem('created_at', data.created_at)
+    else sessionStorage.removeItem('created_at')
+    setUser({ user_id: data.user_id, username: data.username, created_at: data.created_at ?? null })
   }
 
   function logout() {
     sessionStorage.removeItem('user_id')
     sessionStorage.removeItem('username')
+    sessionStorage.removeItem('created_at')
     setUser(null)
   }
 

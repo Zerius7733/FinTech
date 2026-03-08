@@ -30,7 +30,7 @@ export default function Sidebar() {
   const { user } = useAuth()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  const displayName = user?.username || 'WealthSphere User'
+  const displayName = user?.username || 'Unova User'
   const initials = displayName
     .split(/\s+/)
     .map(part => part[0]?.toUpperCase())
@@ -45,7 +45,7 @@ export default function Sidebar() {
         <div style={styles.brandWrap}>
           <div style={styles.brandIcon}>◈</div>
           <div>
-            <div style={styles.brandTitle}>WealthSphere</div>
+            <div style={styles.brandTitle}>Unova</div>
             <div style={styles.brandSub}>Finance App</div>
           </div>
         </div>

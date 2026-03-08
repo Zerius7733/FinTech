@@ -13,6 +13,7 @@ from backend.services.auth_registry import LoginValidationError
 from backend.services.auth_registry import RegisterConflictError
 from backend.services.auth_registry import RegisterValidationError
 from backend.services.auth_registry import authenticate_login_user
+from backend.services.auth_registry import ensure_login_csv_schema
 from backend.services.auth_registry import register_login_user
 from backend.services.portfolio_selector import get_positions_by_asset_class
 from backend.services.portfolio_impact import build_portfolio_impact
@@ -52,6 +53,7 @@ __all__ = [
     "add_default_assets_row",
     "add_default_user_profile",
     "authenticate_login_user",
+    "ensure_login_csv_schema",
     "calculate_user_wellness",
     "fetch_coingecko_coin_listings",
     "fetch_commodity_price",

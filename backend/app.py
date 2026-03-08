@@ -58,6 +58,7 @@ app.add_middleware(
 )
 
 api.rewrite_user_profiles_with_order(USER_JSON_PATH)
+api.ensure_login_csv_schema(LOGIN_CSV_PATH)
 
 
 async def _run_stock_market_refresh() -> None:
@@ -825,7 +826,7 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
             user_id=result["user_id"],
             name=result["username"],
         )
-        return {"status": "ok", "username": result["username"]}
+        return {"status": "ok", **result}
     except api.RegisterValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except api.RegisterConflictError as exc:

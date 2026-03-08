@@ -6,9 +6,34 @@ import SettingsModal from './SettingsModal.jsx'
 
 const API = 'http://localhost:8000'
 const NAV_LINKS = [
-  { label: 'Finance Universe',      path: '/' },
+  { label: 'Home',                  path: '/' },
   { label: 'Markets',    path: '/stocks' },
 ]
+
+function isAccountAtLeastDaysOld(createdAt, minDays = 30) {
+  if (!createdAt) return false
+  const created = new Date(createdAt)
+  if (Number.isNaN(created.getTime())) return false
+  return Date.now() - created.getTime() >= minDays * 24 * 60 * 60 * 1000
+}
+
+function hasFinancialActivity(profile) {
+  if (!profile || typeof profile !== 'object') return false
+
+  const portfolio = profile.portfolio && typeof profile.portfolio === 'object' ? profile.portfolio : {}
+  const portfolioBuckets = ['stocks', 'cryptos', 'commodities']
+  const hasPortfolioPositions = portfolioBuckets.some(bucket =>
+    Array.isArray(portfolio[bucket]) && portfolio[bucket].some(item =>
+      Number(item?.qty || 0) > 0 || Number(item?.market_value || 0) > 0
+    )
+  )
+
+  const hasManualAssets = Array.isArray(profile.manual_assets) && profile.manual_assets.some(item => Number(item?.value || 0) > 0)
+  const hasIncomeStreams = Array.isArray(profile.income_streams) && profile.income_streams.some(item => Number(item?.monthly_amount || 0) > 0)
+  const hasLiabilityItems = Array.isArray(profile.liability_items) && profile.liability_items.some(item => Number(item?.amount || 0) > 0)
+
+  return hasPortfolioPositions || hasManualAssets || hasIncomeStreams || hasLiabilityItems
+}
 
 export default function Navbar() {
   const navigate = useNavigate()
@@ -86,6 +111,8 @@ export default function Navbar() {
 
   const notifications = useMemo(() => {
     if (!navProfile) return []
+    if (!isAccountAtLeastDaysOld(user?.created_at, 30)) return []
+    if (!hasFinancialActivity(navProfile)) return []
     const cashBalance = Number(navProfile.cash_balance || 0)
     const monthlyIncome = Number(navProfile.income || 0)
     const reserveTarget = Math.max(monthlyIncome * 3, 10000)
@@ -119,7 +146,7 @@ export default function Navbar() {
       {/* Logo */}
       <div style={S.logo} onClick={() => navigate('/')}>
         <div style={S.logoDot}>◉</div>
-        WealthSphere
+        Unova
       </div>
 
       {/* Links */}
@@ -321,10 +348,14 @@ const S = {
     boxShadow: '0 10px 24px rgba(21,28,45,0.18)',
   },
   links: {
+    position: 'absolute',
+    left: '50%',
+    transform: 'translateX(-50%)',
     display: 'flex',
     gap: 32,
     listStyle: 'none',
     margin: 0, padding: 0,
+    alignItems: 'center',
   },
   link: {
     color: 'var(--text-dim)',

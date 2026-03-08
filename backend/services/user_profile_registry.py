@@ -107,6 +107,7 @@ def normalize_user_profile(user: Dict[str, Any]) -> Dict[str, Any]:
     normalized["wellness_metrics"] = merged_wellness
     normalized["risk_profile"] = _normalize_risk_profile_value(normalized.get("risk_profile", 50.0))
 
+    normalized.pop("created_at", None)
     normalized.pop("monthly_expenses", None)
     normalized.pop("essential_monthly_expenses", None)
     return _reorder_user_fields(normalized)
