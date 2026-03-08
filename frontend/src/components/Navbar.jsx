@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useLoginModal } from '../context/LoginModalContext.jsx'
 import ThemeModal from './ThemeModal.jsx'
 import SettingsModal from './SettingsModal.jsx'
 
 const API = 'http://localhost:8000'
 const NAV_LINKS = [
-  { label: 'Home',                  path: '/' },
+  { label: 'Home',      path: '/' },
   { label: 'Markets',    path: '/stocks' },
 ]
 
@@ -39,6 +40,7 @@ export default function Navbar() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { user, logout } = useAuth()
+  const { setLoginModalOpen, setSurveyModalOpen } = useLoginModal()
   const [navProfile, setNavProfile] = useState(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const [expandedNotifId, setExpandedNotifId] = useState(null)
@@ -286,7 +288,7 @@ export default function Navbar() {
           <>
             <button
               style={S.btnGhost}
-              onClick={() => navigate('/login')}
+              onClick={() => setLoginModalOpen(true)}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-act)'; e.currentTarget.style.color = 'var(--text)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-dim)' }}
             >
@@ -294,7 +296,7 @@ export default function Navbar() {
             </button>
             <button
               style={S.btnPrimary}
-              onClick={() => navigate('/survey')}
+              onClick={() => setSurveyModalOpen(true)}
               onMouseEnter={e => { e.currentTarget.style.opacity = '0.88' }}
               onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
             >

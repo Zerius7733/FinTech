@@ -2,7 +2,10 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
+import LoginModal from '../components/LoginModal.jsx'
+import SurveyModal from '../components/SurveyModal.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useLoginModal } from '../context/LoginModalContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { MOCK_NODES, genPriceSeries, genSparkline } from '../data.js'
 
@@ -769,6 +772,7 @@ function buildGlobeNodes(profile) {
 export default function Globe() {
   const navigate    = useNavigate()
   const { user } = useAuth()
+  const { loginModalOpen, setLoginModalOpen, surveyModalOpen, setSurveyModalOpen } = useLoginModal()
   const { activeTheme } = useTheme()
   const canvasRef   = useRef(null)
   const globeRef    = useRef(null)   // THREE globe mesh
@@ -1260,8 +1264,8 @@ export default function Globe() {
                 A living, breathing globe that visualises every asset you own — equities, digital, real estate — unified into one actionable financial health score.
               </p>
               <div style={{ display:'flex', gap:14, justifyContent:'flex-start', flexWrap:'wrap' }}>
-                <button style={S.btnCta}     onClick={() => navigate('/survey')}>Start Your Journey</button>
-                <button style={S.btnOutline} onClick={() => navigate('/profile')}>View Portfolio</button>
+                <button style={S.btnCta}     onClick={() => setSurveyModalOpen(true)}>Start Your Journey</button>
+                <button style={S.btnOutline} onClick={() => setLoginModalOpen(true)}>Sign In</button>
               </div>
               <p style={{ marginTop:10, fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-faint)' }}>
                 ↓ Hover any glowing marker · Click to fly in
@@ -1515,6 +1519,12 @@ export default function Globe() {
 
       {/* ══ LAYER 4 — BENTO DASHBOARD ══ */}
       <BentoDashboard node={dashNode} show={dashShow} onClose={closeDashboard} />
+
+      {/* ══ LOGIN MODAL ══ */}
+      <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} onOpenSurvey={() => setSurveyModalOpen(true)} />
+
+      {/* ══ SURVEY MODAL ══ */}
+      <SurveyModal open={surveyModalOpen} onClose={() => setSurveyModalOpen(false)} />
 
       {/* Global keyframes */}
       <style>{`
