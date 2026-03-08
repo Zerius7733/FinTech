@@ -232,7 +232,7 @@ const S = {
   },
   tab: {
     flex: 1,
-    padding: '12px 0',
+    padding: '10px 0',
     border: 'none',
     borderRadius: 'var(--r-sm)',
     background: 'transparent',
@@ -266,7 +266,7 @@ const S = {
     fontSize: '1.17rem',
     fontWeight: 600,
     color: 'var(--text-dim)',
-    letterSpacing: '0.06em',
+    letterSpacing: '0.05em',
     textTransform: 'uppercase',
   },
   input: {
@@ -293,7 +293,7 @@ const S = {
     padding: '19.5px 0',
     background: 'var(--btn-primary-bg)',
     border: '1px solid var(--btn-primary-bg)',
-    borderRadius: 12,
+    borderRadius: 10,
     color: 'var(--btn-primary-text)',
     fontFamily: 'var(--font-body)',
     fontWeight: 700,
