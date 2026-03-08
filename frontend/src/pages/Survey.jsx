@@ -99,6 +99,9 @@ const EMPTY_HOLDING = { ticker:'', name:'', shares:0, price:0, change:0, dir:'up
 function normalizeHoldingType(value) {
   const raw = String(value || '').trim().toLowerCase()
   if (!raw) return 'unknown'
+  if (raw === 'stocks') return 'equity'
+  if (raw === 'cryptos') return 'crypto'
+  if (raw === 'commodities') return 'commodity'
   if (raw === 'stock') return 'equity'
   if (raw === 'fixed_income') return 'bond'
   if (raw === 'real_estate') return 'reit'
@@ -106,8 +109,20 @@ function normalizeHoldingType(value) {
   return 'unknown'
 }
 
+function toBackendAssetClass(assetClassOrType, symbol = '') {
+  const raw = String(assetClassOrType || '').trim().toLowerCase()
+  if (['stock', 'stocks', 'equity', 'equities', 'etf', 'bond', 'reit'].includes(raw)) return 'stocks'
+  if (['crypto', 'cryptos', 'digital_asset', 'digital_assets'].includes(raw)) return 'cryptos'
+  if (['commodity', 'commodities'].includes(raw)) return 'commodities'
+  const upperSymbol = String(symbol || '').toUpperCase()
+  if (upperSymbol.endsWith('-USD')) return 'cryptos'
+  if (upperSymbol.endsWith('=F')) return 'commodities'
+  return 'stocks'
+}
+
 function normalizeParsedHolding(raw) {
   if (!raw || typeof raw !== 'object') return null
+  const backendClass = toBackendAssetClass(raw.asset_class ?? raw.type, raw.symbol ?? raw.ticker)
   const type = normalizeHoldingType(raw.type ?? raw.asset_class)
   const shares = Number(raw.shares ?? raw.qty ?? raw.quantity ?? 0) || 0
   const price = Number(raw.price ?? raw.current_price ?? raw.avg_price ?? 0) || 0
@@ -116,12 +131,18 @@ function normalizeParsedHolding(raw) {
   return {
     ...EMPTY_HOLDING,
     ticker: String(raw.ticker ?? raw.symbol ?? '').trim(),
+    symbol: String(raw.symbol ?? raw.ticker ?? '').trim(),
     name: String(raw.name ?? raw.asset_name ?? raw.ticker ?? raw.symbol ?? '').trim(),
     shares,
+    qty: shares,
     price,
+    avg_price: Number(raw.avg_price ?? raw.price ?? 0) || 0,
+    current_price: Number(raw.current_price ?? raw.price ?? 0) || 0,
+    market_value: Number(raw.market_value ?? (shares * price) ?? 0) || 0,
     change,
     dir,
     type,
+    asset_class: backendClass,
   }
 }
 
@@ -536,7 +557,7 @@ export default function Survey() {
 
             if (importedHoldings.length > 0) {
               const normalizedHoldings = importedHoldings.map((h) => ({
-                asset_class: h.asset_class || h.type || 'unknown',
+                asset_class: toBackendAssetClass(h.asset_class || h.type, h.symbol || h.ticker),
                 symbol: h.symbol || h.ticker || '',
                 qty: Number(h.qty ?? h.shares ?? 0),
                 avg_price: Number(h.avg_price ?? h.price ?? 0),
@@ -544,7 +565,7 @@ export default function Survey() {
                 market_value: Number(h.market_value ?? ((Number(h.qty ?? h.shares ?? 0) || 0) * (Number(h.current_price ?? h.price ?? 0) || 0))),
                 name: h.name || h.ticker || h.symbol || '',
                 confidence: h.confidence == null ? undefined : Number(h.confidence),
-              })).filter((h) => h.symbol)
+              })).filter((h) => h.symbol && h.asset_class)
 
               if (normalizedHoldings.length > 0) {
                 const mergeRes = await fetch(`${API}/users/${activeUser.user_id}/imports/screenshot/merge`, {
