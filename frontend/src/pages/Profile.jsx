@@ -2253,9 +2253,21 @@ export default function Profile() {
               type="button"
               onClick={refreshPortfolioPrices}
               disabled={priceRefreshing || loading}
+              aria-label="Refresh Prices"
+              title="Refresh Prices"
               style={{ ...s.holdingsRefreshBtn, opacity:(priceRefreshing || loading) ? 0.6 : 1, cursor:(priceRefreshing || loading) ? 'not-allowed' : 'pointer' }}
             >
-              {priceRefreshing ? 'Refreshing…' : 'Refresh Prices'}
+              <span
+                style={{
+                  display:'inline-block',
+                  fontSize:'0.86rem',
+                  lineHeight:1,
+                  transform: priceRefreshing ? 'rotate(360deg)' : 'none',
+                  transition: priceRefreshing ? 'transform 0.8s linear' : 'transform 0.2s ease',
+                }}
+              >
+                ↻
+              </span>
             </button>
           </div>
           {loading ? <LoadingPulse /> : allHoldings.length === 0 ? (
