@@ -16,6 +16,7 @@ USER_CSV_FIELDS = [
     "income",
     "estate",
     "expense",
+    "age",
     "age_group",
     "country",
 ]
@@ -64,6 +65,7 @@ def add_default_assets_row(csv_path: Path, user_id: str, name: str) -> None:
             "income": "0",
             "estate": "0",
             "expense": "0",
+            "age": "",
             "age_group": "",
             "country": "",
         }
@@ -74,7 +76,7 @@ def add_default_assets_row(csv_path: Path, user_id: str, name: str) -> None:
         for key in ("dbs", "uob", "ocbc", "other_banks", "liability", "income", "estate", "expense"):
             if (existing.get(key) or "").strip() == "":
                 existing[key] = "0"
-        for key in ("username", "password", "email", "age_group", "country"):
+        for key in ("username", "password", "email", "age", "age_group", "country"):
             if key not in existing:
                 existing[key] = ""
 

@@ -363,7 +363,9 @@ export default function SettingsModal({ onClose }) {
                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>⚖️</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.95rem', marginBottom: 2 }}>{riskInfo.label}</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--teal)' }}>Wellness ratio: {riskInfo.ratio}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.67rem', color: 'var(--teal)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      Wellness ratio: {riskInfo.ratio}
+                    </div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: 3 }}>
                       {profileRisk ? 'Saved to your profile' : 'Default - not yet saved'}
                     </div>

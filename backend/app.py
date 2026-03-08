@@ -178,6 +178,16 @@ def _normalize_risk_profile(value: Any) -> float:
     return round(numeric, 2)
 
 
+def _age_to_group(age: int) -> str:
+    if age <= 29:
+        return "18-29"
+    if age <= 44:
+        return "30-44"
+    if age <= 59:
+        return "45-59"
+    return "60+"
+
+
 def _enforce_insights_rate_limit(subject: str) -> None:
     if not INSIGHTS_RATE_LIMIT_ENABLED:
         return
@@ -337,6 +347,7 @@ def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
         "income",
         "estate",
         "expense",
+        "age",
         "age_group",
         "country",
     ]
@@ -377,6 +388,7 @@ def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
         row.setdefault("username", "")
         row.setdefault("password", "")
         row.setdefault("email", "")
+        row.setdefault("age", "")
         row.setdefault("age_group", "")
         row.setdefault("country", "")
         row.setdefault("dbs", "0")
@@ -413,7 +425,7 @@ def _update_user_csv_profile(user_id: str, updates: Dict[str, Any]) -> None:
         fieldnames = [
             "user_id", "username", "password", "email", "name",
             "dbs", "uob", "ocbc", "other_banks", "liability", "income", "estate", "expense",
-            "age_group", "country",
+            "age", "age_group", "country",
         ]
 
     if "user_id" not in fieldnames:
@@ -510,6 +522,7 @@ class SurveyProfileUpdateRequest(BaseModel):
     last_name: str | None = None
     email: str | None = None
     country: str | None = None
+    age: int | None = Field(default=None, ge=18, le=100)
     age_group: str | None = None
 
 
@@ -800,8 +813,12 @@ def update_survey_profile(payload: SurveyProfileUpdateRequest) -> Dict[str, Any]
         updates = {
             "email": (payload.email or "").strip(),
             "country": (payload.country or "").strip(),
-            "age_group": (payload.age_group or "").strip(),
         }
+        if payload.age is not None:
+            updates["age"] = str(payload.age)
+            updates["age_group"] = _age_to_group(int(payload.age))
+        else:
+            updates["age_group"] = (payload.age_group or "").strip()
         if full_name:
             updates["name"] = full_name
 
@@ -809,8 +826,15 @@ def update_survey_profile(payload: SurveyProfileUpdateRequest) -> Dict[str, Any]
 
         users = _read_users_data()
         user = users.get(user_id)
-        if isinstance(user, dict) and full_name:
-            user["name"] = full_name
+        if isinstance(user, dict):
+            if full_name:
+                user["name"] = full_name
+            if "age" in updates:
+                user["age"] = int(payload.age or 0)
+            if updates.get("age_group"):
+                user["age_group"] = updates["age_group"]
+            user["email"] = updates.get("email", user.get("email", ""))
+            user["country"] = updates.get("country", user.get("country", ""))
             users[user_id] = user
             _write_users_data(users)
 

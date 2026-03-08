@@ -16,6 +16,7 @@ USER_CSV_FIELDS = [
     "income",
     "estate",
     "expense",
+    "age",
     "age_group",
     "country",
 ]
@@ -107,6 +108,7 @@ def register_login_user(
                 "income": "0",
                 "estate": "0",
                 "expense": "0",
+                "age": "",
                 "age_group": "",
                 "country": "",
             }

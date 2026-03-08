@@ -67,14 +67,13 @@ function fileToBase64(file) {
 }
 
 const STEPS = [
-  { title:'Your Profile',      desc:'Name, age group, and investor type.' },
+  { title:'Your Profile',      desc:'Name, age, and account setup.' },
   { title:'Risk Tolerance',    desc:'Set your comfort with volatility.' },
   { title:'Asset Preferences', desc:'Which asset classes do you hold?' },
   { title:'Financial Goals',   desc:'Define what you\'re building toward.' },
   { title:'Import Portfolio',  desc:'Upload a screenshot to auto-extract holdings.' },
 ]
 
-const AGE_GROUPS    = [{ emoji:'🌱', label:'18–29' },{ emoji:'📈', label:'30–44' },{ emoji:'🏦', label:'45–59' },{ emoji:'🌅', label:'60+' }]
 const ASSET_CLASSES = [
   { icon:'📈', name:'Equities',      desc:'Stocks, ETFs, and equity funds.',              color:'#60a5fa', bg:'rgba(96,165,250,0.08)'  },
   { icon:'🏛️', name:'Fixed Income',  desc:'Government & corporate bonds.',                color:'#a78bfa', bg:'rgba(167,139,250,0.08)' },
@@ -434,7 +433,7 @@ export default function Survey() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [country, setCountry] = useState('Singapore')
-  const [ageGroup,       setAgeGroup]       = useState('30–44')
+  const [age,            setAge]            = useState('')
   const [selectedAssets, setSelectedAssets] = useState(new Set(['Equities','Fixed Income']))
   const [selectedGoals,  setSelectedGoals]  = useState(new Set(['Wealth Growth']))
   const [horizon,        setHorizon]        = useState('3–5')
@@ -448,6 +447,11 @@ export default function Survey() {
   const goNextFromProfile = () => {
     if (!username.trim() || !password.trim()) {
       setSubmitErr('Username and password are required.')
+      return
+    }
+    const parsedAge = Number(age)
+    if (!Number.isFinite(parsedAge) || parsedAge < 18 || parsedAge > 100) {
+      setSubmitErr('Please enter a valid age between 18 and 100.')
       return
     }
     setSubmitErr('')
@@ -465,7 +469,7 @@ export default function Survey() {
         </h2>
         <p style={{ color:'var(--text-dim)', fontSize:'0.92rem', lineHeight:1.7, marginBottom:20 }}>Your WealthSphere is calibrated. Your personalised globe awaits.</p>
         <div style={{ display:'flex', flexWrap:'wrap', gap:10, justifyContent:'center', marginBottom:16 }}>
-          {[['Age',ageGroup],['Risk',`${riskLevel}/100`],['Assets',`${selectedAssets.size} classes`],['Horizon',`${horizon}yr`]].map(([k,v]) => (
+          {[['Age', age ? `${age}` : '-'],['Risk',`${riskLevel}/100`],['Assets',`${selectedAssets.size} classes`],['Horizon',`${horizon}yr`]].map(([k,v]) => (
             <div key={k} style={cs.pill}>{k}: <span style={{ color:'var(--gold)' }}>{v}</span></div>
           ))}
         </div>
@@ -528,6 +532,11 @@ export default function Survey() {
               activeUser = authUser
             }
 
+            const finalAge = Number(age)
+            if (!Number.isFinite(finalAge) || finalAge < 18 || finalAge > 100) {
+              throw new Error('Please enter a valid age between 18 and 100.')
+            }
+
             const profileRes = await fetch(`${API}/users/survey/profile`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -537,7 +546,7 @@ export default function Survey() {
                 last_name: lastName,
                 email,
                 country,
-                age_group: ageGroup,
+                age: finalAge,
               }),
             })
             if (!profileRes.ok) {
@@ -656,15 +665,16 @@ export default function Survey() {
               </div>
             </div>
             {submitErr && <div style={{ color:'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.74rem', margin:'-8px 0 10px' }}>{submitErr}</div>}
-            <div style={cs.formLabel}>Age Group</div>
-            <div style={cs.ageGrid}>
-              {AGE_GROUPS.map(a => (
-                <div key={a.label} style={{ ...cs.ageCard, ...(ageGroup===a.label?cs.ageCardActive:{}) }} onClick={() => setAgeGroup(a.label)}>
-                  <div style={{ fontSize:'1.5rem', marginBottom:6 }}>{a.emoji}</div>
-                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:ageGroup===a.label?'var(--gold)':'var(--text-dim)' }}>{a.label}</div>
-                </div>
-              ))}
-            </div>
+            <div style={cs.formLabel}>Age</div>
+            <input
+              type="number"
+              min="18"
+              max="100"
+              style={{ ...cs.formInput, maxWidth: 220 }}
+              placeholder="30"
+              value={age}
+              onChange={e => setAge(e.target.value)}
+            />
             <Footer onNext={goNextFromProfile} showBack={false} />
           </div>
         )}
