@@ -62,10 +62,10 @@
       "cryptos": [
         {
           "symbol": "BTC-USD",
-          "qty": 0.08,
-          "avg_price": 42000.0,
-          "current_price": 68347.9297,
-          "market_value": 5467.83,
+          "qty": 20.08,
+          "avg_price": 67666.205179,
+          "current_price": 67916.63,
+          "market_value": 1363765.93,
           "name": "Bitcoin"
         },
         {
@@ -113,10 +113,11 @@
       ]
     },
     "manual_assets": [],
-    "portfolio_value": 213920.68,
-    "total_balance": 272541.13,
-    "net_worth": 123341.13,
+    "portfolio_value": 1572218.78,
+    "total_balance": 1630839.23,
+    "net_worth": 1485839.23,
     "income": 9800.0,
+    "expenses": 4200.0,
     "income_streams": [
       {
         "id": "income-seed",
@@ -136,8 +137,7 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 86.88,
-    "financial_stress_index": 12.29,
-    "expenses": 4200.0
+    "financial_stress_index": 12.29
   },
   "u002": {
     "name": "Brandon Lim",
@@ -194,6 +194,7 @@
     "total_balance": 6400.75,
     "net_worth": 0.0,
     "income": 4000.0,
+    "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
@@ -207,8 +208,7 @@
     },
     "risk_profile": "High",
     "financial_wellness_score": 35.33,
-    "financial_stress_index": 49.33,
-    "expenses": 0.0
+    "financial_stress_index": 49.33
   },
   "u003": {
     "name": "Cheryl Ng",
@@ -271,6 +271,7 @@
     "total_balance": 16148.04,
     "net_worth": 7147.84,
     "income": 3000.0,
+    "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
@@ -284,8 +285,7 @@
     },
     "risk_profile": "High",
     "financial_wellness_score": 83.51,
-    "financial_stress_index": 22.6,
-    "expenses": 0.0
+    "financial_stress_index": 22.6
   },
   "u004": {
     "name": "Daniel Koh",
@@ -325,13 +325,15 @@
           "current_price": 1976.8615,
           "market_value": 375.6
         }
-      ]
+      ],
+      "commodities": []
     },
     "manual_assets": [],
     "portfolio_value": 7754.45,
     "total_balance": 15104.85,
     "net_worth": 7754.45,
     "income": 4500.0,
+    "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
@@ -345,8 +347,7 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 72.22,
-    "financial_stress_index": 30.65,
-    "expenses": 0.0
+    "financial_stress_index": 30.65
   },
   "u005": {
     "name": "Ethan Lee",
@@ -386,13 +387,15 @@
           "current_price": 1976.8615,
           "market_value": 395.37
         }
-      ]
+      ],
+      "commodities": []
     },
     "manual_assets": [],
     "portfolio_value": 11167.34,
     "total_balance": 23767.59,
     "net_worth": 11167.34,
     "income": 4600.0,
+    "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
@@ -406,8 +409,7 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 72.61,
-    "financial_stress_index": 27.32,
-    "expenses": 0.0
+    "financial_stress_index": 27.32
   },
   "u006": {
     "name": "Farah Aziz",
@@ -447,13 +449,15 @@
           "current_price": 1976.8615,
           "market_value": 415.14
         }
-      ]
+      ],
+      "commodities": []
     },
     "manual_assets": [],
     "portfolio_value": 6701.15,
     "total_balance": 15191.25,
     "net_worth": 6701.15,
     "income": 4750.0,
+    "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
@@ -467,8 +471,7 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 67.18,
-    "financial_stress_index": 33.58,
-    "expenses": 0.0
+    "financial_stress_index": 33.58
   },
   "u007": {
     "name": "Grace Wong",
@@ -508,13 +511,15 @@
           "current_price": 1976.8615,
           "market_value": 434.91
         }
-      ]
+      ],
+      "commodities": []
     },
     "manual_assets": [],
     "portfolio_value": 7261.4,
     "total_balance": 10612.15,
     "net_worth": 7261.4,
     "income": 4800.0,
+    "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
@@ -528,8 +533,7 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 60.17,
-    "financial_stress_index": 41.28,
-    "expenses": 0.0
+    "financial_stress_index": 41.28
   },
   "u008": {
     "name": "Hafiz Rahman",
@@ -569,13 +573,15 @@
           "current_price": 1976.8615,
           "market_value": 454.68
         }
-      ]
+      ],
+      "commodities": []
     },
     "manual_assets": [],
     "portfolio_value": 9748.97,
     "total_balance": 18899.47,
     "net_worth": 9748.97,
     "income": 5200.0,
+    "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
@@ -589,8 +595,7 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 69.28,
-    "financial_stress_index": 32.26,
-    "expenses": 0.0
+    "financial_stress_index": 32.26
   },
   "u009": {
     "name": "Isabella Goh",
@@ -630,13 +635,15 @@
           "current_price": 1976.8615,
           "market_value": 474.45
         }
-      ]
+      ],
+      "commodities": []
     },
     "manual_assets": [],
     "portfolio_value": 8606.56,
     "total_balance": 11546.81,
     "net_worth": 8606.56,
     "income": 3500.0,
+    "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
@@ -650,8 +657,7 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 58.58,
-    "financial_stress_index": 41.95,
-    "expenses": 0.0
+    "financial_stress_index": 41.95
   },
   "u010": {
     "name": "Jason Teo",
@@ -724,6 +730,7 @@
     "total_balance": 45447.34,
     "net_worth": 37747.34,
     "income": 4900.0,
+    "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
@@ -737,7 +744,47 @@
     },
     "risk_profile": "Moderate",
     "financial_wellness_score": 71.15,
-    "financial_stress_index": 31.54,
-    "expenses": 0.0
+    "financial_stress_index": 31.54
+  },
+  "u011": {
+    "name": "Zerius",
+    "age": null,
+    "cash_balance": 0.0,
+    "liability": 0.0,
+    "liability_items": [],
+    "portfolio": {
+      "stocks": [],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 20.0,
+          "avg_price": 67768.87,
+          "current_price": 67916.63,
+          "name": "Bitcoin",
+          "market_value": 1358332.6
+        }
+      ],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 1358332.6,
+    "total_balance": 1358332.6,
+    "net_worth": 1358332.6,
+    "income": 0.0,
+    "expenses": 0.0,
+    "income_streams": [],
+    "mortgage": 0.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 0.0,
+      "liquidity_score": 0.0,
+      "diversification_hhi": 0.0,
+      "diversification_score": 0.0,
+      "debt_income_ratio": 999.0,
+      "debt_income_score": 0.0
+    },
+    "risk_profile": "Moderate",
+    "financial_wellness_score": 0.0,
+    "financial_stress_index": 100.0
   }
 }

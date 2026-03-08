@@ -1,6 +1,7 @@
 import csv
 import json
 from typing import Any, Dict 
+from backend.services.wealth_wellness.engine import calculate_user_wellness
 
 def _to_float(value: Any) -> float:
     if value is None or value == "":
@@ -38,11 +39,18 @@ def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, An
             user["liability"] = round(_to_float(row.get("liability")), 2)
             user["income"] = round(_to_float(row.get("income")), 2)
             user["estate"] = round(_to_float(row.get("estate")), 2)
-            user["expenses"] = round(_to_float(row.get("expenses")), 2)
+            # Support both legacy "expense" and newer "expenses" CSV columns.
+            expense_value = row.get("expenses") if row.get("expenses") not in (None, "") else row.get("expense")
+            user["expenses"] = round(_to_float(expense_value), 2)
             portfolio_total = sum(float(p.get("market_value", 0)) for p in _portfolio_positions(user))
             user["portfolio_value"] = round(portfolio_total, 2)
             user["total_balance"] = round(user["cash_balance"] + portfolio_total + user["estate"], 2)
             user["net_worth"] = round(user["total_balance"] - user["liability"] - user["expenses"], 2)
+
+            wellness = calculate_user_wellness(user)
+            user["wellness_metrics"] = wellness["wellness_metrics"]
+            user["financial_wellness_score"] = wellness["financial_wellness_score"]
+            user["financial_stress_index"] = wellness["financial_stress_index"]
     return updated
 
 def update_assets_file(

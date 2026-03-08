@@ -15,6 +15,7 @@ USER_FIELD_ORDER = [
     "total_balance",
     "net_worth",
     "income",
+    "expenses",
     "income_streams",
     "mortgage",
     "estate",
@@ -38,6 +39,7 @@ def _build_default_user_profile(name: str) -> Dict[str, Any]:
         "total_balance": 0.0,
         "net_worth": 0.0,
         "income": 0.0,
+        "expenses": 0.0,
         "income_streams": [],
         "mortgage": 0.0,
         "estate": 0.0,
@@ -56,12 +58,30 @@ def _build_default_user_profile(name: str) -> Dict[str, Any]:
 
 
 def normalize_user_profile(user: Dict[str, Any]) -> Dict[str, Any]:
-    normalized = dict(user)
-    if "age" not in normalized:
-        normalized["age"] = None
+    default_profile = _build_default_user_profile(str(user.get("name", "")))
+    normalized = dict(default_profile)
+    normalized.update(user)
+
     normalized.setdefault("manual_assets", [])
     normalized.setdefault("liability_items", [])
     normalized.setdefault("income_streams", [])
+
+    portfolio = normalized.get("portfolio")
+    if isinstance(portfolio, dict):
+        for bucket in ("stocks", "cryptos", "commodities"):
+            if not isinstance(portfolio.get(bucket), list):
+                portfolio[bucket] = []
+    else:
+        normalized["portfolio"] = {"stocks": [], "cryptos": [], "commodities": []}
+
+    wellness = normalized.get("wellness_metrics")
+    if not isinstance(wellness, dict):
+        wellness = {}
+    default_wellness = default_profile["wellness_metrics"]
+    merged_wellness = dict(default_wellness)
+    merged_wellness.update(wellness)
+    normalized["wellness_metrics"] = merged_wellness
+
     normalized.pop("monthly_expenses", None)
     normalized.pop("essential_monthly_expenses", None)
     return _reorder_user_fields(normalized)
@@ -99,6 +119,10 @@ def rewrite_user_profiles_with_order(json_path: Path) -> None:
 
 
 def add_default_user_profile(json_path: Path, user_id: str, name: str) -> None:
+    if not json_path.exists():
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump({}, f, indent=2)
+
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
