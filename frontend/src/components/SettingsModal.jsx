@@ -640,11 +640,9 @@ export default function SettingsModal({ onClose }) {
               <p style={s.pageSub}>Find answers, read documentation, or get in touch with our team.</p>
               <Card title="Quick Links" icon={'\u{1F517}'}>
                 {[
-                  { icon: '\u{1F4D6}', title: 'Documentation',       desc: 'Full guides for every Unova feature.',       href: '#' },
-                  { icon: '\u{1F3A5}', title: 'Video Tutorials',      desc: 'Step-by-step walkthroughs for new users.',          href: '#' },
-                  { icon: '\u{1F4EE}', title: 'Contact Support',      desc: 'Reach our team - we reply within 24 hours.',        href: '#' },
+                  { icon: '\u{1F4D6}', title: 'Documentation',       desc: 'Full guides for every Unova feature.',       href: 'https://github.com/Zerius7733/FinTech/blob/main/README.md' },
                 ].map(l => (
-                  <a key={l.title} href={l.href} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0',
+                  <a key={l.title} href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel={l.href.startsWith('http') ? 'noreferrer noopener' : undefined} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0',
                     borderBottom: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--surface2)', display: 'flex',
                       alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{l.icon}</div>
@@ -653,6 +651,35 @@ export default function SettingsModal({ onClose }) {
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{l.desc}</div>
                     </div>
                       <span style={{ color: 'var(--text-faint)', fontSize: '0.9rem' }}>{'->'}</span>
+                  </a>
+                ))}
+              </Card>
+              <Card title="Contact Support" icon={'\u{1F4EE}'}>
+                {[
+                  { name: 'GLYN', email: 'glyn0003@e.ntu.edu.sg' },
+                  { name: 'YIBIN', email: 'GUAN0094@e.ntu.edu.sg' },
+                  { name: 'ABDI', email: 'gohj0099@e.ntu.edu.sg' },
+                  { name: 'Zi An', email: 'e230221@e.ntu.edu.sg' },
+                ].map((contact, idx, arr) => (
+                  <a
+                    key={contact.email}
+                    href={`mailto:${contact.email}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 14,
+                      padding: '12px 0',
+                      borderBottom: idx < arr.length - 1 ? '1px solid var(--border)' : 'none',
+                      textDecoration: 'none',
+                      color: 'inherit',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.87rem', marginBottom: 2 }}>{contact.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{contact.email}</div>
+                    </div>
+                    <span style={{ color: 'var(--text-faint)', fontSize: '0.9rem' }}>{'->'}</span>
                   </a>
                 ))}
               </Card>
