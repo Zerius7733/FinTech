@@ -817,7 +817,7 @@
     "name": "orangi juice",
     "age": null,
     "cash_balance": 0.0,
-    "liability": 0,
+    "liability": 0.0,
     "liability_items": [],
     "portfolio": {
       "stocks": [],
@@ -837,11 +837,11 @@
     "portfolio_value": 1358332.6,
     "total_balance": 1358332.6,
     "net_worth": 1358332.6,
-    "income": 0,
+    "income": 0.0,
     "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0,
-    "estate": 0,
+    "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 0.0,
       "liquidity_score": 0.0,
