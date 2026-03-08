@@ -1352,9 +1352,9 @@ export default function Globe() {
             { label:'Active Positions', val: String(activePositions), sub: userProfile ? `${activePositions} holdings` : 'across 12 portfolios', c:'var(--gold)' },
           ].map((s,i) => (
             <div key={s.label} style={{ ...S.statItem, borderRight: i<3 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:8 }}>{s.label}</div>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.58rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:6 }}>{s.label}</div>
               <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.15rem', color:s.c, minHeight:50, display:'flex', alignItems:'center', justifyContent:'center' }}>{s.val}</div>
-              <div style={{ fontSize:'0.7rem', color:'var(--text-faint)', marginTop:4, maxWidth:220, marginInline:'auto', lineHeight:1.45 }}>{s.sub}</div>
+              <div style={{ fontSize:'0.64rem', color:'var(--text-faint)', marginTop:0, maxWidth:200, marginInline:'auto', lineHeight:1.35 }}>{s.sub}</div>
             </div>
           ))}
         </div>
@@ -1628,7 +1628,7 @@ const S = {
   statItem: {
     flex:1,
     minWidth:0,
-    padding:'18px 28px',
+    padding:'12px 22px',
     textAlign:'center',
     display:'flex',
     flexDirection:'column',
