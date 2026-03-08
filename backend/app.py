@@ -213,9 +213,20 @@ def _sum_portfolio_positions(user: Dict[str, Any]) -> float:
 
 def _normalize_manual_asset_category(value: str) -> str:
     normalized = (value or "").strip().lower().replace("-", "_").replace(" ", "_")
-    allowed = {"real_estate", "business", "private_asset", "banks", "other"}
+    alias_map = {
+        "stock": "stock",
+        "stocks": "stock",
+        "crypto": "crypto",
+        "cryptos": "crypto",
+        "commodity": "commodity",
+        "commodities": "commodity",
+    }
+    normalized = alias_map.get(normalized, normalized)
+    allowed = {"real_estate", "business", "private_asset", "banks", "stock", "crypto", "commodity", "other"}
     if normalized not in allowed:
-        raise ValueError("asset category must be one of: real_estate, business, private_asset, banks, other")
+        raise ValueError(
+            "asset category must be one of: real_estate, business, private_asset, banks, stock, crypto, commodity, other"
+        )
     return normalized
 
 
@@ -393,6 +404,15 @@ class ManualAssetCreateRequest(BaseModel):
     label: str = Field(..., min_length=1, max_length=80)
     category: str = Field(..., min_length=1, max_length=40)
     value: float = Field(..., ge=0)
+    symbol: str | None = Field(default=None, max_length=20)
+
+
+class PortfolioHoldingCreateRequest(BaseModel):
+    symbol: str = Field(..., min_length=1, max_length=20)
+    asset_class: str = Field(..., min_length=1, max_length=20)
+    qty: float = Field(1.0, gt=0)
+    avg_price: float | None = Field(default=None, ge=0)
+    name: str | None = Field(default=None, max_length=80)
 
 
 class LiabilityItemCreateRequest(BaseModel):
@@ -765,12 +785,26 @@ def add_user_manual_asset(user_id: str, payload: ManualAssetCreateRequest) -> Di
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
         user = _ensure_financial_collections(user)
+        normalized_category = _normalize_manual_asset_category(payload.category)
+        raw_label = payload.label.strip()
+        raw_symbol = (payload.symbol or "").strip()
+        if normalized_category in {"stock", "crypto", "commodity"}:
+            symbol = (raw_symbol or raw_label).strip().upper()
+            if not symbol:
+                raise HTTPException(status_code=400, detail="symbol is required for stock, crypto, and commodity assets")
+            label = symbol
+        else:
+            symbol = None
+            label = raw_label
+
         item = {
             "id": str(uuid.uuid4()),
-            "label": payload.label.strip(),
-            "category": _normalize_manual_asset_category(payload.category),
+            "label": label,
+            "category": normalized_category,
             "value": round(float(payload.value), 2),
         }
+        if symbol:
+            item["symbol"] = symbol
         user["manual_assets"].append(item)
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
@@ -782,6 +816,97 @@ def add_user_manual_asset(user_id: str, payload: ManualAssetCreateRequest) -> Di
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"asset create failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/financials/portfolio",
+    tags=["Users"],
+    summary="Add a holding into user portfolio and fetch latest market price",
+)
+def add_user_portfolio_holding(user_id: str, payload: PortfolioHoldingCreateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        portfolio = user.get("portfolio")
+        if not isinstance(portfolio, dict):
+            portfolio = {"stocks": [], "cryptos": [], "commodities": []}
+
+        symbol = payload.symbol.strip().upper()
+        if not symbol:
+            raise HTTPException(status_code=400, detail="symbol is required")
+
+        requested = payload.asset_class.strip().lower()
+        if requested in {"stock", "stocks", "equity", "equities"}:
+            bucket = "stocks"
+            query_type = "STOCK"
+        elif requested in {"crypto", "cryptos", "digital_asset", "digital_assets"}:
+            bucket = "cryptos"
+            query_type = "CRYPTO"
+        elif requested in {"commodity", "commodities"}:
+            bucket = "commodities"
+            query_type = "COMMODITY"
+        else:
+            raise HTTPException(status_code=400, detail="asset_class must be stock, crypto, or commodity")
+
+        quote = get_market_quote(query=f"{query_type}, {symbol}")
+        fetched_symbol = str(quote.get("symbol") or symbol).upper()
+        price = round(float(quote.get("price") or 0.0), 6)
+        if price <= 0:
+            raise HTTPException(status_code=400, detail=f"could not fetch a valid market price for '{symbol}'")
+
+        qty = round(float(payload.qty), 8)
+        avg_price = round(float(payload.avg_price), 6) if payload.avg_price is not None else price
+        market_value = round(qty * price, 2)
+        incoming_name = (payload.name or "").strip()
+
+        entries = portfolio.get(bucket, [])
+        if not isinstance(entries, list):
+            entries = []
+
+        existing = next(
+            (item for item in entries if str(item.get("symbol", "")).strip().upper() == fetched_symbol),
+            None,
+        )
+        if existing is not None:
+            old_qty = float(existing.get("qty", 0.0) or 0.0)
+            old_avg = float(existing.get("avg_price", price) or price)
+            new_qty = round(old_qty + qty, 8)
+            if new_qty > 0:
+                weighted_avg = round(((old_qty * old_avg) + (qty * avg_price)) / new_qty, 6)
+            else:
+                weighted_avg = avg_price
+            existing["qty"] = new_qty
+            existing["avg_price"] = weighted_avg
+            existing["current_price"] = price
+            existing["market_value"] = round(new_qty * price, 2)
+            if incoming_name:
+                existing["name"] = incoming_name
+            item = existing
+        else:
+            item = {
+                "symbol": fetched_symbol,
+                "qty": qty,
+                "avg_price": avg_price,
+                "current_price": price,
+                "market_value": market_value,
+            }
+            if incoming_name:
+                item["name"] = incoming_name
+            entries.append(item)
+
+        portfolio[bucket] = entries
+        user["portfolio"] = portfolio
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+        return {"status": "ok", "user_id": user_id, "asset_class": bucket, "item": item, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"portfolio holding create failed: {exc}") from exc
 
 
 @app.delete(

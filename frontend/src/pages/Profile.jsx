@@ -1136,6 +1136,8 @@ function FinancialManagerModal({
   }, [open, activeTab])
 
   if (!open) return null
+  const symbolDrivenCategories = new Set(['stock', 'crypto', 'commodity'])
+  const needsExactSymbol = symbolDrivenCategories.has(String(assetForm.category || '').toLowerCase())
 
   const tabMap = {
     assets: {
@@ -1192,10 +1194,13 @@ function FinancialManagerModal({
   const submitCurrent = event => {
     event.preventDefault()
     if (activeTab === 'assets') {
+      const cleanedLabel = String(assetForm.label || '').trim()
+      const normalizedSymbol = needsExactSymbol ? cleanedLabel.toUpperCase() : cleanedLabel
       onSubmit('assets', {
-        label: assetForm.label,
+        label: normalizedSymbol,
         category: assetForm.category,
         value: Number(assetForm.value),
+        symbol: needsExactSymbol ? normalizedSymbol : undefined,
       })
     }
     if (activeTab === 'liabilities') {
@@ -1255,7 +1260,7 @@ function FinancialManagerModal({
                 <input
                   value={assetForm.label}
                   onChange={e => setAssetForm(prev => ({ ...prev, label:e.target.value }))}
-                  placeholder="Asset label"
+                  placeholder={needsExactSymbol ? 'Exact symbol (e.g., AAPL, BTC, GOLD)' : 'Asset label'}
                   style={fm.input}
                 />
                 <select
@@ -1265,6 +1270,9 @@ function FinancialManagerModal({
                 >
                   <option value="real_estate">Real Estate</option>
                   <option value="banks">Banks</option>
+                  <option value="stock">Stock</option>
+                  <option value="crypto">Crypto</option>
+                  <option value="commodity">Commodity</option>
                   <option value="business">Business</option>
                   <option value="private_asset">Private Asset</option>
                   <option value="other">Other</option>
@@ -1272,12 +1280,17 @@ function FinancialManagerModal({
                 <input
                   value={assetForm.value}
                   onChange={e => setAssetForm(prev => ({ ...prev, value:e.target.value }))}
-                  placeholder="Value"
+                  placeholder={needsExactSymbol ? 'Quantity' : 'Value'}
                   type="number"
                   min="0"
-                  step="0.01"
+                  step={needsExactSymbol ? '0.000001' : '0.01'}
                   style={fm.input}
                 />
+                {needsExactSymbol && (
+                  <div style={{ gridColumn:'1 / span 3', fontSize:'0.76rem', color:'var(--text-faint)' }}>
+                    For {assetForm.category} assets, enter exact symbol in label. Quantity will be added into portfolio using fetched live price.
+                  </div>
+                )}
               </>
             )}
             {activeTab === 'liabilities' && (
@@ -1852,11 +1865,24 @@ export default function Profile() {
     setFinancialBusy(true)
     setError('')
     try {
+      const isPortfolioAssetCreate = tab === 'assets' && ['stock', 'crypto', 'commodity'].includes(String(payload?.category || '').toLowerCase())
       const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
-      const res = await fetch(`${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}`, {
+      const url = isPortfolioAssetCreate
+        ? `${API}/users/${authUser.user_id}/financials/portfolio`
+        : `${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}`
+      const body = isPortfolioAssetCreate
+        ? JSON.stringify({
+            symbol: payload?.symbol || payload?.label,
+            asset_class: payload?.category,
+            qty: Number(payload?.value || 0),
+            avg_price: null,
+            name: payload?.symbol || payload?.label,
+          })
+        : JSON.stringify(payload)
+      const res = await fetch(url, {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
-        body:JSON.stringify(payload),
+        body,
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
