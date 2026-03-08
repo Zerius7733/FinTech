@@ -1462,6 +1462,10 @@ export default function Profile() {
     async function fetchAll() {
       setLoading(true); setError('')
       try {
+        // Keep portfolio page data fresh on reload.
+        await fetch(`${API}/update/assets`).catch(() => null)
+        await fetch(`${API}/update/wellness`).catch(() => null)
+
         const [profRes, portRes, historyRes] = await Promise.all([
           fetch(`${API}/users/${authUser.user_id}`),
           fetch(`${API}/portfolio/${authUser.user_id}`),
