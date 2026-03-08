@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useTheme, THEMES } from '../context/ThemeContext.jsx'
 
 export default function ThemeModal({ open, onClose }) {
@@ -28,7 +29,7 @@ export default function ThemeModal({ open, onClose }) {
     setTimeout(() => setJustApplied(null), 1600)
   }
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -217,5 +218,6 @@ export default function ThemeModal({ open, onClose }) {
         }
       `}</style>
     </>
+    , document.body
   )
 }
