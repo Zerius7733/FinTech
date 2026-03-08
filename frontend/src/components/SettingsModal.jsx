@@ -389,7 +389,7 @@ export default function SettingsModal({ onClose }) {
                       {profileRisk ? 'Saved to your profile' : 'Default - not yet saved'}
                     </div>
                   </div>
-                  <button style={s.btnGhost} onClick={() => { setRiskOpen(r => !r); mark() }}>
+                  <button style={s.btnRiskAdjust} onClick={() => { setRiskOpen(r => !r); mark() }}>
                     {riskOpen ? 'Close' : 'Adjust'}
                   </button>
                 </div>
@@ -768,6 +768,19 @@ const s = {
     background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)',
     padding: '8px 14px', borderRadius: 10, fontFamily: 'var(--font-display)',
     fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0,
+  },
+  btnRiskAdjust: {
+    background: '#111111',
+    border: '1px solid #000000',
+    color: '#ffffff',
+    padding: '8px 14px',
+    borderRadius: 10,
+    fontFamily: 'var(--font-display)',
+    fontSize: '0.8rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    flexShrink: 0,
+    boxShadow: '0 8px 16px rgba(0,0,0,0.18)',
   },
   extensionHero: {
     display:'flex',

@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
@@ -344,6 +344,37 @@ export default function SurveyModal({ open, onClose }) {
   const [submitErr, setSubmitErr] = useState('')
   const headingAccentColor = activeTheme?.id === 'silent-night' ? '#e9dfcf' : 'var(--gold)'
 
+  useEffect(() => {
+    if (!open) return
+    setStep(1)
+    setDone(false)
+    setImportedHoldings([])
+    setFirstName('')
+    setLastName('')
+    setEmail('')
+    setPassword('')
+    setShowPassword(false)
+    setCountry('Singapore')
+    setAge('')
+    setAgeGroup('30-44')
+    setSelectedAssets(new Set(['Equities', 'Fixed Income']))
+    setSelectedGoals(new Set(['Wealth Growth']))
+    setHorizon('3-5')
+    setRiskLevel(50)
+    setSubmitErr('')
+  }, [open])
+
+  const completionInitials = (() => {
+    const first = String(firstName || '').trim()
+    const last = String(lastName || '').trim()
+    if (first && last) return `${first[0].toUpperCase()}.${last[0].toUpperCase()}.`
+
+    const fallbackSource = String(first || email || user?.username || '').replace(/[^a-zA-Z0-9]/g, '')
+    if (fallbackSource.length >= 2) return `${fallbackSource[0].toUpperCase()}.${fallbackSource[1].toUpperCase()}.`
+    if (fallbackSource.length === 1) return `${fallbackSource[0].toUpperCase()}.`
+    return '?'
+  })()
+
   if (!open) return null
 
   const goNext = () => step < 5 ? setStep(s => s+1) : null
@@ -372,7 +403,7 @@ export default function SurveyModal({ open, onClose }) {
       <div style={{ ...S.card, maxWidth:500, maxHeight:'90vh', overflowY:'auto' }}>
         <button onClick={onClose} style={S.closeBtn} type="button">x</button>
         <div style={{ textAlign:'center', animation:'fadeUp 0.5s ease' ,paddingTop:50, paddingBottom:50 }}>
-          <div style={S.completeRing}>*</div>
+          <div style={S.completeRing}>{completionInitials}</div>
           <h2 style={{ fontFamily:'var(--font-display)', fontSize:'1.4rem', fontWeight:800, marginBottom:10 }}>
             You're set, <span style={{ color:'var(--green)' }}>{firstName || user?.username}</span>
           </h2>
@@ -387,7 +418,7 @@ export default function SurveyModal({ open, onClose }) {
                {importedHoldings.length} holdings imported
             </div>
           )}
-          <button style={{...S.submit, background:'linear-gradient(135deg,var(--gold),var(--amber-600))'}} onClick={async () => {
+          <button style={S.launchBtn} onClick={async () => {
             setSubmitErr('')
             try {
               let activeUser = user
@@ -478,7 +509,7 @@ export default function SurveyModal({ open, onClose }) {
             } catch (err) {
               setSubmitErr(err?.message || 'Failed. Please try again.')
             }
-          }}>Launch WealthSphere </button>
+          }}>Launch WealthSphere</button>
           {submitErr && <div style={{ color:'var(--red)', fontSize:'0.7rem', marginTop:10 }}>{submitErr}</div>}
         </div>
       </div>
@@ -498,15 +529,15 @@ export default function SurveyModal({ open, onClose }) {
             <div style={cs.formGrid}>
               <div>
                 <label style={cs.formLabel}>First Name</label>
-                <input style={cs.formInput} placeholder="Alex" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                <input style={cs.formInput} placeholder="Alex" value={firstName} onChange={e => setFirstName(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               </div>
               <div>
                 <label style={cs.formLabel}>Last Name</label>
-                <input style={cs.formInput} placeholder="Chen" value={lastName} onChange={e => setLastName(e.target.value)} />
+                <input style={cs.formInput} placeholder="Chen" value={lastName} onChange={e => setLastName(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               </div>
               <div style={{ gridColumn:'1/-1' }}>
                 <label style={cs.formLabel}>Email</label>
-                <input style={cs.formInput} placeholder="alex@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+                <input style={cs.formInput} placeholder="alex@example.com" value={email} onChange={e => setEmail(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               </div>
               <div style={{ gridColumn:'1/-1' }}>
                 <label style={cs.formLabel}>Password</label>
@@ -517,6 +548,10 @@ export default function SurveyModal({ open, onClose }) {
                     placeholder="Enter password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
                   />
                   <button
                     type="button"
@@ -525,13 +560,13 @@ export default function SurveyModal({ open, onClose }) {
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? 'Hide' : 'Show'}
+                    {showPassword ? '🙈' : '👁️'}
                   </button>
                 </div>
               </div>
               <div>
                 <label style={cs.formLabel}>Country</label>
-                <select style={cs.formInput} value={country} onChange={e => setCountry(e.target.value)}>
+                <select style={cs.formInput} value={country} onChange={e => setCountry(e.target.value)} autoComplete="off">
                   {['Singapore','United Kingdom','United States','Australia','Japan'].map(o => <option key={o}>{o}</option>)}
                 </select>
               </div>
@@ -545,6 +580,10 @@ export default function SurveyModal({ open, onClose }) {
               placeholder="30"
               value={age}
               onChange={e => setAge(e.target.value)}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
             />
             {submitErr && <div style={{ color:'var(--red)', fontSize:'0.73rem', marginBottom:12 }}>{submitErr}</div>}
             <div style={{ display:'flex', justifyContent:'flex-end', gap:10 }}>
@@ -783,9 +822,25 @@ const S = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '2.64rem',
+    fontSize: '2.2rem',
+    fontWeight: 800,
+    color: 'var(--green)',
     margin: '0 auto 19px',
     boxShadow: '0 0 32px rgba(52,211,153,0.2)',
+  },
+  launchBtn: {
+    minWidth: 240,
+    padding: '13px 30px',
+    background: 'linear-gradient(135deg,#20c997,#14b8a6)',
+    border: '1px solid rgba(45,212,191,0.55)',
+    borderRadius: 12,
+    color: '#ffffff',
+    fontWeight: 800,
+    fontSize: '1rem',
+    letterSpacing: '0.01em',
+    cursor: 'pointer',
+    boxShadow: '0 14px 28px rgba(20,184,166,0.32), inset 0 1px 0 rgba(255,255,255,0.18)',
+    transition: 'transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease',
   },
 }
 
@@ -825,5 +880,7 @@ const imp = {
   spinner: { width: 36, height: 36, border: '3px solid rgba(255,255,255,0.08)', borderTopColor: 'var(--teal)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   addRowBtn: { background: 'transparent', border: '1.5px dashed rgba(255,255,255,0.12)', borderRadius: 8, padding: '8px 12px', color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', cursor: 'pointer', width: '100%' },
 }
+
+
 
 

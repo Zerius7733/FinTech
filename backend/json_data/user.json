@@ -897,7 +897,7 @@
     "financial_stress_index": 100.0
   },
   "u013": {
-    "name": "pekpek lai",
+    "name": "orangi juice",
     "age": null,
     "cash_balance": 0.0,
     "liability": 0.0,
@@ -907,22 +907,15 @@
       "cryptos": [],
       "commodities": []
     },
-    "manual_assets": [
-      {
-        "id": "5cff5820-8e07-4b7f-8093-2af47b7ca7fb",
-        "label": "aw",
-        "category": "real_estate",
-        "value": 123123.0
-      }
-    ],
+    "manual_assets": [],
     "portfolio_value": 0,
-    "total_balance": 123123.0,
-    "net_worth": 123123.0,
+    "total_balance": 0.0,
+    "net_worth": 0.0,
     "income": 0.0,
     "expenses": 0.0,
     "income_streams": [],
-    "mortgage": 0,
-    "estate": 123123.0,
+    "mortgage": 0.0,
+    "estate": 0.0,
     "wellness_metrics": {
       "liquidity_months": 0.0,
       "liquidity_score": 0.0,
@@ -931,11 +924,81 @@
       "debt_income_ratio": 999.0,
       "debt_income_score": 0.0
     },
-    "risk_profile": 78.0,
+    "risk_profile": 95.0,
     "financial_wellness_score": 0.0,
     "financial_stress_index": 100.0,
-    "age_group": "30\u00e2\u20ac\u201c44",
-    "email": "pekpek",
+    "age_group": "18-29",
+    "email": "adawd@gaw.wd",
+    "country": "Singapore"
+  },
+  "u014": {
+    "name": "aw awd",
+    "age": null,
+    "cash_balance": 0.0,
+    "liability": 0.0,
+    "liability_items": [],
+    "portfolio": {
+      "stocks": [],
+      "cryptos": [],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 0,
+    "total_balance": 0.0,
+    "net_worth": 0.0,
+    "income": 0.0,
+    "expenses": 0.0,
+    "income_streams": [],
+    "mortgage": 0.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 0.0,
+      "liquidity_score": 0.0,
+      "diversification_hhi": 0.0,
+      "diversification_score": 0.0,
+      "debt_income_ratio": 999.0,
+      "debt_income_score": 0.0
+    },
+    "risk_profile": 80.0,
+    "financial_wellness_score": 0.0,
+    "financial_stress_index": 100.0,
+    "age_group": "18-29",
+    "email": "aliceawd@awd.awd",
+    "country": "Singapore"
+  },
+  "u015": {
+    "name": "sfsef sef",
+    "age": null,
+    "cash_balance": 0.0,
+    "liability": 0.0,
+    "liability_items": [],
+    "portfolio": {
+      "stocks": [],
+      "cryptos": [],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 0,
+    "total_balance": 0.0,
+    "net_worth": 0.0,
+    "income": 0.0,
+    "expenses": 0.0,
+    "income_streams": [],
+    "mortgage": 0.0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 0.0,
+      "liquidity_score": 0.0,
+      "diversification_hhi": 0.0,
+      "diversification_score": 0.0,
+      "debt_income_ratio": 999.0,
+      "debt_income_score": 0.0
+    },
+    "risk_profile": 35.0,
+    "financial_wellness_score": 0.0,
+    "financial_stress_index": 100.0,
+    "age_group": "18-29",
+    "email": "aliceawd@awd.awdqwwd",
     "country": "Singapore"
   }
 }
