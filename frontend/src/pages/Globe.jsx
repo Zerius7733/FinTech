@@ -2,8 +2,6 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
-import LoginModal from '../components/LoginModal.jsx'
-import SurveyModal from '../components/SurveyModal.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLoginModal } from '../context/LoginModalContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
@@ -809,7 +807,7 @@ function buildGlobeNodes(profile) {
 export default function Globe() {
   const navigate    = useNavigate()
   const { user } = useAuth()
-  const { loginModalOpen, setLoginModalOpen, surveyModalOpen, setSurveyModalOpen } = useLoginModal()
+  const { setLoginModalOpen, setSurveyModalOpen } = useLoginModal()
   const { activeTheme } = useTheme()
   const canvasRef   = useRef(null)
   const globeRef    = useRef(null)   // THREE globe mesh
@@ -1516,12 +1514,6 @@ export default function Globe() {
       )} {/* /!user features */}
       {/* ══ LAYER 4 — BENTO DASHBOARD ══ */}
       <BentoDashboard node={dashNode} show={dashShow} onClose={closeDashboard} themeId={activeTheme?.id} />
-
-      {/* ══ LOGIN MODAL ══ */}
-      <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} onOpenSurvey={() => setSurveyModalOpen(true)} />
-
-      {/* ══ SURVEY MODAL ══ */}
-      <SurveyModal open={surveyModalOpen} onClose={() => setSurveyModalOpen(false)} />
 
       {/* Global keyframes */}
       <style>{`
