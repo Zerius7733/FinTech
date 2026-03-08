@@ -32,9 +32,27 @@ BASE_ALLOCATION = {
 }
 
 
-def _normalize_profile(profile: str) -> str:
-    value = (profile or "").strip().title()
-    return value if value in BASE_ALLOCATION else "Moderate"
+def _normalize_profile(profile: Any) -> str:
+    if isinstance(profile, (int, float)):
+        value = max(0.0, min(100.0, float(profile)))
+        if value <= 33.33:
+            return "Low"
+        if value <= 66.66:
+            return "Moderate"
+        return "High"
+
+    text = str(profile or "").strip().lower()
+    if text in {"low", "conservative"}:
+        return "Low"
+    if text in {"moderate", "medium", "balanced"}:
+        return "Moderate"
+    if text in {"high", "aggressive"}:
+        return "High"
+
+    try:
+        return _normalize_profile(float(text))
+    except ValueError:
+        return "Moderate"
 
 
 def _sum_portfolio_value(user: Dict[str, Any]) -> float:
@@ -169,7 +187,7 @@ def build_retirement_plan(
         raise ValueError("retirement_age must be <= 100")
 
     years_to_retirement = retirement_age - current_age_value
-    profile = _normalize_profile(str(user.get("risk_profile", "Moderate")))
+    profile = _normalize_profile(user.get("risk_profile", 50.0))
     annual_income = float(user.get("income", 0.0) or 0.0) * 12.0
     monthly_expenses = float(monthly_expenses or 0.0)
     essential_monthly_expenses = float(essential_monthly_expenses or 0.0)

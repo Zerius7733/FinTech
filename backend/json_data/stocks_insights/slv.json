@@ -1,0 +1,191 @@
+{
+  "type": "stock",
+  "symbol": "SLV",
+  "updated_at": "2026-03-08T18:40:10.547304+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "SLV",
+      "name": "iShares Silver Trust",
+      "period": {
+        "months": 3,
+        "start": "2025-12-08",
+        "end": "2026-03-08"
+      },
+      "metrics": {
+        "start_price": 52.71,
+        "end_price": 75.94,
+        "return_pct": 44.0713,
+        "volatility_annualized": 0.992233,
+        "max_drawdown_pct": -37.1496,
+        "avg_daily_volume": 108906590.1639,
+        "volume_change_pct": -4.6319
+      },
+      "notable_moves": [
+        {
+          "date": "2025-12-26",
+          "move_pct": 9.0463,
+          "close": 71.12,
+          "volume": 139161200.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-09",
+          "move_pct": 8.3345,
+          "close": 76.04,
+          "volume": 88229100.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-30",
+          "move_pct": -28.5403,
+          "close": 75.44,
+          "volume": 510687700.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-05",
+          "move_pct": -15.7742,
+          "close": 66.69,
+          "volume": 170928000.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-30",
+          "move_pct": -28.5403,
+          "close": 75.44,
+          "volume": 510687700.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-01-26",
+          "move_pct": 5.8444,
+          "close": 98.34,
+          "volume": 393030300.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2025-12-26",
+          "headline": "Market Movers: iShares Silver Trust Up 12% - 24/7 Wall St.",
+          "source": "",
+          "url": "https://247wallst.com/investing/2026/01/26/market-movers-ishares-silver-trust-up-12/?utm_source=openai"
+        },
+        {
+          "date": "2025-12-26",
+          "headline": "SLV: Silver's Remarkable Year-End Performance",
+          "source": "",
+          "url": "https://www.gurufocus.com/news/4088124/slv-silvers-remarkable-yearend-performance%3Fmobile%3Dtrue?utm_source=openai"
+        },
+        {
+          "date": "2025-12-26",
+          "headline": "Silver (XAGUSD) Faces Steepest One-Day Decline in Five Years",
+          "source": "",
+          "url": "https://www.gurufocus.com/news/4089264/silver-xagusd-faces-steepest-oneday-decline-in-five-years?utm_source=openai"
+        },
+        {
+          "date": "2025-12-26",
+          "headline": "SLV: Silver's Remarkable Year-End Performance",
+          "source": "",
+          "url": "https://www.gurufocus.com/news/4088124/slv-silvers-remarkable-yearend-performance?utm_source=openai"
+        },
+        {
+          "date": "2025-12-26",
+          "headline": "iShares Silver Trust Forecast: Expect Sharp Swings and Premium Compression | NaturalResourceStocks.Net posted on the topic | LinkedIn",
+          "source": "",
+          "url": "https://www.linkedin.com/posts/naturalresourcestocks-net_ishares-silver-trust-forecast-what-to-expect-activity-7411620692640681984-4KQm?utm_source=openai"
+        },
+        {
+          "date": "2025-12-26",
+          "headline": "DAVENPORT & Co LLC Sells 1,355,365 Shares of iShares Silver Trust $SLV - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2025/12/26/davenport-co-llc-sells-1355365-shares-of-ishares-silver-trust-slv.html?utm_source=openai"
+        },
+        {
+          "date": "2025-12-26",
+          "headline": "Linked to the Least Performing of the VanEck \u00ae Gold Miners ETF and the iShares \u00ae Silver Trust",
+          "source": "",
+          "url": "https://investor.bankofamerica.com/regulatory-and-other-filings/all-sec-filings/content/0001918704-25-010263/0001918704-25-010263.pdf?utm_source=openai"
+        },
+        {
+          "date": "2025-12-26",
+          "headline": "SLV Stock Surges 152% Before Volatile Reversal",
+          "source": "",
+          "url": "https://trendspider.com/blog/silver-surges-in-historic-silver-rally/?utm_source=openai"
+        },
+        {
+          "date": "2025-12-26",
+          "headline": "Stock Track | iShares Silver Trust (SLV) Plummets 7.98% Intraday Amid Tax-Related Sales and Stronger Dollar - Tiger Brokers",
+          "source": "",
+          "url": "https://www.itiger.com/news/1128515401?utm_source=openai"
+        },
+        {
+          "date": "2025-12-26",
+          "headline": "Cacti Asset Management LLC Cuts Stock Holdings in iShares Silver Trust $SLV - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2025/12/15/cacti-asset-management-llc-cuts-stock-holdings-in-ishares-silver-trust-slv.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-09",
+          "headline": "iShares Silver Trust (SLV) Total Return YTD, TTM, 3Y, 5Y, 10Y, 20Y",
+          "source": "",
+          "url": "https://www.financecharts.com/etfs/SLV/performance/total-return?utm_source=openai"
+        },
+        {
+          "date": "2026-02-09",
+          "headline": "5 Silver ETFs to Buy Now",
+          "source": "",
+          "url": "https://www.kiplinger.com/investing/commodities/601131/5-best-silver-etfs-for-the-markets-forgotten-metal?utm_source=openai"
+        },
+        {
+          "date": "2026-02-09",
+          "headline": "MIAX Exchange Group - Options Markets - iShares Silver Trust (SLV) Series Removed from Closing-Only | MIAX",
+          "source": "",
+          "url": "https://www.miaxglobal.com/alert/2026/02/09/miax-exchange-group-options-markets-ishares-silver-trust-slv-series-removed?utm_source=openai"
+        },
+        {
+          "date": "2026-02-09",
+          "headline": "SLV iShares Silver Trust: 3 Price Paths + Tuesday Predicted Opening Price",
+          "source": "",
+          "url": "https://www.youtube.com/watch?v=VH6k4qOmt_I&utm_source=openai"
+        },
+        {
+          "date": "2026-02-09",
+          "headline": "WESCAP Management Group Inc. Acquires 11,875 Shares of iShares Silver Trust $SLV - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2026/02/09/wescap-management-group-inc-acquires-11875-shares-of-ishares-silver-trust-slv.html?utm_source=openai"
+        }
+      ],
+      "narrative": "The iShares Silver Trust (SLV) experienced a notable price increase from a start price of $52.71 to an end price of $75.94, representing a return of 44.07% over the period. The annualized volatility was relatively high at 0.992, reflecting significant price fluctuations, while the maximum drawdown reached -37.15%, indicating a substantial peak-to-trough decline during the timeframe. Among the largest single-day moves, the biggest upward session occurred on 2025-12-26 with a 9.05% gain closing at $71.12, coinciding with multiple reports highlighting silver's remarkable year-end performance and a surge in SLV shares [1][2]. Conversely, the largest downward day was on 2026-01-30, with a sharp 28.54% drop closing at $75.44, accompanied by an exceptionally high volume of 510,687,700 shares traded, suggesting intense selling pressure or market reaction [3]. Another high-volume day was on 2026-01-26, with 393,030,300 shares traded and a 5.84% price increase, though the direct driver for this move is less clear from the available data. Average daily volume slightly decreased by 4.63% to approximately 108.9 million shares, indicating a modest reduction in trading activity overall. News coverage around the largest up day emphasized silver's strong rally and year-end momentum [1][2], while the largest down day coincided with unusually high volume, possibly reflecting tax-related sales or other market dynamics [3]. Additional headlines around early February 2026 noted ongoing interest and trading activity in SLV, including acquisitions and options market changes, which may have contributed to continued price swings [4].",
+      "tldr": [
+        "Period return: 44.07% with annualized volatility 0.992.",
+        "Largest up day: 2025-12-26 (9.05%), largest down day: 2026-01-30 (-28.54%).",
+        "Highest volume spike was on 2026-01-30 with volume 510,687,700."
+      ],
+      "conclusion": "Over this period, the asset ended higher (44.07%) with peak drawdown of -37.15%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://247wallst.com/investing/2026/01/26/market-movers-ishares-silver-trust-up-12/?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.gurufocus.com/news/4088124/slv-silvers-remarkable-yearend-performance%3Fmobile%3Dtrue?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.defenseworld.net/2025/12/26/davenport-co-llc-sells-1355365-shares-of-ishares-silver-trust-slv.html?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://www.defenseworld.net/2026/02/09/wescap-management-group-inc-acquires-11875-shares-of-ishares-silver-trust-slv.html?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "type": "stock",
+  "symbol": "GOOGL",
+  "updated_at": "2026-03-08T18:53:59.603347+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "GOOGL",
+      "name": "Alphabet Inc.",
+      "period": {
+        "months": 3,
+        "start": "2025-12-08",
+        "end": "2026-03-08"
+      },
+      "metrics": {
+        "start_price": 313.72,
+        "end_price": 298.52,
+        "return_pct": -4.8451,
+        "volatility_annualized": 0.217648,
+        "max_drawdown_pct": -13.1427,
+        "avg_daily_volume": 34278562.2951,
+        "volume_change_pct": 25.3387
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-20",
+          "move_pct": 4.0053,
+          "close": 314.98,
+          "volume": 53210800.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-07",
+          "move_pct": 2.4305,
+          "close": 321.98,
+          "volume": 35104400.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2025-12-17",
+          "move_pct": -3.213,
+          "close": 296.72,
+          "volume": 43930400.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": -2.5328,
+          "close": 322.86,
+          "volume": 56380500.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-05",
+          "move_pct": -0.5375,
+          "close": 331.25,
+          "volume": 88205800.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-02-04",
+          "move_pct": -1.9634,
+          "close": 333.04,
+          "volume": 70618400.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet's Q4 Earnings Beat Estimates, Revenues Increase Y/Y | Nasdaq",
+          "source": "",
+          "url": "https://www.nasdaq.com/articles/alphabets-q4-earnings-beat-estimates-revenues-increase-y-y?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet and Amazon earnings review and outlook | S&P Global",
+          "source": "",
+          "url": "https://www.spglobal.com/market-intelligence/en/news-insights/research/2026/02/alphabet-and-amazon-earnings-review-and-outlook?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet stock sinks after Google parent announces $180 billion spending plan for 2026 in massive AI bet",
+          "source": "",
+          "url": "https://finance.yahoo.com/news/alphabet-set-to-report-q4-earnings-in-test-of-stocks-rally-amid-googles-ai-wins-195254201.html/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Amazon shares fall on profitability concerns",
+          "source": "",
+          "url": "https://moneyweek.com/investments/stocks-and-shares/tech-stocks-magnificent-7-investing?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet\u2019s Massive $175\u2013185B 2026 Capex Guidance: A Clear Signal of Accelerating AI Infrastructure Demand \u2013 Exceeding Industry Forecasts",
+          "source": "",
+          "url": "https://www.ai-capex.com/alphabets-massive-175-185b-2026-capex-guidance-a-clear-signal-of-accelerating-ai-infrastructure-demand-exceeding-industry-forecasts/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet (GOOG) Stock Recovers as J.P. Morgan Raises Price Target to $395 - CoinCentral",
+          "source": "",
+          "url": "https://coincentral.com/alphabet-goog-stock-recovers-as-j-p-morgan-raises-price-target-to-395/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "SEC Info - Alphabet Inc. - \u20188-K\u2019 for 2/13/26",
+          "source": "",
+          "url": "https://www.secinfo.com/d14D5a.N1y6g.htm?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet (GOOGL) | Trefis",
+          "source": "",
+          "url": "https://www.trefis.com/data/companies/GOOGL?from=GE-2026-02-26&source=forbes&utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet Inc - Board Approves CEO Compensation For Sundar Pichai On March 4, 2026 - SEC Filing",
+          "source": "",
+          "url": "https://longbridge.com/news/278175928?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Tsourdinis v. Alphabet, Inc. et al 5:2026cv01770 | U.S. District Court for the Northern District of California | Justia",
+          "source": "",
+          "url": "https://dockets.justia.com/docket/california/candce/5%3A2026cv01770/465150?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet (GOOGL) Slides 1.6% Premarket as Gemini AI Lawsuit Raises New Safety Concerns",
+          "source": "",
+          "url": "https://swikblog.com/alphabet-googl-slides-premarket-gemini-ai-lawsuit-safety-concerns/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Google (GOOGL) Settles Privacy Lawsuit for $68M Over Voice Assis",
+          "source": "",
+          "url": "https://www.gurufocus.com/news/8553331/google-googl-settles-privacy-lawsuit-for-68m-over-voice-assistant?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Google (GOOG) to Settle $135M Lawsuit Over Data Collection Claim",
+          "source": "",
+          "url": "https://www.gurufocus.com/news/8560097/google-goog-to-settle-135m-lawsuit-over-data-collection-claims?utm_source=openai"
+        },
+        {
+          "date": "2026-02-20",
+          "headline": "Alphabet Settles Antitrust-Related Derivative Suit for $500 Million | The D&O Diary",
+          "source": "",
+          "url": "https://www.dandodiary.com/2025/06/articles/shareholders-derivative-litigation/alphabet-settles-antitrust-related-derivative-suit-for-500-million/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-07",
+          "headline": "Alphabet Investor Relations - Alphabet Announces Date of Fourth Quarter and Fiscal Year 2025 Financial Results Conference Call",
+          "source": "",
+          "url": "https://abc.xyz/investor/news/news-details/2026/Alphabet-Announces-Date-of-Fourth-Quarter-and-Fiscal-Year-2025-Financial-Results-Conference-Call-2026-_PQVrgzUKX/default.aspx?utm_source=openai"
+        }
+      ],
+      "narrative": "From the starting price of $313.72 to an ending price of $298.52, the stock experienced a negative return of -4.8451% over the period. The annualized volatility was relatively elevated at 0.217648, with a maximum drawdown reaching -13.1427%, indicating notable price fluctuations and downside risk during the timeframe. The largest upward session occurred on 2026-02-20, with a 4.0053% gain closing at $314.98 on a volume of 53,210,800 shares, coinciding with multiple news items including Alphabet's Q4 earnings beating estimates and a significant $180 billion spending plan announcement for AI in 2026 [1][3][5]. Conversely, the largest downward session was on 2026-02-06, with a -2.5328% decline closing at $322.86 on a volume of 56,380,500 shares, though no specific driver from the provided data directly aligns with this date. High volume days such as 2026-02-05 and 2026-02-04, with volumes of 88,205,800 and 70,618,400 shares respectively, occurred amid price declines of -0.5375% and -1.9634%, suggesting increased trading activity during downward price pressure. The overall average daily volume increased by 25.3387% to approximately 34,278,562 shares, reflecting heightened market participation. Additional news around 2026-02-20 included mixed sentiments such as a recovery in stock price following a price target raise by J.P. Morgan [6], alongside concerns from lawsuits and large capital expenditures signaling accelerating AI infrastructure demand [11][12]. These factors collectively may have contributed to the observed price and volume dynamics during the period.",
+      "tldr": [
+        "Period return: -4.85% with annualized volatility 0.218.",
+        "Largest up day: 2026-02-20 (4.01%), largest down day: 2025-12-17 (-3.21%).",
+        "Highest volume spike was on 2026-02-05 with volume 88,205,800."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-4.85%) with peak drawdown of -13.14%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.nasdaq.com/articles/alphabets-q4-earnings-beat-estimates-revenues-increase-y-y?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://finance.yahoo.com/news/alphabet-set-to-report-q4-earnings-in-test-of-stocks-rally-amid-googles-ai-wins-195254201.html/?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.ai-capex.com/alphabets-massive-175-185b-2026-capex-guidance-a-clear-signal-of-accelerating-ai-infrastructure-demand-exceeding-industry-forecasts/?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://coincentral.com/alphabet-goog-stock-recovers-as-j-p-morgan-raises-price-target-to-395/?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

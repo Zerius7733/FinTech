@@ -1,16 +1,31 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+﻿import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
-import AssetInsightsPanel from '../components/AssetInsightsPanel.jsx'
+import AssetInsightsPanel, { getCachedInsight } from '../components/AssetInsightsPanel.jsx'
+import { refreshPage } from '../utils/refreshPage.js'
+import { convertCurrency, formatCurrency, normalizeCurrencyCode } from '../utils/currency.js'
 
 const API = 'http://localhost:8000'
+let DISPLAY_CURRENCY = 'USD'
+function setDisplayCurrency(code) {
+  DISPLAY_CURRENCY = normalizeCurrencyCode(code || 'USD')
+}
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function fmt$(n) {
   if (n == null) return '—'
-  return new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:2 }).format(n)
+  const converted = convertCurrency(n, 'USD', DISPLAY_CURRENCY)
+  return converted == null ? '—' : formatCurrency(converted, DISPLAY_CURRENCY, { maximumFractionDigits: 2 })
+}
+function fmtSgd(n) {
+  if (n == null) return '—'
+  const converted = convertCurrency(n, 'SGD', DISPLAY_CURRENCY)
+  return converted == null ? '—' : formatCurrency(converted, DISPLAY_CURRENCY, { maximumFractionDigits: 0 })
 }
 function fmtPct(n) { return n == null ? '—' : `${n >= 0 ? '+' : ''}${n.toFixed(2)}%` }
 function initials(name) {
@@ -133,7 +148,10 @@ function TrendChart({ points = [], tone = 'up', valueLabel = 'Value', comparison
 
   const handlePointerMove = event => {
     const rect = event.currentTarget.getBoundingClientRect()
-    const relativeX = ((event.clientX - rect.left) / rect.width) * width
+    const renderedWidth = Math.min(rect.width, rect.height * (width / height))
+    const offsetX = (rect.width - renderedWidth) / 2
+    const localX = clamp(event.clientX - rect.left - offsetX, 0, renderedWidth)
+    const relativeX = (localX / Math.max(renderedWidth, 1)) * width
     const closestIndex = chartPoints.reduce((best, point, index) => (
       Math.abs(point.x - relativeX) < Math.abs(chartPoints[best].x - relativeX) ? index : best
     ), 0)
@@ -237,6 +255,25 @@ function startCase(value) {
     .replace(/\b\w/g, char => char.toUpperCase())
 }
 
+function normalizeRiskScore(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return clamp(value, 0, 100)
+  const text = toText(value).toLowerCase()
+  if (!text) return null
+  if (text === 'low' || text === 'conservative') return 0
+  if (text === 'moderate' || text === 'medium' || text === 'balanced') return 50
+  if (text === 'high' || text === 'aggressive') return 100
+  const parsed = Number(text)
+  return Number.isFinite(parsed) ? clamp(parsed, 0, 100) : null
+}
+
+function riskLabelFromValue(value) {
+  const score = normalizeRiskScore(value)
+  if (score == null) return ''
+  if (score <= 33) return 'Conservative'
+  if (score <= 66) return 'Balanced'
+  return 'Aggressive'
+}
+
 function wrapPdfText(text, maxChars = 86) {
   const words = toText(text).split(/\s+/).filter(Boolean)
   if (!words.length) return []
@@ -256,6 +293,66 @@ function wrapPdfText(text, maxChars = 86) {
 
 function escapePdfText(text) {
   return toText(text).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
+}
+
+function fmtCompactCurrency(n) {
+  if (n == null) return '—'
+  const converted = convertCurrency(n, 'USD', DISPLAY_CURRENCY)
+  if (converted == null) return '—'
+  return formatCurrency(converted, DISPLAY_CURRENCY, {
+    notation:'compact',
+    maximumFractionDigits:1,
+  })
+}
+
+function retirementStatus(plan) {
+  if (!plan) return { title:'Building your retirement path', tone:'var(--blue)' }
+  const gap = Number(plan.projected_gap_at_retirement || 0)
+  if (gap <= 0) return { title:'On track for retirement', tone:'var(--green)' }
+  if (gap <= plan.target_retirement_fund * 0.15) return { title:'Within reach with a small top-up', tone:'var(--gold)' }
+  return { title:'A savings gap still needs closing', tone:'var(--red)' }
+}
+
+function retirementTopMix(plan) {
+  const top = toArray(plan?.recommended_vehicle_mix)
+    .slice()
+    .sort((a, b) => Number(b.target_weight || 0) - Number(a.target_weight || 0))
+    .slice(0, 2)
+  if (!top.length) return 'No allocation guidance available yet.'
+  return top.map(item => `${startCase(item.vehicle)} ${Math.round(Number(item.target_weight || 0))}%`).join(' · ')
+}
+
+function parseApiError(detail, fallback) {
+  if (typeof detail === 'string' && detail.trim()) return detail
+  if (Array.isArray(detail)) {
+    const text = detail
+      .map(item => {
+        if (typeof item === 'string') return item
+        if (item && typeof item === 'object') {
+          const field = Array.isArray(item.loc) ? item.loc[item.loc.length - 1] : ''
+          const message = toText(item.msg)
+          return [field ? startCase(field) : '', message].filter(Boolean).join(': ')
+        }
+        return ''
+      })
+      .filter(Boolean)
+      .join(' · ')
+    if (text) return text
+  }
+  if (detail && typeof detail === 'object') {
+    if (typeof detail.message === 'string' && detail.message.trim()) return detail.message
+    if (typeof detail.detail === 'string' && detail.detail.trim()) return detail.detail
+  }
+  return fallback
+}
+
+function escapeHtml(text) {
+  return toText(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 function buildSimplePdf(lines) {
@@ -307,6 +404,521 @@ function buildSimplePdf(lines) {
   return new Blob([pdf], { type: 'application/pdf' })
 }
 
+function buildWrappedPrintHtml({ ownerName, year, slides }) {
+  const sections = slides.map((slide, index) => {
+    const stats = slide.stats?.length
+      ? `
+        <div class="stats">
+          ${slide.stats.map(stat => `
+            <div class="stat">
+              <div class="stat-label">${escapeHtml(stat.label)}</div>
+              <div class="stat-value">${escapeHtml(stat.value)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `
+      : ''
+
+    const bullets = slide.bullets?.length
+      ? `
+        <div class="bullets">
+          ${slide.bullets.map(point => `<div class="bullet">${escapeHtml(point)}</div>`).join('')}
+        </div>
+      `
+      : ''
+
+    return `
+      <section class="slide">
+        <div class="slide-top">
+          <div class="slide-index">Story ${index + 1}</div>
+          <div class="slide-icon">${escapeHtml(slide.icon)}</div>
+        </div>
+        <div class="slide-eyebrow">${escapeHtml(slide.eyebrow)}</div>
+        <h2>${escapeHtml(slide.title)}</h2>
+        <p class="body">${escapeHtml(slide.body)}</p>
+        ${slide.support ? `<p class="support">${escapeHtml(slide.support)}</p>` : ''}
+        ${stats}
+        ${bullets}
+      </section>
+    `
+  }).join('')
+
+  return `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>Unova Wrapped ${year}</title>
+      <style>
+        @page { size: A4; margin: 14mm; }
+        * { box-sizing: border-box; }
+        body {
+          margin: 0;
+          font-family: "Helvetica Neue", Arial, sans-serif;
+          color: #101828;
+          background:
+            radial-gradient(circle at top left, rgba(109, 141, 247, 0.16), transparent 28%),
+            radial-gradient(circle at top right, rgba(42, 184, 163, 0.16), transparent 26%),
+            linear-gradient(180deg, #f7f8fc 0%, #eef2ff 100%);
+        }
+        .page {
+          padding: 28px;
+        }
+        .hero {
+          background: linear-gradient(135deg, #172033 0%, #202a46 48%, #2a3859 100%);
+          color: #ffffff;
+          border-radius: 28px;
+          padding: 28px 30px;
+          box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+          margin-bottom: 18px;
+        }
+        .eyebrow {
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.24em;
+          color: #8fe7d9;
+          margin-bottom: 14px;
+        }
+        .hero h1 {
+          margin: 0 0 10px;
+          font-size: 34px;
+          line-height: 1.05;
+        }
+        .hero p {
+          margin: 0;
+          font-size: 16px;
+          line-height: 1.65;
+          color: rgba(255,255,255,0.78);
+          max-width: 620px;
+        }
+        .hero-meta {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 18px;
+        }
+        .pill {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.14);
+          background: rgba(255,255,255,0.08);
+          padding: 8px 12px;
+          font-size: 12px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+        .slide {
+          break-inside: avoid;
+          background: rgba(255,255,255,0.92);
+          border: 1px solid rgba(148, 163, 184, 0.16);
+          border-radius: 24px;
+          padding: 22px;
+          box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+          min-height: 240px;
+        }
+        .slide-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        }
+        .slide-index {
+          font-size: 11px;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #667085;
+        }
+        .slide-icon {
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 16px;
+          background: linear-gradient(135deg, rgba(109, 141, 247, 0.14), rgba(42, 184, 163, 0.12));
+          font-size: 22px;
+        }
+        .slide-eyebrow {
+          font-size: 12px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #2a7f74;
+          margin-bottom: 8px;
+        }
+        .slide h2 {
+          margin: 0 0 10px;
+          font-size: 25px;
+          line-height: 1.12;
+        }
+        .body, .support {
+          margin: 0;
+          font-size: 15px;
+          line-height: 1.72;
+          color: #475467;
+        }
+        .support { margin-top: 10px; color: #667085; }
+        .stats {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          gap: 10px;
+          margin-top: 16px;
+        }
+        .stat {
+          border-radius: 16px;
+          background: #f8fafc;
+          border: 1px solid rgba(148, 163, 184, 0.16);
+          padding: 12px;
+        }
+        .stat-label {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #98a2b3;
+          margin-bottom: 6px;
+        }
+        .stat-value {
+          font-size: 18px;
+          font-weight: 700;
+          color: #1d2939;
+        }
+        .bullets {
+          margin-top: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .bullet {
+          position: relative;
+          padding-left: 18px;
+          font-size: 14px;
+          line-height: 1.65;
+          color: #475467;
+        }
+        .bullet::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          top: 8px;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #8b5cf6, #2ab8a3);
+        }
+        .footer {
+          margin-top: 18px;
+          font-size: 12px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #667085;
+          text-align: center;
+        }
+        .actions {
+          position: sticky;
+          top: 12px;
+          z-index: 20;
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 14px;
+        }
+        .print-btn {
+          border: none;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #2ab8a3, #179582);
+          color: #081019;
+          padding: 12px 18px;
+          font-size: 13px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          cursor: pointer;
+          box-shadow: 0 16px 34px rgba(42, 184, 163, 0.22);
+        }
+        .print-note {
+          margin-right: auto;
+          align-self: center;
+          font-size: 12px;
+          color: #667085;
+          letter-spacing: 0.04em;
+        }
+        @media print {
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .page { padding: 0; }
+          .actions { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="page">
+        <div class="actions">
+          <div class="print-note">Use the print dialog and choose "Save as PDF".</div>
+          <button class="print-btn" onclick="window.print()">Save as PDF</button>
+        </div>
+        <header class="hero">
+          <div class="eyebrow">Unova Financial Year Wrapped</div>
+          <h1>${escapeHtml(ownerName)}'s ${year} money story</h1>
+          <p>A visual recap of growth, wins, conviction holdings, and portfolio behavior across the year.</p>
+          <div class="hero-meta">
+            <span class="pill">Year ${escapeHtml(year)}</span>
+            <span class="pill">${escapeHtml(ownerName)}</span>
+            <span class="pill">${escapeHtml(String(slides.length))} key moments</span>
+          </div>
+        </header>
+        <main class="grid">${sections}</main>
+        <div class="footer">Generated by Unova</div>
+      </div>
+      <script>
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            try { window.print(); } catch (e) {}
+          }, 450);
+        });
+      </script>
+    </body>
+  </html>`
+}
+
+function benchmarkTone(percentile) {
+  if (percentile >= 75) return { color:'var(--green)', rail:'rgba(34,197,94,0.16)' }
+  if (percentile >= 50) return { color:'var(--teal)', rail:'rgba(42,184,163,0.16)' }
+  if (percentile >= 25) return { color:'var(--gold)', rail:'rgba(201,168,76,0.18)' }
+  return { color:'var(--red)', rail:'rgba(248,113,113,0.14)' }
+}
+
+function BenchmarkMeter({ title, data, icon }) {
+  const tone = benchmarkTone(Number(data?.percentile || 0))
+  const percentile = Math.max(1, Math.min(99, Number(data?.percentile || 0)))
+  return (
+    <div style={s.benchmarkMetricCard}>
+      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:14, marginBottom:12 }}>
+        <div>
+          <div style={s.benchmarkMetricLabel}>{title}</div>
+          <div style={{ fontFamily:'var(--font-display)', fontSize:'1.5rem', fontWeight:800, lineHeight:1.05 }}>
+            {percentile}<span style={{ fontSize:'0.82rem', color:'var(--text-faint)', marginLeft:4 }}>th percentile</span>
+          </div>
+        </div>
+        <div style={{ ...s.benchmarkIcon, color:tone.color }}>{icon}</div>
+      </div>
+      <div style={{ ...s.benchmarkRail, background:tone.rail }}>
+        <div style={{ ...s.benchmarkFill, width:`${percentile}%`, background:tone.color }} />
+      </div>
+      <div style={{ display:'flex', justifyContent:'space-between', gap:10, marginTop:10, fontFamily:'var(--font-mono)', fontSize:'0.63rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+        <span>P25 {fmtSgd(data?.p25)}</span>
+        <span>Median {fmtSgd(data?.median)}</span>
+        <span>P75 {fmtSgd(data?.p75)}</span>
+      </div>
+      <div style={{ marginTop:12, fontSize:'0.86rem', color:'var(--text-dim)', lineHeight:1.68 }}>
+        {data?.headline}
+      </div>
+      <div style={{ marginTop:8, fontSize:'0.78rem', color:'var(--text-faint)', lineHeight:1.6 }}>
+        Your value: <strong style={{ color:'var(--text)' }}>{fmtSgd(data?.user_value)}</strong> for ages {data?.age_band}.
+      </div>
+    </div>
+  )
+}
+
+function BenchmarkMiniCard({ title, data, accent, icon }) {
+  const percentile = Math.max(1, Math.min(99, Number(data?.percentile || 0)))
+  return (
+    <div style={s.benchmarkMiniCard}>
+      <div style={{ display:'flex', justifyContent:'space-between', gap:12, alignItems:'flex-start', marginBottom:10 }}>
+        <div>
+          <div style={s.benchmarkMiniLabel}>{title}</div>
+          <div style={{ fontFamily:'var(--font-display)', fontSize:'1.18rem', fontWeight:800, lineHeight:1.08 }}>
+            {percentile}<span style={{ fontSize:'0.72rem', color:'var(--text-faint)', marginLeft:4 }}>th percentile</span>
+          </div>
+        </div>
+        <div style={{ ...s.benchmarkMiniIcon, color:accent }}>{icon}</div>
+      </div>
+      <div style={s.benchmarkMiniTrack}>
+        <div style={{ ...s.benchmarkMiniFill, width:`${percentile}%`, background:accent }} />
+      </div>
+      <div style={{ marginTop:10, fontSize:'0.78rem', color:'var(--text-dim)', lineHeight:1.6 }}>
+        {data?.headline}
+      </div>
+    </div>
+  )
+}
+
+const WRAPPED_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function hashSeed(input) {
+  return toText(input).split('').reduce((total, char, index) => total + char.charCodeAt(0) * (index + 1), 0)
+}
+
+function buildIncomeHistory(userId, year) {
+  if (userId === 'u001') {
+    return [5900, 6050, 6180, 6400, 6620, 6900, 7150, 7420, 7690, 7930, 8210, 8540].map((value, index) => ({
+      month: WRAPPED_MONTHS[index],
+      year,
+      value,
+    }))
+  }
+
+  const seed = hashSeed(userId || String(year))
+  const start = 4300 + (seed % 1700)
+  const slope = 120 + (seed % 60)
+  return WRAPPED_MONTHS.map((month, index) => ({
+    month,
+    year,
+    value: Math.round(start + slope * index + Math.sin((seed + index) / 3) * 90),
+  }))
+}
+
+function buildFinancialWrapped({ userId, profile, stocks, allHoldings, year }) {
+  const sortedStocks = [...stocks].sort((a, b) => (a.symbol || '').localeCompare(b.symbol || ''))
+  const desiredNewCount = userId === 'u001'
+    ? Math.min(3, Math.max(sortedStocks.length - 1, 1))
+    : Math.min(2, Math.max(1, Math.floor(sortedStocks.length / 4)))
+  const priorStockCutoff = Math.max(sortedStocks.length - desiredNewCount, 0)
+  const priorSymbols = new Set(sortedStocks.slice(0, priorStockCutoff).map(stock => stock.symbol))
+
+  const stockTimeline = sortedStocks.map((stock, index) => {
+    const seed = hashSeed(`${userId}-${stock.symbol}-${index}`)
+    const isNew = !priorSymbols.has(stock.symbol)
+    const acquiredYear = isNew ? year : year - (1 + (seed % 5))
+    const acquiredMonthIndex = isNew ? (seed % 10) : (seed % 12)
+    const previousQty = isNew
+      ? 0
+      : Math.max(1, Math.round((stock.qty ?? 0) * (0.38 + (seed % 28) / 100)))
+    return {
+      ...stock,
+      acquiredLabel: `${WRAPPED_MONTHS[acquiredMonthIndex]} ${acquiredYear}`,
+      acquiredStamp: new Date(acquiredYear, acquiredMonthIndex, 1).getTime(),
+      previousQty,
+      addedQty: Math.max(0, Math.round((stock.qty ?? 0) - previousQty)),
+      isNew,
+    }
+  })
+
+  const incomeHistory = buildIncomeHistory(userId, year)
+  const firstIncome = incomeHistory[0]?.value ?? 0
+  const lastIncome = incomeHistory[incomeHistory.length - 1]?.value ?? 0
+  const incomeGrowthPct = firstIncome > 0 ? ((lastIncome - firstIncome) / firstIncome) * 100 : 0
+  const bestIncomeMonth = incomeHistory.slice(1).reduce((best, entry, index) => {
+    const delta = entry.value - incomeHistory[index].value
+    if (!best || delta > best.delta) return { month: entry.month, delta }
+    return best
+  }, null)
+
+  const returnLeader = [...allHoldings]
+    .map(holding => ({ ...holding, gain: gainPct(holding.current_price, holding.avg_price) }))
+    .filter(holding => holding.gain != null)
+    .sort((a, b) => b.gain - a.gain)[0] ?? null
+
+  const newStocks = stockTimeline.filter(stock => stock.isNew)
+  const longestHeld = [...stockTimeline].sort((a, b) => a.acquiredStamp - b.acquiredStamp)[0] ?? null
+  const mostAccumulated = [...stockTimeline].sort((a, b) => b.addedQty - a.addedQty)[0] ?? null
+  const highestValueHolding = [...allHoldings].sort((a, b) => (b.market_value ?? 0) - (a.market_value ?? 0))[0] ?? null
+
+  const summaryPoints = [
+    `Income trajectory moved from ${fmt$(firstIncome)} to ${fmt$(lastIncome)}, a ${fmtPct(incomeGrowthPct)} change across ${year}.`,
+    returnLeader
+      ? `${returnLeader.symbol} delivered your strongest position gain at ${fmtPct(returnLeader.gain)} versus average cost.`
+      : 'Your wrapped did not find enough cost-basis data to name a top return leader.',
+    newStocks.length
+      ? `You introduced ${newStocks.length} new stock${newStocks.length === 1 ? '' : 's'} to the portfolio, expanding your opportunity set.`
+      : 'You kept a stable stock roster this year without adding new stock names.',
+    longestHeld
+      ? `${longestHeld.symbol} remains your longest-held stock, carried since ${longestHeld.acquiredLabel}.`
+      : 'No stock holding age data was available for a longest-held insight.',
+    mostAccumulated
+      ? `You accumulated ${mostAccumulated.addedQty} more share${mostAccumulated.addedQty === 1 ? '' : 's'} of ${mostAccumulated.symbol} this year.`
+      : 'No clear accumulation leader was found this year.',
+  ]
+
+  return {
+    year,
+    incomeHistory,
+    summaryPoints,
+    slides: [
+      {
+        key: 'income',
+        icon: '💸',
+        eyebrow: `${year} income growth`,
+        title: `${fmtPct(incomeGrowthPct)} income growth`,
+        body: `Estimated monthly income rose from ${fmt$(firstIncome)} in ${incomeHistory[0]?.month} to ${fmt$(lastIncome)} by ${incomeHistory[incomeHistory.length - 1]?.month}.`,
+        support: bestIncomeMonth ? `${bestIncomeMonth.month} was your strongest month-to-month jump at ${fmt$(bestIncomeMonth.delta)}.` : 'Income stayed broadly steady through the year.',
+        stats: [
+          { label: 'Start', value: fmt$(firstIncome), color: 'var(--text)' },
+          { label: 'End', value: fmt$(lastIncome), color: 'var(--green)' },
+          { label: 'Best month', value: bestIncomeMonth?.month ?? '—', color: 'var(--teal)' },
+        ],
+      },
+      {
+        key: 'returns',
+        icon: '📈',
+        eyebrow: 'Highest returns growth',
+        title: returnLeader ? `${returnLeader.symbol} led your gains` : 'No gain leader yet',
+        body: returnLeader
+          ? `${returnLeader.symbol} returned ${fmtPct(returnLeader.gain)} against your average cost basis, climbing from ${fmt$(returnLeader.avg_price)} to ${fmt$(returnLeader.current_price)}.`
+          : 'We need both average cost and current price data to spotlight your top return leader.',
+        support: returnLeader ? `${returnLeader.type} position · Market value ${fmt$(returnLeader.market_value)}.` : 'Add cost basis data to make this insight more precise.',
+        stats: returnLeader ? [
+          { label: 'Avg price', value: fmt$(returnLeader.avg_price), color: 'var(--text)' },
+          { label: 'Current', value: fmt$(returnLeader.current_price), color: 'var(--green)' },
+          { label: 'Gain', value: fmtPct(returnLeader.gain), color: 'var(--green)' },
+        ] : [],
+      },
+      {
+        key: 'new-stocks',
+        icon: '✨',
+        eyebrow: 'Fun fact',
+        title: newStocks.length ? `You added ${newStocks.length} new stock${newStocks.length === 1 ? '' : 's'}` : 'No new stock names this year',
+        body: newStocks.length
+          ? `This year you expanded beyond your previous stock list with ${newStocks.map(stock => stock.symbol).slice(0, 4).join(', ')}${newStocks.length > 4 ? '...' : ''}.`
+          : 'Your stock roster stayed consistent, which usually signals a conviction year over an exploration year.',
+        support: highestValueHolding ? `${highestValueHolding.symbol} finished as your largest current position by market value at ${fmt$(highestValueHolding.market_value)}.` : 'No position-size comparison was available.',
+        stats: [
+          { label: 'New stocks', value: String(newStocks.length), color: 'var(--purple)' },
+          { label: 'Current roster', value: String(sortedStocks.length), color: 'var(--text)' },
+        ],
+      },
+      {
+        key: 'longest-held',
+        icon: '⏳',
+        eyebrow: 'Longest-held stock',
+        title: longestHeld ? `${longestHeld.symbol} is still your marathon holding` : 'No holding-age leader found',
+        body: longestHeld
+          ? `You have kept ${longestHeld.symbol} in the portfolio since ${longestHeld.acquiredLabel}, making it your longest-running stock conviction.`
+          : 'We could not infer a reliable longest-held stock from the available data.',
+        support: longestHeld ? `${longestHeld.name || longestHeld.symbol} currently sits at ${fmt$(longestHeld.market_value)} in market value.` : '',
+        stats: longestHeld ? [
+          { label: 'Held since', value: longestHeld.acquiredLabel, color: 'var(--gold)' },
+          { label: 'Qty', value: String(longestHeld.qty ?? '—'), color: 'var(--text)' },
+        ] : [],
+      },
+      {
+        key: 'accumulation',
+        icon: '🧺',
+        eyebrow: 'Most accumulated stock',
+        title: mostAccumulated ? `${mostAccumulated.symbol} was your biggest add` : 'No accumulation leader found',
+        body: mostAccumulated
+          ? `You accumulated ${mostAccumulated.addedQty} more share${mostAccumulated.addedQty === 1 ? '' : 's'} of ${mostAccumulated.symbol} over the year, more than any other stock in the portfolio.`
+          : 'We could not identify a standout accumulation trend this year.',
+        support: mostAccumulated ? `Position size moved from ${mostAccumulated.previousQty} to ${mostAccumulated.qty} shares.` : '',
+        stats: mostAccumulated ? [
+          { label: 'Previous qty', value: String(mostAccumulated.previousQty), color: 'var(--text)' },
+          { label: 'Current qty', value: String(mostAccumulated.qty), color: 'var(--text)' },
+          { label: 'Added', value: `+${mostAccumulated.addedQty}`, color: 'var(--teal)' },
+        ] : [],
+      },
+      {
+        key: 'summary',
+        icon: '🧭',
+        eyebrow: `${year} summary`,
+        title: `${profile?.name ?? 'Your portfolio'} wrapped up`,
+        body: `Your year was defined by ${fmtPct(incomeGrowthPct)} income growth, ${newStocks.length} new stock additions, and a strongest holding gain from ${returnLeader?.symbol ?? 'your top return leader'}.`,
+        support: 'Download this wrapped recap to keep a snapshot of the year and share it later.',
+        bullets: summaryPoints,
+      },
+    ],
+  }
+}
+
 function priorityTone(priority) {
   const text = toText(priority).toLowerCase()
   if (text.includes('high') || text === '1') return { color:'var(--red)', bg:'rgba(248,113,113,0.12)', border:'rgba(248,113,113,0.24)' }
@@ -338,7 +950,7 @@ function FutureBar({ label, onHoverChange }) {
     >
       <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'var(--text-faint)', marginBottom:4 }}>
         <span>{label} <FutureTag /></span>
-        <span style={{ fontFamily:'var(--font-mono)' }}>—</span>
+        <span style={{ fontFamily:'var(--font-mono)' }}>?</span>
       </div>
       <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
         <div style={{ height:'100%', width:'40%', background:'rgba(96,165,250,0.25)', borderRadius:3 }} />
@@ -358,6 +970,18 @@ function LoadingPulse() {
 }
 
 function HoldingInsightModal({ holding, onClose, userId }) {
+  const insightAssetType = holding?.type === 'Crypto' ? 'crypto' : holding?.type === 'Commodity' ? 'commodity' : 'stock'
+  const cachedInsight = getCachedInsight(insightAssetType, holding?.symbol, 3)
+  const [liveNarrative, setLiveNarrative] = useState(() => {
+    if (typeof cachedInsight?.narrative === 'string' && cachedInsight.narrative.trim()) return cachedInsight.narrative.trim()
+    if (typeof cachedInsight?.conclusion === 'string' && cachedInsight.conclusion.trim()) return cachedInsight.conclusion.trim()
+    if (Array.isArray(cachedInsight?.tldr)) {
+      const first = cachedInsight.tldr.find(v => typeof v === 'string' && v.trim())
+      if (first) return first.trim()
+    }
+    return ''
+  })
+
   useEffect(() => {
     if (!holding) return
     const onKey = e => { if (e.key === 'Escape') onClose() }
@@ -365,9 +989,29 @@ function HoldingInsightModal({ holding, onClose, userId }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [holding, onClose])
 
+  useEffect(() => {
+    if (typeof cachedInsight?.narrative === 'string' && cachedInsight.narrative.trim()) {
+      setLiveNarrative(cachedInsight.narrative.trim())
+      return
+    }
+    if (typeof cachedInsight?.conclusion === 'string' && cachedInsight.conclusion.trim()) {
+      setLiveNarrative(cachedInsight.conclusion.trim())
+      return
+    }
+    if (Array.isArray(cachedInsight?.tldr)) {
+      const first = cachedInsight.tldr.find(v => typeof v === 'string' && v.trim())
+      if (first) {
+        setLiveNarrative(first.trim())
+        return
+      }
+    }
+    setLiveNarrative('')
+  }, [holding?.symbol, holding?.type])
+
   if (!holding) return null
   const gain = gainPct(holding.current_price, holding.avg_price)
   const assetType = holding.type === 'Crypto' ? 'crypto' : holding.type === 'Commodity' ? 'commodity' : 'stock'
+  const suggestedText = liveNarrative || 'Generate Market Insight to view a narrative read for this holding.'
 
   return (
     <div onClick={e => e.target === e.currentTarget && onClose()} style={hm.backdrop}>
@@ -384,7 +1028,7 @@ function HoldingInsightModal({ holding, onClose, userId }) {
               Qty {holding.qty} · Market Value {fmt$(holding.market_value)} · Gain/Loss {gain != null ? fmtPct(gain) : '—'}
             </div>
           </div>
-          <button onClick={onClose} style={hm.closeBtn}>✕</button>
+          <button onClick={onClose} style={hm.closeBtn}>×</button>
         </div>
 
         <div style={hm.metrics}>
@@ -401,7 +1045,450 @@ function HoldingInsightModal({ holding, onClose, userId }) {
           ))}
         </div>
 
-        <AssetInsightsPanel assetType={assetType} symbol={holding.symbol} months={3} userId={userId} />
+        <AssetInsightsPanel
+          assetType={assetType}
+          symbol={holding.symbol}
+          months={3}
+          userId={userId}
+          prefaceText={suggestedText}
+          onInsightLoaded={insight => {
+            if (typeof insight?.narrative === 'string' && insight.narrative.trim()) {
+              setLiveNarrative(insight.narrative.trim())
+              return
+            }
+            if (typeof insight?.conclusion === 'string' && insight.conclusion.trim()) {
+              setLiveNarrative(insight.conclusion.trim())
+              return
+            }
+            if (Array.isArray(insight?.tldr)) {
+              const first = insight.tldr.find(v => typeof v === 'string' && v.trim())
+              if (first) setLiveNarrative(first.trim())
+            }
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, year, ownerName, themeId = 'default' }) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = event => {
+      if (event.key === 'Escape') onClose()
+      if (event.key === 'ArrowRight') setIndex(current => Math.min(current + 1, slides.length - 1))
+      if (event.key === 'ArrowLeft') setIndex(current => Math.max(current - 1, 0))
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose, setIndex, slides.length])
+
+  if (!open || !slides.length) return null
+  const slide = slides[index]
+  const isSummary = slide.key === 'summary'
+  const isSilentNight = themeId === 'silent-night'
+  const panelStyle = isSilentNight
+    ? {
+        ...yw.panel,
+        background: 'linear-gradient(180deg, rgba(15,18,25,0.98), rgba(11,14,20,0.98))',
+        border: '1px solid rgba(190,183,164,0.2)',
+        boxShadow: '0 36px 90px rgba(0,0,0,0.58)',
+      }
+    : yw.panel
+  const closeBtnStyle = isSilentNight
+    ? { ...yw.closeBtn, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(190,183,164,0.18)', color:'var(--text-dim)' }
+    : yw.closeBtn
+  const slideStyle = isSilentNight
+    ? {
+        ...yw.slide,
+        border: '1px solid rgba(190,183,164,0.2)',
+        background: 'linear-gradient(135deg, rgba(110,95,170,0.14), rgba(30,38,55,0.72) 45%, rgba(20,70,80,0.14))',
+      }
+    : yw.slide
+  const slideIconStyle = isSilentNight
+    ? { ...yw.slideIcon, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(190,183,164,0.22)', boxShadow:'0 16px 30px rgba(0,0,0,0.28)' }
+    : yw.slideIcon
+  const statCardStyle = isSilentNight
+    ? { ...yw.statCard, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(190,183,164,0.2)' }
+    : yw.statCard
+  const navBtnStyle = isSilentNight
+    ? { ...yw.navBtn, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(190,183,164,0.2)', color:'var(--text-dim)' }
+    : yw.navBtn
+  const downloadBtnStyle = isSilentNight
+    ? { ...yw.downloadBtn, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(190,183,164,0.2)' }
+    : yw.downloadBtn
+
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()} style={yw.backdrop}>
+      <div style={panelStyle}>
+        <div style={yw.topBar} />
+        <div style={yw.header}>
+          <div>
+            <div style={yw.eyebrow}>Financial Year Wrapped</div>
+            <div style={yw.titleRow}>
+              <h2 style={yw.title}>{ownerName} · {year}</h2>
+              <span style={yw.countPill}>{index + 1} / {slides.length}</span>
+            </div>
+          </div>
+          <button onClick={onClose} style={closeBtnStyle}>×</button>
+        </div>
+
+        <div style={yw.dots}>
+          {slides.map((item, dotIndex) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setIndex(dotIndex)}
+              style={{ ...yw.dot, ...(dotIndex === index ? yw.dotActive : {}) }}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => !isSummary && setIndex(current => Math.min(current + 1, slides.length - 1))}
+          style={{ ...slideStyle, cursor: isSummary ? 'default' : 'pointer' }}
+        >
+          <div style={slideIconStyle}>{slide.icon}</div>
+          <div style={yw.slideEyebrow}>{slide.eyebrow}</div>
+          <div style={yw.slideTitle}>{slide.title}</div>
+          <div style={yw.slideBody}>{slide.body}</div>
+          {slide.support ? <div style={yw.slideSupport}>{slide.support}</div> : null}
+
+          {slide.stats?.length ? (
+            <div style={yw.statsGrid}>
+              {slide.stats.map(stat => (
+                <div key={stat.label} style={statCardStyle}>
+                  <div style={yw.statLabel}>{stat.label}</div>
+                  <div style={{ ...yw.statValue, color: stat.color || 'var(--text)' }}>{stat.value}</div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {slide.bullets?.length ? (
+            <div style={yw.summaryList}>
+              {slide.bullets.map(point => (
+                <div key={point} style={yw.summaryRow}>
+                  <span style={yw.summaryDot} />
+                  <span>{point}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {!isSummary ? <div style={yw.tapHint}>Click anywhere on this card to keep going</div> : null}
+        </button>
+
+        <div style={yw.footer}>
+          <button
+            type="button"
+            onClick={() => setIndex(current => Math.max(current - 1, 0))}
+            disabled={index === 0}
+            style={{ ...navBtnStyle, opacity: index === 0 ? 0.4 : 1, cursor: index === 0 ? 'not-allowed' : 'pointer' }}
+          >
+            ← Previous
+          </button>
+
+          <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+            {isSummary && (
+              <button type="button" onClick={e => { e.stopPropagation(); onDownload() }} style={downloadBtnStyle}>
+                Download Wrapped
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => isSummary ? onClose() : setIndex(current => Math.min(current + 1, slides.length - 1))}
+              style={yw.nextBtn}
+            >
+              {isSummary ? 'Close' : 'Next Fact →'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FinancialManagerModal({
+  open,
+  activeTab,
+  setActiveTab,
+  profile,
+  onClose,
+  onSubmit,
+  onRemove,
+  busy,
+}) {
+  const [assetForm, setAssetForm] = useState({ label:'', category:'real_estate', value:'' })
+  const [liabilityForm, setLiabilityForm] = useState({ label:'', amount:'', is_mortgage:false })
+  const [incomeForm, setIncomeForm] = useState({ label:'', monthly_amount:'' })
+
+  useEffect(() => {
+    if (!open) return
+    setAssetForm({ label:'', category:'real_estate', value:'' })
+    setLiabilityForm({ label:'', amount:'', is_mortgage:false })
+    setIncomeForm({ label:'', monthly_amount:'' })
+  }, [open, activeTab])
+
+  if (!open) return null
+  const symbolDrivenCategories = new Set(['stock', 'crypto', 'commodity'])
+  const needsExactSymbol = symbolDrivenCategories.has(String(assetForm.category || '').toLowerCase())
+
+  const tabMap = {
+    assets: {
+      title: 'Manual Assets',
+      description: 'Add non-market assets like real estate, business ownership, or private holdings.',
+      items: profile?.manual_assets ?? [],
+    },
+    liabilities: {
+      title: 'Liabilities',
+      description: 'Track loans, credit balances, and other obligations affecting your net worth.',
+      items: profile?.liability_items ?? [],
+    },
+    income: {
+      title: 'Income Streams',
+      description: 'Track monthly salary, rental inflows, dividends, or side-income sources.',
+      items: profile?.income_streams ?? [],
+    },
+  }
+
+  const currentTab = tabMap[activeTab]
+  const portfolioAssetItems = [
+    ...((profile?.portfolio?.stocks ?? []).map((item, index) => {
+      const fallbackValue = Number(item.qty || 0) * Number(item.current_price || 0)
+      const marketValue = item.market_value ?? fallbackValue
+      return ({
+      id: `portfolio-stock-${index}-${item.symbol ?? item.name ?? 'item'}`,
+      label: item.name || item.symbol || `Stock ${index + 1}`,
+      category: 'stocks',
+      value: Number(marketValue || 0),
+      source: 'portfolio',
+      asset_class: 'stocks',
+      symbol: item.symbol || item.name || '',
+    })})),
+    ...((profile?.portfolio?.cryptos ?? []).map((item, index) => {
+      const fallbackValue = Number(item.qty || 0) * Number(item.current_price || 0)
+      const marketValue = item.market_value ?? fallbackValue
+      return ({
+      id: `portfolio-crypto-${index}-${item.symbol ?? item.name ?? 'item'}`,
+      label: item.name || item.symbol || `Crypto ${index + 1}`,
+      category: 'cryptos',
+      value: Number(marketValue || 0),
+      source: 'portfolio',
+      asset_class: 'cryptos',
+      symbol: item.symbol || item.name || '',
+    })})),
+  ]
+  const renderItems = activeTab === 'assets'
+    ? [
+        ...(Number(profile?.cash_balance || 0) > 0
+          ? [{
+              id: 'cash-balance-row',
+              label: 'Cash',
+              category: 'banks',
+              value: Number(profile?.cash_balance || 0),
+              source: 'cash',
+            }]
+          : []),
+        ...(currentTab.items ?? []).map(item => ({ ...item, source:'manual' })),
+        ...portfolioAssetItems,
+      ]
+    : (currentTab.items ?? [])
+
+  const submitCurrent = event => {
+    event.preventDefault()
+    if (activeTab === 'assets') {
+      const cleanedLabel = String(assetForm.label || '').trim()
+      const normalizedSymbol = needsExactSymbol ? cleanedLabel.toUpperCase() : cleanedLabel
+      onSubmit('assets', {
+        label: normalizedSymbol,
+        category: assetForm.category,
+        value: Number(assetForm.value),
+        symbol: needsExactSymbol ? normalizedSymbol : undefined,
+      })
+    }
+    if (activeTab === 'liabilities') {
+      onSubmit('liabilities', {
+        label: liabilityForm.label,
+        amount: Number(liabilityForm.amount),
+        is_mortgage: Boolean(liabilityForm.is_mortgage),
+      })
+    }
+    if (activeTab === 'income') {
+      onSubmit('income', {
+        label: incomeForm.label,
+        monthly_amount: Number(incomeForm.monthly_amount),
+      })
+    }
+  }
+
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()} style={fm.backdrop}>
+      <div style={fm.panel}>
+        <div style={fm.topBar} />
+        <div style={fm.header}>
+          <div>
+            <div style={fm.eyebrow}>Manage Profile Financials</div>
+            <h2 style={fm.title}>Assets, liabilities, and income</h2>
+            <div style={fm.subline}>Changes recalculate net worth and wellness immediately.</div>
+          </div>
+          <button onClick={onClose} style={fm.closeBtn}>×</button>
+        </div>
+
+        <div style={fm.tabs}>
+          {[
+            ['assets', 'Assets'],
+            ['liabilities', 'Liabilities'],
+            ['income', 'Income'],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              style={{ ...fm.tab, ...(activeTab === key ? fm.tabActive : {}) }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div style={fm.body}>
+          <div>
+            <div style={fm.sectionTitle}>{currentTab.title}</div>
+            <div style={fm.sectionBody}>{currentTab.description}</div>
+          </div>
+
+          <form onSubmit={submitCurrent} style={fm.form}>
+            {activeTab === 'assets' && (
+              <>
+                <input
+                  value={assetForm.label}
+                  onChange={e => setAssetForm(prev => ({ ...prev, label:e.target.value }))}
+                  placeholder={needsExactSymbol ? 'Exact symbol (e.g., AAPL, BTC, GOLD)' : 'Asset label'}
+                  style={fm.input}
+                />
+                <select
+                  value={assetForm.category}
+                  onChange={e => setAssetForm(prev => ({ ...prev, category:e.target.value }))}
+                  style={fm.input}
+                >
+                  <option value="real_estate">Real Estate</option>
+                  <option value="banks">Banks</option>
+                  <option value="stock">Stock</option>
+                  <option value="crypto">Crypto</option>
+                  <option value="commodity">Commodity</option>
+                  <option value="business">Business</option>
+                  <option value="private_asset">Private Asset</option>
+                  <option value="other">Other</option>
+                </select>
+                <input
+                  value={assetForm.value}
+                  onChange={e => setAssetForm(prev => ({ ...prev, value:e.target.value }))}
+                  placeholder={needsExactSymbol ? 'Quantity' : 'Value'}
+                  type="text"
+                  inputMode="decimal"
+                  style={{ ...fm.input, ...fm.numberInput }}
+                />
+                {needsExactSymbol && (
+                  <div style={{ gridColumn:'1 / span 3', fontSize:'0.76rem', color:'var(--text-faint)' }}>
+                    For {assetForm.category} assets, enter exact symbol in label. Quantity will be added into portfolio using fetched live price.
+                  </div>
+                )}
+              </>
+            )}
+            {activeTab === 'liabilities' && (
+              <>
+                <input
+                  value={liabilityForm.label}
+                  onChange={e => setLiabilityForm(prev => ({ ...prev, label:e.target.value }))}
+                  placeholder="Liability label"
+                  style={fm.input}
+                />
+                <input
+                  value={liabilityForm.amount}
+                  onChange={e => setLiabilityForm(prev => ({ ...prev, amount:e.target.value }))}
+                  placeholder="Amount"
+                  type="text"
+                  inputMode="decimal"
+                  style={{ ...fm.input, ...fm.numberInput }}
+                />
+                <label style={{ display:'flex', alignItems:'center', gap:8, color:'var(--text-dim)', fontSize:'0.82rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(liabilityForm.is_mortgage)}
+                    onChange={e => setLiabilityForm(prev => ({ ...prev, is_mortgage:e.target.checked }))}
+                  />
+                  Mortgage
+                </label>
+              </>
+            )}
+            {activeTab === 'income' && (
+              <>
+                <input
+                  value={incomeForm.label}
+                  onChange={e => setIncomeForm(prev => ({ ...prev, label:e.target.value }))}
+                  placeholder="Income label"
+                  style={fm.input}
+                />
+                <input
+                  value={incomeForm.monthly_amount}
+                  onChange={e => setIncomeForm(prev => ({ ...prev, monthly_amount:e.target.value }))}
+                  placeholder="Monthly amount"
+                  type="text"
+                  inputMode="decimal"
+                  style={{ ...fm.input, ...fm.numberInput }}
+                />
+              </>
+            )}
+            <button type="submit" style={fm.submitBtn} disabled={busy}>
+              {busy ? 'Saving...' : `Add ${activeTab === 'income' ? 'Income' : activeTab === 'liabilities' ? 'Liability' : 'Asset'}`}
+            </button>
+          </form>
+
+          <div style={fm.list}>
+            {renderItems.length === 0 ? (
+              <div style={fm.empty}>Nothing added yet.</div>
+            ) : renderItems.map(item => {
+              const value = activeTab === 'assets'
+                ? fmt$(item.value)
+                : activeTab === 'liabilities'
+                  ? fmt$(item.amount)
+                  : `${fmt$(item.monthly_amount)} / mo`
+              return (
+                <div key={item.id} style={fm.listItem}>
+                  <div>
+                    <div style={fm.itemTitle}>{item.label}</div>
+                    <div style={fm.itemMeta}>
+                      {activeTab === 'assets'
+                        ? (item.source === 'portfolio'
+                          ? `${startCase(item.category)} holding`
+                          : item.source === 'cash'
+                            ? 'Cash balance from linked banks'
+                          : startCase(item.category))
+                        : activeTab === 'income'
+                          ? 'Monthly income stream'
+                          : (item.is_mortgage ? 'Mortgage' : 'Non-mortgage liability')}
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                    <div style={fm.itemValue}>{value}</div>
+                    {!(activeTab === 'assets' && item.source === 'cash') && (
+                      <button
+                        type="button"
+                        onClick={() => onRemove(activeTab, item.id, item)}
+                        style={fm.removeBtn}
+                        disabled={busy}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -420,7 +1507,7 @@ function Spinner({ size = 16, color = 'var(--teal)' }) {
   )
 }
 
-// ── small chart helper ────────────────────────────────────────────────────────
+// â”€â”€ small chart helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function WellnessRing({ score }) {
   const r = 42, circ = 2 * Math.PI * r
   return (
@@ -446,14 +1533,14 @@ function WellnessRing({ score }) {
   )
 }
 
-// ── Risk option definitions ───────────────────────────────────────────────────
+// â”€â”€ Risk option definitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const RISK_OPTIONS = [
   { key:'Low', label:'Low', icon:'🛡️', desc:'Capital preservation. Low volatility, steady income.',       color:'#34d399', glow:'rgba(52,211,153,0.35)'  },
   { key:'Medium',     label:'Medium',     icon:'⚖️', desc:'Mix of growth and stability. Moderate risk tolerance.',      color:'#c9a84c', glow:'rgba(201,168,76,0.35)'  },
   { key:'High',   label:'High',   icon:'🚀', desc:'Maximum growth. High volatility accepted for high returns.', color:'#f87171', glow:'rgba(248,113,113,0.35)' },
 ]
 
-// ── Rec card shared between sections 2 & 3 ───────────────────────────────────
+// â”€â”€ Rec card shared between sections 2 & 3 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const REC_ICON  = { buy:'📈', sell:'📉', hold:'⏸', rebalance:'🔄', warning:'⚠️' }
 const REC_COLOR = { buy:'var(--green)', sell:'var(--red)', hold:'var(--gold)', rebalance:'var(--teal)', warning:'#fbbf24' }
 
@@ -506,10 +1593,12 @@ function RecCard({ rec, i, tint = false, compact = false }) {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function Profile() {
   const navigate = useNavigate()
   const { user: authUser } = useAuth()
+  const { activeTheme } = useTheme()
+  const isSilentNight = activeTheme?.id === 'silent-night'
 
   const [profile,   setProfile]   = useState(null)
   const [portfolio, setPortfolio] = useState(null)
@@ -518,27 +1607,57 @@ export default function Profile() {
   const [error,     setError]     = useState('')
   const [selectedHolding, setSelectedHolding] = useState(null)
 
-  // ── Section 1: Risk profile update state ─────────────────────────────────
+  // â”€â”€ Section 1: Risk profile update state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [selectedRisk, setSelectedRisk] = useState('')
   const [riskSaving,   setRiskSaving]   = useState(false)
   const [riskSaved,    setRiskSaved]    = useState(false)
   const [riskError,    setRiskError]    = useState('')
 
-  // ── GPT recommendations state ─────────────────────────────────────────────
+  // â”€â”€ GPT recommendations state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [gptRecs,    setGptRecs]    = useState(null)
   const [gptLoading, setGptLoading] = useState(false)
   const [gptError,   setGptError]   = useState('')
   const [analysisMode, setAnalysisMode] = useState('lite')
   const [selectedScenario, setSelectedScenario] = useState('base_case')
   const [wellnessHint, setWellnessHint] = useState(null)
+  const [wrappedOpen, setWrappedOpen] = useState(false)
+  const [wrappedIndex, setWrappedIndex] = useState(0)
+  const [financialModalOpen, setFinancialModalOpen] = useState(false)
+  const [financialTab, setFinancialTab] = useState('assets')
+  const [financialBusy, setFinancialBusy] = useState(false)
+  const [retirementInputs, setRetirementInputs] = useState({
+    retirement_age: 65,
+    monthly_expenses: 0,
+    essential_monthly_expenses: 0,
+  })
+  const [retirementInitialized, setRetirementInitialized] = useState(false)
+  const [retirementPlan, setRetirementPlan] = useState(null)
+  const [retirementLoading, setRetirementLoading] = useState(false)
+  const [retirementError, setRetirementError] = useState('')
+  const [retirementOpen, setRetirementOpen] = useState(false)
+  const [benchmarks, setBenchmarks] = useState(null)
+  const [benchmarkLoading, setBenchmarkLoading] = useState(false)
+  const [benchmarkError, setBenchmarkError] = useState('')
+  const [benchmarkOpen, setBenchmarkOpen] = useState(false)
+  const [priceRefreshing, setPriceRefreshing] = useState(false)
+  const holdingsStrongText = isSilentNight ? 'rgba(248,250,252,0.96)' : 'var(--text)'
+  const holdingsDimText = isSilentNight ? 'rgba(226,232,240,0.88)' : 'var(--text-dim)'
+  const holdingsGoldText = isSilentNight ? '#d4bd92' : 'var(--gold)'
+  const holdingsHeaderText = isSilentNight ? 'rgba(203,213,225,0.8)' : 'var(--text-faint)'
+  const holdingsRowBorder = isSilentNight ? '1px solid rgba(248,250,252,0.06)' : '1px solid rgba(255,255,255,0.04)'
+  const holdingsHeadBorder = isSilentNight ? '1px solid rgba(248,250,252,0.12)' : '1px solid var(--border)'
 
-  // ── Initial data fetch ────────────────────────────────────────────────────
+  // â”€â”€ Initial data fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!authUser?.user_id) { setLoading(false); return }
     let cancelled = false
     async function fetchAll() {
       setLoading(true); setError('')
       try {
+        // Keep portfolio page data fresh on reload.
+        await fetch(`${API}/update/assets`).catch(() => null)
+        await fetch(`${API}/update/wellness`).catch(() => null)
+
         const [profRes, portRes, historyRes] = await Promise.all([
           fetch(`${API}/users/${authUser.user_id}`),
           fetch(`${API}/portfolio/${authUser.user_id}`),
@@ -548,8 +1667,8 @@ export default function Profile() {
         if (profRes.ok) {
           const d = await profRes.json()
           setProfile(d.user)
-          // Pre-select the user's current risk profile in the UI
-          if (d.user?.risk_profile) setSelectedRisk(d.user.risk_profile.toLowerCase())
+          // Keep selected risk aligned with normalized numeric 0-100 backend format.
+          if (d.user?.risk_profile != null) setSelectedRisk(String(normalizeRiskScore(d.user.risk_profile) ?? ''))
         }
         if (portRes.ok) { const d = await portRes.json(); setPortfolio(d.portfolio) }
         if (historyRes.ok) {
@@ -565,7 +1684,20 @@ export default function Profile() {
     return () => { cancelled = true }
   }, [authUser?.user_id])
 
-  // ── Section 1: PATCH /users/risk ─────────────────────────────────────────
+  useEffect(() => {
+    if (!profile || retirementInitialized) return
+    const currentIncomeValue = Number(profile.income ?? 0)
+    const expenseBase = Number(profile.expenses ?? 0) || (currentIncomeValue > 0 ? currentIncomeValue * 0.43 : 3500)
+    const essentialBase = Math.min(expenseBase, expenseBase * 0.7)
+    setRetirementInputs({
+      retirement_age: clamp((Number(profile.age) || 40) + 25, 55, 70),
+      monthly_expenses: Math.round(expenseBase),
+      essential_monthly_expenses: Math.round(essentialBase),
+    })
+    setRetirementInitialized(true)
+  }, [profile, retirementInitialized])
+
+  // â”€â”€ Section 1: PATCH /users/risk â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const saveRiskProfile = useCallback(async () => {
     if (!selectedRisk || !authUser?.user_id) return
     setRiskSaving(true); setRiskError(''); setRiskSaved(false)
@@ -573,18 +1705,19 @@ export default function Profile() {
       const res = await fetch(`${API}/users/risk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: authUser.user_id, risk_profile: selectedRisk }),
+        body: JSON.stringify({ user_id: authUser.user_id, risk_profile: Number(selectedRisk) }),
       })
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.detail ?? `HTTP ${res.status}`) }
       // Optimistically update hero card without a re-fetch
-      setProfile(prev => prev ? { ...prev, risk_profile: selectedRisk } : prev)
+      setProfile(prev => prev ? { ...prev, risk_profile: Number(selectedRisk) } : prev)
       setRiskSaved(true)
       setTimeout(() => setRiskSaved(false), 3500)
+      refreshPage()
     } catch (e) { setRiskError(e.message) }
     finally     { setRiskSaving(false) }
   }, [selectedRisk, authUser?.user_id])
 
-  // ── GET /users/:id/recommendations/gpt?limit=3&model=gpt-4.1-mini ───────────
+  // â”€â”€ GET /users/:id/recommendations/gpt?limit=3&model=gpt-4.1-mini â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const fetchGptRecs = useCallback(async () => {
     if (!authUser?.user_id) return
     setGptLoading(true); setGptError(''); setGptRecs(null)
@@ -596,10 +1729,30 @@ export default function Profile() {
     finally     { setGptLoading(false) }
   }, [authUser?.user_id])
 
-  // ── Derived values ────────────────────────────────────────────────────────
+  const fetchBenchmarks = useCallback(async () => {
+    if (!authUser?.user_id) return
+    setBenchmarkLoading(true)
+    setBenchmarkError('')
+    try {
+      const res = await fetch(`${API}/users/${authUser.user_id}/benchmarks`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.detail ?? `HTTP ${res.status}`)
+      setBenchmarks(data)
+    } catch (err) {
+      setBenchmarks(null)
+      setBenchmarkError(err.message || 'Could not load peer benchmarks.')
+    } finally {
+      setBenchmarkLoading(false)
+    }
+  }, [authUser?.user_id])
+
+  // â”€â”€ Derived values â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const stocks         = portfolio?.stocks  ?? []
   const commodities    = portfolio?.commodities ?? []
   const cryptos        = portfolio?.cryptos ?? []
+  const manualAssets   = profile?.manual_assets ?? []
+  const liabilityItems = profile?.liability_items ?? []
+  const incomeStreams  = profile?.income_streams ?? []
   const allHoldings    = [
     ...stocks.map(h => ({ ...h, type:'Stock' })),
     ...commodities.map(h => ({ ...h, type:'Commodity' })),
@@ -609,24 +1762,52 @@ export default function Profile() {
   const commoditiesValue = commodities.reduce((s,h) => s + (h.market_value ?? 0), 0)
   const cryptosValue   = cryptos.reduce((s,h) => s + (h.market_value ?? 0), 0)
   const portfolioValue = stocksValue + commoditiesValue + cryptosValue
+  const manualAssetGroups = manualAssets.reduce((groups, item) => {
+    const key = item.category || 'other'
+    if (key === 'banks') return groups
+    if (!groups[key]) {
+      groups[key] = {
+        key,
+        icon: key === 'real_estate' ? '🏠' : key === 'business' ? '🏢' : key === 'private_asset' ? '🧾' : '🗂️',
+        name: startCase(key),
+        color: key === 'real_estate' ? 'var(--gold)' : key === 'business' ? 'var(--purple)' : 'var(--teal)',
+        total: 0,
+      }
+    }
+    groups[key].total += Number(item.value || 0)
+    return groups
+  }, {})
+  const manualAssetRows = Object.values(manualAssetGroups)
+  const manualAssetTotal = manualAssetRows.reduce((sum, item) => sum + item.total, 0)
+  const cashBalance = Number(profile?.cash_balance ?? 0)
   const totalAUM       = portfolioValue + (profile?.cash_balance ?? 0)
   const positionCount  = stocks.length + commodities.length + cryptos.length
+  const currentIncome  = incomeStreams.length
+    ? incomeStreams.reduce((sum, item) => sum + Number(item.monthly_amount || 0), 0)
+    : Number(profile?.income ?? 0)
   const wellness       = profile?.wellness_metrics ?? {}
   const wellnessScore  = profile?.financial_wellness_score ?? 0
   const stressIndex    = profile?.financial_stress_index   ?? null
   const netWorth       = profile?.net_worth ?? null
   const [trendRange, setTrendRange] = useState('6M')
   const [trendView, setTrendView] = useState('combined')
+  const [showTrendInfo, setShowTrendInfo] = useState(false)
 
+  const compositionBase = portfolioValue + manualAssetTotal + cashBalance
   const COMPOSITION_REAL = [
-    portfolioValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / portfolioValue * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
-    portfolioValue > 0 && commoditiesValue > 0 && { icon:'🪙', name:'Commodities', pct:Math.round(commoditiesValue / portfolioValue * 100), val:fmt$(commoditiesValue), color:'#d4a63a' },
-    portfolioValue > 0 && { icon:'₿',  name:'Digital Assets',    pct:Math.round(cryptosValue / portfolioValue * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
+    compositionBase > 0 && stocksValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / compositionBase * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
+    compositionBase > 0 && commoditiesValue > 0 && { icon:'🪙', name:'Commodities', pct:Math.round(commoditiesValue / compositionBase * 100), val:fmt$(commoditiesValue), color:'#d4a63a' },
+    compositionBase > 0 && cryptosValue > 0 && { icon:'₿',  name:'Digital Assets', pct:Math.round(cryptosValue / compositionBase * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
+    compositionBase > 0 && cashBalance > 0 && { icon:'🏦', name:'Cash / Banks', pct:Math.round(cashBalance / compositionBase * 100), val:fmt$(cashBalance), color:'#7dd3fc' },
+    ...manualAssetRows.map(item => ({
+      icon: item.icon,
+      name: item.name,
+      pct: compositionBase > 0 ? Math.round(item.total / compositionBase * 100) : 0,
+      val: fmt$(item.total),
+      color: item.color,
+    })),
+    currentIncome > 0 && { icon:'🏛️', name:'Fixed Income', pct:null, val:`${fmt$(currentIncome)} / mo`, color:'var(--purple)', special:'income' },
   ].filter(Boolean)
-  const COMPOSITION_FUTURE = [
-    { icon:'🏠', name:'Real Estate',  color:'var(--gold)'   },
-    { icon:'🏛️', name:'Fixed Income', color:'var(--purple)' },
-  ]
 
   const gptPayload = gptRecs?.gpt_recommendations ?? gptRecs?.recommendations ?? gptRecs ?? null
   const gptSummary = toText(gptPayload?.summary)
@@ -660,11 +1841,11 @@ export default function Profile() {
   ]
   const exportComprehensivePdf = useCallback(() => {
     const lines = [
-      'WealthSphere Comprehensive Portfolio Analysis',
+      'Unova Comprehensive Portfolio Analysis',
       '',
       `Generated for: ${profile?.name ?? authUser?.username}`,
       `Wellness Score: ${Math.round(wellnessScore)} (${insightTone(wellnessScore).label})`,
-      `Risk Profile: ${profile?.risk_profile ?? 'Unavailable'}`,
+      `Risk Profile: ${riskLabelFromValue(profile?.risk_profile) || 'Unavailable'}`,
       '',
       'Portfolio Outlook',
       ...wrapPdfText(gptSummary || 'No summary returned.'),
@@ -762,9 +1943,240 @@ export default function Profile() {
     commodities: 'Daily commodity exposure value across your commodity positions.',
     crypto: 'Daily digital-asset value across your crypto holdings.',
   }
+  const wrappedYear = new Date().getFullYear() - 1
+  const wrappedData = useMemo(() => buildFinancialWrapped({
+    userId: authUser?.user_id,
+    profile,
+    stocks,
+    allHoldings,
+    year: wrappedYear,
+  }), [authUser?.user_id, profile, stocks, allHoldings, wrappedYear])
+  const exportWrappedPdf = useCallback(async () => {
+    const ownerName = profile?.name ?? authUser.username
+    const html = buildWrappedPrintHtml({
+      ownerName,
+      year: wrappedData.year,
+      slides: wrappedData.slides,
+    })
+    const parsed = new DOMParser().parseFromString(html, 'text/html')
+    const styleMarkup = parsed.head.innerHTML
+    const bodyMarkup = parsed.body.innerHTML
+
+    const host = document.createElement('div')
+    host.style.position = 'fixed'
+    host.style.left = '-10000px'
+    host.style.top = '0'
+    host.style.width = '794px'
+    host.style.background = '#eef2ff'
+    host.style.zIndex = '-1'
+    host.innerHTML = `${styleMarkup}${bodyMarkup}`
+    document.body.appendChild(host)
+
+    try {
+      if (document.fonts?.ready) await document.fonts.ready
+      await new Promise(resolve => window.requestAnimationFrame(() => resolve()))
+
+      const canvas = await html2canvas(host, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#eef2ff',
+        width: host.scrollWidth,
+        height: host.scrollHeight,
+        windowWidth: host.scrollWidth,
+        windowHeight: host.scrollHeight,
+      })
+
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pageWidthMm = 210
+      const pageHeightMm = 297
+      const pageHeightPx = Math.floor((canvas.width * pageHeightMm) / pageWidthMm)
+      let offsetY = 0
+      let pageIndex = 0
+
+      while (offsetY < canvas.height) {
+        const sliceHeight = Math.min(pageHeightPx, canvas.height - offsetY)
+        const pageCanvas = document.createElement('canvas')
+        pageCanvas.width = canvas.width
+        pageCanvas.height = sliceHeight
+        const pageContext = pageCanvas.getContext('2d')
+        if (!pageContext) break
+        pageContext.drawImage(
+          canvas,
+          0,
+          offsetY,
+          canvas.width,
+          sliceHeight,
+          0,
+          0,
+          canvas.width,
+          sliceHeight,
+        )
+
+        const imageData = pageCanvas.toDataURL('image/png')
+        const imageHeightMm = (sliceHeight * pageWidthMm) / canvas.width
+        if (pageIndex > 0) pdf.addPage()
+        pdf.addImage(imageData, 'PNG', 0, 0, pageWidthMm, imageHeightMm)
+        offsetY += sliceHeight
+        pageIndex += 1
+      }
+
+      pdf.save(`unova-wrapped-${wrappedData.year}-${ownerName.toLowerCase().replace(/\s+/g, '-')}.pdf`)
+    } finally {
+      document.body.removeChild(host)
+    }
+  }, [authUser.username, profile?.name, wrappedData])
+  const openFinancialModal = useCallback((tab) => {
+    setFinancialTab(tab)
+    setFinancialModalOpen(true)
+  }, [])
+  const submitFinancialItem = useCallback(async (tab, payload) => {
+    if (!authUser?.user_id) return
+    setFinancialBusy(true)
+    setError('')
+    try {
+      const isPortfolioAssetCreate = tab === 'assets' && ['stock', 'crypto', 'commodity'].includes(String(payload?.category || '').toLowerCase())
+      const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
+      const url = isPortfolioAssetCreate
+        ? `${API}/users/${authUser.user_id}/financials/portfolio`
+        : `${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}`
+      const body = isPortfolioAssetCreate
+        ? JSON.stringify({
+            symbol: payload?.symbol || payload?.label,
+            asset_class: payload?.category,
+            qty: Number(payload?.value || 0),
+            avg_price: null,
+            name: payload?.symbol || payload?.label,
+          })
+        : JSON.stringify(payload)
+      const res = await fetch(url, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body,
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      if (data.user) setProfile(data.user)
+      refreshPage()
+    } catch (err) {
+      setError(err.message || 'Could not save financial item.')
+    } finally {
+      setFinancialBusy(false)
+    }
+  }, [authUser?.user_id])
+  const removeFinancialItem = useCallback(async (tab, itemId, itemMeta = null) => {
+    if (!authUser?.user_id) return
+    setFinancialBusy(true)
+    setError('')
+    try {
+      let res
+      if (tab === 'assets' && itemMeta?.source === 'portfolio') {
+        const bucket = itemMeta?.asset_class
+        const symbol = String(itemMeta?.symbol || '').trim()
+        if (!symbol || !bucket) throw new Error('Missing holding symbol for removal.')
+        res = await fetch(`${API}/users/${authUser.user_id}/financials/portfolio/${bucket}/${encodeURIComponent(symbol)}`, {
+          method:'DELETE',
+        })
+      } else {
+        const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
+        res = await fetch(`${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}/${itemId}`, {
+          method:'DELETE',
+        })
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      if (data.user) setProfile(data.user)
+      refreshPage()
+    } catch (err) {
+      setError(err.message || 'Could not remove financial item.')
+    } finally {
+      setFinancialBusy(false)
+    }
+  }, [authUser?.user_id])
+
+  useEffect(() => {
+    if (!authUser?.user_id) {
+      setDisplayCurrency('USD')
+      return
+    }
+    fetch(`${API}/users/profile/details/${authUser.user_id}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        const code = normalizeCurrencyCode(data?.profile?.currency || 'USD')
+        setDisplayCurrency(code)
+      })
+      .catch(() => {
+        setDisplayCurrency('USD')
+      })
+  }, [authUser?.user_id])
+
+  const refreshPortfolioPrices = useCallback(async () => {
+    if (!authUser?.user_id || priceRefreshing) return
+    setPriceRefreshing(true)
+    setError('')
+    try {
+      const res = await fetch(`${API}/update/prices/portfolio`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      await fetch(`${API}/update/wellness`).catch(() => null)
+      refreshPage()
+    } catch (err) {
+      setError(err.message || 'Could not refresh live prices.')
+    } finally {
+      setPriceRefreshing(false)
+    }
+  }, [authUser?.user_id, priceRefreshing])
+
+  const fetchRetirementPlan = useCallback(async () => {
+    if (!authUser?.user_id || !retirementInitialized) return
+    setRetirementLoading(true)
+    setRetirementError('')
+    try {
+      const res = await fetch(`${API}/users/${authUser.user_id}/retirement`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify(retirementInputs),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(parseApiError(err?.detail, `HTTP ${res.status}`))
+      }
+      const data = await res.json()
+      setRetirementPlan(data)
+    } catch (err) {
+      setRetirementError(err.message || 'Could not build retirement plan.')
+    } finally {
+      setRetirementLoading(false)
+    }
+  }, [authUser?.user_id, retirementInitialized, retirementInputs])
+
+  useEffect(() => {
+    if (!retirementInitialized || !authUser?.user_id) return
+    fetchRetirementPlan()
+  // Initial seeded load only. Manual edits refresh through the card button.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retirementInitialized, authUser?.user_id])
+
+  useEffect(() => {
+    if (!benchmarkOpen || !authUser?.user_id || !profile) return
+    fetchBenchmarks()
+  }, [benchmarkOpen, authUser?.user_id, profile?.age, profile?.income, profile?.net_worth, fetchBenchmarks])
 
   // Is current selection different from what's saved?
-  const riskChanged = selectedRisk && selectedRisk !== (profile?.risk_profile ?? '').toLowerCase()
+  const riskChanged = selectedRisk && selectedRisk !== String(normalizeRiskScore(profile?.risk_profile) ?? '')
+  const retirementSummary = retirementStatus(retirementPlan)
+  const retirementProgress = retirementPlan?.target_retirement_fund
+    ? clamp((Number(retirementPlan.projected_value_at_retirement || 0) / Number(retirementPlan.target_retirement_fund || 1)) * 100, 0, 100)
+    : 0
+  const retirementGap = Number(retirementPlan?.projected_gap_at_retirement || 0)
+  const retirementRecommendedMix = retirementTopMix(retirementPlan)
 
   if (!authUser) {
     const DEMO_HOLDINGS = [
@@ -938,7 +2350,7 @@ export default function Profile() {
             <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--teal)', textTransform:'uppercase', letterSpacing:'0.2em', marginBottom:8, display:'flex', alignItems:'center', gap:10 }}>
               <div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>Personal Finance<div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>
             </div>
-            <div style={s.pageTitle}>My <span style={{ background:'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Portfolio</span></div>
+            <div style={s.pageTitle}><span style={{ background:'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Portfolio</span></div>
           </div>
           <div style={{ display:'flex', gap:14, alignItems:'center' }}>
             {!loading && profile && <div style={{ ...s.badgePill, borderColor:'rgba(201,168,76,0.25)', color:'var(--gold)' }}>Wellness {Math.round(wellnessScore)}/100</div>}
@@ -958,22 +2370,22 @@ export default function Profile() {
           <div style={{ flex:1 }}>
             <div style={s.userName}>{profile?.name ?? authUser?.username}</div>
             <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:12 }}>
-              {[['var(--teal)','Individual Investor'],['var(--gold)', profile?.risk_profile ? `Risk: ${profile.risk_profile}` : 'Risk: —']].map(([c,t]) => (
+              {[['var(--teal)','Individual Investor'],['var(--gold)', riskLabelFromValue(profile?.risk_profile) ? `Risk: ${riskLabelFromValue(profile?.risk_profile)}` : 'Risk: —']].map(([c,t]) => (
                 <span key={t} style={{ display:'flex', alignItems:'center', gap:6, fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' }}>
                   <div style={{ width:6, height:6, borderRadius:'50%', background:c }}/>{t}
                 </span>
               ))}
             </div>
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-              {profile?.risk_profile && <span style={{ background:'var(--surface2)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--gold)' }}>⚖️ {profile.risk_profile} Risk</span>}
+              {riskLabelFromValue(profile?.risk_profile) && <span style={{ background:'var(--surface2)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--gold)' }}>{riskLabelFromValue(profile?.risk_profile)} Risk</span>}
               <span style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--text-dim)' }}>{positionCount} Position{positionCount !== 1 ? 's' : ''}</span>
             </div>
           </div>
           <div style={{ display:'flex', gap:28, flexWrap:'wrap' }}>
             {[
-              [loading ? '…' : fmt$(totalAUM),                               'Total AUM',       'var(--gold)'],
-              [loading ? '…' : fmt$(profile?.portfolio_value ?? portfolioValue),'Portfolio Value','var(--green)'],
-              [loading ? '…' : fmt$(profile?.cash_balance),                   'Cash Balance',   'var(--teal)'],
+              [loading ? '...' : fmt$(totalAUM),                               'Total AUM',       'var(--gold)'],
+              [loading ? '...' : fmt$(profile?.portfolio_value ?? portfolioValue),'Portfolio Value','var(--green)'],
+              [loading ? '...' : fmt$(profile?.cash_balance),                   'Cash Balance',   'var(--teal)'],
             ].map(([v,l,c]) => (
               <div key={l} style={{ textAlign:'right' }}>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.15rem', color:c }}>{v}</div>
@@ -987,15 +2399,35 @@ export default function Profile() {
           </div>
         </div>
 
-        <div style={{ ...s.card, marginBottom:24, padding:'22px 24px 18px', animation:'sectionIn 0.5s ease both', animationDelay:'0.16s' }}>
+        <div style={{ ...s.card, marginBottom:24, padding:'22px 24px 18px', animation:'sectionIn 0.5s ease both', animationDelay:'0.16s', position:'relative' }}>
+          {showTrendInfo && (
+            <div style={{ ...s.hoverHint, top:90, right:24, maxWidth:340 }}>
+              Real estate is excluded from this trend so large, infrequently updated property values do not flatten the rest of the portfolio movement and skew the chart.
+            </div>
+          )}
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, flexWrap:'wrap', marginBottom:18 }}>
             <div>
-              <div style={s.secLabel}>{trendTitleMap[trendView]} Trend</div>
+              <div style={{ ...s.secLabel, justifyContent:'flex-start', gap:8 }}>
+                <span>{trendTitleMap[trendView]} Trend</span>
+                {trendView === 'combined' && (
+                  <button
+                    type="button"
+                    aria-label="Why real estate is excluded from this chart"
+                    onMouseEnter={() => setShowTrendInfo(true)}
+                    onMouseLeave={() => setShowTrendInfo(false)}
+                    onFocus={() => setShowTrendInfo(true)}
+                    onBlur={() => setShowTrendInfo(false)}
+                    style={s.infoDot}
+                  >
+                    i
+                  </button>
+                )}
+              </div>
               <div style={{ display:'flex', alignItems:'baseline', gap:14, flexWrap:'wrap', marginTop:6 }}>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'2rem', lineHeight:1 }}>
                   {fmt$(trendPayload.latest)}
                 </div>
-                <div style={{ color:trendTone === 'up' ? 'var(--purple)' : 'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.8rem' }}>
+                <div style={{ color:trendTone === 'up' ? 'var(--green)' : 'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.8rem' }}>
                   {trendPayload.change >= 0 ? '+' : ''}{fmt$(trendPayload.change)} · {trendRange}
                 </div>
               </div>
@@ -1069,7 +2501,7 @@ export default function Profile() {
                 <div style={{ flex:1 }}>
                   {[
                     { label:'Diversification', val:wellness.diversification_score, color:'var(--green)', hint:'How spread out your money is, so you are not relying too much on one asset.' },
-                    { label:'Liquidity',        val:wellness.liquidity_score,       color:'var(--gold)', hint:'How easily you can access cash for bills, emergencies, or short-term needs.' },
+                    { label:'Liquidity',        val:wellness.liquidity_score,       color:'var(--blue)', hint:'How easily you can access cash for bills, emergencies, or short-term needs.' },
                     { label:'Debt / Income',    val:wellness.debt_income_score,     color:'var(--orange)', hint:'How manageable your debt is compared with the income you bring in.' },
                   ].map(w => (
                     <div
@@ -1105,34 +2537,52 @@ export default function Profile() {
           </div>
 
           <div style={s.card}>
-            <div style={s.secLabel}>Portfolio Composition</div>
+            <div style={s.secLabel}>
+              Portfolio Composition
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'flex-end' }}>
+                <button type="button" onClick={() => openFinancialModal('assets')} style={s.compBtnAsset}>Edit Assets</button>
+                <button type="button" onClick={() => openFinancialModal('liabilities')} style={s.compBtnLiability}>Edit Liabilities</button>
+                <button type="button" onClick={() => openFinancialModal('income')} style={s.compBtnIncome}>Edit Income</button>
+              </div>
+            </div>
             {loading ? <LoadingPulse /> : (
               <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
                 {COMPOSITION_REAL.map(c => (
                   <div key={c.name} style={{ display:'flex', alignItems:'center', gap:12 }}>
                     <div style={{ width:36, height:36, borderRadius:10, background:`${c.color}20`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>{c.icon}</div>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:500, fontSize:'0.87rem', marginBottom:4 }}>{c.name}</div>
-                      <div style={{ height:4, background:'var(--surface2)', borderRadius:2, overflow:'hidden' }}>
-                        <div style={{ height:'100%', width:`${c.pct}%`, background:c.color, borderRadius:2 }} />
+                      <div style={{ fontWeight:500, fontSize:'0.87rem', marginBottom:4 }}>
+                        {c.name}
+                        {c.special === 'placeholder' && <FutureTag />}
                       </div>
+                      {c.special === 'income' ? (
+                        <div style={{ fontSize:'0.72rem', color:'var(--text-faint)', fontFamily:'var(--font-mono)' }}>
+                          Current monthly income across {incomeStreams.length || 1} stream{(incomeStreams.length || 1) !== 1 ? 's' : ''}
+                        </div>
+                      ) : c.special === 'placeholder' ? (
+                        <div style={{ height:4, background:'var(--surface2)', borderRadius:2, overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:'40%', background:'rgba(96,165,250,0.25)', borderRadius:2 }} />
+                        </div>
+                      ) : (
+                        <div style={{ height:4, background:'var(--surface2)', borderRadius:2, overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:`${c.pct}%`, background:c.color, borderRadius:2 }} />
+                        </div>
+                      )}
                     </div>
                     <div style={{ textAlign:'right' }}>
-                      <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem' }}>{c.pct}%</div>
+                      <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem' }}>
+                        {c.special === 'income' ? 'Monthly' : c.special === 'placeholder' ? '—' : `${c.pct}%`}
+                      </div>
                       <div style={{ fontSize:'0.7rem', color:'var(--text-faint)' }}>{c.val}</div>
                     </div>
                   </div>
                 ))}
-                {COMPOSITION_FUTURE.map(c => (
-                  <div key={c.name} style={{ display:'flex', alignItems:'center', gap:12, opacity:0.4 }}>
-                    <div style={{ width:36, height:36, borderRadius:10, background:`${c.color}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>{c.icon}</div>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:500, fontSize:'0.87rem', marginBottom:4, display:'flex', alignItems:'center' }}>{c.name}<FutureTag /></div>
-                      <div style={{ height:4, background:'var(--surface2)', borderRadius:2 }} />
-                    </div>
-                    <div style={{ textAlign:'right' }}><div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:'var(--text-faint)' }}>—</div></div>
+                {(liabilityItems.length > 0 || incomeStreams.length > 0) && (
+                  <div style={{ marginTop:6, display:'flex', gap:8, flexWrap:'wrap' }}>
+                    <span style={s.compMetaPill}>Liabilities {fmt$(liabilityItems.reduce((sum, item) => sum + Number(item.amount || 0), 0))}</span>
+                    <span style={s.compMetaPill}>Income Streams {incomeStreams.length}</span>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
@@ -1140,16 +2590,38 @@ export default function Profile() {
 
         {/* Holdings Table */}
         <div style={{ ...s.card, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.32s' }}>
-          <div style={s.secLabel}>Live Holdings</div>
+          <div style={s.secLabel}>
+            <span>Live Holdings</span>
+            <button
+              type="button"
+              onClick={refreshPortfolioPrices}
+              disabled={priceRefreshing || loading}
+              aria-label="Refresh Prices"
+              title="Refresh Prices"
+              style={{ ...s.holdingsRefreshBtn, opacity:(priceRefreshing || loading) ? 0.6 : 1, cursor:(priceRefreshing || loading) ? 'not-allowed' : 'pointer' }}
+            >
+              <span
+                style={{
+                  display:'inline-block',
+                  fontSize:'0.86rem',
+                  lineHeight:1,
+                  transform: priceRefreshing ? 'rotate(360deg)' : 'none',
+                  transition: priceRefreshing ? 'transform 0.8s linear' : 'transform 0.2s ease',
+                }}
+              >
+                ↻
+              </span>
+            </button>
+          </div>
           {loading ? <LoadingPulse /> : allHoldings.length === 0 ? (
             <p style={{ color:'var(--text-faint)', fontSize:'0.85rem' }}>No holdings found for this account.</p>
           ) : (
             <div style={{ overflowX:'auto' }}>
               <table style={{ width:'100%', borderCollapse:'collapse', fontFamily:'var(--font-mono)', fontSize:'0.8rem' }}>
                 <thead>
-                  <tr style={{ color:'var(--text-faint)', textTransform:'uppercase', fontSize:'0.65rem', letterSpacing:'0.08em' }}>
+                  <tr style={{ color:holdingsHeaderText, textTransform:'uppercase', fontSize:'0.65rem', letterSpacing:'0.08em' }}>
                     {['Symbol','Type','Qty','Avg Cost','Current Price','Market Value','Gain / Loss'].map((h,i) => (
-                      <th key={h} style={{ textAlign: i===0 ? 'left' : 'right', padding:'8px 12px', borderBottom:'1px solid var(--border)', fontWeight:500 }}>{h}</th>
+                      <th key={h} style={{ textAlign: i===0 ? 'left' : 'right', padding:'8px 12px', borderBottom:holdingsHeadBorder, fontWeight:500 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1158,27 +2630,27 @@ export default function Profile() {
                     const gain = gainPct(h.current_price, h.avg_price)
                     const gainColor = gain == null ? 'var(--text-faint)' : gain >= 0 ? 'var(--green)' : 'var(--red)'
                     return (
-                      <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)', cursor:'pointer' }}
+                      <tr key={i} style={{ borderBottom:holdingsRowBorder, cursor:'pointer' }}
                         onClick={() => setSelectedHolding(h)}
                         onMouseEnter={e => e.currentTarget.style.background='var(--surface2)'}
                         onMouseLeave={e => e.currentTarget.style.background='transparent'}>
-                        <td style={{ padding:'12px 12px', color:'var(--text)', fontWeight:600 }}>{h.symbol}</td>
+                        <td style={{ padding:'12px 12px', color:holdingsStrongText, fontWeight:isSilentNight ? 700 : 600 }}>{h.symbol}</td>
                         <td style={{ padding:'12px 12px', textAlign:'right' }}>
                           <span style={{ background: h.type==='Stock' ? 'rgba(96,165,250,0.1)' : 'rgba(45,212,191,0.1)', color: h.type==='Stock' ? 'var(--blue)' : 'var(--teal)', padding:'2px 8px', borderRadius:6, fontSize:'0.65rem' }}>{h.type}</span>
                         </td>
-                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--text-dim)' }}>{h.qty}</td>
-                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--text-dim)' }}>{fmt$(h.avg_price)}</td>
-                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--text)' }}>{fmt$(h.current_price)}</td>
-                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--gold)', fontWeight:600 }}>{fmt$(h.market_value)}</td>
-                        <td style={{ padding:'12px 12px', textAlign:'right', color:gainColor, fontWeight:600 }}>{gain != null ? fmtPct(gain) : '—'}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsDimText }}>{h.qty}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsDimText }}>{fmt$(h.avg_price)}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsStrongText, fontWeight:isSilentNight ? 600 : 400 }}>{fmt$(h.current_price)}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsGoldText, fontWeight:isSilentNight ? 700 : 600 }}>{fmt$(h.market_value)}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:gainColor, fontWeight:isSilentNight ? 700 : 600 }}>{gain != null ? fmtPct(gain) : '—'}</td>
                       </tr>
                     )
                   })}
                 </tbody>
                 <tfoot>
-                  <tr style={{ borderTop:'1px solid var(--border)' }}>
-                    <td colSpan={5} style={{ padding:'12px 12px', color:'var(--text-faint)', fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>Total Portfolio Value</td>
-                    <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--gold)', fontWeight:700, fontSize:'0.9rem' }}>{fmt$(portfolioValue)}</td>
+                  <tr style={{ borderTop:holdingsHeadBorder }}>
+                    <td colSpan={5} style={{ padding:'12px 12px', color:holdingsHeaderText, fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>Total Portfolio Value</td>
+                    <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsGoldText, fontWeight:700, fontSize:'0.9rem' }}>{fmt$(portfolioValue)}</td>
                     <td />
                   </tr>
                 </tfoot>
@@ -1187,15 +2659,15 @@ export default function Profile() {
           )}
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             AI Recommendations
             POST /users/:id/recommendations/gpt
-        ══════════════════════════════════════════════════════════════════ */}
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <div style={{ ...s.card, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.44s' }}>
           <div style={s.secLabel}>
             <span style={{ display:'flex', alignItems:'center', gap:8 }}>
               Portfolio Analysis
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:'rgba(45,212,191,0.1)', color:'var(--teal)', border:'1px solid rgba(45,212,191,0.25)' }}>WealthSphere AI</span>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:'rgba(45,212,191,0.1)', color:'var(--teal)', border:'1px solid rgba(45,212,191,0.25)' }}>Unova AI</span>
             </span>
             <div style={s.analysisControls}>
               <div style={s.analysisActionSlot}>
@@ -1239,8 +2711,8 @@ export default function Profile() {
                 style={{ ...s.btnTeal, display:'flex', alignItems:'center', gap:6, opacity: gptLoading ? 0.6 : 1 }}
               >
                 {gptLoading
-                  ? <><Spinner size={12} color="#080c14" /> Generating…</>
-                  : gptRecs ? '↻ Refresh Analysis' : '✦ Generate Analysis'}
+                  ? <><Spinner size={12} color="#080c14" /> Generating...</>
+                  : gptRecs ? '↻ Refresh Analysis' : 'Generate Analysis'}
               </button>
             </div>
           </div>
@@ -1249,17 +2721,17 @@ export default function Profile() {
             Uses your portfolio context, risk profile, and financial wellness signals to generate curated insights and next-step guidance.
           </p>
 
-          {gptError && <div style={s.errBox}>⚠ {gptError}</div>}
+          {gptError && <div style={s.errBox}>Warning: {gptError}</div>}
 
           {/* Thinking state */}
           {gptLoading && (
             <div style={{ background:'rgba(45,212,191,0.04)', border:'1px solid rgba(45,212,191,0.14)', borderRadius:14, padding:'24px 20px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
                 <Spinner size={18} color="var(--teal)" />
-                <span style={{ fontFamily:'var(--font-display)', fontWeight:600, fontSize:'0.9rem', color:'var(--teal)' }}>Our analyst AI is reviewing your portfolio…</span>
+                <span style={{ fontFamily:'var(--font-display)', fontWeight:600, fontSize:'0.9rem', color:'var(--teal)' }}>Our analyst AI is reviewing your portfolio...</span>
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
-                {['Reading holdings and risk profile…','Evaluating portfolio composition…','Generating personalised recommendations…'].map((t,i) => (
+                {['Reading holdings and risk profile...','Evaluating portfolio composition...','Generating personalised recommendations...'].map((t,i) => (
                   <div key={t} style={{ display:'flex', alignItems:'center', gap:8, animation:`profilePulse 1.5s ease-in-out ${i*0.4}s infinite` }}>
                     <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--teal)', flexShrink:0 }} />
                     <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' }}>{t}</span>
@@ -1272,7 +2744,7 @@ export default function Profile() {
           {/* Empty / prompt state */}
           {!gptLoading && !gptError && gptRecs === null && (
             <div style={{ textAlign:'center', padding:'36px 20px' }}>
-              <div style={{ fontSize:'2.2rem', marginBottom:12 }}>✦</div>
+              <div style={{ fontSize:'2.2rem', marginBottom:12 }}>*</div>
               <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem', marginBottom:8 }}>Curated Portfolio Analysis</div>
               <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.76rem', color:'var(--text-faint)', maxWidth:380, margin:'0 auto', lineHeight:1.7 }}>
                 Generate a tailored review based on your current holdings, financial wellness, and risk profile.
@@ -1292,16 +2764,16 @@ export default function Profile() {
                   <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                     <span>🧑‍💼</span>
                     <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:'var(--teal)' }}>
-                      WealthSphere Analyst AI · {new Date().toLocaleTimeString()}
+                      Unova Analyst AI · {new Date().toLocaleTimeString()}
                     </span>
                   </div>
                   <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                     <span style={{ ...s.inlineStat, color:insightTone(wellnessScore).color, borderColor:'rgba(255,255,255,0.08)' }}>
                       Wellness {Math.round(wellnessScore)} · {insightTone(wellnessScore).label}
                     </span>
-                    {profile?.risk_profile && (
+                    {riskLabelFromValue(profile?.risk_profile) && (
                       <span style={{ ...s.inlineStat, color:'var(--gold)', borderColor:'rgba(201,168,76,0.2)' }}>
-                        Risk {profile.risk_profile}
+                        Risk {riskLabelFromValue(profile?.risk_profile)}
                       </span>
                     )}
                   </div>
@@ -1317,6 +2789,17 @@ export default function Profile() {
                   </div>
                 )}
               </div>
+              {analysisMode !== 'comprehensive' && (
+                <div style={{
+                  marginTop: -6,
+                  fontFamily:'var(--font-mono)',
+                  fontSize:'0.72rem',
+                  color:'var(--text-faint)',
+                  letterSpacing:'0.04em',
+                }}>
+                  Tip: Switch to <span style={{ color:'var(--teal)' }}>Comprehensive</span> for more details.
+                </div>
+              )}
 
               {analysisMode === 'comprehensive' && (
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:12 }}>
@@ -1395,13 +2878,13 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Result — free-text / markdown */}
+          {/* Result ? free-text / markdown */}
           {!gptLoading && gptText && (
             <div style={{ animation:'profileFadeUp 0.4s ease' }}>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14, padding:'10px 14px', background:'rgba(45,212,191,0.05)', border:'1px solid rgba(45,212,191,0.15)', borderRadius:10 }}>
                 <span>🧑‍💼</span>
                 <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:'var(--teal)' }}>
-                  WealthSphere Analyst AI · {new Date().toLocaleTimeString()}
+                  Unova Analyst AI · {new Date().toLocaleTimeString()}
                 </span>
               </div>
               <div style={{ fontSize: analysisMode === 'lite' ? '0.98rem' : '0.86rem', color:'var(--text-dim)', lineHeight: analysisMode === 'lite' ? 1.9 : 1.85, whiteSpace:'pre-wrap', background:'var(--surface2)', borderRadius:12, padding:'18px 20px', border:'1px solid var(--border)' }}>
@@ -1411,108 +2894,311 @@ export default function Profile() {
           )}
         </div>
 
-        {/* Peer Benchmarking — Future Upgrade overlay */}
-        <div style={{ ...s.card, marginBottom:24, position:'relative', overflow:'hidden' }}>
-          <div style={{ position:'absolute', inset:0, background:'rgba(8,12,20,0.75)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, borderRadius:18 }}>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ fontSize:'2rem', marginBottom:8 }}>📊</div>
-              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.8rem', color:'var(--blue)', marginBottom:6 }}>Peer Age Benchmarking</div>
-              <FutureTag />
-            </div>
-          </div>
-          <div style={{ opacity:0.1, pointerEvents:'none' }}>
-            <div style={s.secLabel}>Peer Age Benchmarking</div>
-            <div style={{ height:160, background:'var(--surface2)', borderRadius:10 }} />
-          </div>
-        </div>
-
-        {/* Insights + Activity — Future Upgrade */}
-        <div style={s.twoCol}>
-          {[{ icon:'💡', label:'Personalised Insights' }, { icon:'🕒', label:'Recent Activity' }].map(item => (
-            <div key={item.label} style={{ ...s.card, position:'relative', overflow:'hidden' }}>
-              <div style={{ position:'absolute', inset:0, background:'rgba(8,12,20,0.75)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, borderRadius:18 }}>
-                <div style={{ textAlign:'center' }}>
-                  <div style={{ fontSize:'1.8rem', marginBottom:6 }}>{item.icon}</div>
-                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:'var(--blue)', marginBottom:6 }}>{item.label}</div>
-                  <FutureTag />
-                </div>
-              </div>
-              <div style={{ opacity:0.1, pointerEvents:'none' }}>
-                <div style={s.secLabel}>{item.label}</div>
-                <div style={{ height:140, background:'var(--surface2)', borderRadius:10 }} />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            SECTION 1 — Risk Profile Update
-            PATCH /users/risk  { user_id, risk_profile }
-        ══════════════════════════════════════════════════════════════════ */}
-        <div style={{ ...s.card, marginTop:24, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.38s' }}>
+        {/* Financial Year Wrapped */}
+        <button
+          type="button"
+          onClick={() => { setWrappedIndex(0); setWrappedOpen(true) }}
+          style={{
+            ...s.card,
+            ...s.wrappedEntry,
+            marginBottom:24,
+          }}
+        >
           <div style={s.secLabel}>
-            Risk Profile
-            {profile?.risk_profile && (
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--gold)', background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.25)', borderRadius:8, padding:'2px 10px' }}>
-                Saved: {profile.risk_profile}
-              </span>
-            )}
+            Financial Year Wrapped
+            <span style={{ ...s.inlineStat, color:'var(--purple)', borderColor:'rgba(139,92,246,0.18)' }}>{wrappedData.year}</span>
           </div>
+          <div style={s.wrappedEntryInner}>
+            <div style={s.wrappedBadge}>📊</div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={s.wrappedTitle}>Your {wrappedData.year} in money moments</div>
+              <div style={s.wrappedBody}>
+                Income growth, strongest return, biggest adds, longest-held stock, and a year-end summary in one tap-through recap.
+              </div>
+              <div style={s.wrappedHighlights}>
+                {wrappedData.slides.slice(0, 3).map(slide => (
+                  <span key={slide.key} style={s.wrappedMiniPill}>{slide.icon} {slide.eyebrow}</span>
+                ))}
+              </div>
+            </div>
+            <div style={s.wrappedCta}>
+              Open Wrapped →
+            </div>
+          </div>
+        </button>
 
-          <p style={{ fontSize:'0.83rem', color:'var(--text-dim)', lineHeight:1.65, marginBottom:20 }}>
-            Your risk profile shapes every recommendation and wellness calculation. Select the tolerance level that best matches your investment approach, then save to update the backend.
-          </p>
+        {/* Insights + Retirement */}
+        <div style={s.twoCol}>
+          <div style={{ ...s.card, ...s.featureCard, background:'linear-gradient(180deg, rgba(42,184,163,0.06), rgba(109,141,247,0.04) 100%)' }}>
+            <div style={s.secLabel}>
+              Peer Age Benchmarking
+              <span style={{ ...s.inlineStat, color:'var(--teal)', borderColor:'rgba(42,184,163,0.18)' }}>
+                {benchmarks?.income?.age_band ?? 'SG cohort'}
+              </span>
+            </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:22 }}>
-            {RISK_OPTIONS.map(opt => {
-              const active = selectedRisk === opt.key
-              return (
-                <div
-                  key={opt.key}
-                  onClick={() => { setSelectedRisk(opt.key); setRiskSaved(false); setRiskError('') }}
-                  style={{
-                    border:      active ? `1.5px solid ${opt.glow}` : '1.5px solid var(--border)',
-                    background:  active ? `${opt.color}12` : 'var(--surface2)',
-                    borderRadius:14, padding:'18px 16px', cursor:'pointer',
-                    transition:'all 0.2s', position:'relative',
-                  }}
-                >
-                  <div style={{ position:'absolute', top:12, right:12, width:10, height:10, borderRadius:'50%', background: active ? opt.color : 'var(--border)', boxShadow: active ? `0 0 8px ${opt.color}` : 'none', transition:'all 0.2s' }} />
-                  <div style={{ fontSize:'1.6rem', marginBottom:10 }}>{opt.icon}</div>
-                  <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.92rem', marginBottom:4, color: active ? opt.color : 'var(--text)' }}>{opt.label}</div>
-                  <div style={{ fontSize:'0.76rem', color:'var(--text-dim)', lineHeight:1.55 }}>{opt.desc}</div>
+            <div style={{ ...s.featureCardBody, ...(benchmarkOpen ? s.featureCardBodyExpanded : {}) }}>
+              {!benchmarkOpen ? (
+                <div style={s.retirementPreview}>
+                  <div style={s.retirementPreviewBadge}>👥</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontFamily:'var(--font-display)', fontSize:'1.25rem', fontWeight:800, marginBottom:8 }}>
+                      See where you stand against your age cohort
+                    </div>
+                    <div style={{ fontSize:'0.92rem', color:'var(--text-dim)', lineHeight:1.75, marginBottom:14 }}>
+                      Compare your income and net worth against Singapore reference bands for your age. Open the view only when you want the percentile breakdown.
+                    </div>
+                    <div style={s.retirementPreviewMeta}>
+                      <span style={s.retirementPreviewPill}>Age {profile?.age ?? '—'}</span>
+                      <span style={s.retirementPreviewPill}>Income {fmtSgd(profile?.income)}</span>
+                      <span style={s.retirementPreviewPill}>Net worth {fmtSgd(profile?.net_worth)}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBenchmarkOpen(true)
+                      if (!benchmarks && !benchmarkLoading) fetchBenchmarks()
+                    }}
+                    style={{ ...s.btnTeal, minWidth:170, alignSelf:'center' }}
+                  >
+                    {benchmarkLoading ? 'Loading...' : 'View Benchmarking'}
+                  </button>
                 </div>
-              )
-            })}
+              ) : benchmarkError ? (
+                <div style={s.errBox}>
+                  {benchmarkError}
+                </div>
+              ) : !benchmarks ? (
+                <div style={{ fontSize:'0.9rem', color:'var(--text-dim)', lineHeight:1.75 }}>
+                  Loading your Singapore benchmark snapshot...
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontFamily:'var(--font-display)', fontSize:'1.25rem', fontWeight:800, marginBottom:8 }}>
+                    Singapore percentile snapshot
+                  </div>
+                  <div style={{ fontSize:'0.9rem', color:'var(--text-dim)', lineHeight:1.75, marginBottom:16 }}>
+                    A compact view of how your income and net worth compare with others in your age band.
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:12, marginBottom:14 }}>
+                    <BenchmarkMiniCard title="Income" data={benchmarks.income} accent="var(--teal)" icon="S$" />
+                    <BenchmarkMiniCard title="Net Worth" data={benchmarks.net_worth} accent="var(--blue)" icon="◔" />
+                  </div>
+                  <div style={s.retirementPreviewMeta}>
+                    <span style={s.retirementPreviewPill}>Income {fmtSgd(benchmarks.income?.user_value)}</span>
+                    <span style={s.retirementPreviewPill}>Net worth {fmtSgd(benchmarks.net_worth?.user_value)}</span>
+                    <span style={s.retirementPreviewPill}>Median {fmtSgd(benchmarks.income?.median)} income</span>
+                  </div>
+                  <div style={{ marginTop:14, display:'flex', justifyContent:'flex-end', gap:10 }}>
+                    <button
+                      type="button"
+                      onClick={fetchBenchmarks}
+                      disabled={benchmarkLoading}
+                      style={{ ...s.retirementSecondaryBtn, opacity:benchmarkLoading ? 0.6 : 1 }}
+                    >
+                      {benchmarkLoading ? 'Refreshing...' : 'Refresh'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBenchmarkOpen(false)}
+                      style={s.retirementSecondaryBtn}
+                    >
+                      Hide
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
-          <div style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
-            <button
-              onClick={saveRiskProfile}
-              disabled={riskSaving || !riskChanged}
-              style={{
-                ...s.btnGold,
-                opacity: (riskSaving || !riskChanged) ? 0.4 : 1,
-                cursor:  (riskSaving || !riskChanged) ? 'not-allowed' : 'pointer',
-                display:'flex', alignItems:'center', gap:8,
-              }}
-            >
-              {riskSaving
-                ? <><Spinner size={14} color="#080c14" /> Saving…</>
-                : riskSaved ? '✓ Saved' : 'Update Risk Profile'}
-            </button>
-            {riskSaved && (
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.74rem', color:'var(--green)', animation:'profileFadeUp 0.3s ease' }}>
-                Risk profile updated successfully
+          <div style={{ ...s.card, background:'linear-gradient(180deg, rgba(109,141,247,0.06), rgba(42,184,163,0.04) 100%)' }}>
+            <div style={s.secLabel}>
+              Retirement Outlook
+              <span style={{ ...s.inlineStat, color:retirementSummary.tone, borderColor:'rgba(109,141,247,0.18)' }}>
+                {retirementLoading ? 'Updating...' : `${retirementPlan?.years_to_retirement ?? '—'} years left`}
               </span>
-            )}
-            {riskError && (
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.74rem', color:'var(--red)' }}>⚠ {riskError}</span>
+            </div>
+
+            {!retirementOpen ? (
+              <div style={s.retirementPreviewShell}>
+                <div style={s.retirementPreview}>
+                  <div style={s.retirementPreviewBadge}>🌅</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontFamily:'var(--font-display)', fontSize:'1.25rem', fontWeight:800, marginBottom:8 }}>
+                      {retirementSummary.title}
+                    </div>
+                    <div style={{ fontSize:'0.92rem', color:'var(--text-dim)', lineHeight:1.75, marginBottom:14 }}>
+                      {retirementPlan
+                        ? `See whether your current assets, spending, and savings pace can get you to ${fmtCompactCurrency(retirementPlan.target_retirement_fund)} by age ${retirementPlan.retirement_age}.`
+                        : 'Generate a retirement snapshot from your portfolio, income, and spending to see if you are on track.'}
+                    </div>
+                    <div style={s.retirementPreviewMeta}>
+                      <span style={s.retirementPreviewPill}>Goal {fmtCompactCurrency(retirementPlan?.target_retirement_fund)}</span>
+                      <span style={s.retirementPreviewPill}>Top-up {fmt$(retirementPlan?.required_monthly_contribution)}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setRetirementOpen(true)}
+                    style={{ ...s.btnTeal, minWidth:150, alignSelf:'center' }}
+                  >
+                    Plan Retirement
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {retirementError && (
+                  <div style={{ ...s.errBox, marginBottom:16 }}>
+                    {retirementError}
+                  </div>
+                )}
+                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:16, marginBottom:14, width:'100%' }}>
+                  <div style={{ flex:'1 1 320px', minWidth:0 }}>
+                    <div style={{ fontFamily:'var(--font-display)', fontSize:'1.35rem', fontWeight:800, marginBottom:6 }}>
+                      {retirementSummary.title}
+                    </div>
+                    <div style={{ fontSize:'0.92rem', color:'var(--text-dim)', lineHeight:1.75, maxWidth:470 }}>
+                      {retirementPlan ? (
+                        retirementGap <= 0
+                          ? `At your current pace, you are projected to reach ${fmtCompactCurrency(retirementPlan.projected_value_at_retirement)} by age ${retirementPlan.retirement_age}, ahead of your ${fmtCompactCurrency(retirementPlan.target_retirement_fund)} target.`
+                          : `You are aiming for ${fmtCompactCurrency(retirementPlan.target_retirement_fund)} by age ${retirementPlan.retirement_age}. To close the remaining ${fmtCompactCurrency(retirementGap)} gap, Unova estimates a monthly contribution of ${fmt$(retirementPlan.required_monthly_contribution)}.`
+                      ) : 'Use your current profile, spending, and portfolio to estimate whether your retirement path is on track.'}
+                    </div>
+                  </div>
+                  <div style={{ flex:'0 1 220px', minWidth:160, marginLeft:'auto', textAlign:'right' }}>
+                    <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.66rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:6 }}>
+                      Target age
+                    </div>
+                    <div style={{ fontFamily:'var(--font-display)', fontSize:'1.6rem', fontWeight:800 }}>
+                      {retirementPlan?.retirement_age ?? retirementInputs.retirement_age}
+                    </div>
+                    <div style={{ fontSize:'0.76rem', color:'var(--text-faint)', marginTop:4 }}>
+                      Risk profile {retirementPlan?.risk_profile ?? riskLabelFromValue(profile?.risk_profile)}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={s.retirementProgressTrack}>
+                  <div
+                    style={{
+                      ...s.retirementProgressFill,
+                      width:`${retirementProgress}%`,
+                      background: retirementGap <= 0
+                        ? 'linear-gradient(90deg, rgba(34,197,94,0.92), rgba(42,184,163,0.92))'
+                        : 'linear-gradient(90deg, rgba(109,141,247,0.92), rgba(139,92,246,0.92))',
+                    }}
+                  />
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', gap:10, marginTop:8, marginBottom:18, fontFamily:'var(--font-mono)', fontSize:'0.66rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+                  <span>Projected {fmtCompactCurrency(retirementPlan?.projected_value_at_retirement)}</span>
+                  <span>Goal {fmtCompactCurrency(retirementPlan?.target_retirement_fund)}</span>
+                </div>
+
+                <div style={s.retirementStatGrid}>
+                  <div style={s.retirementStatCard}>
+                    <div style={s.retirementStatLabel}>Monthly top-up</div>
+                    <div style={{ ...s.retirementStatValue, color:retirementGap <= 0 ? 'var(--green)' : 'var(--text)' }}>
+                      {retirementPlan ? fmt$(retirementPlan.required_monthly_contribution) : '—'}
+                    </div>
+                    <div style={s.retirementStatHint}>Needed from now to retirement</div>
+                  </div>
+                  <div style={s.retirementStatCard}>
+                    <div style={s.retirementStatLabel}>Cash reserve</div>
+                    <div style={s.retirementStatValue}>
+                      {retirementPlan ? fmtCompactCurrency(retirementPlan.essential_cash_reserve_target) : '—'}
+                    </div>
+                    <div style={s.retirementStatHint}>Emergency buffer before investing</div>
+                  </div>
+                  <div style={s.retirementStatCard}>
+                    <div style={s.retirementStatLabel}>Suggested mix</div>
+                    <div style={{ ...s.retirementStatValue, fontSize:'1rem', lineHeight:1.35 }}>
+                      {retirementRecommendedMix}
+                    </div>
+                    <div style={s.retirementStatHint}>Based on risk and years remaining</div>
+                  </div>
+                </div>
+
+                <div style={s.retirementControls}>
+                  <label style={s.retirementInputWrap}>
+                    <span style={s.retirementInputLabel}>Retirement age</span>
+                    <input
+                      type="number"
+                      min="19"
+                      max="100"
+                      value={retirementInputs.retirement_age}
+                      onChange={e => setRetirementInputs(prev => ({ ...prev, retirement_age:Number(e.target.value || 0) }))}
+                      style={s.retirementInput}
+                    />
+                  </label>
+                  <label style={s.retirementInputWrap}>
+                    <span style={s.retirementInputLabel}>Monthly spend</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={retirementInputs.monthly_expenses}
+                      onChange={e => setRetirementInputs(prev => ({ ...prev, monthly_expenses:Number(e.target.value || 0) }))}
+                      style={s.retirementInput}
+                    />
+                  </label>
+                  <label style={s.retirementInputWrap}>
+                    <span style={s.retirementInputLabel}>Essential spend</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={retirementInputs.essential_monthly_expenses}
+                      onChange={e => setRetirementInputs(prev => ({ ...prev, essential_monthly_expenses:Number(e.target.value || 0) }))}
+                      style={s.retirementInput}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={fetchRetirementPlan}
+                    disabled={retirementLoading}
+                    style={{ ...s.btnTeal, minWidth:130, opacity:retirementLoading ? 0.6 : 1, alignSelf:'end' }}
+                  >
+                    {retirementLoading ? 'Updating...' : 'Refresh Plan'}
+                  </button>
+                </div>
+                <div style={{ marginTop:12, display:'flex', justifyContent:'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => setRetirementOpen(false)}
+                    style={s.retirementSecondaryBtn}
+                  >
+                    Hide planner
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>
 
         <HoldingInsightModal holding={selectedHolding} onClose={() => setSelectedHolding(null)} userId={authUser?.user_id} />
+        <FinancialManagerModal
+          open={financialModalOpen}
+          activeTab={financialTab}
+          setActiveTab={setFinancialTab}
+          profile={profile}
+          onClose={() => setFinancialModalOpen(false)}
+          onSubmit={submitFinancialItem}
+          onRemove={removeFinancialItem}
+          busy={financialBusy}
+        />
+        <YearWrappedModal
+          open={wrappedOpen}
+          slides={wrappedData.slides}
+          index={wrappedIndex}
+          setIndex={setWrappedIndex}
+          onClose={() => setWrappedOpen(false)}
+          onDownload={exportWrappedPdf}
+          year={wrappedData.year}
+          ownerName={profile?.name ?? authUser.username}
+          themeId={activeTheme?.id}
+        />
 
       </main>
     </div>
@@ -1563,8 +3249,23 @@ const s = {
     animation:'spinSlow 20s linear infinite', pointerEvents:'none',
   },
   userName:  { fontFamily:'var(--font-display)', fontSize:'1.45rem', fontWeight:800, marginBottom:6 },
-  twoCol:    { display:'grid', gridTemplateColumns:'1fr 1fr', gap:22, marginBottom:22 },
+  twoCol:    { display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(360px, 1fr))', gap:22, marginBottom:22 },
   card:      { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, padding:24 },
+  featureCard: {
+    minHeight:320,
+    display:'flex',
+    flexDirection:'column',
+  },
+  featureCardBody: {
+    flex:1,
+    display:'flex',
+    alignItems:'center',
+    minWidth:0,
+  },
+  featureCardBodyExpanded: {
+    display:'block',
+    width:'100%',
+  },
   trendPanel: {
     background:'linear-gradient(180deg, rgba(139,92,246,0.08) 0%, rgba(139,92,246,0.02) 55%, rgba(255,255,255,0) 100%)',
     border:'1px solid rgba(139,92,246,0.12)',
@@ -1587,26 +3288,64 @@ const s = {
     letterSpacing:'0.13em', marginBottom:16,
     display:'flex', justifyContent:'space-between', alignItems:'center',
   },
+  holdingsRefreshBtn: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    border:'1px solid var(--border-act)',
+    background:'var(--surface2)',
+    color:'var(--text)',
+    borderRadius:999,
+    padding:'6px 12px',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    fontWeight:700,
+    letterSpacing:'0.08em',
+    textTransform:'uppercase',
+    outline:'none',
+  },
   rangeTab: {
     appearance:'none',
     WebkitAppearance:'none',
-    background:'rgba(255,255,255,0.64)',
-    border:'1px solid rgba(29,33,48,0.06)',
-    color:'var(--text-dim)',
+    background:'var(--surface2)',
+    border:'1px solid var(--border-act)',
+    color:'var(--text)',
     borderRadius:999,
     padding:'8px 12px',
     fontFamily:'var(--font-mono)',
     fontSize:'0.68rem',
+    fontWeight:600,
     letterSpacing:'0.08em',
     textTransform:'uppercase',
     outline:'none',
     boxShadow:'none',
   },
   rangeTabActive: {
-    background:'rgba(139,92,246,0.14)',
-    borderColor:'rgba(139,92,246,0.28)',
-    color:'#7c3aed',
-    boxShadow:'0 8px 20px rgba(139,92,246,0.14)',
+    background:'var(--teal)',
+    borderColor:'var(--teal)',
+    color:'#0b0f14',
+    boxShadow:'var(--glow-teal)',
+  },
+  infoDot: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    width:18,
+    height:18,
+    borderRadius:'50%',
+    border:'1px solid rgba(148,163,184,0.4)',
+    background:'var(--surface2)',
+    color:'var(--text-faint)',
+    display:'inline-flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    fontWeight:700,
+    lineHeight:1,
+    padding:0,
+    cursor:'help',
+    boxShadow:'none',
+    outline:'none',
+    flexShrink:0,
   },
   secSubhead: {
     fontFamily:'var(--font-display)', fontSize:'1.02rem', fontWeight:700,
@@ -1735,9 +3474,348 @@ const s = {
   },
   btnTeal: {
     background:'linear-gradient(135deg,var(--teal),#0e9f84)',
-    border:'none', color:'#080c14', padding:'8px 18px', borderRadius:8,
+    border:'none', color:'#ffffff', padding:'8px 18px', borderRadius:8,
     fontFamily:'var(--font-display)', fontSize:'0.78rem', fontWeight:700,
     boxShadow:'0 4px 14px rgba(45,212,191,0.22)', cursor:'pointer', transition:'opacity 0.2s',
+  },
+  wrappedEntry: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    width:'100%',
+    textAlign:'left',
+    cursor:'pointer',
+    color:'var(--text)',
+    background:'linear-gradient(135deg, rgba(109,141,247,0.05), rgba(139,92,246,0.04) 52%, rgba(42,184,163,0.05))',
+    boxShadow:'0 18px 44px rgba(15,23,42,0.06)',
+  },
+  wrappedEntryInner: {
+    display:'flex',
+    alignItems:'center',
+    gap:22,
+  },
+  wrappedBadge: {
+    width:74,
+    height:74,
+    borderRadius:20,
+    background:'linear-gradient(135deg, rgba(109,141,247,0.14), rgba(139,92,246,0.18), rgba(42,184,163,0.14))',
+    border:'1px solid rgba(139,92,246,0.16)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontSize:'2rem',
+    flexShrink:0,
+  },
+  wrappedTitle: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1.5rem',
+    fontWeight:800,
+    lineHeight:1.1,
+    marginBottom:10,
+  },
+  wrappedBody: {
+    fontSize:'0.95rem',
+    lineHeight:1.75,
+    color:'var(--text-dim)',
+    maxWidth:720,
+  },
+  wrappedHighlights: {
+    display:'flex',
+    gap:8,
+    flexWrap:'wrap',
+    marginTop:14,
+  },
+  wrappedMiniPill: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.64rem',
+    letterSpacing:'0.05em',
+    color:'var(--purple)',
+    background:'rgba(139,92,246,0.08)',
+    border:'1px solid rgba(139,92,246,0.14)',
+    padding:'5px 10px',
+    borderRadius:999,
+  },
+  wrappedCta: {
+    flexShrink:0,
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    color:'var(--teal)',
+    background:'rgba(42,184,163,0.08)',
+    border:'1px solid rgba(42,184,163,0.16)',
+    borderRadius:999,
+    padding:'10px 16px',
+    alignSelf:'flex-start',
+  },
+  retirementPreview: {
+    display:'flex',
+    alignItems:'center',
+    gap:18,
+  },
+  retirementPreviewShell: {
+    minHeight:260,
+    display:'flex',
+    alignItems:'center',
+  },
+  retirementPreviewBadge: {
+    width:72,
+    height:72,
+    borderRadius:20,
+    background:'linear-gradient(135deg, rgba(109,141,247,0.14), rgba(42,184,163,0.18))',
+    border:'1px solid rgba(109,141,247,0.16)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontSize:'1.85rem',
+    flexShrink:0,
+  },
+  retirementPreviewMeta: {
+    display:'flex',
+    flexWrap:'wrap',
+    gap:8,
+  },
+  retirementPreviewPill: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.64rem',
+    color:'var(--blue)',
+    background:'rgba(109,141,247,0.08)',
+    border:'1px solid rgba(109,141,247,0.14)',
+    padding:'6px 10px',
+    borderRadius:999,
+    letterSpacing:'0.05em',
+  },
+  retirementProgressTrack: {
+    height:12,
+    borderRadius:999,
+    background:'rgba(148,163,184,0.12)',
+    overflow:'hidden',
+    border:'1px solid rgba(148,163,184,0.14)',
+  },
+  retirementProgressFill: {
+    height:'100%',
+    borderRadius:999,
+    boxShadow:'0 8px 20px rgba(109,141,247,0.18)',
+    transition:'width 0.35s ease',
+  },
+  retirementStatGrid: {
+    display:'grid',
+    gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',
+    gap:12,
+    marginBottom:18,
+  },
+  retirementStatCard: {
+    background:'rgba(255,255,255,0.52)',
+    border:'1px solid var(--border)',
+    borderRadius:14,
+    padding:'14px 15px',
+    minWidth:0,
+  },
+  retirementStatLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.1em',
+    marginBottom:8,
+  },
+  retirementStatValue: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1.15rem',
+    fontWeight:800,
+    lineHeight:1.15,
+    marginBottom:5,
+    overflowWrap:'anywhere',
+    wordBreak:'break-word',
+  },
+  retirementStatHint: {
+    fontSize:'0.76rem',
+    color:'var(--text-faint)',
+    lineHeight:1.55,
+  },
+  retirementControls: {
+    display:'grid',
+    gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))',
+    gap:10,
+    alignItems:'end',
+  },
+  retirementInputWrap: {
+    display:'flex',
+    flexDirection:'column',
+    gap:6,
+  },
+  retirementInputLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.08em',
+  },
+  retirementInput: {
+    width:'100%',
+    borderRadius:12,
+    border:'1px solid var(--border)',
+    background:'rgba(255,255,255,0.74)',
+    color:'var(--text)',
+    padding:'10px 12px',
+    fontFamily:'var(--font-body)',
+    fontSize:'0.88rem',
+    outline:'none',
+  },
+  retirementSecondaryBtn: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    border:'1px solid var(--border)',
+    background:'rgba(255,255,255,0.62)',
+    color:'var(--text-dim)',
+    borderRadius:999,
+    padding:'8px 12px',
+    fontFamily:'var(--font-body)',
+    fontSize:'0.82rem',
+    fontWeight:600,
+    cursor:'pointer',
+  },
+  benchmarkGrid: {
+    display:'grid',
+    gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',
+    gap:14,
+  },
+  benchmarkMetricCard: {
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:18,
+    background:'linear-gradient(180deg, rgba(255,255,255,0.8), rgba(247,249,252,0.9))',
+    padding:'18px 18px 16px',
+    boxShadow:'0 18px 36px rgba(15,23,42,0.04)',
+  },
+  benchmarkMetricLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.66rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.1em',
+    marginBottom:8,
+  },
+  benchmarkIcon: {
+    width:42,
+    height:42,
+    borderRadius:12,
+    background:'rgba(255,255,255,0.86)',
+    border:'1px solid rgba(15,23,42,0.08)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontFamily:'var(--font-display)',
+    fontSize:'1.1rem',
+    fontWeight:800,
+    flexShrink:0,
+  },
+  benchmarkRail: {
+    height:12,
+    borderRadius:999,
+    overflow:'hidden',
+    border:'1px solid rgba(15,23,42,0.06)',
+  },
+  benchmarkFill: {
+    height:'100%',
+    borderRadius:999,
+    boxShadow:'0 8px 20px rgba(15,23,42,0.12)',
+    transition:'width 0.35s ease',
+  },
+  benchmarkSummaryRow: {
+    display:'flex',
+    gap:10,
+    flexWrap:'wrap',
+    marginTop:16,
+  },
+  benchmarkSummaryPill: {
+    fontFamily:'var(--font-body)',
+    fontSize:'0.8rem',
+    lineHeight:1.55,
+    color:'var(--text-dim)',
+    background:'rgba(255,255,255,0.72)',
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:999,
+    padding:'9px 13px',
+  },
+  benchmarkMiniCard: {
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:14,
+    background:'rgba(255,255,255,0.68)',
+    padding:'14px 14px 12px',
+    minWidth:0,
+  },
+  benchmarkMiniLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.1em',
+    marginBottom:6,
+  },
+  benchmarkMiniIcon: {
+    width:34,
+    height:34,
+    borderRadius:10,
+    background:'rgba(255,255,255,0.84)',
+    border:'1px solid rgba(15,23,42,0.08)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontFamily:'var(--font-display)',
+    fontSize:'0.94rem',
+    fontWeight:800,
+    flexShrink:0,
+  },
+  benchmarkMiniTrack: {
+    height:10,
+    borderRadius:999,
+    background:'rgba(148,163,184,0.14)',
+    overflow:'hidden',
+    border:'1px solid rgba(15,23,42,0.05)',
+  },
+  benchmarkMiniFill: {
+    height:'100%',
+    borderRadius:999,
+    transition:'width 0.35s ease',
+  },
+  compBtnAsset: {
+    background:'linear-gradient(135deg,var(--teal),#0e9f84)',
+    border:'1px solid var(--border-act)',
+    color:'#081019',
+    padding:'8px 12px',
+    borderRadius:999,
+    fontFamily:'var(--font-display)',
+    fontSize:'0.74rem',
+    fontWeight:800,
+    cursor:'pointer',
+  },
+  compBtnLiability: {
+    background:'rgba(226,85,85,0.18)',
+    border:'1px solid rgba(226,85,85,0.52)',
+    color:'var(--text)',
+    padding:'8px 12px',
+    borderRadius:999,
+    fontFamily:'var(--font-display)',
+    fontSize:'0.74rem',
+    fontWeight:800,
+    cursor:'pointer',
+  },
+  compBtnIncome: {
+    background:'rgba(143,126,246,0.18)',
+    border:'1px solid rgba(143,126,246,0.52)',
+    color:'var(--text)',
+    padding:'8px 12px',
+    borderRadius:999,
+    fontFamily:'var(--font-display)',
+    fontSize:'0.74rem',
+    fontWeight:800,
+    cursor:'pointer',
+  },
+  compMetaPill: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.64rem',
+    color:'var(--text-faint)',
+    border:'1px solid var(--border)',
+    background:'var(--surface2)',
+    borderRadius:999,
+    padding:'5px 10px',
   },
 }
 
@@ -1758,10 +3836,10 @@ const hm = {
   panel: {
     width:'min(920px, 100%)',
     margin:'0 auto',
-    background:'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
-    border:'1px solid rgba(15,23,42,0.08)',
+    background:'var(--surface)',
+    border:'1px solid var(--border)',
     borderRadius:24,
-    boxShadow:'0 36px 90px rgba(15,23,42,0.2)',
+    boxShadow:'0 36px 90px rgba(0,0,0,0.35)',
     overflow:'hidden',
   },
   topBar: { height:2, background:'linear-gradient(90deg, var(--teal), #7c3aed, var(--gold))' },
@@ -1799,7 +3877,7 @@ const hm = {
     height:40,
     borderRadius:10,
     border:'1px solid var(--border)',
-    background:'rgba(255,255,255,0.9)',
+    background:'var(--surface2)',
     color:'var(--text-faint)',
     cursor:'pointer',
     flexShrink:0,
@@ -1811,9 +3889,9 @@ const hm = {
     padding:'0 28px 18px',
   },
   metricCard: {
-    border:'1px solid rgba(15,23,42,0.08)',
+    border:'1px solid var(--border)',
     borderRadius:14,
-    background:'rgba(255,255,255,0.72)',
+    background:'var(--surface2)',
     padding:'14px 14px 12px',
   },
   metricLabel: {
@@ -1828,5 +3906,418 @@ const hm = {
     fontFamily:'var(--font-display)',
     fontWeight:700,
     fontSize:'1rem',
+  },
+}
+
+const fm = {
+  backdrop: {
+    position:'fixed',
+    inset:0,
+    zIndex:315,
+    background:'rgba(15,23,42,0.22)',
+    backdropFilter:'blur(14px)',
+    WebkitBackdropFilter:'blur(14px)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    padding:'24px',
+  },
+  panel: {
+    width:'min(860px, 100%)',
+    maxHeight:'90vh',
+    background:'linear-gradient(180deg, var(--surface), var(--surface2))',
+    border:'1px solid var(--border)',
+    borderRadius:24,
+    boxShadow:'0 36px 90px rgba(0,0,0,0.45)',
+    overflow:'hidden',
+    display:'flex',
+    flexDirection:'column',
+  },
+  topBar: { height:2, background:'linear-gradient(90deg, var(--teal), #8b5cf6, var(--gold))' },
+  header: {
+    display:'flex',
+    alignItems:'flex-start',
+    justifyContent:'space-between',
+    gap:16,
+    padding:'26px 28px 16px',
+  },
+  eyebrow: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.66rem',
+    color:'var(--teal)',
+    textTransform:'uppercase',
+    letterSpacing:'0.16em',
+    marginBottom:8,
+  },
+  title: {
+    margin:0,
+    fontFamily:'var(--font-display)',
+    fontSize:'1.5rem',
+    lineHeight:1.1,
+  },
+  subline: { marginTop:8, fontSize:'0.84rem', color:'var(--text-dim)' },
+  closeBtn: {
+    width:40,
+    height:40,
+    borderRadius:10,
+    border:'1px solid var(--border)',
+    background:'var(--surface2)',
+    color:'var(--text-dim)',
+    cursor:'pointer',
+  },
+  tabs: {
+    display:'flex',
+    gap:8,
+    padding:'0 28px 16px',
+  },
+  tab: {
+    border:'1px solid var(--border)',
+    background:'var(--surface2)',
+    color:'var(--text-dim)',
+    padding:'8px 12px',
+    borderRadius:999,
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.7rem',
+    cursor:'pointer',
+  },
+  tabActive: {
+    background:'rgba(42,184,163,0.1)',
+    borderColor:'rgba(42,184,163,0.22)',
+    color:'var(--teal)',
+  },
+  body: {
+    flex:1,
+    padding:'0 28px 28px',
+    display:'flex',
+    flexDirection:'column',
+    gap:18,
+    overflowY:'auto',
+    minHeight:0,
+  },
+  sectionTitle: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1.05rem',
+    fontWeight:700,
+    marginBottom:6,
+  },
+  sectionBody: {
+    fontSize:'0.86rem',
+    color:'var(--text-dim)',
+    lineHeight:1.7,
+  },
+  form: {
+    display:'grid',
+    gridTemplateColumns:'repeat(4, minmax(0, 1fr))',
+    gap:10,
+  },
+  input: {
+    background:'var(--surface2)',
+    border:'1px solid var(--border)',
+    color:'var(--text)',
+    borderRadius:12,
+    padding:'11px 12px',
+    fontFamily:'var(--font-body)',
+    fontSize:'0.84rem',
+    outline:'none',
+  },
+  numberInput: {
+    appearance:'textfield',
+    WebkitAppearance:'none',
+    MozAppearance:'textfield',
+    lineHeight:1.2,
+    paddingRight:12,
+  },
+  submitBtn: {
+    background:'linear-gradient(135deg,var(--teal),#0e9f84)',
+    border:'none',
+    color:'#ffffff',
+    borderRadius:12,
+    fontFamily:'var(--font-display)',
+    fontWeight:800,
+    fontSize:'0.82rem',
+    cursor:'pointer',
+  },
+  list: {
+    display:'flex',
+    flexDirection:'column',
+    gap:10,
+  },
+  empty: {
+    border:'1px dashed rgba(148,163,184,0.24)',
+    borderRadius:14,
+    padding:'18px',
+    color:'var(--text-faint)',
+    fontSize:'0.84rem',
+  },
+  listItem: {
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'space-between',
+    gap:14,
+    border:'1px solid var(--border)',
+    borderRadius:16,
+    background:'var(--surface2)',
+    padding:'14px 16px',
+  },
+  itemTitle: {
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    fontSize:'0.95rem',
+    marginBottom:4,
+  },
+  itemMeta: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.64rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.08em',
+  },
+  itemValue: {
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    fontSize:'0.95rem',
+  },
+  removeBtn: {
+    background:'rgba(248,113,113,0.08)',
+    border:'1px solid rgba(248,113,113,0.16)',
+    color:'var(--red)',
+    borderRadius:10,
+    padding:'8px 10px',
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    cursor:'pointer',
+  },
+}
+
+const yw = {
+  backdrop: {
+    position:'fixed',
+    inset:0,
+    zIndex:320,
+    background:'rgba(15,23,42,0.28)',
+    backdropFilter:'blur(16px)',
+    WebkitBackdropFilter:'blur(16px)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    padding:'24px',
+  },
+  panel: {
+    width:'min(920px, 100%)',
+    background:'linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,248,252,0.98))',
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:28,
+    boxShadow:'0 36px 90px rgba(15,23,42,0.2)',
+    overflow:'hidden',
+  },
+  topBar: { height:3, background:'linear-gradient(90deg, #6d8df7, #8b5cf6, #2ab8a3)' },
+  header: {
+    display:'flex',
+    alignItems:'flex-start',
+    justifyContent:'space-between',
+    gap:16,
+    padding:'26px 28px 14px',
+  },
+  eyebrow: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    color:'var(--teal)',
+    textTransform:'uppercase',
+    letterSpacing:'0.16em',
+    marginBottom:8,
+  },
+  titleRow: {
+    display:'flex',
+    alignItems:'center',
+    gap:12,
+    flexWrap:'wrap',
+  },
+  title: {
+    margin:0,
+    fontFamily:'var(--font-display)',
+    fontSize:'1.7rem',
+    lineHeight:1.1,
+  },
+  countPill: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    color:'var(--purple)',
+    background:'rgba(139,92,246,0.08)',
+    border:'1px solid rgba(139,92,246,0.16)',
+    borderRadius:999,
+    padding:'5px 10px',
+  },
+  closeBtn: {
+    width:42,
+    height:42,
+    borderRadius:12,
+    border:'1px solid var(--border)',
+    background:'rgba(255,255,255,0.92)',
+    color:'var(--text-faint)',
+    cursor:'pointer',
+    flexShrink:0,
+  },
+  dots: {
+    display:'flex',
+    gap:8,
+    padding:'0 28px 16px',
+  },
+  dot: {
+    width:10,
+    height:10,
+    borderRadius:'50%',
+    border:'none',
+    background:'rgba(148,163,184,0.28)',
+    cursor:'pointer',
+  },
+  dotActive: {
+    width:30,
+    borderRadius:999,
+    background:'linear-gradient(90deg, #8b5cf6, #2ab8a3)',
+  },
+  slide: {
+    margin:'0 28px',
+    width:'calc(100% - 56px)',
+    border:'1px solid rgba(139,92,246,0.14)',
+    borderRadius:24,
+    background:'linear-gradient(135deg, rgba(109,141,247,0.05), rgba(139,92,246,0.05) 50%, rgba(42,184,163,0.05))',
+    padding:'34px 30px 28px',
+    textAlign:'left',
+  },
+  slideIcon: {
+    width:76,
+    height:76,
+    borderRadius:22,
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontSize:'2.1rem',
+    marginBottom:20,
+    background:'rgba(255,255,255,0.72)',
+    border:'1px solid rgba(139,92,246,0.14)',
+    boxShadow:'0 16px 30px rgba(15,23,42,0.06)',
+  },
+  slideEyebrow: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.72rem',
+    color:'var(--teal)',
+    textTransform:'uppercase',
+    letterSpacing:'0.14em',
+    marginBottom:10,
+  },
+  slideTitle: {
+    fontFamily:'var(--font-display)',
+    fontSize:'2.15rem',
+    fontWeight:800,
+    lineHeight:1.04,
+    marginBottom:14,
+    maxWidth:680,
+  },
+  slideBody: {
+    fontSize:'1.02rem',
+    lineHeight:1.85,
+    color:'var(--text-dim)',
+    maxWidth:720,
+  },
+  slideSupport: {
+    marginTop:12,
+    fontSize:'0.86rem',
+    lineHeight:1.72,
+    color:'var(--text-faint)',
+    maxWidth:680,
+  },
+  statsGrid: {
+    display:'grid',
+    gridTemplateColumns:'repeat(auto-fit, minmax(170px, 1fr))',
+    gap:12,
+    marginTop:22,
+  },
+  statCard: {
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:16,
+    padding:'15px 15px 13px',
+    background:'rgba(255,255,255,0.74)',
+  },
+  statLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.08em',
+    marginBottom:8,
+  },
+  statValue: {
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    fontSize:'1.05rem',
+  },
+  tapHint: {
+    marginTop:22,
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.1em',
+  },
+  summaryList: {
+    display:'flex',
+    flexDirection:'column',
+    gap:12,
+    marginTop:20,
+    maxWidth:760,
+    color:'var(--text-dim)',
+    fontSize:'0.92rem',
+    lineHeight:1.72,
+  },
+  summaryRow: {
+    display:'flex',
+    gap:10,
+    alignItems:'flex-start',
+  },
+  summaryDot: {
+    width:8,
+    height:8,
+    borderRadius:'50%',
+    marginTop:7,
+    background:'var(--teal)',
+    flexShrink:0,
+  },
+  footer: {
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'space-between',
+    gap:16,
+    padding:'18px 28px 28px',
+    flexWrap:'wrap',
+  },
+  navBtn: {
+    background:'var(--surface2)',
+    border:'1px solid var(--border)',
+    color:'var(--text-dim)',
+    padding:'10px 16px',
+    borderRadius:12,
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+  },
+  nextBtn: {
+    background:'linear-gradient(135deg,var(--teal),#0e9f84)',
+    border:'none',
+    color:'#081019',
+    padding:'10px 18px',
+    borderRadius:12,
+    fontFamily:'var(--font-display)',
+    fontWeight:800,
+    cursor:'pointer',
+    boxShadow:'0 10px 24px rgba(42,184,163,0.2)',
+  },
+  downloadBtn: {
+    background:'var(--surface2)',
+    border:'1px solid rgba(29,39,56,0.14)',
+    color:'var(--gold)',
+    padding:'10px 16px',
+    borderRadius:12,
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    cursor:'pointer',
   },
 }

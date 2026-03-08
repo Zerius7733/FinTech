@@ -1,17 +1,27 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 
 const INSIGHTS_API = 'http://localhost:8000'
 const insightsCache = new Map()
 
 function fmtPct(value) {
-  if (value == null || Number.isNaN(Number(value))) return '—'
+  if (value == null || Number.isNaN(Number(value))) return '-'
   const pct = Number(value)
   return `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`
 }
 
 function fmtNumber(value, digits = 2) {
-  if (value == null || Number.isNaN(Number(value))) return '—'
+  if (value == null || Number.isNaN(Number(value))) return '-'
   return Number(value).toLocaleString('en-US', { maximumFractionDigits: digits })
+}
+
+
+function narrativeToBullets(text) {
+  return String(text || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(/(?<=[.!?])\s+(?=[A-Z0-9(])/)
+    .map(v => v.trim())
+    .filter(Boolean)
 }
 
 function normalizeInsightTarget(assetType, symbol) {
@@ -26,16 +36,46 @@ function normalizeInsightTarget(assetType, symbol) {
     if (['GLD', 'SLV', 'IAU', 'SIVR', 'PPLT', 'PALL'].includes(raw)) {
       return { type: 'stock', symbol: raw }
     }
-    return { type: 'commodity', symbol: raw.replace(/=F$/, '').replace(/-USD$/, '') }
+    return { type: 'commodity', symbol: raw.replace(/-USD$/, '') }
   }
 
   return { type: 'stock', symbol: raw }
 }
 
-export default function AssetInsightsPanel({ assetType, symbol, months = 3, compact = false, userId = '' }) {
+export function getCachedInsight(assetType, symbol, months = 3) {
+  const target = normalizeInsightTarget(assetType, symbol)
+  const cacheKey = `${target.type}:${target.symbol}:${months}`
+  return insightsCache.get(cacheKey) || null
+}
+
+export default function AssetInsightsPanel({ assetType, symbol, months = 3, compact = false, userId = '', onInsightLoaded = null, prefaceText = '' }) {
   const [requested, setRequested] = useState(false)
   const [requestVersion, setRequestVersion] = useState(0)
   const [state, setState] = useState({ loading: false, error: '', data: null })
+  const hasUserContext = Boolean(userId)
+
+  useEffect(() => {
+    if (hasUserContext) return
+    setRequested(false)
+    setRequestVersion(0)
+    setState({ loading: false, error: '', data: null })
+  }, [hasUserContext])
+
+  if (!hasUserContext) {
+    return (
+      <div style={S.card}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div style={S.label}>Market Insight</div>
+            <div style={{ fontSize: '0.84rem', color: 'var(--text-dim)', lineHeight: 1.7, marginTop: 10, maxWidth: 620 }}>
+              Sign in to generate a personalised market insight for this asset.
+            </div>
+          </div>
+          <div style={S.lockedPill}>Sign In Required</div>
+        </div>
+      </div>
+    )
+  }
 
   useEffect(() => {
     if (!requested) {
@@ -45,7 +85,9 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
     const target = normalizeInsightTarget(assetType, symbol)
     const cacheKey = `${target.type}:${target.symbol}:${months}`
     if (insightsCache.has(cacheKey)) {
-      setState({ loading: false, error: '', data: insightsCache.get(cacheKey) })
+      const cached = insightsCache.get(cacheKey)
+      setState({ loading: false, error: '', data: cached })
+      if (typeof onInsightLoaded === 'function') onInsightLoaded(cached)
       return
     }
 
@@ -64,6 +106,7 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
         if (cancelled) return
         insightsCache.set(cacheKey, data)
         setState({ loading: false, error: '', data })
+        if (typeof onInsightLoaded === 'function') onInsightLoaded(data)
       })
       .catch(error => {
         if (cancelled) return
@@ -94,13 +137,19 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
   if (state.loading) {
     return (
       <div style={S.card}>
+        <style>{`@keyframes insightSpin { to { transform: rotate(360deg); } }`}</style>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
           <div style={S.label}>Market Insight</div>
           <button onClick={() => setRequested(false)} style={S.ghostBtn}>Hide</button>
         </div>
+        <NarrativeContext text={prefaceText} />
+        <div style={S.loadingRow}>
+          <span style={S.loadingSpinner} />
+          <span style={S.loadingText}>Generating market insight...</span>
+        </div>
         <div style={{ display: 'grid', gap: 10 }}>
           {[1, 2, 3].map(i => (
-            <div key={i} style={{ height: i === 1 ? 16 : 12, width: i === 1 ? '38%' : `${88 - i * 12}%`, borderRadius: 6, background: 'rgba(15,23,42,0.06)' }} />
+            <div key={i} style={{ height: i === 1 ? 16 : 12, width: i === 1 ? '38%' : `${88 - i * 12}%`, borderRadius: 6, background: 'var(--surface3)' }} />
           ))}
         </div>
       </div>
@@ -117,6 +166,7 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
             <button onClick={() => setRequestVersion(v => v + 1)} style={S.triggerBtn}>Retry</button>
           </div>
         </div>
+        <NarrativeContext text={prefaceText} />
         <div style={{ fontSize: '0.84rem', color: 'var(--text-faint)', lineHeight: 1.7 }}>
           {state.error || 'Insight data is unavailable for this asset right now.'}
         </div>
@@ -142,6 +192,7 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
           <button onClick={() => setRequested(false)} style={S.ghostBtn}>Hide</button>
         </div>
       </div>
+      <NarrativeContext text={prefaceText} />
 
       {tldr.length > 0 && (
         <div style={{ marginBottom: 16 }}>
@@ -231,13 +282,30 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
   )
 }
 
+function NarrativeContext({ text }) {
+  const bullets = narrativeToBullets(text)
+  if (!bullets.length) return null
+  return (
+    <div style={S.prefaceBox}>
+      <div style={S.prefaceTitle}>Context</div>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {bullets.map((line, idx) => (
+          <div key={`${idx}-${line.slice(0, 24)}`} style={S.bulletRow}>
+            <span style={S.dot} />
+            <span style={S.prefaceText}>{line}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 const S = {
   card: {
-    background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
-    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'var(--surface2)',
+    border: '1px solid var(--border)',
     borderRadius: 18,
     padding: 20,
-    boxShadow: '0 14px 28px rgba(15,23,42,0.06)',
+    boxShadow: '0 14px 28px rgba(0,0,0,0.2)',
   },
   label: {
     fontFamily: 'var(--font-mono)',
@@ -275,9 +343,9 @@ const S = {
     marginTop: 6,
   },
   metric: {
-    border: '1px solid rgba(15,23,42,0.08)',
+    border: '1px solid var(--border)',
     borderRadius: 14,
-    background: 'rgba(255,255,255,0.72)',
+    background: 'var(--surface)',
     padding: '14px 14px 12px',
   },
   metricLabel: {
@@ -298,16 +366,16 @@ const S = {
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 12,
-    border: '1px solid rgba(15,23,42,0.08)',
+    border: '1px solid var(--border)',
     borderRadius: 14,
-    background: 'rgba(255,255,255,0.72)',
+    background: 'var(--surface)',
     padding: '12px 14px',
   },
   linkCard: {
     display: 'block',
-    border: '1px solid rgba(15,23,42,0.08)',
+    border: '1px solid var(--border)',
     borderRadius: 14,
-    background: 'rgba(255,255,255,0.72)',
+    background: 'var(--surface)',
     padding: '12px 14px',
     textDecoration: 'none',
   },
@@ -333,9 +401,20 @@ const S = {
     cursor: 'pointer',
     boxShadow: '0 10px 24px rgba(17,24,39,0.16)',
   },
+  lockedPill: {
+    border: '1px solid rgba(148,163,184,0.18)',
+    background: 'rgba(148,163,184,0.08)',
+    color: 'var(--text-faint)',
+    borderRadius: 999,
+    padding: '10px 14px',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.68rem',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+  },
   ghostBtn: {
-    background: 'rgba(255,255,255,0.72)',
-    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
     color: 'var(--text-dim)',
     padding: '8px 12px',
     borderRadius: 10,
@@ -343,4 +422,46 @@ const S = {
     fontSize: '0.72rem',
     cursor: 'pointer',
   },
+  loadingRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  loadingSpinner: {
+    width: 14,
+    height: 14,
+    borderRadius: '50%',
+    border: '2px solid rgba(42,184,163,0.28)',
+    borderTopColor: 'var(--teal)',
+    animation: 'insightSpin 0.8s linear infinite',
+    flexShrink: 0,
+  },
+  loadingText: {
+    fontSize: '0.8rem',
+    color: 'var(--text-dim)',
+    fontFamily: 'var(--font-mono)',
+    letterSpacing: '0.03em',
+  },
+  prefaceBox: {
+    border: '1px solid var(--border)',
+    background: 'var(--surface)',
+    borderRadius: 12,
+    padding: '10px 12px',
+    marginBottom: 12,
+  },
+  prefaceTitle: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.62rem',
+    color: 'var(--text-faint)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    marginBottom: 6,
+  },
+  prefaceText: {
+    fontSize: '0.84rem',
+    color: 'var(--text-dim)',
+    lineHeight: 1.7,
+  },
 }
+

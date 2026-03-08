@@ -26,14 +26,51 @@ from backend.services.news_provider import build_default_news_provider
 # ----------------------------
 
 COMMODITY_TICKER_MAP: Dict[str, Tuple[str, str]] = {
+    "GC=F": ("GC=F", "Gold"),
     "XAU": ("GC=F", "Gold"),
     "GOLD": ("GC=F", "Gold"),
+    "SI=F": ("SI=F", "Silver"),
     "XAG": ("SI=F", "Silver"),
     "SILVER": ("SI=F", "Silver"),
+    "CL=F": ("CL=F", "Crude Oil"),
     "CL": ("CL=F", "Crude Oil"),
     "WTI": ("CL=F", "Crude Oil"),
+    "BZ=F": ("BZ=F", "Brent Oil"),
     "BRENT": ("BZ=F", "Brent Oil"),
+    "NG=F": ("NG=F", "Natural Gas"),
     "NG": ("NG=F", "Natural Gas"),
+    "HG=F": ("HG=F", "Copper"),
+    "COPPER": ("HG=F", "Copper"),
+    "PL=F": ("PL=F", "Platinum"),
+    "PLATINUM": ("PL=F", "Platinum"),
+    "PA=F": ("PA=F", "Palladium"),
+    "PALLADIUM": ("PA=F", "Palladium"),
+    "RB=F": ("RB=F", "RBOB Gasoline"),
+    "HO=F": ("HO=F", "Heating Oil"),
+    "ZC=F": ("ZC=F", "Corn"),
+    "CORN": ("ZC=F", "Corn"),
+    "ZO=F": ("ZO=F", "Oats"),
+    "OATS": ("ZO=F", "Oats"),
+    "ZS=F": ("ZS=F", "Soybeans"),
+    "SOYBEANS": ("ZS=F", "Soybeans"),
+    "ZW=F": ("ZW=F", "Wheat"),
+    "WHEAT": ("ZW=F", "Wheat"),
+    "ZM=F": ("ZM=F", "Soybean Meal"),
+    "ZL=F": ("ZL=F", "Soybean Oil"),
+    "CC=F": ("CC=F", "Cocoa"),
+    "COCOA": ("CC=F", "Cocoa"),
+    "KC=F": ("KC=F", "Coffee"),
+    "COFFEE": ("KC=F", "Coffee"),
+    "CT=F": ("CT=F", "Cotton"),
+    "COTTON": ("CT=F", "Cotton"),
+    "SB=F": ("SB=F", "Sugar"),
+    "SUGAR": ("SB=F", "Sugar"),
+    "HE=F": ("HE=F", "Lean Hogs"),
+    "LEAN_HOGS": ("HE=F", "Lean Hogs"),
+    "LE=F": ("LE=F", "Live Cattle"),
+    "LIVE_CATTLE": ("LE=F", "Live Cattle"),
+    "GF=F": ("GF=F", "Feeder Cattle"),
+    "FEEDER_CATTLE": ("GF=F", "Feeder Cattle"),
 }
 
 def _ollama_base_url() -> str:
@@ -410,9 +447,12 @@ async def _fetch_crypto_history(
 
 def _fetch_commodity_history(symbol: str, start: date, end: date) -> PriceSeries:
     mapped = COMMODITY_TICKER_MAP.get(symbol)
-    if not mapped:
+    if mapped:
+        yf_symbol, display_name = mapped
+    elif symbol.endswith("=F"):
+        yf_symbol, display_name = symbol, symbol
+    else:
         raise InsightError("commodity symbol not supported", status_code=404)
-    yf_symbol, display_name = mapped
     try:
         ticker = yf.Ticker(yf_symbol)
         df = ticker.history(start=str(start), end=str(end + timedelta(days=1)), interval="1d")

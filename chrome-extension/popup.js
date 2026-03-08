@@ -13,6 +13,7 @@ const authStatusEl = document.getElementById("authStatus");
 
 const statusEl = document.getElementById("status");
 const previewEl = document.getElementById("preview");
+const previewPlaceholderEl = document.getElementById("previewPlaceholder");
 const holdingsListEl = document.getElementById("holdingsList");
 const warningsBoxEl = document.getElementById("warningsBox");
 const addRowBtn = document.getElementById("addRowBtn");
@@ -22,6 +23,12 @@ const confirmBtn = document.getElementById("confirmBtn");
 let screenshotDataUrl = "";
 let authUser = null;
 let currentImportId = "";
+
+function renderPreviewState() {
+  const hasPreview = Boolean(screenshotDataUrl);
+  previewEl.style.display = hasPreview ? "block" : "none";
+  previewPlaceholderEl.style.display = hasPreview ? "none" : "flex";
+}
 
 function setStatus(text, tone = "neutral") {
   statusEl.textContent = text;
@@ -88,7 +95,6 @@ function createHoldingCard(holding = {}) {
       <input data-k="avg_price" type="number" step="any" placeholder="Avg Price" />
       <input data-k="current_price" type="number" step="any" placeholder="Current Price" />
       <input data-k="name" placeholder="Asset Name" />
-      <input data-k="confidence" type="number" step="any" placeholder="Conf." />
     </div>
   `;
 
@@ -99,7 +105,6 @@ function createHoldingCard(holding = {}) {
   card.querySelector('[data-k="avg_price"]').value = holding.avg_price ?? "";
   card.querySelector('[data-k="current_price"]').value = holding.current_price ?? "";
   card.querySelector('[data-k="name"]').value = holding.name || "";
-  card.querySelector('[data-k="confidence"]').value = holding.confidence ?? "";
 
   return card;
 }
@@ -142,7 +147,6 @@ function getHoldingsFromUI() {
       avg_price: toNumberOrNull(card.querySelector('[data-k="avg_price"]').value),
       current_price: toNumberOrNull(card.querySelector('[data-k="current_price"]').value),
       name: (card.querySelector('[data-k="name"]').value || "").trim() || null,
-      confidence: toNumberOrNull(card.querySelector('[data-k="confidence"]').value),
       _client_debug_qty_parsed: qtyParsed,
     });
   }
@@ -176,7 +180,9 @@ async function loadSettings() {
   authUser = saved.authUser || null;
   setHoldingsToUI([]);
   setWarnings([]);
+  screenshotDataUrl = "";
   previewEl.removeAttribute("src");
+  renderPreviewState();
   renderAuthState();
 }
 
@@ -273,6 +279,7 @@ async function captureAndParse() {
   const tab = await getActiveTab();
   screenshotDataUrl = await captureVisibleTab(tab.windowId);
   previewEl.src = screenshotDataUrl;
+  renderPreviewState();
 
   const res = await fetch(`${API_BASE}/users/${encodeURIComponent(authUser.user_id)}/imports/screenshot/parse`, {
     method: "POST",
@@ -343,6 +350,7 @@ logoutBtn.addEventListener("click", async () => {
   screenshotDataUrl = "";
   currentImportId = "";
   previewEl.removeAttribute("src");
+  renderPreviewState();
   setHoldingsToUI([]);
   setWarnings([]);
   await saveSettings();
@@ -373,4 +381,5 @@ addRowBtn.addEventListener("click", () => {
   holdingsListEl.appendChild(createHoldingCard());
 });
 
+renderPreviewState();
 loadSettings();

@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
-import ThemeModal from '../components/ThemeModal.jsx'
-import SettingsModal from '../components/SettingsModal.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useLoginModal } from '../context/LoginModalContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { MOCK_NODES, genPriceSeries, genSparkline } from '../data.js'
 
@@ -177,13 +176,33 @@ function Sparkline({ dir, color, h = 32 }) {
   )
 }
 
-function PriceChart({ mtd, nodeColor }) {
+function PriceChart({ mtd, nodeColor, points = null, hoveredIndex = null, onHoverIndexChange = null }) {
   const hex  = '#' + (nodeColor || 0x2dd4bf).toString(16).padStart(6,'0')
-  const pts  = genPriceSeries(mtd)
+  const pts  = Array.isArray(points) && points.length > 1 ? points : genPriceSeries(mtd)
+  const W = 800
+  const H = 110
   const path = pts.map((v, i) => `${i===0?'M':'L'}${(i/(pts.length-1))*800},${110-v*100}`).join(' ')
   const area = path + ' L800,110 L0,110 Z'
+  const activeIndex = typeof hoveredIndex === 'number'
+    ? Math.min(Math.max(hoveredIndex, 0), pts.length - 1)
+    : null
+  const markerX = activeIndex != null ? (activeIndex / (pts.length - 1)) * W : null
+  const markerY = activeIndex != null ? H - pts[activeIndex] * 100 : null
+  const handlePointer = event => {
+    if (typeof onHoverIndexChange !== 'function') return
+    const rect = event.currentTarget.getBoundingClientRect()
+    const x = Math.min(Math.max(event.clientX - rect.left, 0), rect.width || 1)
+    const idx = Math.round((x / Math.max(rect.width || 1, 1)) * (pts.length - 1))
+    onHoverIndexChange(Math.min(Math.max(idx, 0), pts.length - 1))
+  }
   return (
-    <svg viewBox="0 0 800 110" style={{ width:'100%', height:100 }} preserveAspectRatio="none">
+    <svg
+      viewBox="0 0 800 110"
+      style={{ width:'100%', height:100, cursor:'crosshair' }}
+      preserveAspectRatio="none"
+      onMouseMove={handlePointer}
+      onMouseLeave={() => { if (typeof onHoverIndexChange === 'function') onHoverIndexChange(null) }}
+    >
       <defs>
         <linearGradient id={`pg_${nodeColor}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.28" />
@@ -192,14 +211,41 @@ function PriceChart({ mtd, nodeColor }) {
       </defs>
       <path d={area} fill={`url(#pg_${nodeColor})`} />
       <path d={path} stroke="#7c3aed" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      {activeIndex != null && (
+        <>
+          <line x1={markerX} x2={markerX} y1={6} y2={106} stroke="rgba(124,58,237,0.28)" strokeWidth="1.2" strokeDasharray="4 4" />
+          <circle cx={markerX} cy={markerY} r="4.6" fill="#fff" stroke="#7c3aed" strokeWidth="2.2" />
+        </>
+      )}
     </svg>
   )
 }
 
-function WellnessRing({ score, size = 84 }) {
+function WellnessRing({ score, size = 84, centerText = null, subLabel = 'score' }) {
+  const [animatedScore, setAnimatedScore] = useState(0)
+
+  useEffect(() => {
+    let frameId = 0
+    let start = null
+    const target = Math.max(0, Math.min(100, Number(score) || 0))
+    const duration = 1400
+
+    const tick = ts => {
+      if (start == null) start = ts
+      const progress = Math.min((ts - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setAnimatedScore(Math.round(target * eased))
+      if (progress < 1) frameId = requestAnimationFrame(tick)
+    }
+
+    setAnimatedScore(0)
+    frameId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frameId)
+  }, [score])
+
   const r     = size * 0.42
   const circ  = 2 * Math.PI * r
-  const color = score >= 75 ? '#34d399' : score >= 55 ? '#c9a84c' : '#f87171'
+  const color = score <= 5 ? '#34d399' : score <= 20 ? '#c9a84c' : '#f87171'
   return (
     <div style={{ position:'relative', width:size, height:size, flexShrink:0 }}>
       <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ transform:'rotate(-90deg)' }}>
@@ -211,26 +257,73 @@ function WellnessRing({ score, size = 84 }) {
         </defs>
         <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={size*0.085} />
         <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={`url(#wg_${score})`} strokeWidth={size*0.085}
-          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - score/100)} />
+          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - animatedScore/100)}
+          style={{ transition: 'stroke-dashoffset 0.08s linear' }} />
       </svg>
       <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:size*0.24, color:'var(--text)', lineHeight:1 }}>{score}</span>
-        <span style={{ fontFamily:'var(--font-mono)', fontSize:size*0.11, color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.07em', marginTop:2 }}>score</span>
+        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:size*0.24, color:'var(--text)', lineHeight:1 }}>
+          {centerText ?? animatedScore}
+        </span>
+        <span style={{ fontFamily:'var(--font-mono)', fontSize:size*0.11, color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.07em', marginTop:2 }}>
+          {subLabel}
+        </span>
       </div>
     </div>
   )
 }
 
-function BentoDashboard({ node, show, onClose }) {
+function BentoDashboard({ node, show, onClose, themeId = 'default' }) {
   const [entered, setEntered] = useState(false)
+  const [chartHoverIndex, setChartHoverIndex] = useState(null)
+  const stableChartPts = useMemo(() => (
+    node ? genPriceSeries(node.mtd) : []
+  ), [node?.id, node?.mtd])
   useEffect(() => {
     if (show) { const t = setTimeout(() => setEntered(true), 30); return () => clearTimeout(t) }
     else setEntered(false)
   }, [show])
+  useEffect(() => {
+    setChartHoverIndex(null)
+  }, [node?.id, show])
 
   if (!node) return null
   const hex   = '#' + node.color.toString(16).padStart(6,'0')
   const isPos = node.mtd >= 0
+  const isSilentNight = themeId === 'silent-night'
+  const panelSurface = isSilentNight
+    ? 'linear-gradient(180deg, rgba(18,20,24,0.97), rgba(12,14,18,0.98))'
+    : 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))'
+  const panelBorder = isSilentNight ? '1px solid rgba(190,183,164,0.2)' : '1px solid rgba(15,23,42,0.08)'
+  const panelShadow = isSilentNight
+    ? '0 34px 90px rgba(0,0,0,0.58), 0 18px 40px rgba(0,0,0,0.36)'
+    : '0 34px 90px rgba(15,23,42,0.18), 0 18px 40px rgba(15,23,42,0.1)'
+  const cardSurface = isSilentNight
+    ? 'linear-gradient(180deg, rgba(22,25,32,0.95), rgba(16,19,26,0.97))'
+    : 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))'
+  const cardBorder = isSilentNight ? '1px solid rgba(190,183,164,0.16)' : '1px solid rgba(15,23,42,0.08)'
+  const tileSurface = isSilentNight ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.5)'
+  const tileBorder = isSilentNight ? '1px solid rgba(190,183,164,0.12)' : '1px solid rgba(15,23,42,0.06)'
+  const chipSurface = isSilentNight ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)'
+  const closeSurface = isSilentNight ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.86)'
+  const closeBorder = isSilentNight ? '1px solid rgba(190,183,164,0.16)' : '1px solid rgba(15,23,42,0.08)'
+  const BC_LOCAL = {
+    background: cardSurface,
+    border: cardBorder,
+    borderRadius: 16,
+    padding: '18px 20px',
+    boxShadow: isSilentNight ? '0 14px 28px rgba(0,0,0,0.24)' : '0 14px 28px rgba(15,23,42,0.06)',
+  }
+  const BL_LOCAL = {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.64rem',
+    color: 'var(--text-faint)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.13em',
+    marginBottom: 14,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  }
 
   return (
     <>
@@ -260,11 +353,11 @@ function BentoDashboard({ node, show, onClose }) {
         <div style={{
           width: '100%', maxWidth: 980,
           maxHeight: '92vh', overflowY: 'auto',
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98))',
-          border: '1px solid rgba(15,23,42,0.08)',
+          background: panelSurface,
+          border: panelBorder,
           borderTop: `2px solid ${hex}`,
           borderRadius: 24,
-          boxShadow: `0 34px 90px rgba(15,23,42,0.18), 0 18px 40px rgba(15,23,42,0.1)`,
+          boxShadow: panelShadow,
           transform: entered ? 'scale(1) translateY(0)' : 'scale(0.86) translateY(50px)',
           transition: 'transform 0.45s cubic-bezier(0.16,1,0.3,1)',
           overflow: 'hidden',
@@ -281,11 +374,13 @@ function BentoDashboard({ node, show, onClose }) {
               <div style={{ display:'flex', gap:16, alignItems:'center' }}>
                 <div style={{
                   width:56, height:56, borderRadius:16,
-                  background:`linear-gradient(135deg,rgba(255,255,255,0.92),${hex}12)`,
+                  background: isSilentNight
+                    ? `linear-gradient(135deg,rgba(255,255,255,0.08),${hex}18)`
+                    : `linear-gradient(135deg,rgba(255,255,255,0.92),${hex}12)`,
                   border:`1px solid ${hex}30`,
                   display:'flex', alignItems:'center', justifyContent:'center',
                   fontSize:'1.9rem', flexShrink:0,
-                  boxShadow:'0 12px 24px rgba(15,23,42,0.08)',
+                  boxShadow: isSilentNight ? '0 12px 24px rgba(0,0,0,0.28)' : '0 12px 24px rgba(15,23,42,0.08)',
                 }}>
                   {node.flag}
                 </div>
@@ -308,7 +403,7 @@ function BentoDashboard({ node, show, onClose }) {
                 </div>
               </div>
               <button onClick={onClose} style={{
-                background:'rgba(255,255,255,0.86)', border:'1px solid rgba(15,23,42,0.08)',
+                background: closeSurface, border: closeBorder,
                 color:'var(--text-faint)', width:38, height:38, borderRadius:10,
                 fontSize:'1rem', display:'flex', alignItems:'center', justifyContent:'center',
                 cursor:'pointer', transition:'all 0.2s', flexShrink:0,
@@ -321,39 +416,65 @@ function BentoDashboard({ node, show, onClose }) {
             {/* ════ BENTO GRID ════ */}
             {(() => {
               const h0 = node.holdings[0]
-              const avgCost = h0 ? (node.aum / h0.shares || 0) : 0
-              const gain = node.aum - (h0 ? h0.shares * (avgCost / (1 + node.mtd / 100)) : 0)
+              const chartPts = stableChartPts.length > 1 ? stableChartPts : genPriceSeries(node.mtd)
               // recalculate cost basis
               const costBasis = h0 ? h0.shares * (h0.price / (1 + node.mtd / 100)) : 0
               const gainAbs = node.aum - costBasis
+              const lastPoint = chartPts.length ? chartPts[chartPts.length - 1] : 0
+              const peakPoint = chartPts.length ? Math.max(...chartPts) : 0
+              const currentPrice = Number(h0?.price || 0)
+              const hoveredPoint = typeof chartHoverIndex === 'number'
+                ? chartPts[Math.min(Math.max(chartHoverIndex, 0), chartPts.length - 1)]
+                : lastPoint
+              const hoveredPrice = currentPrice > 0 && lastPoint > 0 ? (currentPrice * hoveredPoint) / lastPoint : currentPrice
+              const athPrice = currentPrice > 0 && lastPoint > 0 ? (currentPrice * peakPoint) / lastPoint : currentPrice
+              const dropFromAthPct = athPrice > 0 ? Math.max(0, ((athPrice - hoveredPrice) / athPrice) * 100) : 0
+              const latestDropFromAthPct = athPrice > 0 ? Math.max(0, ((athPrice - currentPrice) / athPrice) * 100) : 0
+              const displayDropPct = dropFromAthPct < 0.005 ? 0 : dropFromAthPct
+              const displayLatestDropPct = latestDropFromAthPct < 0.005 ? 0 : latestDropFromAthPct
               return (
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gridTemplateRows:'auto auto', gap:14, marginBottom:14 }}>
 
               {/* Cell A — Price chart (2 cols) */}
-              <div style={{ ...BC, gridColumn:'1/3' }}>
-                <div style={BL}>
+                  <div style={{ ...BC_LOCAL, gridColumn:'1/3' }}>
+                <div style={BL_LOCAL}>
                   <span>{h0?.name || node.label} — Price Trend</span>
                   <span style={{ fontFamily:'var(--font-display)', fontSize:'0.88rem', letterSpacing:0, color: isPos?'var(--green)':'var(--red)' }}>
                     {node.returnPct} return
                   </span>
                 </div>
-                <PriceChart mtd={node.mtd} nodeColor={node.color} />
+                <PriceChart
+                  mtd={node.mtd}
+                  nodeColor={node.color}
+                  points={chartPts}
+                  hoveredIndex={chartHoverIndex}
+                  onHoverIndexChange={setChartHoverIndex}
+                />
               </div>
 
               {/* Cell B — Return ring */}
-              <div style={{ ...BC, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, background:'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98))' }}>
-                <WellnessRing score={Math.min(100, Math.max(0, 50 + node.mtd))} size={90} />
+               <div style={{ ...BC_LOCAL, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10 }}>
+                <WellnessRing
+                  score={Math.min(100, displayDropPct)}
+                  centerText={`${displayDropPct.toFixed(1)}%`}
+                  subLabel="below ATH"
+                  size={90}
+                />
                 <div style={{ textAlign:'center' }}>
-                  <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', color: isPos?'var(--green)':'var(--red)', marginBottom:2 }}>
-                    {isPos?'+':''}{node.mtd}%
+                  <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', color:'var(--red)', marginBottom:2 }}>
+                    {displayLatestDropPct > 0 ? `-${displayLatestDropPct.toFixed(2)}%` : '0.00%'}
                   </div>
-                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)' }}>since avg cost</div>
+                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)' }}>
+                    {athPrice > 0
+                      ? `Latest $${currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} vs ATH $${athPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                      : 'Latest price vs ATH unavailable'}
+                  </div>
                 </div>
               </div>
 
               {/* Cell C — Position details (2 cols) */}
-              <div style={{ ...BC, gridColumn:'1/3' }}>
-                <div style={BL}><span>Position Details</span></div>
+               <div style={{ ...BC_LOCAL, gridColumn:'1/3' }}>
+                <div style={BL_LOCAL}><span>Position Details</span></div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                   {[
                     { label:'Current Price', val: h0 ? `$${h0.price.toLocaleString()}` : '—', c: 'var(--text)' },
@@ -361,7 +482,7 @@ function BentoDashboard({ node, show, onClose }) {
                     { label:'Quantity',      val: h0 ? h0.shares.toLocaleString() : '—',        c: 'var(--teal)' },
                     { label:'Unrealised P&L',val: `${gainAbs >= 0 ? '+' : ''}$${Math.round(gainAbs).toLocaleString()}`, c: gainAbs >= 0 ? 'var(--green)' : 'var(--red)' },
                   ].map(s => (
-                    <div key={s.label} style={{ background:'rgba(255,255,255,0.5)', borderRadius:10, padding:'10px 14px', border:'1px solid rgba(15,23,42,0.06)' }}>
+                    <div key={s.label} style={{ background: tileSurface, borderRadius:10, padding:'10px 14px', border: tileBorder }}>
                       <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:5 }}>{s.label}</div>
                       <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', color:s.c }}>{s.val}</div>
                     </div>
@@ -370,8 +491,8 @@ function BentoDashboard({ node, show, onClose }) {
               </div>
 
               {/* Cell D — P&L summary */}
-              <div style={{ ...BC, background:'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(243,247,251,0.98))' }}>
-                <div style={BL}><span>Summary</span></div>
+               <div style={{ ...BC_LOCAL }}>
+                <div style={BL_LOCAL}><span>Summary</span></div>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.7rem', color: isPos?'var(--green)':'var(--red)', lineHeight:1, marginBottom:4 }}>
                   {isPos?'+':''}{node.mtd}%
                 </div>
@@ -393,22 +514,22 @@ function BentoDashboard({ node, show, onClose }) {
             })()}
 
             {/* Holdings grid */}
-            <div style={BL}><span>Price Action</span><span style={{ letterSpacing:0, fontSize:'0.7rem', color:'var(--text-dim)' }}>{node.label}</span></div>
+            <div style={BL_LOCAL}><span>Price Action</span><span style={{ letterSpacing:0, fontSize:'0.7rem', color:'var(--text-dim)' }}>{node.label}</span></div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(195px,1fr))', gap:12 }}>
               {node.holdings.map(h => {
                 const hc  = h.change >= 0 ? 'var(--green)' : 'var(--red)'
                 const dir = h.dir || (h.change >= 0 ? 'up' : 'dn')
                 return (
                   <div key={h.ticker} style={{
-                    background:'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,250,252,0.96))',
-                    border:'1px solid rgba(15,23,42,0.08)',
+                    background: cardSurface,
+                    border: cardBorder,
                     borderRadius:14, padding:'15px 17px', cursor:'pointer', transition:'all 0.2s',
                   }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.16)'; e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 14px 28px rgba(15,23,42,0.08)' }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.08)'; e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor=isSilentNight ? 'rgba(190,183,164,0.28)' : 'rgba(15,23,42,0.16)'; e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=isSilentNight ? '0 14px 28px rgba(0,0,0,0.26)' : '0 14px 28px rgba(15,23,42,0.08)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor=isSilentNight ? 'rgba(190,183,164,0.16)' : 'rgba(15,23,42,0.08)'; e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none' }}
                   >
                     <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
-                      <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', background:'rgba(15,23,42,0.05)', padding:'2px 8px', borderRadius:6, color:'var(--text-faint)' }}>
+                      <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.7rem', background: chipSurface, padding:'2px 8px', borderRadius:6, color:'var(--text-faint)' }}>
                         {h.ticker}
                       </span>
                       <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:hc }}>
@@ -526,14 +647,28 @@ function getRotationForLatLng(lat, lng) {
 // Kept only as ZONE_DEFS for hover detection — no longer used for canvas drawing
 const GLOBE_ZONES = [
   {
-    label:'Stock Market', cx:360,  cy:330, rx:265, ry:198,
+    label:'Equities',    cx:360,  cy:330, rx:265, ry:198,
     core:[{cx:360,cy:330,rx:265,ry:198,rot:0.08},{cx:395,cy:348,rx:185,ry:140,rot:-0.05}],
     dr:10,  dg:38,  db:98,    // very dark blue fill
     lr:96,  lg:165, lb:250,   // light edge #60a5fa
     color:'#60a5fa',
   },
   {
-    label:'Crypto',      cx:1680, cy:280, rx:182, ry:152,
+    label:'Bonds',       cx:850,  cy:210, rx:188, ry:142,
+    core:[{cx:850,cy:210,rx:188,ry:142,rot:0},{cx:875,cy:228,rx:132,ry:100,rot:0.07}],
+    dr:48,  dg:20,  db:112,   // very dark purple
+    lr:167, lg:139, lb:250,
+    color:'#a78bfa',
+  },
+  {
+    label:'Real Assets', cx:1250, cy:430, rx:202, ry:158,
+    core:[{cx:1250,cy:430,rx:202,ry:158,rot:0.06},{cx:1272,cy:450,rx:148,ry:114,rot:-0.06}],
+    dr:10,  dg:68,  db:48,    // very dark emerald
+    lr:52,  lg:211, lb:153,   // light edge #34d399
+    color:'#34d399',
+  },
+  {
+    label:'Digital',     cx:1680, cy:280, rx:182, ry:152,
     core:[{cx:1680,cy:280,rx:182,ry:152,rot:-0.07},{cx:1660,cy:300,rx:128,ry:108,rot:0.05}],
     dr:6,   dg:68,  db:65,    // very dark teal
     lr:45,  lg:212, lb:191,
@@ -549,9 +684,38 @@ const GLOBE_ZONES = [
 ]
 
 const ZONE_ROTATION_TARGETS = {
-  'Stock Market': getRotationForLatLng(38, -95),
-  Crypto: getRotationForLatLng(34, 118),
+  Equities: getRotationForLatLng(38, -95),
+  Bonds: getRotationForLatLng(52, -25),
+  'Real Assets': getRotationForLatLng(18, 35),
+  Digital: getRotationForLatLng(34, 118),
   Commodities: getRotationForLatLng(-18, 22),
+}
+
+const GLOBE_PREFS_KEY = 'ws_globe_prefs'
+const GLOBE_PREFS_EVENT = 'ws:globe-prefs'
+
+function readGlobePrefs() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(GLOBE_PREFS_KEY) || '{}')
+    return {
+      rotationSpeed: Number.isFinite(parsed.rotationSpeed) ? parsed.rotationSpeed : 40,
+      nodeScale: Number.isFinite(parsed.nodeScale) ? parsed.nodeScale : 50,
+      labels: parsed.labels !== false,
+      pulses: parsed.pulses !== false,
+    }
+  } catch {
+    return { rotationSpeed: 40, nodeScale: 50, labels: true, pulses: true }
+  }
+}
+
+function rotationSpeedToIdle(speedPct) {
+  const value = Math.max(0, Math.min(100, Number(speedPct) || 0))
+  return (value / 100) * 0.004
+}
+
+function nodeScaleFactor(scalePct) {
+  const value = Math.max(0, Math.min(100, Number(scalePct) || 0))
+  return 0.6 + (value / 100) * 0.8
 }
 
 // ─── Per-theme palette for the 2D canvas texture ────────────────────────────
@@ -683,14 +847,14 @@ function buildGlobeNodes(profile) {
   const activeStocks = stocks.filter(h => (h.qty ?? 0) > 0)
   const stockPos = spreadPositions(activeStocks.length, 38, -95, 16, 28)
   activeStocks.forEach((h, i) =>
-    nodes.push(makeNode(h, 'stocks', stockPos[i].lat, stockPos[i].lng, 0x60a5fa, 'Stock Market', '📈'))
+    nodes.push(makeNode(h, 'stocks', stockPos[i].lat, stockPos[i].lng, 0x60a5fa, 'Equities', '📈'))
   )
 
   // Crypto — spread across East Asia / Pacific
   const activeCryptos = cryptos.filter(h => (h.qty ?? 0) > 0)
   const cryptoPos = spreadPositions(activeCryptos.length, 32, 118, 14, 22)
   activeCryptos.forEach((h, i) =>
-    nodes.push(makeNode(h, 'cryptos', cryptoPos[i].lat, cryptoPos[i].lng, 0x2dd4bf, 'Crypto', '₿'))
+    nodes.push(makeNode(h, 'cryptos', cryptoPos[i].lat, cryptoPos[i].lng, 0x2dd4bf, 'Digital Assets', '₿'))
   )
 
   // Commodities — spread across Africa / Middle East
@@ -706,6 +870,7 @@ function buildGlobeNodes(profile) {
 export default function Globe() {
   const navigate    = useNavigate()
   const { user } = useAuth()
+  const { setLoginModalOpen, setSurveyModalOpen } = useLoginModal()
   const { activeTheme } = useTheme()
   const canvasRef   = useRef(null)
   const globeRef    = useRef(null)   // THREE globe mesh
@@ -716,6 +881,7 @@ export default function Globe() {
   const activeThemeRef   = useRef(activeTheme)  // read inside rAF without stale closure
   const globeNodesRef     = useRef(MOCK_NODES)  // live portfolio nodes (updated when profile loads)
   const buildParticlesRef = useRef(null)         // exposed by canvas effect so profile effect can rebuild
+  const globePrefsRef     = useRef(readGlobePrefs())
 
   // UI state
   const [aum,           setAum]         = useState(0)
@@ -729,15 +895,25 @@ export default function Globe() {
   const [dashNode,      setDashNode]    = useState(null)
   const [dashShow,      setDashShow]    = useState(false)
   const [flyingIn,      setFlyingIn]    = useState(false)  // camera zoom animation
-  const [settingsOpen,  setSettingsOpen] = useState(false)
-  const [themeModalOpen, setThemeModalOpen] = useState(false)
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [riskPct,       setRiskPct]     = useState(50)
   const [hoverZone,     setHoverZone]   = useState(null)
   const [zonePos,        setZonePos]     = useState({ x:0, y:0 })
   const [selectedZone, setSelectedZone] = useState(null)
   const [legendHoverZone, setLegendHoverZone] = useState(null)
   const riskLevel = RISK_DEFS.find(r => riskPct >= r.min && riskPct <= r.max) || RISK_DEFS[1]
+  const heroNameStyle = activeTheme?.id === 'silent-night'
+    ? {
+        fontStyle: 'normal',
+        background: 'linear-gradient(135deg,#fefcf7,#e9dfcf 58%,#cdb89c)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+      }
+    : {
+        fontStyle: 'normal',
+        background: 'linear-gradient(135deg,var(--gold-light),var(--gold))',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+      }
   const riskTrackRef  = useRef(null)
   const riskDragRef   = useRef(false)
   const rotationTargetRef = useRef(null)
@@ -803,6 +979,34 @@ export default function Globe() {
   // Keep activeThemeRef in sync so the rAF loop always reads the latest theme
   useEffect(() => { activeThemeRef.current = activeTheme }, [activeTheme])
 
+  // Keep globe runtime preferences (rotation speed / node scaling) in sync.
+  useEffect(() => {
+    const onPrefs = (event) => {
+      const detail = event?.detail
+      if (detail && typeof detail === 'object') {
+        globePrefsRef.current = {
+          rotationSpeed: Number.isFinite(detail.rotationSpeed) ? detail.rotationSpeed : globePrefsRef.current.rotationSpeed,
+          nodeScale: Number.isFinite(detail.nodeScale) ? detail.nodeScale : globePrefsRef.current.nodeScale,
+          labels: typeof detail.labels === 'boolean' ? detail.labels : globePrefsRef.current.labels,
+          pulses: typeof detail.pulses === 'boolean' ? detail.pulses : globePrefsRef.current.pulses,
+        }
+      } else {
+        globePrefsRef.current = readGlobePrefs()
+      }
+    }
+    const onStorage = (event) => {
+      if (event.key === GLOBE_PREFS_KEY) {
+        globePrefsRef.current = readGlobePrefs()
+      }
+    }
+    window.addEventListener(GLOBE_PREFS_EVENT, onPrefs)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener(GLOBE_PREFS_EVENT, onPrefs)
+      window.removeEventListener('storage', onStorage)
+    }
+  }, [])
+
   // Open dashboard
   const openDashboard = useCallback((node) => {
     setCardLocked(false)
@@ -836,8 +1040,7 @@ export default function Globe() {
 
     // ── Rotation + velocity state (mutable, lives outside React)
     let rotY = 0.5, rotX = 0.12
-    let velY = 0.0016, velX = 0
-    const IDLE_VEL_Y = 0.0016  // default auto-spin rate the globe always returns to
+    let velY = rotationSpeedToIdle(globePrefsRef.current.rotationSpeed), velX = 0
     let W = 0, H = 0, CX = 0, CY = 0, R = 0
 
     // ── Particle arrays
@@ -920,12 +1123,15 @@ export default function Globe() {
       })
 
       dots.sort((a, b) => a.z - b.z)
+      const nodeScale = nodeScaleFactor(globePrefsRef.current.nodeScale)
+      const showLabels = globePrefsRef.current.labels !== false
+      const showPulses = globePrefsRef.current.pulses !== false
 
       dots.forEach(d => {
         ctx.save()
         if (d.isCluster && d.z > 0) { ctx.shadowBlur = 10; ctx.shadowColor = d.glowColor }
         ctx.beginPath()
-        ctx.arc(d.sx, d.sy, Math.max(0.5, d.r * (0.4 + 0.6 * Math.max(0, d.z + 0.5))), 0, Math.PI * 2)
+        ctx.arc(d.sx, d.sy, Math.max(0.5, d.r * nodeScale * (0.4 + 0.6 * Math.max(0, d.z + 0.5))), 0, Math.PI * 2)
         ctx.fillStyle = d.color + `,${d.alpha})`
         ctx.fill()
         ctx.restore()
@@ -963,32 +1169,36 @@ export default function Globe() {
         const r3 = rotP(ll2xyz(node.lat, node.lng), rotY, rotX)
         const { sx, sy } = proj2d(r3, CX, CY, R)
         const hex = '#' + node.color.toString(16).padStart(6, '0')
+        // Use bright red for pulse rings if holdings are going down
+        const pulseColor = node.mtd < 0 ? '#ff0000' : hex
         clusterScreenRef.current[node.id] = { x: sx, y: sy, vis: r3.z > 0.05 }
         if (r3.z < 0.05) return
         const fade = Math.min(1, (r3.z - 0.05) / 0.15)
 
         // Dual pulse rings — bigger
-        for (let w = 0; w < 2; w++) {
-          const tp = ((now + w * 1200) % 2400) / 2400
-          ctx.save()
-          ctx.beginPath(); ctx.arc(sx, sy, 14 + tp * 36, 0, Math.PI * 2)
-          ctx.strokeStyle = hexRgba(hex, (1 - tp) * 0.65 * fade)
-          ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore()
+        if (showPulses) {
+          for (let w = 0; w < 2; w++) {
+            const tp = ((now + w * 1200) % 2400) / 2400
+            ctx.save()
+            ctx.beginPath(); ctx.arc(sx, sy, (14 + tp * 36) * nodeScale, 0, Math.PI * 2)
+            ctx.strokeStyle = hexRgba(pulseColor, (1 - tp) * 0.65 * fade)
+            ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore()
+          }
         }
 
         // Core glow dot — bigger
         ctx.save()
         ctx.shadowBlur = 28; ctx.shadowColor = hex
-        const cg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 14)
+        const cg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 14 * nodeScale)
         cg.addColorStop(0, hexRgba(hex, fade)); cg.addColorStop(1, hexRgba(hex, 0))
-        ctx.beginPath(); ctx.arc(sx, sy, 9 + 0.9 * Math.sin(now * 0.003), 0, Math.PI * 2)
+        ctx.beginPath(); ctx.arc(sx, sy, (9 + 0.9 * Math.sin(now * 0.003)) * nodeScale, 0, Math.PI * 2)
         ctx.fillStyle = cg; ctx.fill()
-        ctx.beginPath(); ctx.arc(sx, sy, 5.5, 0, Math.PI * 2)
+        ctx.beginPath(); ctx.arc(sx, sy, 5.5 * nodeScale, 0, Math.PI * 2)
         ctx.fillStyle = '#ffffff'; ctx.globalAlpha = fade * 0.92; ctx.fill()
         ctx.restore()
 
         // Label — always show ticker, show market value below
-        if (r3.z > 0.12) {
+        if (showLabels && r3.z > 0.12) {
           ctx.save(); ctx.globalAlpha = fade * 0.92
           ctx.font = "bold 10px 'DM Mono',monospace"; ctx.fillStyle = hex
           ctx.fillText(node.label.toUpperCase(), sx + 16, sy + 1)
@@ -1019,7 +1229,8 @@ export default function Globe() {
           }
         } else {
           // Gradually ease velY back toward the idle spin rate after a drag
-          velY += (IDLE_VEL_Y - velY) * 0.012
+          const idleVelY = rotationSpeedToIdle(globePrefsRef.current.rotationSpeed)
+          velY += (idleVelY - velY) * 0.012
           rotY = wrapAngle(rotY + velY)
           rotX += velX; velX *= 0.94
         }
@@ -1047,9 +1258,10 @@ export default function Globe() {
       if (dist < 5) {
         const rect = canvas.getBoundingClientRect()
         const mx = e.clientX - rect.left, my = e.clientY - rect.top
+        const clickRadius = 44 * nodeScaleFactor(globePrefsRef.current.nodeScale)
         for (const node of globeNodesRef.current) {
           const p = clusterScreenRef.current[node.id]
-          if (p && p.vis && Math.hypot(mx - p.x, my - p.y) < 44) {
+          if (p && p.vis && Math.hypot(mx - p.x, my - p.y) < clickRadius) {
             openDashboard(node); break
           }
         }
@@ -1067,9 +1279,10 @@ export default function Globe() {
       const rect = canvas.getBoundingClientRect()
       const mx = e.clientX - rect.left, my = e.clientY - rect.top
       let found = null
+      const hoverRadius = 34 * nodeScaleFactor(globePrefsRef.current.nodeScale)
       for (const node of globeNodesRef.current) {
         const p = clusterScreenRef.current[node.id]
-        if (p && p.vis && Math.hypot(mx - p.x, my - p.y) < 34) { found = node; break }
+        if (p && p.vis && Math.hypot(mx - p.x, my - p.y) < hoverRadius) { found = node; break }
       }
       if (found) {
         setHoverNode(found)
@@ -1132,17 +1345,17 @@ export default function Globe() {
         <div style={S.heroSplit}>
 
           {/* ── LEFT column ── */}
-          <div style={S.heroLeft}>
+          <div style={{ ...S.heroLeft, alignItems: user ? 'center' : 'flex-start' }}>
 
         {/* Hero text */}
-        <div style={S.heroText}>
+        <div style={{ ...S.heroText, textAlign: user ? 'center' : 'left' }}>
           {user ? (
             /* ── LOGGED-IN HERO ── */
             <>
               <h1 style={{ ...S.heroTitle, marginBottom: 10 }}>
                 <span style={{ whiteSpace:'nowrap' }}>Welcome back,</span>
                 <br />
-                <em style={{ fontStyle:'normal', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+                <em style={heroNameStyle}>
                   {userProfile?.name?.split(' ')[0] ?? user.username}
                 </em>
               </h1>
@@ -1164,8 +1377,8 @@ export default function Globe() {
                 A living, breathing globe that visualises every asset you own — equities, digital, real estate — unified into one actionable financial health score.
               </p>
               <div style={{ display:'flex', gap:14, justifyContent:'flex-start', flexWrap:'wrap' }}>
-                <button style={S.btnCta}     onClick={() => navigate('/survey')}>Start Your Journey</button>
-                <button style={S.btnOutline} onClick={() => navigate('/profile')}>View Portfolio</button>
+                <button style={S.btnCta}     onClick={() => setSurveyModalOpen(true)}>Start Your Journey</button>
+                <button style={S.btnOutline} onClick={() => setLoginModalOpen(true)}>Sign In</button>
               </div>
               <p style={{ marginTop:10, fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-faint)' }}>
                 ↓ Hover any glowing marker · Click to fly in
@@ -1291,10 +1504,8 @@ export default function Globe() {
         {/* Stats bar */}
         <div style={S.statsBar}>
           {[
-            { label:'Total Portfolio',
-              val: user ? `$${aum.toLocaleString()}` : '$247,500',
+            { label:'Total Portfolio', val:`$${aum.toLocaleString()}`,
               sub: (() => {
-                if (!user) return '3 asset classes · Stocks, Crypto, Commodities'
                 if (!userProfile?.portfolio) return 'loading…'
                 const { stocks=[], cryptos=[], commodities=[] } = userProfile.portfolio
                 const types = [
@@ -1306,22 +1517,19 @@ export default function Globe() {
               })(),
               c:'var(--gold)' },
             { label:'Unrealised P&L',
-              val: user ? (userProfile ? `${plSign >= 0 ? '+' : '-'}$${pl.toLocaleString()}` : '—') : '+$18,240',
-              sub: user ? (userProfile ? `${plSign >= 0 ? '+' : ''}${plPct.toFixed(2)}% vs avg cost` : 'loading…') : '+7.96% vs avg cost',
-              c:   user ? (userProfile ? (plSign >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--text-faint)') : 'var(--green)' },
+              val: userProfile ? `${plSign >= 0 ? '+' : '-'}$${pl.toLocaleString()}` : '—',
+              sub: userProfile ? `${plSign >= 0 ? '+' : ''}${plPct.toFixed(2)}% vs avg cost` : 'loading…',
+              c:   userProfile ? (plSign >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--text-faint)' },
             { label:'Wellness Score',
-              val: user ? (userProfile?.financial_wellness_score != null ? `${Math.round(userProfile.financial_wellness_score)} / 100` : '— / 100') : '74 / 100',
-              sub: user ? (userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'Excellent':userProfile.financial_wellness_score>=55?'On Track':userProfile.financial_wellness_score>=35?'Needs Work':'At Risk') : 'diversification') : 'On Track',
-              c:   user ? (userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'var(--green)':userProfile.financial_wellness_score>=55?'#d4a63a':userProfile.financial_wellness_score>=35?'var(--orange)':'var(--red)') : 'var(--teal)') : '#d4a63a' },
-            { label:'Active Positions',
-              val: user ? String(activePositions) : '12',
-              sub: user ? (userProfile ? `${activePositions} holdings` : 'across 12 portfolios') : 'across 3 asset classes',
-              c:'var(--gold)' },
+              val: userProfile?.financial_wellness_score != null ? `${Math.round(userProfile.financial_wellness_score)} / 100` : '— / 100',
+              sub: userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'Excellent':userProfile.financial_wellness_score>=55?'On Track':userProfile.financial_wellness_score>=35?'Needs Work':'At Risk') : 'diversification',
+              c:   userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'var(--green)':userProfile.financial_wellness_score>=55?'#d4a63a':userProfile.financial_wellness_score>=35?'var(--orange)':'var(--red)') : 'var(--teal)' },
+            { label:'Active Positions', val: String(activePositions), sub: userProfile ? `${activePositions} holdings` : 'across 12 portfolios', c:'var(--gold)' },
           ].map((s,i) => (
             <div key={s.label} style={{ ...S.statItem, borderRight: i<3 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:4 }}>{s.label}</div>
-              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.15rem', color:s.c }}>{s.val}</div>
-              <div style={{ fontSize:'0.7rem', color:'var(--text-faint)', marginTop:2 }}>{s.sub}</div>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.58rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:6 }}>{s.label}</div>
+              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.15rem', color:s.c, minHeight:50, display:'flex', alignItems:'center', justifyContent:'center' }}>{s.val}</div>
+              <div style={{ fontSize:'0.64rem', color:'var(--text-faint)', marginTop:0, maxWidth:200, marginInline:'auto', lineHeight:1.35 }}>{s.sub}</div>
             </div>
           ))}
         </div>
@@ -1340,7 +1548,7 @@ export default function Globe() {
         <div style={{ textAlign:'center', marginBottom:64 }}>
           <div style={S.sectionEyebrow}>Platform Features</div>
           <h2 style={S.sectionTitle}>Everything in <em style={{ fontStyle:'normal', color:'var(--gold)' }}>one orbit</em></h2>
-          <p style={S.sectionDesc}>From fragmented ecosystems to a unified command centre. WealthSphere turns financial complexity into clear, actionable intelligence.</p>
+          <p style={S.sectionDesc}>From fragmented ecosystems to a unified command centre. Unova turns financial complexity into clear, actionable intelligence.</p>
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20 }}>
           {FEATURES.map(f => (
@@ -1367,136 +1575,8 @@ export default function Globe() {
         </div>
       </section>
       )} {/* /!user features */}
-
-      {/* ══════════════════════════════════════════════════ */}
-      {/* RISK SURVEY SECTION  (guests only)                */}
-      {/* ══════════════════════════════════════════════════ */}
-      {!user && (
-      <section style={{ padding:'80px 48px', maxWidth:900, margin:'0 auto' }}>
-        <div style={{ textAlign:'center', marginBottom:48 }}>
-          <div style={S.sectionEyebrow}>Onboarding</div>
-          <h2 style={S.sectionTitle}>Define your <em style={{ fontStyle:'normal', color:'var(--gold)' }}>risk horizon</em></h2>
-        </div>
-        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:40, position:'relative', overflow:'hidden' }}>
-          <div style={{ position:'absolute', top:'-50%', right:'-10%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle,rgba(45,212,191,0.06),transparent 70%)', pointerEvents:'none' }} />
-          <p style={{ color:'var(--text-dim)', fontSize:'0.9rem', marginBottom:28, maxWidth:480 }}>
-            Before we map your world, we calibrate to you. Drag to set your risk appetite — this shapes every recommendation you receive.
-          </p>
-          <div style={{ marginBottom:28 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:20 }}>
-              <span>Conservative</span><span>Balanced</span><span>Aggressive</span>
-            </div>
-            <div
-              ref={riskTrackRef}
-              style={{ position:'relative', height:8, background:'var(--surface2)', borderRadius:4, cursor:'pointer' }}
-              onClick={e => { const r=riskTrackRef.current.getBoundingClientRect(); setRiskPct(Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100))) }}
-            >
-              <div style={{ position:'absolute', top:0, left:0, height:'100%', borderRadius:4, width:`${riskPct}%`, background:`linear-gradient(90deg,var(--green),${riskLevel.color})`, transition:'width 0.15s' }} />
-              <div
-                style={{ position:'absolute', top:'50%', left:`${riskPct}%`, transform:'translate(-50%,-50%)', width:24, height:24, borderRadius:'50%', background:'var(--bg2)', border:`3px solid ${riskLevel.color}`, boxShadow:`0 0 16px ${riskLevel.color}80`, cursor:'grab', transition:'border-color 0.3s,box-shadow 0.3s' }}
-                onMouseDown={e => { riskDragRef.current=true; e.preventDefault() }}
-              />
-            </div>
-          </div>
-          <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 20px', display:'flex', alignItems:'center', gap:16, marginBottom:28 }}>
-            <div style={{ width:48, height:48, borderRadius:12, background:'rgba(201,168,76,0.15)', border:'1px solid rgba(201,168,76,0.3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem', flexShrink:0 }}>
-              {riskLevel.icon}
-            </div>
-            <div>
-              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem', marginBottom:4 }}>{riskLevel.title}</div>
-              <div style={{ fontSize:'0.8rem', color:'var(--text-dim)' }}>{riskLevel.desc}</div>
-            </div>
-          </div>
-          <button style={{ background:'var(--gold)', border:'none', color:'var(--btn-text-on-gold)', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.9rem', fontWeight:700, cursor:'pointer', boxShadow:'0 10px 24px rgba(17,24,39,0.16)' }} onClick={() => navigate('/survey')}>
-            Continue to Full Onboarding →
-          </button>
-        </div>
-      </section>
-      )} {/* /!user onboarding */}
-
-      {/* ── Second ticker + Footer ── */}
-      {/* <TickerBar /> */}
-      <footer style={{ padding:'40px 48px', display:'flex', alignItems:'center', justifyContent:'space-between', borderTop:'1px solid var(--border)', color:'var(--text-faint)', fontSize:'0.8rem' }}>
-        <div style={{ fontFamily:'var(--font-display)', fontWeight:700, color:'var(--gold)', fontSize:'1rem' }}>WealthSphere</div>
-        <div>© 2025 WealthSphere · Schroders Hackathon Prototype</div>
-        <div>Built with Three.js · Open Finance APIs</div>
-      </footer>
-
-      {/* ══ THEME PICKER MODAL ══ */}
-      <ThemeModal open={themeModalOpen} onClose={() => setThemeModalOpen(false)} />
-      {settingsModalOpen && <SettingsModal onClose={() => setSettingsModalOpen(false)} />}
-
       {/* ══ LAYER 4 — BENTO DASHBOARD ══ */}
-      <BentoDashboard node={dashNode} show={dashShow} onClose={closeDashboard} />
-
-      {/* ══ FIXED SETTINGS BUTTON + DROPUP ══ */}
-      <div style={{ position:'fixed', bottom:28, right:28, zIndex:200, display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
-
-        {/* Dropup menu */}
-        {settingsOpen && (
-          <div style={{
-            background:'var(--surface)', border:'1px solid var(--border)',
-            borderRadius:14, overflow:'hidden',
-            boxShadow:'0 16px 48px rgba(0,0,0,0.45)',
-            display:'flex', flexDirection:'column',
-            minWidth:190,
-            animation:'fadeUp 0.18s ease both',
-          }}>
-            {[
-              { icon:'🎨', label:'Change Theme',  action:() => { setSettingsOpen(false); setThemeModalOpen(true) } },
-              { icon:'⚙️', label:'Settings',       action:() => { setSettingsOpen(false); setSettingsModalOpen(true) } },
-            ].map((item, i, arr) => (
-              <button
-                key={item.label}
-                onClick={item.action}
-                style={{
-                  display:'flex', alignItems:'center', gap:12,
-                  background:'transparent', border:'none',
-                  borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
-                  padding:'13px 18px', cursor:'pointer',
-                  fontFamily:'var(--font-display)', fontSize:'0.88rem',
-                  color:'var(--text)', textAlign:'left',
-                  transition:'background 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface2)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <span style={{ fontSize:'1rem' }}>{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Filter / settings trigger button */}
-        <button
-          title="Settings"
-          onClick={() => setSettingsOpen(o => !o)}
-          style={{
-            width:50, height:50, borderRadius:10,
-            display:'flex', alignItems:'center', justifyContent:'center',
-            border:'1px solid rgba(255,255,255,0.12)',
-            background: settingsOpen ? 'rgb(59,59,59)' : 'var(--surface)',
-            cursor:'pointer',
-            boxShadow:'0 10px 24px rgba(0,0,0,0.25)',
-            transition:'all 0.3s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background='rgb(59,59,59)'; e.currentTarget.querySelector('svg').style.fill='white' }}
-          onMouseLeave={e => { if(!settingsOpen){ e.currentTarget.style.background='var(--surface)'; e.currentTarget.querySelector('svg').style.fill='rgb(180,180,180)' } }}
-        >
-          <svg viewBox="0 0 512 512" style={{ height:16, fill: settingsOpen ? 'white' : 'rgb(180,180,180)', transition:'fill 0.3s' }}>
-            <path d="M0 416c0 17.7 14.3 32 32 32l54.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48L480 448c17.7 0 32-14.3 32-32s-14.3-32-32-32l-246.7 0c-12.3-28.3-40.5-48-73.3-48s-61 19.7-73.3 48L32 384c-17.7 0-32 14.3-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zM320 256a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zm32-80c-32.8 0-61 19.7-73.3 48L32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l246.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48l54.7 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-54.7 0c-12.3-28.3-40.5-48-73.3-48zM192 128a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73.3-64C253 35.7 224.8 16 192 16s-61 19.7-73.3 48L32 64C14.3 64 0 78.3 0 96s14.3 32 32 32l86.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48L480 128c17.7 0 32-14.3 32-32s-14.3-32-32-32L265.3 64z" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Click-away to close dropup */}
-      {settingsOpen && (
-        <div
-          onClick={() => setSettingsOpen(false)}
-          style={{ position:'fixed', inset:0, zIndex:199 }}
-        />
-      )}
+      <BentoDashboard node={dashNode} show={dashShow} onClose={closeDashboard} themeId={activeTheme?.id} />
 
       {/* Global keyframes */}
       <style>{`
@@ -1567,7 +1647,7 @@ const S = {
   },
   btnCta: {
     background:'var(--gold)',
-    border:'none', color:'var(--btn-text-on-gold)', padding:'14px 36px', borderRadius:10,
+    border:'none', color:'#ffffff', padding:'14px 36px', borderRadius:10,
     fontFamily:'var(--font-display)', fontSize:'0.95rem', fontWeight:700,
     cursor:'pointer', boxShadow:'0 12px 28px rgba(17,24,39,0.18)',
   },
@@ -1586,12 +1666,22 @@ const S = {
   },
   statsBar: {
     display:'flex', zIndex:3,
+    alignItems:'stretch',
     background:'var(--surface)', border:'1px solid var(--border)',
     borderRadius:14, overflow:'hidden', marginTop:36,
     animation:'fadeUp 1s ease 0.4s both',
     boxShadow:'0 8px 40px rgba(0,0,0,0.3)',
   },
-  statItem: { padding:'16px 28px', textAlign:'center' },
+  statItem: {
+    flex:1,
+    minWidth:0,
+    padding:'12px 22px',
+    textAlign:'center',
+    display:'flex',
+    flexDirection:'column',
+    justifyContent:'center',
+    alignItems:'center',
+  },
   sectionEyebrow: {
     fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:'var(--teal)',
     textTransform:'uppercase', letterSpacing:'0.2em', marginBottom:14,

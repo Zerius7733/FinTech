@@ -1,0 +1,183 @@
+{
+  "type": "stock",
+  "symbol": "PM",
+  "updated_at": "2026-03-07T08:23:18.889924+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "PM",
+      "name": "Philip Morris International Inc",
+      "period": {
+        "months": 3,
+        "start": "2025-12-07",
+        "end": "2026-03-07"
+      },
+      "metrics": {
+        "start_price": 146.9497,
+        "end_price": 169.98,
+        "return_pct": 15.6722,
+        "volatility_annualized": 0.249686,
+        "max_drawdown_pct": -10.5901,
+        "avg_daily_volume": 5649281.9672,
+        "volume_change_pct": -13.4312
+      },
+      "notable_moves": [
+        {
+          "date": "2026-01-14",
+          "move_pct": 3.1534,
+          "close": 171.08,
+          "volume": 6383000.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2025-12-15",
+          "move_pct": 3.098,
+          "close": 156.9782,
+          "volume": 7020500.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-03-05",
+          "move_pct": -5.2167,
+          "close": 169.7,
+          "volume": 8517800.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-20",
+          "move_pct": -3.7093,
+          "close": 167.18,
+          "volume": 5942700.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2025-12-19",
+          "move_pct": -0.2988,
+          "close": 155.4224,
+          "volume": 18081100.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2025-12-10",
+          "move_pct": -0.399,
+          "close": 148.4163,
+          "volume": 9023100.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-01-14",
+          "headline": "Philip Morris International posts FY2025 reported diluted EPS of USD 7.26, up 60.6%",
+          "source": "",
+          "url": "https://www.sahmcapital.com/news/content/philip-morris-international-posts-fy2025-reported-diluted-eps-of-usd-726-up-606-2026-02-06?utm_source=openai"
+        },
+        {
+          "date": "2026-01-14",
+          "headline": "Philip Morris Swings To Profit In Q4; Guides FY26 Adj. EPS Above Estimates",
+          "source": "",
+          "url": "https://www.rttnews.com/3618696/philip-morris-swings-to-profit-in-q4-guides-fy26-adj-eps-above-estimates.aspx?utm_source=openai"
+        },
+        {
+          "date": "2026-01-14",
+          "headline": "Philip Morris (PM) Reaffirms 2026 Earnings Forecast",
+          "source": "",
+          "url": "https://www.gurufocus.com/news/8626580/philip-morris-pm-reaffirms-2026-earnings-forecast?utm_source=openai"
+        },
+        {
+          "date": "2026-01-14",
+          "headline": "Philip Morris Int'l Reaffirms FY26 Outlook | Nasdaq",
+          "source": "",
+          "url": "https://www.nasdaq.com/articles/philip-morris-intl-reaffirms-fy26-outlook?utm_source=openai"
+        },
+        {
+          "date": "2026-01-14",
+          "headline": "Philip Morris 2025 EPS jumps to $7.26 on smoke-free growth | PM SEC Filing - Form 8-K",
+          "source": "",
+          "url": "https://www.stocktitan.net/sec-filings/PM/8-k-philip-morris-international-inc-reports-material-event-f666bf49ea04.html?utm_source=openai"
+        },
+        {
+          "date": "2026-01-14",
+          "headline": "Philip Morris International Earnings Call Signals Smoke-Free Surge - TipRanks.com",
+          "source": "",
+          "url": "https://www.tipranks.com/news/company-announcements/philip-morris-international-earnings-call-signals-smoke-free-surge?utm_source=openai"
+        },
+        {
+          "date": "2026-01-14",
+          "headline": "Form 8-K - Current report",
+          "source": "",
+          "url": "https://br.advfn.com/noticias/EDGAR2/2026/artigo/97624065?utm_source=openai"
+        },
+        {
+          "date": "2026-01-14",
+          "headline": "Philip Morris International Inc. Declares Regular Quarterly Dividend, Payable on January 14, 2026 | MarketScreener Canada",
+          "source": "",
+          "url": "https://ca.marketscreener.com/news/philip-morris-international-inc-declares-regular-quarterly-dividend-payable-on-january-14-2026-ce7d50d8d980fe2d?utm_source=openai"
+        },
+        {
+          "date": "2026-01-14",
+          "headline": "Philip Morris Sues Reynolds for $100 Million Settlement Windfall",
+          "source": "",
+          "url": "https://news.bloomberglaw.com/business-and-practice/philip-morris-sues-reynolds-for-100-million-settlement-windfall?utm_source=openai"
+        },
+        {
+          "date": "2026-01-14",
+          "headline": "Philip Morris, Altria and Juul Face Fines and Litigation as\u2026",
+          "source": "",
+          "url": "https://www.tobaccofreekids.org/press-releases/2026_01_06_philip-morris-altria-and-juul-face-fines-and-litigation-as-governments-hold-big-tobacco-to-account?utm_source=openai"
+        },
+        {
+          "date": "2026-01-14",
+          "headline": "Philip Morris v. FDA (2024) | Public Health Law Center",
+          "source": "",
+          "url": "https://www.publichealthlawcenter.org/litigation-tracker/philip-morris-v-fda-2024?utm_source=openai"
+        },
+        {
+          "date": "2025-12-15",
+          "headline": "2025 Q4 and full year results",
+          "source": "",
+          "url": "https://www.pmi.com/investor-relations/press-releases-and-events/2025-q4-and-full-year-results/?utm_source=openai"
+        },
+        {
+          "date": "2025-12-15",
+          "headline": "Philip Morris International Q2 2025 Earnings Call",
+          "source": "",
+          "url": "https://www.youtube.com/watch?v=Ijxz3-wCLZY&utm_source=openai"
+        },
+        {
+          "date": "2025-12-15",
+          "headline": "Philip Morris International Stock on 7 December 2025: Ferrari Deal, Smoke\u2011Free Pivot and Conflicting 2030 Forecasts",
+          "source": "",
+          "url": "https://ts2.tech/en/philip-morris-international-stock-on-7-december-2025-ferrari-deal-smoke-free-pivot-and-conflicting-2030-forecasts/?utm_source=openai"
+        },
+        {
+          "date": "2025-12-15",
+          "headline": "Philip Morris Raises 2025 Adj. EPS Guidance | Nasdaq",
+          "source": "",
+          "url": "https://www.nasdaq.com/articles/philip-morris-raises-2025-adj-eps-guidance?utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 146.9497, the stock ended the period at 169.98, representing a total return of 15.6722%. The annualized volatility was 0.249686, with a maximum drawdown of -10.5901%, indicating moderate price fluctuations and a notable peak-to-trough decline during the timeframe. The largest single-day gain occurred on 2026-01-14, with a 3.1534% increase closing at 171.08, coinciding with multiple positive earnings-related announcements including Philip Morris International posting FY2025 reported diluted EPS of USD 7.26, up 60.6% [1], and reaffirming its 2026 earnings forecast [2]. Conversely, the largest single-day loss was on 2026-03-05, with a -5.2167% drop closing at 169.7, though no specific driver is directly linked to this date. Another significant down day was on 2026-01-20 with a -3.7093% move. High volume days included 2025-12-19 with 18,081,100 shares traded and a slight price decline of -0.2988%, and 2025-12-10 with 9,023,100 shares and a -0.399% move, suggesting periods of increased trading activity without large price changes. Overall, the price appreciation and volatility appear to have been influenced by strong earnings results and guidance reaffirmations in mid-January 2026, while volume trends showed a 13.4312% decrease on average daily volume to 5,649,281.97 shares, indicating somewhat reduced trading activity over the period.",
+      "tldr": [
+        "Period return: 15.67% with annualized volatility 0.250.",
+        "Largest up day: 2026-01-14 (3.15%), largest down day: 2026-03-05 (-5.22%).",
+        "Highest volume spike was on 2025-12-19 with volume 18,081,100."
+      ],
+      "conclusion": "Over this period, the asset ended higher (15.67%) with peak drawdown of -10.59%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.sahmcapital.com/news/content/philip-morris-international-posts-fy2025-reported-diluted-eps-of-usd-726-up-606-2026-02-06?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.gurufocus.com/news/8626580/philip-morris-pm-reaffirms-2026-earnings-forecast?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

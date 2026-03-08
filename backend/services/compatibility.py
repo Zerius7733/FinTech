@@ -135,13 +135,27 @@ def _iter_portfolio_positions(user: Dict[str, Any]):
                 yield "stocks", row
 
 
-def _profile_risk_score(profile: str) -> float:
+def _profile_risk_score(profile: Any) -> float:
+    if isinstance(profile, (int, float)):
+        return _clamp(float(profile), 0.0, 100.0)
+
+    value = str(profile or "").strip().lower()
     mapping = {
-        "low": 30.0,
-        "moderate": 55.0,
-        "high": 80.0,
+        "low": 0.0,
+        "conservative": 0.0,
+        "moderate": 50.0,
+        "medium": 50.0,
+        "balanced": 50.0,
+        "high": 100.0,
+        "aggressive": 100.0,
     }
-    return mapping.get((profile or "").strip().lower(), 55.0)
+    if value in mapping:
+        return mapping[value]
+
+    try:
+        return _clamp(float(value), 0.0, 100.0)
+    except ValueError:
+        return 50.0
 
 
 def _asset_risk_score(target_type: str, symbol: str) -> float:
@@ -182,7 +196,7 @@ def _position_weight(user: Dict[str, Any], position: Dict[str, Any] | None) -> f
 
 
 def _risk_fit(user: Dict[str, Any], target_type: str, symbol: str) -> float:
-    user_risk = _profile_risk_score(str(user.get("risk_profile", "Moderate")))
+    user_risk = _profile_risk_score(user.get("risk_profile", 50.0))
     asset_risk = _asset_risk_score(target_type, symbol)
     return round(_clamp(100.0 - abs(user_risk - asset_risk) * 1.4), 2)
 

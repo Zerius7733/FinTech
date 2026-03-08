@@ -1,0 +1,215 @@
+{
+  "type": "stock",
+  "symbol": "GLD",
+  "updated_at": "2026-03-08T18:47:24.933282+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "GLD",
+      "name": "SPDR Gold Shares",
+      "period": {
+        "months": 3,
+        "start": "2025-12-08",
+        "end": "2026-03-08"
+      },
+      "metrics": {
+        "start_price": 385.42,
+        "end_price": 473.51,
+        "return_pct": 22.8556,
+        "volatility_annualized": 0.38374,
+        "max_drawdown_pct": -13.8677,
+        "avg_daily_volume": 17940611.4754,
+        "volume_change_pct": 20.0962
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-03",
+          "move_pct": 6.3587,
+          "close": 454.29,
+          "volume": 28703500.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-28",
+          "move_pct": 3.8773,
+          "close": 494.56,
+          "volume": 44154600.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-30",
+          "move_pct": -10.2742,
+          "close": 444.95,
+          "volume": 86593500.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-03-03",
+          "move_pct": -4.4612,
+          "close": 468.14,
+          "volume": 22591500.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-30",
+          "move_pct": -10.2742,
+          "close": 444.95,
+          "volume": 86593500.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-01-29",
+          "move_pct": 0.2709,
+          "close": 495.9,
+          "volume": 69970900.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-03",
+          "headline": "SPDR Gold Shares ETF - USD: Performance & Quotes, GLD Stock Price on Nyse Exchange",
+          "source": "",
+          "url": "https://www.marketscreener.com/quote/etf/SPDR-GOLD-SHARES-ETF-USD-29425888/quotes/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "GLD: SPDR\u00ae Gold Shares",
+          "source": "",
+          "url": "https://www.ssga.com/us/en/individual/etfs/spdr-gold-shares-gld?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "SPDR Gold Shares (GLD) performance history \u2013 Yahoo Finance",
+          "source": "",
+          "url": "https://uk.finance.yahoo.com/quote/GLD/performance/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "GLD SPDR Gold Shares: Bullish Reversal - 3 Price Targets + Wednesday Predicted Opening Price",
+          "source": "",
+          "url": "https://www.youtube.com/watch?v=bTezZUJadyA&utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "SPDR Gold Trust results to Dec. 31, 2025 | GLD SEC Filing - Form 10-Q",
+          "source": "",
+          "url": "https://www.stocktitan.net/sec-filings/GLD/10-q-spdr-gold-trust-quarterly-earnings-report-82025a62f68f.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "GLD: SPDR\u00ae Gold Shares",
+          "source": "",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-gold-shares-gld?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "GLD SEC Filings - SPDR\u00ae Gold Shares 10-K, 10-Q, 8-K Forms",
+          "source": "",
+          "url": "https://www.stocktitan.net/sec-filings/GLD/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "SPDR Gold Trust names new executive officer | GLD SEC Filing - Form 8-K",
+          "source": "",
+          "url": "https://www.stocktitan.net/sec-filings/GLD/8-k-spdr-gold-trust-reports-material-event-28a5d51adb33.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Atria Investments Inc Boosts Holdings in SPDR Gold Shares $GLD - American Market News",
+          "source": "",
+          "url": "https://www.americanbankingnews.com/2026/02/12/atria-investments-inc-boosts-holdings-in-spdr-gold-shares-gld.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "SPDR Gold Shares $GLD Position Raised by Acorn Creek Capital LLC - American Market News",
+          "source": "",
+          "url": "https://www.americanbankingnews.com/2026/02/13/spdr-gold-shares-gld-position-raised-by-acorn-creek-capital-llc.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "SPDR Gold Shares $GLD Shares Sold by Fifth Third Bancorp - American Market News",
+          "source": "",
+          "url": "https://www.americanbankingnews.com/2026/02/16/spdr-gold-shares-gld-shares-sold-by-fifth-third-bancorp.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Jpmorgan Chase & Co ownership in GLD / SPDR Gold Shares - 13F, 13D, 13G Filings - Fintel.io",
+          "source": "",
+          "url": "https://fintel.io/so/us/gld/jpmorgan-chase-?utm_source=openai"
+        },
+        {
+          "date": "2026-01-28",
+          "headline": "SPDR Gold Shares (GLD) stock historical prices and data \u2013 Yahoo Finance",
+          "source": "",
+          "url": "https://uk.finance.yahoo.com/quote/GLD/history/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-28",
+          "headline": "SPDR\u00a0Gold Shares (GLD) performance history \u2013 Yahoo Finance",
+          "source": "",
+          "url": "https://sg.finance.yahoo.com/quote/GLD/performance/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-28",
+          "headline": "GLD SPDR Gold Shares: Will JPMorgan's $8,000 Call Ignite Rally? 5 Signs + Friday Predicted Opening P - YouTube",
+          "source": "",
+          "url": "https://www.youtube.com/watch?v=Q3q4_lRCJ8E&utm_source=openai"
+        }
+      ],
+      "narrative": "SPDR Gold Shares ETF (GLD) experienced a notable price increase from a start price of 385.42 to an end price of 473.51, representing a return of 22.8556%. The annualized volatility was relatively high at 0.38374, with a maximum drawdown of -13.8677%, indicating some significant price fluctuations during the period. The largest upward price movement occurred on 2026-02-03, with a 6.3587% gain closing at 454.29 on a volume of 28,703,500 shares, coinciding with multiple news items including performance updates and executive changes reported on the same date [1][2][3][4][5][6][7][8]. Conversely, the largest downward day was on 2026-01-30, with a decline of -10.2742% closing at 444.95 and an exceptionally high volume of 86,593,500 shares, which was also tagged as a high volume day. Another high volume day was 2026-01-29 with 69,970,900 shares traded and a slight price increase of 0.2709%, though no specific news driver was directly linked to this date. Overall, the average daily volume increased by 20.0962% to 17,940,611 shares, reflecting heightened trading activity. The price swings and volume surges around late January and early February may have been influenced by a series of filings, executive announcements, and institutional position changes reported during this timeframe [1][4][8][9][10][11][12][13][14].",
+      "tldr": [
+        "Period return: 22.86% with annualized volatility 0.384.",
+        "Largest up day: 2026-02-03 (6.36%), largest down day: 2026-01-30 (-10.27%).",
+        "Highest volume spike was on 2026-01-30 with volume 86,593,500."
+      ],
+      "conclusion": "Over this period, the asset ended higher (22.86%) with peak drawdown of -13.87%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.marketscreener.com/quote/etf/SPDR-GOLD-SHARES-ETF-USD-29425888/quotes/?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.ssga.com/us/en/individual/etfs/spdr-gold-shares-gld?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://uk.finance.yahoo.com/quote/GLD/performance/?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://www.youtube.com/watch?v=bTezZUJadyA&utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://www.stocktitan.net/sec-filings/GLD/10-q-spdr-gold-trust-quarterly-earnings-report-82025a62f68f.html?utm_source=openai"
+        },
+        {
+          "id": 6,
+          "url": "https://www.stocktitan.net/sec-filings/GLD/8-k-spdr-gold-trust-reports-material-event-28a5d51adb33.html?utm_source=openai"
+        },
+        {
+          "id": 7,
+          "url": "https://www.americanbankingnews.com/2026/02/12/atria-investments-inc-boosts-holdings-in-spdr-gold-shares-gld.html?utm_source=openai"
+        },
+        {
+          "id": 8,
+          "url": "https://www.americanbankingnews.com/2026/02/13/spdr-gold-shares-gld-position-raised-by-acorn-creek-capital-llc.html?utm_source=openai"
+        },
+        {
+          "id": 9,
+          "url": "https://www.americanbankingnews.com/2026/02/16/spdr-gold-shares-gld-shares-sold-by-fifth-third-bancorp.html?utm_source=openai"
+        },
+        {
+          "id": 10,
+          "url": "https://fintel.io/so/us/gld/jpmorgan-chase-?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

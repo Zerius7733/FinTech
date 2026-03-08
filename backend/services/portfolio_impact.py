@@ -18,9 +18,27 @@ BASE_RECOMMENDED_ALLOCATION = {
 }
 
 
-def _normalize_profile(profile: str) -> str:
-    normalized = (profile or "").strip().title()
-    return normalized if normalized in BASE_RECOMMENDED_ALLOCATION else "Moderate"
+def _normalize_profile(profile: Any) -> str:
+    if isinstance(profile, (int, float)):
+        value = max(0.0, min(100.0, float(profile)))
+        if value <= 33.33:
+            return "Low"
+        if value <= 66.66:
+            return "Moderate"
+        return "High"
+
+    normalized = str(profile or "").strip().lower()
+    if normalized in {"low", "conservative"}:
+        return "Low"
+    if normalized in {"moderate", "medium", "balanced"}:
+        return "Moderate"
+    if normalized in {"high", "aggressive"}:
+        return "High"
+
+    try:
+        return _normalize_profile(float(normalized))
+    except ValueError:
+        return "Moderate"
 
 
 def _classify_position(position: Dict[str, Any]) -> str:
@@ -103,7 +121,7 @@ def build_portfolio_impact(user: Dict[str, Any], *, horizon_years: int = 5) -> D
     if horizon_years < 1 or horizon_years > 10:
         raise ValueError("horizon_years must be between 1 and 10")
 
-    profile = _normalize_profile(str(user.get("risk_profile", "Moderate")))
+    profile = _normalize_profile(user.get("risk_profile", 50.0))
     stress = float(user.get("financial_stress_index", 0.0) or 0.0)
 
     current_portfolio_value = _sum_current_market_value(user)

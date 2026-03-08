@@ -1,0 +1,211 @@
+{
+  "type": "stock",
+  "symbol": "ES3.SI",
+  "updated_at": "2026-03-07T08:36:05.653902+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "ES3.SI",
+      "name": "STI ETF",
+      "period": {
+        "months": 3,
+        "start": "2025-12-07",
+        "end": "2026-03-07"
+      },
+      "metrics": {
+        "start_price": 4.5067,
+        "end_price": 4.852,
+        "return_pct": 7.6622,
+        "volatility_annualized": 0.109057,
+        "max_drawdown_pct": -4.4886,
+        "avg_daily_volume": 1869529.918,
+        "volume_change_pct": 98.1975
+      },
+      "notable_moves": [
+        {
+          "date": "2025-12-12",
+          "move_pct": 1.3024,
+          "close": 4.5883,
+          "volume": 678880.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-03",
+          "move_pct": 1.2073,
+          "close": 4.9452,
+          "volume": 1095985.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-03-02",
+          "move_pct": -2.1013,
+          "close": 4.892,
+          "volume": 4563395.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-03-04",
+          "move_pct": -1.8371,
+          "close": 4.809,
+          "volume": 4503382.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-30",
+          "move_pct": -0.4583,
+          "close": 4.9117,
+          "volume": 7765484.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-03-02",
+          "move_pct": -2.1013,
+          "close": 4.892,
+          "volume": 4563395.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2025-12-12",
+          "headline": "SPDR Straits Times Index ETF (ES3.SI) performance history \u2013 Yahoo Finance",
+          "source": "",
+          "url": "https://uk.finance.yahoo.com/quote/ES3.SI/performance/?utm_source=openai"
+        },
+        {
+          "date": "2025-12-12",
+          "headline": "STI ETF (ES3.SG): \u6211\u5c0d2025\u5e7412\u6708\u7684\u6df1\u5ea6\u5206\u6790 \ud83d\udcca - moomoo \u793e\u5340",
+          "source": "",
+          "url": "https://www.moomoo.com/hant/community/feed/sti-etf-es3-sg-my-december-2025-deep-dive-115772943368198?utm_source=openai"
+        },
+        {
+          "date": "2025-12-12",
+          "headline": "NEOS Investments Announces December 2025 ETF Suite Distributions",
+          "source": "",
+          "url": "https://www.streetinsider.com/Business%2BWire/NEOS%2BInvestments%2BAnnounces%2BDecember%2B2025%2BETF%2BSuite%2BDistributions/25810429.html?utm_source=openai"
+        },
+        {
+          "date": "2025-12-12",
+          "headline": "State Street Rebrands SPDR Straits Times Index ETF Without Changing Investment Strategy - TipRanks.com",
+          "source": "",
+          "url": "https://www.tipranks.com/news/company-announcements/state-street-rebrands-spdr-straits-times-index-etf-without-changing-investment-strategy?utm_source=openai"
+        },
+        {
+          "date": "2025-12-12",
+          "headline": "General Announcement::STATE STREET SPDR STRAITS TIMES INDEX ETF Prospectus and Product Highlights Sheet Update",
+          "source": "",
+          "url": "https://links.sgx.com/1.0.0/corporate-announcements/S2XIMHZ49A3UHHA1/?utm_source=openai"
+        },
+        {
+          "date": "2025-12-12",
+          "headline": "Cash Dividend/ Distribution::Mandatory",
+          "source": "",
+          "url": "https://links.sgx.com/1.0.0/corporate-announcements/HPMBWV03Q0XPDE8U/?utm_source=openai"
+        },
+        {
+          "date": "2025-12-12",
+          "headline": "SPDR\n\u00ae STRAITS TIMES INDEX ETF\nStock Code: ES3\nWeb",
+          "source": "",
+          "url": "https://www.ssga.com/library-content/products/fund-docs/etfs/apac/semi-annual-report-sg-en-es3.pdf?utm_source=openai"
+        },
+        {
+          "date": "2025-12-12",
+          "headline": "STI ETF\uff08ES3.SG\uff09\uff1a\u6211\u5bf92025\u5e7412\u6708\u7684\u6df1\u5ea6\u5206\u6790 \ud83d\udcca - moomoo \u793e\u533a",
+          "source": "",
+          "url": "https://www.moomoo.com/hans/community/feed/sti-etf-es3-sg-my-december-2025-deep-dive-115772943368198?utm_source=openai"
+        },
+        {
+          "date": "2025-12-12",
+          "headline": "WisdomTree Gets SEC Wells Notice Over ESG ETFs | etf.com",
+          "source": "",
+          "url": "https://www.etf.com/sections/news/wisdomtree-gets-sec-wells-notice-over-esg-etfs?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "SPDR Straits Times Index ETF Announces Dividend Distribution, Payable on February 27, 2026 | MarketScreener",
+          "source": "",
+          "url": "https://www.marketscreener.com/news/spdr-straits-times-index-etf-announces-dividend-distribution-payable-on-february-27-2026-ce7e5adadd89f421?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "Historical ES3.SI stock prices (quote) - SPDR Straits Times Index ETF",
+          "source": "",
+          "url": "https://stockinvest.us/stock-price/ES3.SI?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "SPDR Straits Times Index ETF (SGX:ES3) Stock Price & Overview",
+          "source": "",
+          "url": "https://stockanalysis.com/quote/sgx/ES3/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "SPDR Straits Times Index ETF (ES3.SI) stock price, news, quote and history - Yahoo Finance",
+          "source": "",
+          "url": "https://uk.finance.yahoo.com/quote/ES3.SI/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "General Announcement::CHANGE IN THE NAME OF SPDR STRAITS TIMES INDEX ETF",
+          "source": "",
+          "url": "https://links.sgx.com/1.0.0/corporate-announcements/B6D8GR3H0JGCPTQS/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-03",
+          "headline": "ES3: Latest Closing Price $5.04 - SPDR\u00ae Straits Times Index ETF | POEMS",
+          "source": "",
+          "url": "https://www.poems.com.sg/etf-screener/sgx-es3/?utm_source=openai"
+        }
+      ],
+      "narrative": "The SPDR Straits Times Index ETF started the period at a price of 4.5067 and ended at 4.852, reflecting a total return of 7.6622%. Over this timeframe, the ETF exhibited an annualized volatility of 0.109057 and experienced a maximum drawdown of -4.4886%. The largest single-day gain occurred on 2025-12-12, with a 1.3024% increase closing at 4.5883, coinciding with multiple announcements including a rebranding of the ETF and distribution news on the same date [1][2][3][4][5][6][7]. Conversely, the largest single-day decline was on 2026-03-02, with a drop of -2.1013% closing at 4.892, accompanied by a notably high trading volume of 4,563,395 shares, which was also tagged as a high volume day [8]. Another significant down day followed shortly after on 2026-03-04 with a -1.8371% move. A high volume day was also recorded on 2026-01-30 with 7,765,484 shares traded, although no specific driver is directly linked to this date. The average daily volume nearly doubled, increasing by 98.1975% to approximately 1,869,530 shares, indicating heightened market activity. On 2026-02-03, another largest up day with a 1.2073% gain closing at 4.9452 was observed, coinciding with dividend distribution announcements and a name change for the ETF [9][10][11][12][13][14]. These events may have contributed to the price movements and volume spikes during the period.",
+      "tldr": [
+        "Period return: 7.66% with annualized volatility 0.109.",
+        "Largest up day: 2025-12-12 (1.30%), largest down day: 2026-03-02 (-2.10%).",
+        "Highest volume spike was on 2026-01-30 with volume 7,765,484."
+      ],
+      "conclusion": "Over this period, the asset ended higher (7.66%) with peak drawdown of -4.49%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://uk.finance.yahoo.com/quote/ES3.SI/performance/?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.moomoo.com/hant/community/feed/sti-etf-es3-sg-my-december-2025-deep-dive-115772943368198?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.streetinsider.com/Business%2BWire/NEOS%2BInvestments%2BAnnounces%2BDecember%2B2025%2BETF%2BSuite%2BDistributions/25810429.html?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://www.tipranks.com/news/company-announcements/state-street-rebrands-spdr-straits-times-index-etf-without-changing-investment-strategy?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://links.sgx.com/1.0.0/corporate-announcements/S2XIMHZ49A3UHHA1/?utm_source=openai"
+        },
+        {
+          "id": 6,
+          "url": "https://links.sgx.com/1.0.0/corporate-announcements/HPMBWV03Q0XPDE8U/?utm_source=openai"
+        },
+        {
+          "id": 7,
+          "url": "https://www.ssga.com/library-content/products/fund-docs/etfs/apac/semi-annual-report-sg-en-es3.pdf?utm_source=openai"
+        },
+        {
+          "id": 8,
+          "url": "https://www.marketscreener.com/news/spdr-straits-times-index-etf-announces-dividend-distribution-payable-on-february-27-2026-ce7e5adadd89f421?utm_source=openai"
+        },
+        {
+          "id": 9,
+          "url": "https://links.sgx.com/1.0.0/corporate-announcements/B6D8GR3H0JGCPTQS/?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

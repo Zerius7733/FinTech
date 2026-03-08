@@ -1,0 +1,207 @@
+{
+  "type": "commodity",
+  "symbol": "ZC=F",
+  "updated_at": "2026-03-08T19:20:18.647091+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "commodity",
+      "symbol": "ZC=F",
+      "name": "Corn",
+      "period": {
+        "months": 3,
+        "start": "2025-12-08",
+        "end": "2026-03-08"
+      },
+      "metrics": {
+        "start_price": 436.25,
+        "end_price": 460.5,
+        "return_pct": 5.5587,
+        "volatility_annualized": 0.192805,
+        "max_drawdown_pct": -6.929,
+        "avg_daily_volume": 165152.1967,
+        "volume_change_pct": 37.2912
+      },
+      "notable_moves": [
+        {
+          "date": "2026-03-06",
+          "move_pct": 4.3035,
+          "close": 460.5,
+          "volume": 331641.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-03-05",
+          "move_pct": 2.2583,
+          "close": 441.5,
+          "volume": 385.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-12",
+          "move_pct": -5.4403,
+          "close": 421.5,
+          "volume": 570230.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2025-12-29",
+          "move_pct": -1.7222,
+          "close": 442.25,
+          "volume": 169679.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-12",
+          "move_pct": -5.4403,
+          "close": 421.5,
+          "volume": 570230.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-01-13",
+          "move_pct": -0.4152,
+          "close": 419.75,
+          "volume": 357198.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-03-06",
+          "headline": "Soybeans End the Day Up More Than 21\u00a2 | Friday, March 6, 2026",
+          "source": "",
+          "url": "https://www.agriculture.com/soybeans-up-nearly-20cent-or-friday-march-6-2026-11920848?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "FinancialContent - Corn Rallies into the Weekend",
+          "source": "",
+          "url": "https://markets.financialcontent.com/stocks/article/barchart-2026-3-6-corn-rallies-into-the-weekend?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Stock Market Today 06.03.2026",
+          "source": "",
+          "url": "https://ts2.tech/en/stock-market-today-06-03-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "US Corn Exports Surpass Records as USDA Slashes Ending Stock Forecasts",
+          "source": "",
+          "url": "https://markets.financialcontent.com/wral/article/marketminute-2026-2-26-us-corn-exports-surpass-records-as-usda-slashes-ending-stock-forecasts?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "MarKit County Grain",
+          "source": "",
+          "url": "https://www.markitcountygrain.com/options?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "DOJ Launches Investigation Into Fertilizer Price Fixing - Morning Ag Clips",
+          "source": "",
+          "url": "https://www.morningagclips.com/doj-launches-investigation-into-fertilizer-price-fixing/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "At Commodity Classic, Farm Leaders Voice Frustration Over Stubbornly High Input Costs",
+          "source": "",
+          "url": "https://www.dtnpf.com/agriculture/web/ag/livestock/article/2026/03/02/commodity-classic-farm-leaders-voice?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Iowa Corn Growers Urge DOJ to Press on Looking Whether There's Fertilizer Price Collusion",
+          "source": "",
+          "url": "https://www.dtnpf.com/agriculture/web/ag/news/crops/article/2026/03/05/iowa-corn-growers-urge-doj-press?utm_source=openai"
+        },
+        {
+          "date": "2026-03-05",
+          "headline": "BC-Corn Futures",
+          "source": "",
+          "url": "https://apnews.com/article/cbc0a6fe43a57b5e85c3d5ba465e2281?utm_source=openai"
+        },
+        {
+          "date": "2026-03-05",
+          "headline": "Corn and Soybeans Close Nearly 10\u00a2 Higher | Thursday, March 5, 2026",
+          "source": "",
+          "url": "https://www.agriculture.com/corn-up-nearly-5cent-or-thursday-march-5-2026-11920104?utm_source=openai"
+        },
+        {
+          "date": "2026-03-05",
+          "headline": "Projected Prices and Volatility Factors for 2026",
+          "source": "",
+          "url": "https://farmdocdaily.illinois.edu/wp-content/uploads/2026/03/fdd030326.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-03-05",
+          "headline": "DOJ launches investigation into fertilizer price fixing - Texas Corn Producers",
+          "source": "",
+          "url": "https://texascorn.org/doj-launches-investigation-into-fertilizer-price-fixing/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-05",
+          "headline": "Syngenta Ordered to Pay Full Damages to Farmers for Unapproved Corn - Cornucopia Institute",
+          "source": "",
+          "url": "https://www.cornucopia.org/2017/06/syngenta-ordered-pay-full-damages-farmers-unapproved-corn/?utm_source=openai"
+        },
+        {
+          "date": "2026-01-12",
+          "headline": "BC-Corn Futures",
+          "source": "",
+          "url": "https://apnews.com/article/c3053400191c46d1c2a9b9a7a82970d6?utm_source=openai"
+        },
+        {
+          "date": "2026-01-12",
+          "headline": "Negative Close After Report | Monday, Jan. 12, 2026",
+          "source": "",
+          "url": "https://www.agriculture.com/pre-report-markets-higher-or-monday-jan-12-2026-11883462?utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 436.25 to an ending price of 460.5, the asset experienced a total return of 5.5587%. The annualized volatility was measured at 0.192805, while the maximum drawdown during this period reached -6.929%. The largest upward price movement occurred on 2026-03-06, with a 4.3035% increase closing at 460.5 on a notably high volume of 331,641 shares, coinciding with multiple positive commodity headlines including soybean gains and corn rallies [1][2][3]. Conversely, the largest downward move was on 2026-01-12, with a 5.4403% decline closing at 421.5, accompanied by a high volume day of 570,230 shares, which aligned with reports of a negative market close after a report release [4][5]. Another high volume day was recorded on 2026-01-13 with 357,198 shares traded, though price movement was modest at -0.4152%. Average daily volume increased by 37.2912% to 165,152 shares, indicating heightened trading activity. The price appreciation towards early March may have been influenced by strong commodity fundamentals such as record US corn exports and USDA stock forecast revisions, alongside ongoing investigations into fertilizer price fixing that could impact input costs [1][6][7]. Overall, the price and volume dynamics reflect a period of increased market interest and volatility, with significant moves tied to both fundamental agricultural news and regulatory developments.",
+      "tldr": [
+        "Period return: 5.56% with annualized volatility 0.193.",
+        "Largest up day: 2026-03-06 (4.30%), largest down day: 2026-01-12 (-5.44%).",
+        "Highest volume spike was on 2026-01-12 with volume 570,230."
+      ],
+      "conclusion": "Over this period, the asset ended higher (5.56%) with peak drawdown of -6.93%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.agriculture.com/soybeans-up-nearly-20cent-or-friday-march-6-2026-11920848?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://markets.financialcontent.com/stocks/article/barchart-2026-3-6-corn-rallies-into-the-weekend?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://ts2.tech/en/stock-market-today-06-03-2026/?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://apnews.com/article/c3053400191c46d1c2a9b9a7a82970d6?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://www.agriculture.com/pre-report-markets-higher-or-monday-jan-12-2026-11883462?utm_source=openai"
+        },
+        {
+          "id": 6,
+          "url": "https://markets.financialcontent.com/wral/article/marketminute-2026-2-26-us-corn-exports-surpass-records-as-usda-slashes-ending-stock-forecasts?utm_source=openai"
+        },
+        {
+          "id": 7,
+          "url": "https://www.morningagclips.com/doj-launches-investigation-into-fertilizer-price-fixing/?utm_source=openai"
+        },
+        {
+          "id": 8,
+          "url": "https://www.dtnpf.com/agriculture/web/ag/livestock/article/2026/03/02/commodity-classic-farm-leaders-voice?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

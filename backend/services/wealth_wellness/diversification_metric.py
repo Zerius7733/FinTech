@@ -1,6 +1,28 @@
 from typing import Dict, Any, List
 
 
+def _clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(high, value))
+
+
+def _resolve_risk_profile_value(profile: Any) -> float:
+    if isinstance(profile, (int, float)):
+        return _clamp(float(profile), 0.0, 100.0)
+
+    value = str(profile or "").strip().lower()
+    if value in {"low", "conservative"}:
+        return 0.0
+    if value in {"moderate", "medium", "balanced"}:
+        return 50.0
+    if value in {"high", "aggressive"}:
+        return 100.0
+
+    try:
+        return _clamp(float(value), 0.0, 100.0)
+    except ValueError:
+        return 50.0
+
+
 def _extract_position_values(user: Dict[str, Any]) -> List[float]:
     values: List[float] = []
     portfolio = user.get("portfolio", [])
@@ -20,6 +42,7 @@ def _extract_position_values(user: Dict[str, Any]) -> List[float]:
 
 
 def calculate_diversification_metric(user: Dict[str, Any]) -> Dict[str, float]:
+    risk_profile = _resolve_risk_profile_value(user.get("risk_profile", 50.0))
     values = _extract_position_values(user)
     n = len(values)
     if n <= 1:
@@ -34,5 +57,7 @@ def calculate_diversification_metric(user: Dict[str, Any]) -> Dict[str, float]:
     # Normalize concentration to a 0-100 diversification score.
     min_hhi = 1.0 / n
     normalized = (1.0 - hhi) / (1.0 - min_hhi)
-    score = max(0.0, min(100.0, normalized * 100.0))
+    # Interpolate target from 1.0 (risk=0) to 0.7 (risk=100).
+    target = 1.0 - (0.3 * (risk_profile / 100.0))
+    score = max(0.0, min(100.0, (normalized / target) * 100.0))
     return {"diversification_hhi": round(hhi, 4), "diversification_score": round(score, 2)}

@@ -1,12 +1,16 @@
 import asyncio,os
+import csv
 import json
 import time
+import uuid
+import io
 from dotenv import load_dotenv
 from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import AliasChoices, BaseModel, Field
 import backend.services.api_deps as api
 
@@ -16,9 +20,9 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
 USER_JSON_PATH = BASE_DIR / "json_data" / "user.json"
 USER_PORTFOLIO_DIR = BASE_DIR / "json_data" / "user_portfolio"
-CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
-LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users_login.csv"
-ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users_assets.csv"
+CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
+LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
+ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
 STOCK_LISTINGS_CACHE_PATH = BASE_DIR / "json_data" / "stock_listings_cache.json"
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
 STOCK_MARKET_REFRESH_INTERVAL_SECONDS = 30 * 60
@@ -26,6 +30,8 @@ INSIGHTS_RATE_LIMIT_ENABLED = os.getenv("INSIGHTS_RATE_LIMIT_ENABLED", "1").stri
 INSIGHTS_RATE_LIMIT_WINDOW_SECONDS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_WINDOW_SECONDS", "3600")))
 INSIGHTS_RATE_LIMIT_MAX_REQUESTS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_MAX_REQUESTS", "10")))
 _INSIGHTS_RATE_LIMIT_BUCKETS: dict[str, deque[float]] = defaultdict(deque)
+YOUTUBE_HELP_VIDEO_URL = "https://youtu.be/1yTlB7DJeT8"
+YOUTUBE_HELP_EMBED_URL = "https://www.youtube.com/embed/1yTlB7DJeT8"
 
 app = FastAPI(
     title="FinTech Wellness API",
@@ -52,6 +58,7 @@ app.add_middleware(
 )
 
 api.rewrite_user_profiles_with_order(USER_JSON_PATH)
+api.ensure_login_csv_schema(LOGIN_CSV_PATH)
 
 
 async def _run_stock_market_refresh() -> None:
@@ -121,7 +128,7 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _read_users_data() -> Dict[str, Any]:
-    with open(USER_JSON_PATH, "r", encoding="utf-8") as f:
+    with open(USER_JSON_PATH, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
     return api.normalize_users_data(data)
 
@@ -133,10 +140,28 @@ def _write_users_data(data: Dict[str, Any]) -> None:
 
 def _read_user_portfolio_history(user_id: str) -> Dict[str, Any]:
     history_path = USER_PORTFOLIO_DIR / f"{user_id}.json"
-    if not history_path.exists():
-        raise HTTPException(status_code=404, detail=f"portfolio history for user_id '{user_id}' not found")
-    with open(history_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    if history_path.exists():
+        with open(history_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    # Backward compatibility for shifted IDs (e.g. u000 now mapped from prior u001 history file).
+    normalized = str(user_id or "").strip().lower()
+    if normalized.startswith("u") and normalized[1:].isdigit():
+        legacy_id = f"u{int(normalized[1:]) + 1:03d}"
+        legacy_path = USER_PORTFOLIO_DIR / f"{legacy_id}.json"
+        if legacy_path.exists():
+            with open(legacy_path, "r", encoding="utf-8") as f:
+                legacy_history = json.load(f)
+            # Best-effort copy so future calls hit the normalized path directly.
+            try:
+                with open(history_path, "w", encoding="utf-8") as f:
+                    json.dump(legacy_history, f, indent=2)
+            except Exception:
+                pass
+            return legacy_history
+
+    # Do not hard-fail the profile page if no history exists yet.
+    return {"daily_values": []}
 
 
 def _parse_market_query(query: str) -> Dict[str, str]:
@@ -149,17 +174,41 @@ def _parse_market_query(query: str) -> Dict[str, str]:
     return {"asset_type": asset_type, "ticker": ticker}
 
 
-def _normalize_risk_profile(value: str) -> str:
-    normalized = (value or "").strip().lower()
-    mapping = {
-        "low": "Low",
-        "moderate": "Moderate",
-        "medium": "Moderate",
-        "high": "High",
-    }
-    if normalized not in mapping:
-        raise ValueError("risk_appetite must be one of: Low, Moderate, High")
-    return mapping[normalized]
+def _normalize_risk_profile(value: Any) -> float:
+    if isinstance(value, (int, float)):
+        numeric = float(value)
+    else:
+        normalized = str(value or "").strip().lower()
+        mapping = {
+            "low": 0.0,
+            "conservative": 0.0,
+            "moderate": 50.0,
+            "medium": 50.0,
+            "balanced": 50.0,
+            "high": 100.0,
+            "aggressive": 100.0,
+        }
+        if normalized in mapping:
+            numeric = mapping[normalized]
+        else:
+            try:
+                numeric = float(normalized)
+            except ValueError as exc:
+                raise ValueError("risk_profile must be a number between 0 and 100") from exc
+
+    if numeric < 0 or numeric > 100:
+        raise ValueError("risk_profile must be between 0 and 100")
+    return round(numeric, 2)
+
+
+def _age_to_group(age: int) -> str:
+    if age <= 29:
+        return "18-29"
+    if age <= 44:
+        return "30-44"
+    if age <= 59:
+        return "45-59"
+    return "60+"
 
 
 def _enforce_insights_rate_limit(subject: str) -> None:
@@ -180,9 +229,288 @@ def _enforce_insights_rate_limit(subject: str) -> None:
     bucket.append(now)
 
 
+def _sum_portfolio_positions(user: Dict[str, Any]) -> float:
+    portfolio = user.get("portfolio", {})
+    if isinstance(portfolio, list):
+        positions = portfolio
+    elif isinstance(portfolio, dict):
+        positions = []
+        for bucket in ("stocks", "cryptos", "commodities"):
+            bucket_positions = portfolio.get(bucket, [])
+            if isinstance(bucket_positions, list):
+                positions.extend(bucket_positions)
+    else:
+        positions = []
+    return round(sum(float(position.get("market_value", 0.0) or 0.0) for position in positions), 2)
+
+
+def _normalize_manual_asset_category(value: str) -> str:
+    normalized = (value or "").strip().lower().replace("-", "_").replace(" ", "_")
+    alias_map = {
+        "stock": "stock",
+        "stocks": "stock",
+        "crypto": "crypto",
+        "cryptos": "crypto",
+        "commodity": "commodity",
+        "commodities": "commodity",
+    }
+    normalized = alias_map.get(normalized, normalized)
+    allowed = {"real_estate", "business", "private_asset", "banks", "stock", "crypto", "commodity", "other"}
+    if normalized not in allowed:
+        raise ValueError(
+            "asset category must be one of: real_estate, business, private_asset, banks, stock, crypto, commodity, other"
+        )
+    return normalized
+
+
+def _ensure_financial_collections(user: Dict[str, Any]) -> Dict[str, Any]:
+    manual_assets = user.get("manual_assets")
+    if not isinstance(manual_assets, list):
+        manual_assets = []
+    liability_items = user.get("liability_items")
+    if not isinstance(liability_items, list):
+        liability_items = []
+    income_streams = user.get("income_streams")
+    if not isinstance(income_streams, list):
+        income_streams = []
+
+    if not manual_assets and float(user.get("estate", 0.0) or 0.0) > 0:
+        manual_assets = [{
+            "id": "estate-seed",
+            "label": "Property",
+            "category": "real_estate",
+            "value": round(float(user.get("estate", 0.0) or 0.0), 2),
+        }]
+    if not liability_items and float(user.get("liability", 0.0) or 0.0) > 0:
+        liability_items = [{
+            "id": "liability-seed",
+            "label": "Existing Liabilities",
+            "amount": round(float(user.get("liability", 0.0) or 0.0), 2),
+            "is_mortgage": False,
+        }]
+    if float(user.get("mortgage", 0.0) or 0.0) > 0 and not any(bool(item.get("is_mortgage")) for item in liability_items):
+        liability_items.append({
+            "id": "mortgage-seed",
+            "label": "Mortgage",
+            "amount": round(float(user.get("mortgage", 0.0) or 0.0), 2),
+            "is_mortgage": True,
+        })
+    if not income_streams and float(user.get("income", 0.0) or 0.0) > 0:
+        income_streams = [{
+            "id": "income-seed",
+            "label": "Primary Income",
+            "monthly_amount": round(float(user.get("income", 0.0) or 0.0), 2),
+        }]
+
+    user["manual_assets"] = manual_assets
+    user["liability_items"] = liability_items
+    user["income_streams"] = income_streams
+    return user
+
+
+def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
+    user = _ensure_financial_collections(user)
+    manual_assets = user.get("manual_assets", [])
+    liability_items = user.get("liability_items", [])
+    income_streams = user.get("income_streams", [])
+
+    real_estate_value = round(sum(
+        float(item.get("value", 0.0) or 0.0)
+        for item in manual_assets
+        if item.get("category") == "real_estate"
+    ), 2)
+    non_estate_asset_value = round(sum(
+        float(item.get("value", 0.0) or 0.0)
+        for item in manual_assets
+        if item.get("category") != "real_estate"
+    ), 2)
+    liability_total = round(sum(
+        float(item.get("amount", 0.0) or 0.0)
+        for item in liability_items
+        if not bool(item.get("is_mortgage"))
+    ), 2)
+    mortgage_total = round(sum(
+        float(item.get("amount", 0.0) or 0.0)
+        for item in liability_items
+        if bool(item.get("is_mortgage"))
+    ), 2)
+    income_total = round(sum(float(item.get("monthly_amount", 0.0) or 0.0) for item in income_streams), 2)
+    portfolio_total = _sum_portfolio_positions(user)
+    cash_balance = round(float(user.get("cash_balance", 0.0) or 0.0), 2)
+    expenses = round(float(user.get("expenses", 0.0) or 0.0), 2)
+
+    user["estate"] = real_estate_value
+    user["liability"] = liability_total
+    user["mortgage"] = mortgage_total
+    user["income"] = income_total
+    user["portfolio_value"] = portfolio_total
+    user["total_balance"] = round(cash_balance + portfolio_total + real_estate_value + non_estate_asset_value, 2)
+    user["net_worth"] = round(user["total_balance"] - liability_total - expenses, 2)
+
+    wellness_result = api.calculate_user_wellness(user)
+    user["wellness_metrics"] = wellness_result["wellness_metrics"]
+    user["financial_wellness_score"] = wellness_result["financial_wellness_score"]
+    user["financial_stress_index"] = wellness_result["financial_stress_index"]
+    return user
+
+
+def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
+    csv_path = ASSETS_CSV_PATH
+    default_headers = [
+        "user_id",
+        "username",
+        "password",
+        "email",
+        "name",
+        "dbs",
+        "uob",
+        "ocbc",
+        "other_banks",
+        "liability",
+        "income",
+        "estate",
+        "expense",
+        "age",
+        "age_group",
+        "country",
+    ]
+
+    if csv_path.exists():
+        with open(csv_path, "r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            rows = [dict(row) for row in reader]
+            fieldnames = list(reader.fieldnames or [])
+    else:
+        rows = []
+        fieldnames = default_headers[:]
+
+    if "other_banks" not in fieldnames and "other_bank" not in fieldnames:
+        fieldnames.append("other_banks")
+
+    for required in ("user_id", "name", "liability", "income", "estate", "username", "password", "email"):
+        if required not in fieldnames:
+            fieldnames.append(required)
+
+    other_bank_col = "other_banks" if "other_banks" in fieldnames else "other_bank"
+    banks_total = round(sum(
+        float(item.get("value", 0.0) or 0.0)
+        for item in (user.get("manual_assets") or [])
+        if str(item.get("category", "")).strip().lower() == "banks"
+    ), 2)
+
+    target_index = None
+    for idx, row in enumerate(rows):
+        if (row.get("user_id") or "").strip() == user_id:
+            target_index = idx
+            break
+
+    if target_index is None:
+        row = {key: "" for key in fieldnames}
+        row["user_id"] = user_id
+        row["name"] = str(user.get("name", "") or "")
+        row.setdefault("username", "")
+        row.setdefault("password", "")
+        row.setdefault("email", "")
+        row.setdefault("age", "")
+        row.setdefault("age_group", "")
+        row.setdefault("country", "")
+        row.setdefault("dbs", "0")
+        row.setdefault("uob", "0")
+        row.setdefault("ocbc", "0")
+        row.setdefault("expense", str(user.get("expenses", 0.0) or 0.0))
+        rows.append(row)
+        target_index = len(rows) - 1
+
+    target = rows[target_index]
+    target["name"] = str(user.get("name", target.get("name", "")) or "")
+    target["liability"] = f"{round(float(user.get('liability', 0.0) or 0.0), 2):.2f}"
+    target["income"] = f"{round(float(user.get('income', 0.0) or 0.0), 2):.2f}"
+    target["estate"] = f"{round(float(user.get('estate', 0.0) or 0.0), 2):.2f}"
+    target[other_bank_col] = f"{banks_total:.2f}"
+
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            clean_row = {key: row.get(key, "") for key in fieldnames}
+            writer.writerow(clean_row)
+
+
+def _update_user_csv_profile(user_id: str, updates: Dict[str, Any]) -> None:
+    csv_path = ASSETS_CSV_PATH
+    if csv_path.exists():
+        with open(csv_path, "r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            rows = [dict(row) for row in reader]
+            fieldnames = list(reader.fieldnames or [])
+    else:
+        rows = []
+        fieldnames = [
+            "user_id", "username", "password", "email", "name",
+            "dbs", "uob", "ocbc", "other_banks", "liability", "income", "estate", "expense",
+            "age", "age_group", "country",
+        ]
+
+    if "user_id" not in fieldnames:
+        fieldnames.insert(0, "user_id")
+
+    for key in updates.keys():
+        if key not in fieldnames:
+            fieldnames.append(key)
+
+    target = next((row for row in rows if (row.get("user_id") or "").strip() == user_id), None)
+    if target is None:
+        target = {key: "" for key in fieldnames}
+        target["user_id"] = user_id
+        rows.append(target)
+
+    for key, value in updates.items():
+        target[key] = "" if value is None else str(value)
+
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({key: row.get(key, "") for key in fieldnames})
+
+
+def _read_user_csv_profile(user_id: str) -> Dict[str, Any]:
+    csv_path = ASSETS_CSV_PATH
+    if not csv_path.exists():
+        return {}
+    with open(csv_path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if (row.get("user_id") or "").strip() == user_id:
+                return dict(row)
+    return {}
+
+
+def _load_users_csv() -> tuple[list[Dict[str, str]], list[str]]:
+    if ASSETS_CSV_PATH.exists():
+        with open(ASSETS_CSV_PATH, "r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            rows = [dict(row) for row in reader]
+            fieldnames = list(reader.fieldnames or [])
+    else:
+        rows = []
+        fieldnames = []
+    return rows, fieldnames
+
+
+def _write_users_csv(rows: list[Dict[str, str]], fieldnames: list[str]) -> None:
+    if not fieldnames:
+        return
+    with open(ASSETS_CSV_PATH, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({key: row.get(key, "") for key in fieldnames})
+
+
 class UserRiskUpdateRequest(BaseModel):
     user_id: str
-    risk_profile: str = Field(
+    risk_profile: float | str = Field(
         validation_alias=AliasChoices("risk_profile", "risk_appetite", "risk_appetitie")
     )
 
@@ -197,6 +525,33 @@ class RetirementPlanRequest(BaseModel):
     monthly_expenses: float = Field(..., ge=0)
     essential_monthly_expenses: float = Field(..., ge=0)
 
+
+class ManualAssetCreateRequest(BaseModel):
+    label: str = Field(..., min_length=1, max_length=80)
+    category: str = Field(..., min_length=1, max_length=40)
+    value: float = Field(..., ge=0)
+    symbol: str | None = Field(default=None, max_length=20)
+
+
+class PortfolioHoldingCreateRequest(BaseModel):
+    symbol: str = Field(..., min_length=1, max_length=20)
+    asset_class: str = Field(..., min_length=1, max_length=20)
+    qty: float = Field(1.0, gt=0)
+    avg_price: float | None = Field(default=None, ge=0)
+    name: str | None = Field(default=None, max_length=80)
+
+
+class LiabilityItemCreateRequest(BaseModel):
+    label: str = Field(..., min_length=1, max_length=80)
+    amount: float = Field(..., ge=0)
+    is_mortgage: bool = False
+
+
+class IncomeStreamCreateRequest(BaseModel):
+    label: str = Field(..., min_length=1, max_length=80)
+    monthly_amount: float = Field(..., ge=0)
+
+
 class RegisterRequest(BaseModel):
     username: str
     password: str
@@ -204,6 +559,31 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+
+class SurveyProfileUpdateRequest(BaseModel):
+    user_id: str
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str | None = None
+    country: str | None = None
+    age: int | None = Field(default=None, ge=18, le=100)
+    age_group: str | None = None
+
+
+class UserProfileDetailsUpdateRequest(BaseModel):
+    user_id: str
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str | None = None
+    country: str | None = None
+    investor_type: str | None = None
+    currency: str | None = None
+    password: str | None = None
+
+
+class ScreenshotMergeRequest(BaseModel):
+    holdings: list[Dict[str, Any]]
 
 
 class CoinListingResponse(BaseModel):
@@ -316,6 +696,15 @@ def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/app/content/video", tags=["Health"], summary="Get app help video URL")
+def get_app_help_video() -> Dict[str, str]:
+    return {
+        "status": "ok",
+        "youtube_url": YOUTUBE_HELP_VIDEO_URL,
+        "embed_url": YOUTUBE_HELP_EMBED_URL,
+    }
+
+
 @app.post("/auth/login", tags=["Users"], summary="Authenticate a user")
 def login(payload: LoginRequest) -> Dict[str, Any]:
     try:
@@ -327,7 +716,7 @@ def login(payload: LoginRequest) -> Dict[str, Any]:
         return {"status": "ok", **result}
     except api.LoginValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except api.LoginNotFoundError as exc:
+    except api.LoginAuthError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
@@ -437,7 +826,7 @@ def get_commodity_listings(
         raise HTTPException(status_code=502, detail=f"commodity fetch failed: {exc}") from exc
 
 
-@app.post("/auth/register", tags=["Users"], summary="Register login user into users_login.csv")
+@app.post("/auth/register", tags=["Users"], summary="Register login user into users.csv")
 def register_user(payload: RegisterRequest) -> Dict[str, Any]:
     try:
         result = api.register_login_user(
@@ -446,7 +835,7 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
             password=payload.password,
         )
         api.add_default_user_profile(
-            USER_JSON_PATH=USER_JSON_PATH,
+            json_path=USER_JSON_PATH,
             user_id=result["user_id"],
             name=result["username"],
         )
@@ -455,13 +844,236 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
             user_id=result["user_id"],
             name=result["username"],
         )
-        return {"status": "ok", "username": result["username"]}
+        return {"status": "ok", **result}
     except api.RegisterValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except api.RegisterConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
+
+
+@app.post("/users/survey/profile", tags=["Users"], summary="Persist survey profile fields into users.csv")
+def update_survey_profile(payload: SurveyProfileUpdateRequest) -> Dict[str, Any]:
+    try:
+        user_id = payload.user_id.strip()
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        first = (payload.first_name or "").strip()
+        last = (payload.last_name or "").strip()
+        full_name = " ".join(part for part in (first, last) if part).strip()
+
+        updates = {
+            "email": (payload.email or "").strip(),
+            "country": (payload.country or "").strip(),
+        }
+        if payload.age is not None:
+            updates["age"] = str(payload.age)
+            updates["age_group"] = _age_to_group(int(payload.age))
+        else:
+            updates["age_group"] = (payload.age_group or "").strip()
+        if full_name:
+            updates["name"] = full_name
+
+        _update_user_csv_profile(user_id=user_id, updates=updates)
+
+        users = _read_users_data()
+        user = users.get(user_id)
+        if isinstance(user, dict):
+            if full_name:
+                user["name"] = full_name
+            if "age" in updates:
+                user["age"] = int(payload.age or 0)
+            if updates.get("age_group"):
+                user["age_group"] = updates["age_group"]
+            user["email"] = updates.get("email", user.get("email", ""))
+            user["country"] = updates.get("country", user.get("country", ""))
+            users[user_id] = user
+            _write_users_data(users)
+
+        return {"status": "ok", "user_id": user_id, "updates": updates}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"survey profile update failed: {exc}") from exc
+
+
+@app.post("/users/profile/details", tags=["Users"], summary="Persist profile details into users.csv")
+def update_profile_details(payload: UserProfileDetailsUpdateRequest) -> Dict[str, Any]:
+    try:
+        user_id = (payload.user_id or "").strip()
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        first = (payload.first_name or "").strip()
+        last = (payload.last_name or "").strip()
+        full_name = " ".join(part for part in (first, last) if part).strip()
+
+        updates: Dict[str, Any] = {
+            "email": (payload.email or "").strip(),
+            "country": (payload.country or "").strip(),
+            "investor_type": (payload.investor_type or "").strip(),
+            "currency": (payload.currency or "").strip(),
+        }
+        if full_name:
+            updates["name"] = full_name
+        password = (payload.password or "").strip()
+        if password:
+            updates["password"] = password
+
+        _update_user_csv_profile(user_id=user_id, updates=updates)
+
+        users = _read_users_data()
+        user = users.get(user_id)
+        if isinstance(user, dict):
+            if full_name:
+                user["name"] = full_name
+            user["email"] = updates.get("email", user.get("email", ""))
+            user["country"] = updates.get("country", user.get("country", ""))
+            users[user_id] = user
+            _write_users_data(users)
+
+        safe_updates = dict(updates)
+        if "password" in safe_updates:
+            safe_updates["password"] = "***"
+
+        return {"status": "ok", "user_id": user_id, "updates": safe_updates}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"profile details update failed: {exc}") from exc
+
+
+@app.get("/users/profile/details/{user_id}", tags=["Users"], summary="Read profile details from users.csv")
+def get_profile_details(user_id: str) -> Dict[str, Any]:
+    try:
+        user_id = (user_id or "").strip()
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        row = _read_user_csv_profile(user_id)
+        if not row:
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found in users.csv")
+        return {"status": "ok", "user_id": user_id, "profile": row}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"profile details read failed: {exc}") from exc
+
+
+@app.get(
+    "/users/{user_id}/danger/export",
+    tags=["Users"],
+    summary="Export current portfolio holdings as CSV",
+)
+def export_user_portfolio_csv(user_id: str) -> Response:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        portfolio = user.get("portfolio", {})
+        rows: list[Dict[str, Any]] = []
+        if isinstance(portfolio, dict):
+            for asset_class in ("stocks", "cryptos", "commodities"):
+                entries = portfolio.get(asset_class, [])
+                if not isinstance(entries, list):
+                    continue
+                for item in entries:
+                    qty = float(item.get("qty", 0.0) or 0.0)
+                    avg_price = float(item.get("avg_price", 0.0) or 0.0)
+                    current_price = float(item.get("current_price", 0.0) or 0.0)
+                    market_value = float(item.get("market_value", qty * current_price) or 0.0)
+                    rows.append(
+                        {
+                            "user_id": user_id,
+                            "asset_class": asset_class,
+                            "symbol": str(item.get("symbol", "") or ""),
+                            "name": str(item.get("name", "") or ""),
+                            "qty": round(qty, 8),
+                            "avg_price": round(avg_price, 6),
+                            "current_price": round(current_price, 6),
+                            "market_value": round(market_value, 2),
+                        }
+                    )
+
+        output = io.StringIO()
+        headers = ["user_id", "asset_class", "symbol", "name", "qty", "avg_price", "current_price", "market_value"]
+        writer = csv.DictWriter(output, fieldnames=headers)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+        csv_data = output.getvalue()
+        filename = f"{user_id}_portfolio_export.csv"
+        return Response(
+            content=csv_data,
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"portfolio export failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/danger/portfolio",
+    tags=["Users"],
+    summary="Delete all portfolio holdings for a user",
+)
+def delete_user_portfolio_data(user_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        user["portfolio"] = {"stocks": [], "cryptos": [], "commodities": []}
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+
+        history_path = USER_PORTFOLIO_DIR / f"{user_id}.json"
+        if history_path.exists():
+            history_path.unlink()
+
+        return {"status": "ok", "user_id": user_id, "message": "portfolio data deleted"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"portfolio delete failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/danger/account",
+    tags=["Users"],
+    summary="Permanently delete account and all related data",
+)
+def delete_user_account(user_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        if not isinstance(users.get(user_id), dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        users.pop(user_id, None)
+        _write_users_data(users)
+
+        rows, fieldnames = _load_users_csv()
+        if fieldnames:
+            rows = [row for row in rows if (row.get("user_id") or "").strip() != user_id]
+            _write_users_csv(rows, fieldnames)
+
+        history_path = USER_PORTFOLIO_DIR / f"{user_id}.json"
+        if history_path.exists():
+            history_path.unlink()
+
+        return {"status": "ok", "user_id": user_id, "message": "account deleted"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"account delete failed: {exc}") from exc
 
 
 @app.get("/users", tags=["Users"], summary="Get all users")
@@ -481,11 +1093,404 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
         user = data.get(user_id)
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
         return {"status": "ok", "user_id": user_id, "user": user}
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read user failed: {exc}") from exc
+
+
+@app.get(
+    "/users/{user_id}/benchmarks",
+    tags=["Users"],
+    summary="Get Singapore peer benchmarking for a user",
+)
+def get_user_peer_benchmarks(user_id: str) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        benchmark_user = dict(user) if isinstance(user, dict) else {}
+        raw_age = benchmark_user.get("age")
+        needs_csv_age = raw_age in (None, "", 0, "0")
+        if needs_csv_age:
+            csv_profile = _read_user_csv_profile(user_id)
+            csv_age = (csv_profile.get("age") or "").strip()
+            if csv_age:
+                try:
+                    benchmark_user["age"] = int(float(csv_age))
+                except Exception:
+                    pass
+        result = api.build_peer_benchmarks(benchmark_user)
+        return {"status": "ok", "user_id": user_id, **result}
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"peer benchmarking failed: {exc}") from exc
+
+
+@app.get(
+    "/users/{user_id}/financials",
+    tags=["Users"],
+    summary="Get editable financial items by user ID",
+)
+def get_user_financial_items(user_id: str) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "manual_assets": user.get("manual_assets", []),
+            "liability_items": user.get("liability_items", []),
+            "income_streams": user.get("income_streams", []),
+            "summary": {
+                "income": user.get("income", 0.0),
+                "liability": user.get("liability", 0.0),
+                "mortgage": user.get("mortgage", 0.0),
+                "estate": user.get("estate", 0.0),
+                "portfolio_value": user.get("portfolio_value", 0.0),
+                "net_worth": user.get("net_worth", 0.0),
+            },
+            "user": user,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"read financial items failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/financials/assets",
+    tags=["Users"],
+    summary="Add a manual asset to a user profile",
+)
+def add_user_manual_asset(user_id: str, payload: ManualAssetCreateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        normalized_category = _normalize_manual_asset_category(payload.category)
+        raw_label = payload.label.strip()
+        raw_symbol = (payload.symbol or "").strip()
+        if normalized_category in {"stock", "crypto", "commodity"}:
+            symbol = (raw_symbol or raw_label).strip().upper()
+            if not symbol:
+                raise HTTPException(status_code=400, detail="symbol is required for stock, crypto, and commodity assets")
+            label = symbol
+        else:
+            symbol = None
+            label = raw_label
+
+        item = {
+            "id": str(uuid.uuid4()),
+            "label": label,
+            "category": normalized_category,
+            "value": round(float(payload.value), 2),
+        }
+        if symbol:
+            item["symbol"] = symbol
+        user["manual_assets"].append(item)
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+        return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"asset create failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/financials/portfolio",
+    tags=["Users"],
+    summary="Add a holding into user portfolio and fetch latest market price",
+)
+def add_user_portfolio_holding(user_id: str, payload: PortfolioHoldingCreateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        portfolio = user.get("portfolio")
+        if not isinstance(portfolio, dict):
+            portfolio = {"stocks": [], "cryptos": [], "commodities": []}
+
+        symbol = payload.symbol.strip().upper()
+        if not symbol:
+            raise HTTPException(status_code=400, detail="symbol is required")
+
+        requested = payload.asset_class.strip().lower()
+        if requested in {"stock", "stocks", "equity", "equities"}:
+            bucket = "stocks"
+            query_type = "STOCK"
+        elif requested in {"crypto", "cryptos", "digital_asset", "digital_assets"}:
+            bucket = "cryptos"
+            query_type = "CRYPTO"
+        elif requested in {"commodity", "commodities"}:
+            bucket = "commodities"
+            query_type = "COMMODITY"
+        else:
+            raise HTTPException(status_code=400, detail="asset_class must be stock, crypto, or commodity")
+
+        quote = get_market_quote(query=f"{query_type}, {symbol}")
+        fetched_symbol = str(quote.get("symbol") or symbol).upper()
+        price = round(float(quote.get("price") or 0.0), 6)
+        if price <= 0:
+            raise HTTPException(status_code=400, detail=f"could not fetch a valid market price for '{symbol}'")
+
+        qty = round(float(payload.qty), 8)
+        avg_price = round(float(payload.avg_price), 6) if payload.avg_price is not None else price
+        market_value = round(qty * price, 2)
+        incoming_name = (payload.name or "").strip()
+
+        entries = portfolio.get(bucket, [])
+        if not isinstance(entries, list):
+            entries = []
+
+        existing = next(
+            (item for item in entries if str(item.get("symbol", "")).strip().upper() == fetched_symbol),
+            None,
+        )
+        if existing is not None:
+            old_qty = float(existing.get("qty", 0.0) or 0.0)
+            old_avg = float(existing.get("avg_price", price) or price)
+            new_qty = round(old_qty + qty, 8)
+            if new_qty > 0:
+                weighted_avg = round(((old_qty * old_avg) + (qty * avg_price)) / new_qty, 6)
+            else:
+                weighted_avg = avg_price
+            existing["qty"] = new_qty
+            existing["avg_price"] = weighted_avg
+            existing["current_price"] = price
+            existing["market_value"] = round(new_qty * price, 2)
+            if incoming_name:
+                existing["name"] = incoming_name
+            item = existing
+        else:
+            item = {
+                "symbol": fetched_symbol,
+                "qty": qty,
+                "avg_price": avg_price,
+                "current_price": price,
+                "market_value": market_value,
+            }
+            if incoming_name:
+                item["name"] = incoming_name
+            entries.append(item)
+
+        portfolio[bucket] = entries
+        user["portfolio"] = portfolio
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+        return {"status": "ok", "user_id": user_id, "asset_class": bucket, "item": item, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"portfolio holding create failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/financials/portfolio/{asset_class}/{symbol}",
+    tags=["Users"],
+    summary="Remove a portfolio holding (stocks or cryptos) from a user profile",
+)
+def remove_user_portfolio_holding(user_id: str, asset_class: str, symbol: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        portfolio = user.get("portfolio")
+        if not isinstance(portfolio, dict):
+            raise HTTPException(status_code=400, detail="user portfolio is not in expected format")
+
+        bucket = asset_class.strip().lower()
+        if bucket in {"stock", "stocks", "equity", "equities"}:
+            bucket = "stocks"
+        elif bucket in {"crypto", "cryptos", "digital_assets", "digital_asset"}:
+            bucket = "cryptos"
+        else:
+            raise HTTPException(status_code=400, detail="asset_class must be stocks or cryptos")
+
+        entries = portfolio.get(bucket, [])
+        if not isinstance(entries, list):
+            raise HTTPException(status_code=400, detail=f"portfolio bucket '{bucket}' is invalid")
+
+        target = symbol.strip().lower()
+        if not target:
+            raise HTTPException(status_code=400, detail="symbol is required")
+
+        remove_index = next(
+            (
+                idx
+                for idx, item in enumerate(entries)
+                if str(item.get("symbol", "")).strip().lower() == target
+            ),
+            None,
+        )
+        if remove_index is None:
+            raise HTTPException(status_code=404, detail=f"holding '{symbol}' not found in {bucket}")
+
+        entries.pop(remove_index)
+        portfolio[bucket] = entries
+        user["portfolio"] = portfolio
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "asset_class": bucket, "symbol": symbol, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"portfolio holding delete failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/financials/assets/{item_id}",
+    tags=["Users"],
+    summary="Remove a manual asset from a user profile",
+)
+def remove_user_manual_asset(user_id: str, item_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        before = len(user["manual_assets"])
+        user["manual_assets"] = [item for item in user["manual_assets"] if item.get("id") != item_id]
+        if len(user["manual_assets"]) == before:
+            raise HTTPException(status_code=404, detail=f"asset item '{item_id}' not found")
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+        return {"status": "ok", "user_id": user_id, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"asset delete failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/financials/liabilities",
+    tags=["Users"],
+    summary="Add a liability item to a user profile",
+)
+def add_user_liability_item(user_id: str, payload: LiabilityItemCreateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        item = {
+            "id": str(uuid.uuid4()),
+            "label": payload.label.strip(),
+            "amount": round(float(payload.amount), 2),
+            "is_mortgage": bool(payload.is_mortgage),
+        }
+        user["liability_items"].append(item)
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+        return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"liability create failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/financials/liabilities/{item_id}",
+    tags=["Users"],
+    summary="Remove a liability item from a user profile",
+)
+def remove_user_liability_item(user_id: str, item_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        before = len(user["liability_items"])
+        user["liability_items"] = [item for item in user["liability_items"] if item.get("id") != item_id]
+        if len(user["liability_items"]) == before:
+            raise HTTPException(status_code=404, detail=f"liability item '{item_id}' not found")
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+        return {"status": "ok", "user_id": user_id, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"liability delete failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/financials/income",
+    tags=["Users"],
+    summary="Add an income stream to a user profile",
+)
+def add_user_income_stream(user_id: str, payload: IncomeStreamCreateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        item = {
+            "id": str(uuid.uuid4()),
+            "label": payload.label.strip(),
+            "monthly_amount": round(float(payload.monthly_amount), 2),
+        }
+        user["income_streams"].append(item)
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+        return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"income create failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/financials/income/{item_id}",
+    tags=["Users"],
+    summary="Remove an income stream from a user profile",
+)
+def remove_user_income_stream(user_id: str, item_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        before = len(user["income_streams"])
+        user["income_streams"] = [item for item in user["income_streams"] if item.get("id") != item_id]
+        if len(user["income_streams"]) == before:
+            raise HTTPException(status_code=404, detail=f"income stream '{item_id}' not found")
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+        return {"status": "ok", "user_id": user_id, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"income delete failed: {exc}") from exc
 
 
 @app.post(
@@ -718,6 +1723,30 @@ def parse_screenshot_import(user_id: str, payload: ScreenshotParseRequest) -> Di
 
 
 @app.post(
+    "/imports/screenshot/parse",
+    tags=["Imports"],
+    summary="Parse screenshot into holdings without requiring login",
+)
+def parse_screenshot_import_guest(payload: ScreenshotParseRequest) -> Dict[str, Any]:
+    try:
+        parsed = api.parse_screenshot_with_llm(
+            payload.image_base64,
+            model=payload.model,
+            page_text=payload.page_text,
+        )
+        return {
+            "status": "ok",
+            "parsed": parsed,
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"screenshot parse failed: {exc}") from exc
+
+
+@app.post(
     "/users/{user_id}/imports/screenshot/confirm",
     tags=["Imports"],
     summary="Confirm parsed screenshot holdings and merge into user portfolio",
@@ -782,6 +1811,29 @@ async def confirm_screenshot_import(user_id: str, request: Request) -> Dict[str,
 
 
 @app.post(
+    "/users/{user_id}/imports/screenshot/merge",
+    tags=["Imports"],
+    summary="Merge screenshot-extracted holdings directly into user portfolio",
+)
+def merge_screenshot_holdings_direct(user_id: str, payload: ScreenshotMergeRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        result = api.merge_holdings_into_user(user, payload.holdings)
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+        return {"status": "ok", "user_id": user_id, **result, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"screenshot direct merge failed: {exc}") from exc
+
+
+@app.post(
     "/users/risk",
     tags=["Users"],
     summary="Update user risk appetite and recalibrate scores",
@@ -828,9 +1880,20 @@ def build_user_retirement_plan(user_id: str, payload: RetirementPlanRequest) -> 
         user = users.get(user_id)
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        plan_user = dict(user)
+        raw_age = plan_user.get("age")
+        needs_csv_age = raw_age in (None, "", 0, "0")
+        if needs_csv_age:
+            csv_profile = _read_user_csv_profile(user_id)
+            csv_age = (csv_profile.get("age") or "").strip()
+            if csv_age:
+                try:
+                    plan_user["age"] = int(float(csv_age))
+                except Exception:
+                    pass
 
         plan = api.build_retirement_plan(
-            user=user,
+            user=plan_user,
             retirement_age=payload.retirement_age,
             monthly_expenses=payload.monthly_expenses,
             essential_monthly_expenses=payload.essential_monthly_expenses,

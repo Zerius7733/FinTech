@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext.jsx'
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 const API = 'http://localhost:8000'
-const SLIDER_KEY_TO_RISK = { conservative: 'Low', balanced: 'Moderate', aggressive: 'High' }
 
 // Paste your OpenAI API key here. In production, proxy this through your backend.
 const OPENAI_API_KEY = ''   // ← e.g. 'sk-...'
@@ -68,14 +67,13 @@ function fileToBase64(file) {
 }
 
 const STEPS = [
-  { title:'Your Profile',      desc:'Name, age group, and investor type.' },
+  { title:'Your Profile',      desc:'Name, age, and account setup.' },
   { title:'Risk Tolerance',    desc:'Set your comfort with volatility.' },
   { title:'Asset Preferences', desc:'Which asset classes do you hold?' },
   { title:'Financial Goals',   desc:'Define what you\'re building toward.' },
   { title:'Import Portfolio',  desc:'Upload a screenshot to auto-extract holdings.' },
 ]
 
-const AGE_GROUPS    = [{ emoji:'🌱', label:'18–29' },{ emoji:'📈', label:'30–44' },{ emoji:'🏦', label:'45–59' },{ emoji:'🌅', label:'60+' }]
 const ASSET_CLASSES = [
   { icon:'📈', name:'Equities',      desc:'Stocks, ETFs, and equity funds.',              color:'#60a5fa', bg:'rgba(96,165,250,0.08)'  },
   { icon:'🏛️', name:'Fixed Income',  desc:'Government & corporate bonds.',                color:'#a78bfa', bg:'rgba(167,139,250,0.08)' },
@@ -96,6 +94,56 @@ const HORIZONS = [{ num:'1–2', label:'Short Term' },{ num:'3–5', label:'Medi
 
 const TYPE_COLOR = { equity:'#60a5fa', crypto:'#2dd4bf', etf:'#a78bfa', bond:'#f0abfc', commodity:'#fbbf24', reit:'#c9a84c', unknown:'#94a3b8' }
 const EMPTY_HOLDING = { ticker:'', name:'', shares:0, price:0, change:0, dir:'up', type:'equity' }
+
+function normalizeHoldingType(value) {
+  const raw = String(value || '').trim().toLowerCase()
+  if (!raw) return 'unknown'
+  if (raw === 'stocks') return 'equity'
+  if (raw === 'cryptos') return 'crypto'
+  if (raw === 'commodities') return 'commodity'
+  if (raw === 'stock') return 'equity'
+  if (raw === 'fixed_income') return 'bond'
+  if (raw === 'real_estate') return 'reit'
+  if (['equity', 'crypto', 'etf', 'bond', 'commodity', 'reit', 'unknown'].includes(raw)) return raw
+  return 'unknown'
+}
+
+function toBackendAssetClass(assetClassOrType, symbol = '') {
+  const raw = String(assetClassOrType || '').trim().toLowerCase()
+  if (['stock', 'stocks', 'equity', 'equities', 'etf', 'bond', 'reit'].includes(raw)) return 'stocks'
+  if (['crypto', 'cryptos', 'digital_asset', 'digital_assets'].includes(raw)) return 'cryptos'
+  if (['commodity', 'commodities'].includes(raw)) return 'commodities'
+  const upperSymbol = String(symbol || '').toUpperCase()
+  if (upperSymbol.endsWith('-USD')) return 'cryptos'
+  if (upperSymbol.endsWith('=F')) return 'commodities'
+  return 'stocks'
+}
+
+function normalizeParsedHolding(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const backendClass = toBackendAssetClass(raw.asset_class ?? raw.type, raw.symbol ?? raw.ticker)
+  const type = normalizeHoldingType(raw.type ?? raw.asset_class)
+  const shares = Number(raw.shares ?? raw.qty ?? raw.quantity ?? 0) || 0
+  const price = Number(raw.price ?? raw.current_price ?? raw.avg_price ?? 0) || 0
+  const change = Number(raw.change ?? raw.change_pct ?? raw.price_change_pct ?? 0) || 0
+  const dir = String(raw.dir || '').toLowerCase() === 'dn' ? 'dn' : (change < 0 ? 'dn' : 'up')
+  return {
+    ...EMPTY_HOLDING,
+    ticker: String(raw.ticker ?? raw.symbol ?? '').trim(),
+    symbol: String(raw.symbol ?? raw.ticker ?? '').trim(),
+    name: String(raw.name ?? raw.asset_name ?? raw.ticker ?? raw.symbol ?? '').trim(),
+    shares,
+    qty: shares,
+    price,
+    avg_price: Number(raw.avg_price ?? raw.price ?? 0) || 0,
+    current_price: Number(raw.current_price ?? raw.price ?? 0) || 0,
+    market_value: Number(raw.market_value ?? (shares * price) ?? 0) || 0,
+    change,
+    dir,
+    type,
+    asset_class: backendClass,
+  }
+}
 
 // ─── EDITABLE ROW ─────────────────────────────────────────────────────────────
 function HoldingRow({ holding, index, onChange, onDelete }) {
@@ -140,6 +188,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
   const [preview,  setPreview]  = useState(null)
   const [fileData, setFileData] = useState(null)
   const [holdings, setHoldings] = useState([])
+  const [importId, setImportId] = useState('')
   const [error,    setError]    = useState(null)
   const [dragging, setDragging] = useState(false)
   const fileRef = useRef(null)
@@ -147,6 +196,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
   const handleFile = async (file) => {
     if (!file.type.startsWith('image/')) { setError('Please upload an image file (PNG, JPG, WEBP).'); return }
     setError(null)
+    setImportId('')
     setPreview(URL.createObjectURL(file))
     setFileData({ base64: await fileToBase64(file), mimeType: file.type })
   }
@@ -156,10 +206,12 @@ function PortfolioImportStep({ onBack, onComplete }) {
   // Parse image using backend endpoint
   const parse = async () => {
     if (!fileData) return setError('No file selected');
-    if (!user?.user_id) return setError('User not logged in');
     setPhase('parsing'); setError(null);
     try {
-      const res = await fetch(`/api/users/${user.user_id}/imports/screenshot/parse`, {
+      const parseUrl = user?.user_id
+        ? `${API}/users/${user.user_id}/imports/screenshot/parse`
+        : `${API}/imports/screenshot/parse`
+      const res = await fetch(parseUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -168,10 +220,18 @@ function PortfolioImportStep({ onBack, onComplete }) {
           page_text: null,
         })
       });
-      if (!res.ok) throw new Error(`Parse failed: ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail || `Parse failed: ${res.status}`)
+      }
       const data = await res.json();
-      if (!Array.isArray(data.holdings)) throw new Error('No holdings found');
-      setHoldings(data.holdings);
+      const parsedHoldings = data?.parsed?.holdings
+      if (!Array.isArray(parsedHoldings)) throw new Error('No holdings found');
+      const normalizedHoldings = parsedHoldings
+        .map(normalizeParsedHolding)
+        .filter(Boolean)
+      setImportId(data?.import_id || '')
+      setHoldings(normalizedHoldings);
       setPhase('review');
     } catch (e) {
       setError(e.message || 'Parse error');
@@ -181,17 +241,25 @@ function PortfolioImportStep({ onBack, onComplete }) {
 
   // Confirm holdings using backend endpoint
   const confirm = async () => {
-    if (!user?.user_id) return setError('User not logged in');
+    if (!user?.user_id) {
+      onComplete(holdings)
+      return
+    }
+    if (!importId) return setError('Missing import id. Please parse the screenshot again.');
     setError(null);
     try {
-      const res = await fetch(`/api/users/${user.user_id}/imports/screenshot/confirm`, {
+      const res = await fetch(`${API}/users/${user.user_id}/imports/screenshot/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          import_id: importId,
           holdings,
         })
       });
-      if (!res.ok) throw new Error(`Confirm failed: ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail || `Confirm failed: ${res.status}`)
+      }
       onComplete(holdings);
     } catch (e) {
       setError(e.message || 'Confirm error');
@@ -199,6 +267,17 @@ function PortfolioImportStep({ onBack, onComplete }) {
   }
 
   // ── Upload ──────────────────────────────────────────────
+  const updateHolding = (index, key, value) => {
+    setHoldings(prev => prev.map((item, i) => (i === index ? { ...item, [key]: value } : item)))
+  }
+
+  const deleteHolding = (index) => {
+    setHoldings(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const addHolding = () => {
+    setHoldings(prev => [...prev, { ...EMPTY_HOLDING }])
+  }
   if (phase === 'upload') return (
     <div style={cs.stepPage}>
       <div style={cs.eyebrow}>Step 5 of 5 · Optional</div>
@@ -326,8 +405,6 @@ function PortfolioImportStep({ onBack, onComplete }) {
         ))}
       </div>
 
-      <button onClick={confirm}>Confirm & Launch ✦</button>
-
       <div style={{ display:'flex', justifyContent:'space-between', paddingTop:24, borderTop:'1px solid var(--border)' }}>
         <button style={cs.btnBack} onClick={() => setPhase('upload')}>← Re-upload</button>
         <div style={{ display:'flex', gap:12 }}>
@@ -346,19 +423,40 @@ function PortfolioImportStep({ onBack, onComplete }) {
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Survey() {
   const navigate = useNavigate()
+  const { user, login } = useAuth()
   const [step, setStep] = useState(1)
   const [done, setDone] = useState(false)
   const [importedHoldings, setImportedHoldings] = useState([])
-  const [ageGroup,       setAgeGroup]       = useState('30–44')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
+  const [country, setCountry] = useState('Singapore')
+  const [age,            setAge]            = useState('')
   const [selectedAssets, setSelectedAssets] = useState(new Set(['Equities','Fixed Income']))
   const [selectedGoals,  setSelectedGoals]  = useState(new Set(['Wealth Growth']))
   const [horizon,        setHorizon]        = useState('3–5')
-  const [riskLevel,      setRiskLevel]      = useState('balanced')
+  const [riskLevel,      setRiskLevel]      = useState(50)
+  const [submitErr, setSubmitErr] = useState('')
 
   const goNext = () => step < 5 ? setStep(s => s+1) : null
   const goBack = () => setStep(s => s-1)
   const progress = done ? 100 : (step/5)*100
   const toggleSet = (set, setter, val) => setter(prev => { const n=new Set(prev); n.has(val)?n.delete(val):n.add(val); return n })
+  const goNextFromProfile = () => {
+    if (!username.trim() || !password.trim()) {
+      setSubmitErr('Username and password are required.')
+      return
+    }
+    const parsedAge = Number(age)
+    if (!Number.isFinite(parsedAge) || parsedAge < 18 || parsedAge > 100) {
+      setSubmitErr('Please enter a valid age between 18 and 100.')
+      return
+    }
+    setSubmitErr('')
+    goNext()
+  }
 
   const handleImportComplete = (holdings) => { setImportedHoldings(holdings); setDone(true) }
 
@@ -367,11 +465,11 @@ export default function Survey() {
       <div style={{ textAlign:'center', maxWidth:520, padding:40, animation:'fadeUp 0.5s ease' }}>
         <div style={cs.completeRing}>✦</div>
         <h2 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:800, marginBottom:12 }}>
-          You're all set, <span style={{ color:'var(--green)' }}>Alex</span>
+          You're all set, <span style={{ color:'var(--green)' }}>{firstName || user?.username || 'Investor'}</span>
         </h2>
-        <p style={{ color:'var(--text-dim)', fontSize:'0.92rem', lineHeight:1.7, marginBottom:20 }}>Your WealthSphere is calibrated. Your personalised globe awaits.</p>
+        <p style={{ color:'var(--text-dim)', fontSize:'0.92rem', lineHeight:1.7, marginBottom:20 }}>Your Unova is calibrated. Your personalised globe awaits.</p>
         <div style={{ display:'flex', flexWrap:'wrap', gap:10, justifyContent:'center', marginBottom:16 }}>
-          {[['Age',ageGroup],['Risk',riskLevel],['Assets',`${selectedAssets.size} classes`],['Horizon',`${horizon}yr`]].map(([k,v]) => (
+          {[['Age', age ? `${age}` : '-'],['Risk',`${riskLevel}/100`],['Assets',`${selectedAssets.size} classes`],['Horizon',`${horizon}yr`]].map(([k,v]) => (
             <div key={k} style={cs.pill}>{k}: <span style={{ color:'var(--gold)' }}>{v}</span></div>
           ))}
         </div>
@@ -387,17 +485,117 @@ export default function Survey() {
           </div>
         )}
         <button style={cs.btnLaunch} onClick={async () => {
-          if (user?.user_id && riskLevel) {
-            try {
-              await fetch(`${API}/users/risk`, {
+          setSubmitErr('')
+          try {
+            let activeUser = user
+            const finalUsername = (username || '').trim()
+            const finalPassword = (password || '').trim()
+
+            if (!activeUser?.user_id) {
+              if (!finalUsername || !finalPassword) {
+                setSubmitErr('Username and password are required.')
+                return
+              }
+
+              const regRes = await fetch(`${API}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: user.user_id, risk_profile: SLIDER_KEY_TO_RISK[riskLevel] }),
+                body: JSON.stringify({
+                  username: finalUsername,
+                  password: finalPassword,
+                }),
               })
-            } catch (_) {}
+              if (!regRes.ok && regRes.status !== 409) {
+                const regErr = await regRes.json().catch(() => ({}))
+                throw new Error(regErr?.detail || `register failed (${regRes.status})`)
+              }
+
+              const loginRes = await fetch(`${API}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  username: finalUsername,
+                  password: finalPassword,
+                }),
+              })
+              if (!loginRes.ok) {
+                const loginErr = await loginRes.json().catch(() => ({}))
+                throw new Error(loginErr?.detail || `login failed (${loginRes.status})`)
+              }
+              const loginData = await loginRes.json()
+              const authUser = {
+                user_id: loginData?.user_id || loginData?.data?.user_id,
+                username: loginData?.username || loginData?.data?.username || finalUsername,
+                created_at: loginData?.created_at || loginData?.data?.created_at || null,
+              }
+              if (!authUser.user_id) throw new Error('login did not return user_id')
+              login(authUser)
+              activeUser = authUser
+            }
+
+            const finalAge = Number(age)
+            if (!Number.isFinite(finalAge) || finalAge < 18 || finalAge > 100) {
+              throw new Error('Please enter a valid age between 18 and 100.')
+            }
+
+            const profileRes = await fetch(`${API}/users/survey/profile`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                user_id: activeUser.user_id,
+                first_name: firstName,
+                last_name: lastName,
+                email,
+                country,
+                age: finalAge,
+              }),
+            })
+            if (!profileRes.ok) {
+              const profileErr = await profileRes.json().catch(() => ({}))
+              throw new Error(profileErr?.detail || `profile update failed (${profileRes.status})`)
+            }
+
+            const riskRes = await fetch(`${API}/users/risk`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: activeUser.user_id, risk_profile: Number(riskLevel ?? 50) }),
+            })
+            if (!riskRes.ok) {
+              const riskErr = await riskRes.json().catch(() => ({}))
+              throw new Error(riskErr?.detail || `risk update failed (${riskRes.status})`)
+            }
+
+            if (importedHoldings.length > 0) {
+              const normalizedHoldings = importedHoldings.map((h) => ({
+                asset_class: toBackendAssetClass(h.asset_class || h.type, h.symbol || h.ticker),
+                symbol: h.symbol || h.ticker || '',
+                qty: Number(h.qty ?? h.shares ?? 0),
+                avg_price: Number(h.avg_price ?? h.price ?? 0),
+                current_price: Number(h.current_price ?? h.price ?? 0),
+                market_value: Number(h.market_value ?? ((Number(h.qty ?? h.shares ?? 0) || 0) * (Number(h.current_price ?? h.price ?? 0) || 0))),
+                name: h.name || h.ticker || h.symbol || '',
+                confidence: h.confidence == null ? undefined : Number(h.confidence),
+              })).filter((h) => h.symbol && h.asset_class)
+
+              if (normalizedHoldings.length > 0) {
+                const mergeRes = await fetch(`${API}/users/${activeUser.user_id}/imports/screenshot/merge`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ holdings: normalizedHoldings }),
+                })
+                if (!mergeRes.ok) {
+                  const mergeErr = await mergeRes.json().catch(() => ({}))
+                  throw new Error(mergeErr?.detail || `holdings merge failed (${mergeRes.status})`)
+                }
+              }
+            }
+
+            navigate('/')
+          } catch (err) {
+            setSubmitErr(err?.message || 'Failed to complete setup. Please try again.')
           }
-          navigate('/')
-        }}>Enter My WealthSphere →</button>
+        }}>Enter My Unova →</button>
+        {submitErr && <div style={{ color:'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.74rem', margin:'12px 0 0' }}>{submitErr}</div>}
       </div>
     </div>
   )
@@ -408,7 +606,10 @@ export default function Survey() {
       <div style={cs.bgGrid} />
 
       <aside style={cs.leftPanel}>
-        <div style={cs.logo}><div style={cs.logoDot} />WealthSphere</div>
+        <div style={cs.logo}>
+          <img src="/logo.png" alt="Logo" style={cs.logoImage} />
+          <span style={cs.logoText}>Unova</span>
+        </div>
         <nav style={{ flex:1 }}>
           {STEPS.map((s,i) => {
             const n=i+1, isActive=n===step, isDone=n<step, isAI=n===5
@@ -440,25 +641,45 @@ export default function Survey() {
             <h1 style={cs.heading}>Tell us about <em style={{ fontStyle:'normal', color:'var(--gold)' }}>yourself</em></h1>
             <p style={cs.subtext}>This helps us benchmark your portfolio against peers and tailor your wellness insights.</p>
             <div style={cs.formGrid}>
-              {[['First Name','Alex'],['Last Name','Chen'],['Email Address','alex@example.com']].map(([label,ph]) => (
-                <div key={label} style={{ ...(label==='Email Address'?{gridColumn:'1/-1'}:{}) }}>
-                  <label style={cs.formLabel}>{label}</label><input style={cs.formInput} placeholder={ph} />
-                </div>
-              ))}
-              {[['Investor Type',['Individual Investor','HNWI','Family Office','Institutional']],['Primary Currency',['SGD — Singapore Dollar','USD — US Dollar','GBP — British Pound']],['Country',['Singapore','United Kingdom','United States','Australia','Japan']]].map(([label,opts]) => (
-                <div key={label}><label style={cs.formLabel}>{label}</label><select style={cs.formInput}>{opts.map(o=><option key={o}>{o}</option>)}</select></div>
-              ))}
+              <div>
+                <label style={cs.formLabel}>First Name</label>
+                <input style={cs.formInput} placeholder="Alex" value={firstName} onChange={e => setFirstName(e.target.value)} />
+              </div>
+              <div>
+                <label style={cs.formLabel}>Last Name</label>
+                <input style={cs.formInput} placeholder="Chen" value={lastName} onChange={e => setLastName(e.target.value)} />
+              </div>
+              <div style={{ gridColumn:'1/-1' }}>
+                <label style={cs.formLabel}>Email Address</label>
+                <input style={cs.formInput} placeholder="alex@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+              </div>
+              <div>
+                <label style={cs.formLabel}>Username</label>
+                <input style={cs.formInput} placeholder="alex123" value={username} onChange={e => setUsername(e.target.value)} />
+              </div>
+              <div>
+                <label style={cs.formLabel}>Password</label>
+                <input type="password" style={cs.formInput} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+              </div>
+              <div>
+                <label style={cs.formLabel}>Country</label>
+                <select style={cs.formInput} value={country} onChange={e => setCountry(e.target.value)}>
+                  {['Singapore','United Kingdom','United States','Australia','Japan'].map(o => <option key={o}>{o}</option>)}
+                </select>
+              </div>
             </div>
-            <div style={cs.formLabel}>Age Group</div>
-            <div style={cs.ageGrid}>
-              {AGE_GROUPS.map(a => (
-                <div key={a.label} style={{ ...cs.ageCard, ...(ageGroup===a.label?cs.ageCardActive:{}) }} onClick={() => setAgeGroup(a.label)}>
-                  <div style={{ fontSize:'1.5rem', marginBottom:6 }}>{a.emoji}</div>
-                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:ageGroup===a.label?'var(--gold)':'var(--text-dim)' }}>{a.label}</div>
-                </div>
-              ))}
-            </div>
-            <Footer onNext={goNext} showBack={false} />
+            {submitErr && <div style={{ color:'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.74rem', margin:'-8px 0 10px' }}>{submitErr}</div>}
+            <div style={cs.formLabel}>Age</div>
+            <input
+              type="number"
+              min="18"
+              max="100"
+              style={{ ...cs.formInput, maxWidth: 220 }}
+              placeholder="30"
+              value={age}
+              onChange={e => setAge(e.target.value)}
+            />
+            <Footer onNext={goNextFromProfile} showBack={false} />
           </div>
         )}
 
@@ -468,7 +689,7 @@ export default function Survey() {
             <h1 style={cs.heading}>Your <em style={{ fontStyle:'normal', color:'var(--gold)' }}>risk horizon</em></h1>
             <p style={cs.subtext}>Drag the slider or choose a preset. This shapes every recommendation you receive.</p>
             <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:28, marginBottom:24 }}>
-              <RiskSlider initialPct={50} onChange={(l) => setRiskLevel(l.key)} />
+              <RiskSlider initialPct={50} onChange={(l) => setRiskLevel(Number(l.value ?? 50))} />
             </div>
             <Footer onNext={goNext} onBack={goBack} />
           </div>
@@ -549,8 +770,9 @@ const cs = {
   progressFill: { height:'100%', background:'linear-gradient(90deg,var(--teal),var(--gold))', boxShadow:'0 0 8px rgba(45,212,191,0.5)', transition:'width 0.5s cubic-bezier(0.4,0,0.2,1)' },
   bgGrid: { position:'fixed', inset:0, pointerEvents:'none', zIndex:0, backgroundImage:'linear-gradient(rgba(45,212,191,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(45,212,191,0.03) 1px,transparent 1px)', backgroundSize:'60px 60px' },
   leftPanel: { background:'var(--surface)', borderRight:'1px solid var(--border)', padding:'48px 36px', display:'flex', flexDirection:'column', position:'sticky', top:0, height:'100vh', overflow:'hidden', zIndex:1 },
-  logo: { fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.2rem', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', display:'flex', alignItems:'center', gap:10, marginBottom:48 },
-  logoDot: { width:24, height:24, borderRadius:'50%', background:'linear-gradient(135deg,var(--gold),var(--teal))', flexShrink:0, boxShadow:'0 0 14px rgba(201,168,76,0.4)' },
+  logo: { display:'flex', alignItems:'center', gap:10, justifyContent:'flex-start', marginBottom:48 },
+  logoImage: { height:40, width:'auto', objectFit:'contain', background:'transparent' },
+  logoText: { fontFamily:'var(--font-display)', fontWeight:900, fontSize:'1.2rem', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' },
   stepItem: { display:'flex', alignItems:'flex-start', gap:14, marginBottom:8, cursor:'pointer', padding:'8px 4px', borderRadius:10 },
   stepActive: {}, stepInactive: { opacity:0.35 },
   stepBullet: { width:34, height:34, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-mono)', fontSize:'0.78rem', border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text-faint)', flexShrink:0, marginTop:2 },
@@ -596,3 +818,5 @@ const imp = {
   spinner:   { width:44, height:44, border:'3px solid rgba(255,255,255,0.08)', borderTopColor:'var(--teal)', borderRadius:'50%', animation:'spin 0.8s linear infinite' },
   addRowBtn: { background:'transparent', border:'1.5px dashed rgba(255,255,255,0.12)', borderRadius:10, padding:'10px 20px', color:'var(--text-faint)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', cursor:'pointer', width:'100%', marginBottom:16 },
 }
+
+
