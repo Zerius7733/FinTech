@@ -560,7 +560,7 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
             password=payload.password,
         )
         api.add_default_user_profile(
-            USER_JSON_PATH=USER_JSON_PATH,
+            json_path=USER_JSON_PATH,
             user_id=result["user_id"],
             name=result["username"],
         )
