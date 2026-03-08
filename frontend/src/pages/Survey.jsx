@@ -606,7 +606,10 @@ export default function Survey() {
       <div style={cs.bgGrid} />
 
       <aside style={cs.leftPanel}>
-        <div style={cs.logo}><div style={cs.logoDot} />Unova</div>
+        <div style={cs.logo}>
+          <img src="/logo.png" alt="Logo" style={cs.logoImage} />
+          <span style={cs.logoText}>Unova</span>
+        </div>
         <nav style={{ flex:1 }}>
           {STEPS.map((s,i) => {
             const n=i+1, isActive=n===step, isDone=n<step, isAI=n===5
@@ -767,8 +770,9 @@ const cs = {
   progressFill: { height:'100%', background:'linear-gradient(90deg,var(--teal),var(--gold))', boxShadow:'0 0 8px rgba(45,212,191,0.5)', transition:'width 0.5s cubic-bezier(0.4,0,0.2,1)' },
   bgGrid: { position:'fixed', inset:0, pointerEvents:'none', zIndex:0, backgroundImage:'linear-gradient(rgba(45,212,191,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(45,212,191,0.03) 1px,transparent 1px)', backgroundSize:'60px 60px' },
   leftPanel: { background:'var(--surface)', borderRight:'1px solid var(--border)', padding:'48px 36px', display:'flex', flexDirection:'column', position:'sticky', top:0, height:'100vh', overflow:'hidden', zIndex:1 },
-  logo: { fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.2rem', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', display:'flex', alignItems:'center', gap:10, marginBottom:48 },
-  logoDot: { width:24, height:24, borderRadius:'50%', background:'linear-gradient(135deg,var(--gold),var(--teal))', flexShrink:0, boxShadow:'0 0 14px rgba(201,168,76,0.4)' },
+  logo: { display:'flex', alignItems:'center', gap:10, justifyContent:'flex-start', marginBottom:48 },
+  logoImage: { height:40, width:'auto', objectFit:'contain', background:'transparent' },
+  logoText: { fontFamily:'var(--font-display)', fontWeight:900, fontSize:'1.2rem', background:'linear-gradient(135deg,var(--gold-light),var(--gold))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' },
   stepItem: { display:'flex', alignItems:'flex-start', gap:14, marginBottom:8, cursor:'pointer', padding:'8px 4px', borderRadius:10 },
   stepActive: {}, stepInactive: { opacity:0.35 },
   stepBullet: { width:34, height:34, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-mono)', fontSize:'0.78rem', border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text-faint)', flexShrink:0, marginTop:2 },

@@ -1058,6 +1058,8 @@ export default function Globe() {
         const r3 = rotP(ll2xyz(node.lat, node.lng), rotY, rotX)
         const { sx, sy } = proj2d(r3, CX, CY, R)
         const hex = '#' + node.color.toString(16).padStart(6, '0')
+        // Use bright red for pulse rings if holdings are going down
+        const pulseColor = node.mtd < 0 ? '#ff0000' : hex
         clusterScreenRef.current[node.id] = { x: sx, y: sy, vis: r3.z > 0.05 }
         if (r3.z < 0.05) return
         const fade = Math.min(1, (r3.z - 0.05) / 0.15)
@@ -1068,7 +1070,7 @@ export default function Globe() {
             const tp = ((now + w * 1200) % 2400) / 2400
             ctx.save()
             ctx.beginPath(); ctx.arc(sx, sy, (14 + tp * 36) * nodeScale, 0, Math.PI * 2)
-            ctx.strokeStyle = hexRgba(hex, (1 - tp) * 0.65 * fade)
+            ctx.strokeStyle = hexRgba(pulseColor, (1 - tp) * 0.65 * fade)
             ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore()
           }
         }
