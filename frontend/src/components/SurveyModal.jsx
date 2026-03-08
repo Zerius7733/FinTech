@@ -292,7 +292,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
         <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14, padding:'8px 12px', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10 }}>
           <img src={preview} alt="" style={{ width:40, height:30, objectFit:'cover', borderRadius:6 }} />
           <div style={{ flex:1, fontSize:'0.75rem', color:'var(--text-dim)' }}>Extracted {holdings.length} items</div>
-          <button onClick={() => { setPhase('upload'); setHoldings([]) }} style={{ ...cs.btnBack, padding:'4px 10px', fontSize:'0.7rem' }}>Re-upload</button>
+          <button onClick={() => { setPhase('upload'); setHoldings([]) }} style={{ ...S.btnBack, padding:'4px 10px', fontSize:'0.7rem' }}>Re-upload</button>
         </div>
       )}
 
@@ -306,11 +306,11 @@ function PortfolioImportStep({ onBack, onComplete }) {
       <button onClick={addHolding} style={{ ...imp.addRowBtn, padding:'6px 12px', fontSize:'0.7rem', marginBottom:12 }}>+ Add row</button>
 
       <div style={{ display:'flex', justifyContent:'space-between', gap:12 }}>
-        <button style={cs.btnBack} onClick={() => setPhase('upload')}>← Back</button>
+        <button style={S.btnBack} onClick={() => setPhase('upload')}>← Back</button>
         <div style={{ display:'flex', gap:8 }}>
-          <button style={{ ...cs.btnBack, color:'var(--text-faint)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => onComplete([])}>Skip</button>
-          <button style={{ ...S.submit, background:'linear-gradient(135deg,var(--green),#059669)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={confirm}>
-            Confirm ✦
+          <button style={{ ...S.btnBack, color:'var(--text-faint)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => onComplete([])}>Skip</button>
+          <button style={{ ...S.submit, fontSize:'0.78rem', padding:'8px 16px' }} onClick={confirm}>
+            Confirm
           </button>
         </div>
       </div>
