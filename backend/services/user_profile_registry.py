@@ -134,7 +134,7 @@ def _reorder_user_fields(user: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def rewrite_user_profiles_with_order(json_path: Path) -> None:
-    with open(json_path, "r", encoding="utf-8") as f:
+    with open(json_path, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
 
     rewritten = normalize_users_data(data)
@@ -148,7 +148,7 @@ def add_default_user_profile(json_path: Path, user_id: str, name: str) -> None:
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump({}, f, indent=2)
 
-    with open(json_path, "r", encoding="utf-8") as f:
+    with open(json_path, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
 
     if user_id not in data:

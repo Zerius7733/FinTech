@@ -122,7 +122,7 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _read_users_data() -> Dict[str, Any]:
-    with open(USER_JSON_PATH, "r", encoding="utf-8") as f:
+    with open(USER_JSON_PATH, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
     return api.normalize_users_data(data)
 

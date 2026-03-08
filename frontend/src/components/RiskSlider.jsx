@@ -1,72 +1,47 @@
-﻿import { useState, useRef, useCallback } from 'react'
+﻿import { useState, useRef, useCallback, useEffect } from 'react'
 
-const LEVELS = [
-  {
-    min: 0,
-    max: 33,
-    pct: 16.5,
-    key: 'conservative',
-    name: 'Conservative',
-    icon: '🛡️',
-    color: 'var(--green)',
-    desc: 'Liquidity 50% + Debt 35% + Diversification 15%',
-    liquidity: '50%',
-    diversification: '15%',
-    debtIncome: '35%',
-    equity: '30%',
-    bonds: '60%',
-    vol: 'Low',
-  },
-  {
-    min: 34,
-    max: 66,
-    pct: 50,
-    key: 'balanced',
-    name: 'Balanced',
-    icon: '⚖️',
-    color: 'var(--gold)',
-    desc: 'Liquidity 35% + Debt 35% + Diversification 30%',
-    liquidity: '35%',
-    diversification: '30%',
-    debtIncome: '35%',
-    equity: '60%',
-    bonds: '30%',
-    vol: 'Medium',
-  },
-  {
-    min: 67,
-    max: 100,
-    pct: 83.5,
-    key: 'aggressive',
-    name: 'Aggressive',
-    icon: '🚀',
-    color: 'var(--red)',
-    desc: 'Liquidity 20% + Debt 30% + Diversification 50%',
-    liquidity: '20%',
-    diversification: '50%',
-    debtIncome: '30%',
-    equity: '90%',
-    bonds: '5%',
-    vol: 'High',
-  },
-]
+const DEBT_WEIGHT = 30
+
+function clamp(v, min = 0, max = 100) {
+  return Math.max(min, Math.min(max, v))
+}
 
 function levelFromPct(pct) {
-  return LEVELS.find(l => pct <= l.max) ?? LEVELS[2]
+  if (pct <= 33.33) return { key: 'conservative', name: 'Conservative', color: 'var(--green)' }
+  if (pct <= 66.66) return { key: 'balanced', name: 'Balanced', color: 'var(--gold)' }
+  return { key: 'aggressive', name: 'Aggressive', color: 'var(--red)' }
+}
+
+function buildPayload(pct) {
+  const value = clamp(Math.round(pct))
+  const level = levelFromPct(value)
+  const diversification = Number((0.7 * value).toFixed(1))
+  const liquidity = Number((70 - diversification).toFixed(1))
+  const debt = DEBT_WEIGHT
+  const diversificationTarget = Number((1.0 - (0.3 * (value / 100))).toFixed(3))
+  return { ...level, value, pct: value, liquidity, diversification, debt, diversificationTarget }
 }
 
 export default function RiskSlider({ initialPct = 50, onChange }) {
-  const [pct, setPct] = useState(initialPct)
+  const [pct, setPct] = useState(clamp(initialPct))
   const trackRef = useRef(null)
   const dragging = useRef(false)
-  const level = levelFromPct(pct)
+  const payload = buildPayload(pct)
+
+  useEffect(() => {
+    setPct(clamp(initialPct))
+  }, [initialPct])
+
+  useEffect(() => {
+    onChange?.(buildPayload(pct))
+  }, [pct, onChange])
 
   const updatePct = useCallback((clientX) => {
+    if (!trackRef.current) return
     const rect = trackRef.current.getBoundingClientRect()
     const next = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100))
     setPct(next)
-    onChange?.(levelFromPct(next))
-  }, [onChange])
+  }, [])
 
   const onMouseDown = (e) => {
     dragging.current = true
@@ -87,38 +62,32 @@ export default function RiskSlider({ initialPct = 50, onChange }) {
         <span>Conservative</span><span>Balanced</span><span>Aggressive</span>
       </div>
       <div ref={trackRef} style={s.track} onClick={(e) => updatePct(e.clientX)}>
-        <div style={{ ...s.fill, width: `${pct}%`, background: `linear-gradient(90deg, var(--green), ${level.color})` }} />
+        <div style={{ ...s.fill, width: `${pct}%`, background: `linear-gradient(90deg, var(--green), ${payload.color})` }} />
         <div
-          style={{ ...s.thumb, left: `${pct}%`, border: `3px solid ${level.color}`, boxShadow: `0 0 14px ${level.color}80` }}
+          style={{ ...s.thumb, left: `${pct}%`, border: `3px solid ${payload.color}`, boxShadow: `0 0 14px ${payload.color}80` }}
           onMouseDown={onMouseDown}
         />
       </div>
 
-      <div style={s.presets}>
-        {LEVELS.map(l => (
-          <div
-            key={l.key}
-            style={{ ...s.preset, ...(level.key === l.key ? s.presetActive : {}) }}
-            onClick={() => { setPct(l.pct); onChange?.(l) }}
-          >
-            <div style={s.presetIcon}>{l.icon}</div>
-            <div style={s.presetName}>{l.name}</div>
-          </div>
-        ))}
+      <div style={s.scoreRow}>
+        <span style={s.scoreLabel}>Risk Score</span>
+        <span style={{ ...s.scoreValue, color: payload.color }}>{payload.value}/100</span>
       </div>
 
       <div style={s.detail}>
         <div style={s.detailLeft}>
-          <div style={s.detailTitle}>{level.name} Portfolio</div>
-          <div style={s.detailDesc}>{level.desc}</div>
+          <div style={s.detailTitle}>{payload.name} Portfolio</div>
+          <div style={s.detailDesc}>
+            Wellness ratio: Liquidity {payload.liquidity}% / Diversification {payload.diversification}% / Debt-Income {payload.debt}%
+          </div>
         </div>
         <div style={s.impactRow}>
           {[
-            { label: 'LIQUIDITY', val: level.liquidity, color: 'var(--blue)' },
-            { label: 'DEBT', val: level.debtIncome, color: 'var(--teal)' },
-            { label: 'DIVERSIFICATION', val: level.diversification, color: 'var(--gold)' },
+            { label: 'LIQUIDITY', val: `${payload.liquidity}%`, color: 'var(--blue)' },
+            { label: 'DEBT', val: `${payload.debt}%`, color: 'var(--teal)' },
+            { label: 'DIVERSIFICATION', val: `${payload.diversification}%`, color: 'var(--gold)' },
           ].map((x, idx) => (
-            <div key={`${x.val}-${idx}`} style={s.impactItem}>
+            <div key={`${x.label}-${idx}`} style={s.impactItem}>
               <span style={{ ...s.impactVal, color: x.color }}>{x.val}</span>
               <span style={s.impactLbl}>{x.label}</span>
             </div>
@@ -154,20 +123,17 @@ const s = {
     cursor: 'grab', zIndex: 2,
     transition: 'border 0.3s, box-shadow 0.3s',
   },
-  presets: {
-    display: 'grid', gridTemplateColumns: 'repeat(3,1fr)',
-    gap: 12, marginTop: 20,
+  scoreRow: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: 12,
   },
-  preset: {
-    background: 'var(--surface2)', border: '1.5px solid var(--border)',
-    borderRadius: 14, padding: '16px 12px',
-    textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s',
+  scoreLabel: {
+    fontFamily: 'var(--font-mono)', fontSize: '0.68rem',
+    color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.1em',
   },
-  presetActive: {
-    border: '1.5px solid var(--gold)', background: 'rgba(201,168,76,0.07)',
+  scoreValue: {
+    fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem',
   },
-  presetIcon: { fontSize: '1.5rem', marginBottom: 6 },
-  presetName: { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.85rem', marginBottom: 2 },
   detail: {
     background: 'var(--surface2)', border: '1px solid var(--border)',
     borderRadius: 14, padding: '18px 20px',
