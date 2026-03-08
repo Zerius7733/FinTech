@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import ThemeModal from './ThemeModal.jsx'
+import SettingsModal from './SettingsModal.jsx'
 
 const API = 'http://localhost:8000'
 const NAV_LINKS = [
@@ -15,7 +17,11 @@ export default function Navbar() {
   const [navProfile, setNavProfile] = useState(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const [expandedNotifId, setExpandedNotifId] = useState(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [themeModalOpen, setThemeModalOpen] = useState(false)
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const notifRef = useRef(null)
+  const settingsRef = useRef(null)
 
   function handleSignOut() {
     logout()
@@ -59,6 +65,24 @@ export default function Navbar() {
       document.removeEventListener('keydown', handleEscape)
     }
   }, [notifOpen])
+
+  useEffect(() => {
+    if (!settingsOpen) return
+    function handleClickOutside(event) {
+      if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+        setSettingsOpen(false)
+      }
+    }
+    function handleEscape(event) {
+      if (event.key === 'Escape') setSettingsOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [settingsOpen])
 
   const notifications = useMemo(() => {
     if (!navProfile) return []
@@ -124,6 +148,40 @@ export default function Navbar() {
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div ref={settingsRef} style={{ position:'relative' }}>
+          <button
+            type="button"
+            aria-label="View settings menu"
+            title="Settings"
+            onClick={() => setSettingsOpen(open => !open)}
+            style={S.settingsBtn}
+          >
+            <svg viewBox="0 0 512 512" style={{ height:16, fill:'currentColor' }}>
+              <path d="M0 416c0 17.7 14.3 32 32 32l54.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48L480 448c17.7 0 32-14.3 32-32s-14.3-32-32-32l-246.7 0c-12.3-28.3-40.5-48-73.3-48s-61 19.7-73.3 48L32 384c-17.7 0-32 14.3-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zM320 256a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zm32-80c-32.8 0-61 19.7-73.3 48L32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l246.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48l54.7 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-54.7 0c-12.3-28.3-40.5-48-73.3-48zM192 128a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73.3-64C253 35.7 224.8 16 192 16s-61 19.7-73.3 48L32 64C14.3 64 0 78.3 0 96s14.3 32 32 32l86.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48L480 128c17.7 0 32-14.3 32-32s-14.3-32-32-32L265.3 64z" />
+            </svg>
+          </button>
+          {settingsOpen && (
+            <div style={S.settingsMenu}>
+              {[
+                { icon:'🎨', label:'Change Theme', action:() => { setSettingsOpen(false); setThemeModalOpen(true) } },
+                { icon:'⚙️', label:'Settings', action:() => { setSettingsOpen(false); setSettingsModalOpen(true) } },
+              ].map((item, i, arr) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={item.action}
+                  style={{
+                    ...S.settingsItem,
+                    borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
+                  }}
+                >
+                  <span style={{ fontSize:'1rem' }}>{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {user ? (
           <>
             <div ref={notifRef} style={{ position:'relative' }}>
@@ -218,6 +276,8 @@ export default function Navbar() {
           </>
         )}
       </div>
+      <ThemeModal open={themeModalOpen} onClose={() => setThemeModalOpen(false)} />
+      {settingsModalOpen && <SettingsModal onClose={() => setSettingsModalOpen(false)} />}
     </nav>
   )
 }
@@ -329,6 +389,47 @@ const S = {
     justifyContent:'center',
     cursor:'pointer',
     boxShadow:'0 10px 24px rgba(21,28,45,0.08)',
+  },
+  settingsBtn: {
+    width:46,
+    height:46,
+    borderRadius:14,
+    border:'1px solid var(--border)',
+    background:'var(--surface)',
+    color:'var(--text-dim)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    cursor:'pointer',
+    boxShadow:'0 10px 24px rgba(21,28,45,0.08)',
+    transition:'all 0.18s',
+  },
+  settingsMenu: {
+    position:'absolute',
+    top:'calc(100% + 12px)',
+    right:0,
+    background:'var(--surface)',
+    border:'1px solid var(--border)',
+    borderRadius:14,
+    overflow:'hidden',
+    boxShadow:'0 16px 48px rgba(15,23,42,0.16)',
+    display:'flex',
+    flexDirection:'column',
+    minWidth:190,
+    zIndex:120,
+  },
+  settingsItem: {
+    display:'flex',
+    alignItems:'center',
+    gap:12,
+    background:'transparent',
+    border:'none',
+    padding:'13px 18px',
+    cursor:'pointer',
+    fontFamily:'var(--font-display)',
+    fontSize:'0.88rem',
+    color:'var(--text)',
+    textAlign:'left',
   },
   bellBadge: {
     position:'absolute',

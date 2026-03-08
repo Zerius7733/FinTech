@@ -2,8 +2,6 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
-import ThemeModal from '../components/ThemeModal.jsx'
-import SettingsModal from '../components/SettingsModal.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { MOCK_NODES, genPriceSeries, genSparkline } from '../data.js'
@@ -767,9 +765,6 @@ export default function Globe() {
   const [dashNode,      setDashNode]    = useState(null)
   const [dashShow,      setDashShow]    = useState(false)
   const [flyingIn,      setFlyingIn]    = useState(false)  // camera zoom animation
-  const [settingsOpen,  setSettingsOpen] = useState(false)
-  const [themeModalOpen, setThemeModalOpen] = useState(false)
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [riskPct,       setRiskPct]     = useState(50)
   const [hoverZone,     setHoverZone]   = useState(null)
   const [zonePos,        setZonePos]     = useState({ x:0, y:0 })
@@ -1455,81 +1450,8 @@ export default function Globe() {
         <div>Built with Three.js · Open Finance APIs</div>
       </footer>
 
-      {/* ══ THEME PICKER MODAL ══ */}
-      <ThemeModal open={themeModalOpen} onClose={() => setThemeModalOpen(false)} />
-      {settingsModalOpen && <SettingsModal onClose={() => setSettingsModalOpen(false)} />}
-
       {/* ══ LAYER 4 — BENTO DASHBOARD ══ */}
       <BentoDashboard node={dashNode} show={dashShow} onClose={closeDashboard} />
-
-      {/* ══ FIXED SETTINGS BUTTON + DROPUP ══ */}
-      <div style={{ position:'fixed', bottom:28, right:28, zIndex:200, display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
-
-        {/* Dropup menu */}
-        {settingsOpen && (
-          <div style={{
-            background:'var(--surface)', border:'1px solid var(--border)',
-            borderRadius:14, overflow:'hidden',
-            boxShadow:'0 16px 48px rgba(0,0,0,0.45)',
-            display:'flex', flexDirection:'column',
-            minWidth:190,
-            animation:'fadeUp 0.18s ease both',
-          }}>
-            {[
-              { icon:'🎨', label:'Change Theme',  action:() => { setSettingsOpen(false); setThemeModalOpen(true) } },
-              { icon:'⚙️', label:'Settings',       action:() => { setSettingsOpen(false); setSettingsModalOpen(true) } },
-            ].map((item, i, arr) => (
-              <button
-                key={item.label}
-                onClick={item.action}
-                style={{
-                  display:'flex', alignItems:'center', gap:12,
-                  background:'transparent', border:'none',
-                  borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
-                  padding:'13px 18px', cursor:'pointer',
-                  fontFamily:'var(--font-display)', fontSize:'0.88rem',
-                  color:'var(--text)', textAlign:'left',
-                  transition:'background 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface2)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <span style={{ fontSize:'1rem' }}>{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Filter / settings trigger button */}
-        <button
-          title="Settings"
-          onClick={() => setSettingsOpen(o => !o)}
-          style={{
-            width:50, height:50, borderRadius:10,
-            display:'flex', alignItems:'center', justifyContent:'center',
-            border:'1px solid rgba(255,255,255,0.12)',
-            background: settingsOpen ? 'rgb(59,59,59)' : 'var(--surface)',
-            cursor:'pointer',
-            boxShadow:'0 10px 24px rgba(0,0,0,0.25)',
-            transition:'all 0.3s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background='rgb(59,59,59)'; e.currentTarget.querySelector('svg').style.fill='white' }}
-          onMouseLeave={e => { if(!settingsOpen){ e.currentTarget.style.background='var(--surface)'; e.currentTarget.querySelector('svg').style.fill='rgb(180,180,180)' } }}
-        >
-          <svg viewBox="0 0 512 512" style={{ height:16, fill: settingsOpen ? 'white' : 'rgb(180,180,180)', transition:'fill 0.3s' }}>
-            <path d="M0 416c0 17.7 14.3 32 32 32l54.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48L480 448c17.7 0 32-14.3 32-32s-14.3-32-32-32l-246.7 0c-12.3-28.3-40.5-48-73.3-48s-61 19.7-73.3 48L32 384c-17.7 0-32 14.3-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zM320 256a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zm32-80c-32.8 0-61 19.7-73.3 48L32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l246.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48l54.7 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-54.7 0c-12.3-28.3-40.5-48-73.3-48zM192 128a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73.3-64C253 35.7 224.8 16 192 16s-61 19.7-73.3 48L32 64C14.3 64 0 78.3 0 96s14.3 32 32 32l86.7 0c12.3 28.3 40.5 48 73.3 48s61-19.7 73.3-48L480 128c17.7 0 32-14.3 32-32s-14.3-32-32-32L265.3 64z" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Click-away to close dropup */}
-      {settingsOpen && (
-        <div
-          onClick={() => setSettingsOpen(false)}
-          style={{ position:'fixed', inset:0, zIndex:199 }}
-        />
-      )}
 
       {/* Global keyframes */}
       <style>{`
