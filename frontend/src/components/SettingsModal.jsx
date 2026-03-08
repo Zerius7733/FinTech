@@ -4,15 +4,19 @@ import { useAuth } from '../context/AuthContext.jsx'
 import RiskSlider from './RiskSlider.jsx'
 
 const API = 'http://localhost:8000'
-const RISK_KEY_TO_PCT  = { Low: 0, Moderate: 50, High: 100 }
-const RISK_KEY_TO_INFO = {
-  Low:      { label: 'Conservative Portfolio', ratio: 'Liquidity 50% + Diversification 15% + Debt-Income 35%' },
-  Moderate: { label: 'Balanced Portfolio', ratio: 'Liquidity 35% + Diversification 30% + Debt-Income 35%' },
-  High:     { label: 'Aggressive Portfolio', ratio: 'Liquidity 20% + Diversification 50% + Debt-Income 30%' },
-}
-const SLIDER_KEY_TO_RISK = { conservative: 'Low', balanced: 'Moderate', aggressive: 'High' }
 const GLOBE_PREFS_KEY = 'ws_globe_prefs'
 const GLOBE_PREFS_EVENT = 'ws:globe-prefs'
+
+function normalizeRiskProfileValue(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, Math.min(100, value))
+  const text = String(value ?? '').trim().toLowerCase()
+  if (text === 'low' || text === 'conservative') return 0
+  if (text === 'moderate' || text === 'medium' || text === 'balanced') return 50
+  if (text === 'high' || text === 'aggressive') return 100
+  const numeric = Number(text)
+  if (Number.isFinite(numeric)) return Math.max(0, Math.min(100, numeric))
+  return 50
+}
 
 const SECTIONS = [
   { key: 'risk',     icon: '⚖️',  label: 'Risk Profile'       },
@@ -136,7 +140,7 @@ export default function SettingsModal({ onClose }) {
     if (!user?.user_id) { setProfileLoaded(true); return }
     fetch(`${API}/users/${user.user_id}`)
       .then(r => r.json())
-      .then(d => { if (d.user?.risk_profile) setProfileRisk(d.user.risk_profile) })
+      .then(d => { if (d.user?.risk_profile != null) setProfileRisk(normalizeRiskProfileValue(d.user.risk_profile)) })
       .catch(() => {})
       .finally(() => setProfileLoaded(true))
   }, [user?.user_id])
@@ -155,14 +159,15 @@ export default function SettingsModal({ onClose }) {
   }, [])
 
   const handleSave = async () => {
-    if (user?.user_id && riskLevel) {
+    if (user?.user_id) {
+      const riskValue = normalizeRiskProfileValue(riskLevel?.value ?? profileRisk ?? 50)
       try {
         await fetch(`${API}/users/risk`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: user.user_id, risk_profile: SLIDER_KEY_TO_RISK[riskLevel.key] }),
+          body: JSON.stringify({ user_id: user.user_id, risk_profile: riskValue }),
         })
-        setProfileRisk(SLIDER_KEY_TO_RISK[riskLevel.key])
+        setProfileRisk(riskValue)
       } catch (_) {}
     }
     setSaved(true); setUnsaved(false)
@@ -194,7 +199,14 @@ export default function SettingsModal({ onClose }) {
     }
   }
 
-  const riskInfo = RISK_KEY_TO_INFO[profileRisk] ?? RISK_KEY_TO_INFO.Moderate
+  const liveRisk = normalizeRiskProfileValue(riskLevel?.value ?? profileRisk ?? 50)
+  const liveDiversification = Number((0.7 * liveRisk).toFixed(1))
+  const liveLiquidity = Number((70 - liveDiversification).toFixed(1))
+  const liveDebt = 30
+  const riskInfo = {
+    label: liveRisk <= 33 ? 'Conservative Portfolio' : liveRisk <= 66 ? 'Balanced Portfolio' : 'Aggressive Portfolio',
+    ratio: `Diversification ${liveDiversification}% + Liquidity ${liveLiquidity}% + Debt-Income ${liveDebt}%`,
+  }
 
   return createPortal(
     <div style={s.overlay} onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
@@ -254,7 +266,7 @@ export default function SettingsModal({ onClose }) {
                 {riskOpen && (
                   <div style={{ animation: 'fadeUp 0.25s ease' }}>
                     {profileLoaded
-                      ? <RiskSlider key={profileRisk ?? 'default'} initialPct={RISK_KEY_TO_PCT[profileRisk] ?? 50}
+                      ? <RiskSlider key={profileRisk ?? 'default'} initialPct={normalizeRiskProfileValue(profileRisk ?? 50)}
                           onChange={l => { setRiskLevel(l); mark() }} />
                       : <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>Loading…</div>
                     }

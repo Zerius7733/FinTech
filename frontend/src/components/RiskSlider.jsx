@@ -78,14 +78,14 @@ export default function RiskSlider({ initialPct = 50, onChange }) {
         <div style={s.detailLeft}>
           <div style={s.detailTitle}>{payload.name} Portfolio</div>
           <div style={s.detailDesc}>
-            Wellness ratio: Liquidity {payload.liquidity}% / Diversification {payload.diversification}% / Debt-Income {payload.debt}%
+            Wellness ratio: Diversification {payload.diversification}% / Liquidity {payload.liquidity}% / Debt-Income {payload.debt}%
           </div>
         </div>
         <div style={s.impactRow}>
           {[
+            { label: 'DIVERSIFICATION', val: `${payload.diversification}%`, color: 'var(--gold)' },
             { label: 'LIQUIDITY', val: `${payload.liquidity}%`, color: 'var(--blue)' },
             { label: 'DEBT', val: `${payload.debt}%`, color: 'var(--teal)' },
-            { label: 'DIVERSIFICATION', val: `${payload.diversification}%`, color: 'var(--gold)' },
           ].map((x, idx) => (
             <div key={`${x.label}-${idx}`} style={s.impactItem}>
               <span style={{ ...s.impactVal, color: x.color }}>{x.val}</span>

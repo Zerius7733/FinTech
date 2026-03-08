@@ -749,7 +749,7 @@
   "u011": {
     "name": "Zerius",
     "age": null,
-    "cash_balance": 100000.0,
+    "cash_balance": 100.0,
     "liability": 0.0,
     "liability_items": [],
     "portfolio": {
@@ -781,8 +781,8 @@
       }
     ],
     "portfolio_value": 2716665.2,
-    "total_balance": 2816665.2,
-    "net_worth": 2816665.2,
+    "total_balance": 2716765.2,
+    "net_worth": 2716765.2,
     "income": 500.0,
     "expenses": 0.0,
     "income_streams": [
@@ -795,15 +795,15 @@
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 200.0,
-      "liquidity_score": 100.0,
+      "liquidity_months": 0.2,
+      "liquidity_score": 3.33,
       "diversification_hhi": 1.0,
       "diversification_score": 0.0,
       "debt_income_ratio": 0.0,
       "debt_income_score": 100.0
     },
-    "risk_profile": 100.0,
-    "financial_wellness_score": 30.0,
-    "financial_stress_index": 20.0
+    "risk_profile": 0.0,
+    "financial_wellness_score": 32.33,
+    "financial_stress_index": 58.67
   }
 }

@@ -51,6 +51,29 @@ const fmt = {
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
 
+function normalizeRiskBucket(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const score = clamp(value, 0, 100)
+    if (score <= 33) return 'conservative'
+    if (score <= 66) return 'balanced'
+    return 'aggressive'
+  }
+  const text = String(value ?? '').trim().toLowerCase()
+  if (text === 'conservative' || text === 'low') return 'conservative'
+  if (text === 'balanced' || text === 'moderate' || text === 'medium') return 'balanced'
+  if (text === 'aggressive' || text === 'high') return 'aggressive'
+  const numeric = Number(text)
+  if (Number.isFinite(numeric)) return normalizeRiskBucket(numeric)
+  return 'balanced'
+}
+
+function riskLabel(value) {
+  const bucket = normalizeRiskBucket(value)
+  if (bucket === 'conservative') return 'Conservative'
+  if (bucket === 'aggressive') return 'Aggressive'
+  return 'Balanced'
+}
+
 function scoreTone(score) {
   if (score >= 80) return { label: 'Strong fit', color: 'var(--green)', bg: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.22)' }
   if (score >= 65) return { label: 'Aligned', color: 'var(--teal)', bg: 'rgba(45,212,191,0.12)', border: 'rgba(45,212,191,0.22)' }
@@ -59,7 +82,7 @@ function scoreTone(score) {
 }
 
 function getAssetClassBase(endpoint, riskProfile) {
-  const risk = (riskProfile || 'Balanced').toLowerCase()
+  const risk = normalizeRiskBucket(riskProfile)
   const matrix = {
     stocks: { conservative: 58, balanced: 76, aggressive: 84 },
     commodities: { conservative: 68, balanced: 72, aggressive: 62 },
@@ -69,7 +92,7 @@ function getAssetClassBase(endpoint, riskProfile) {
 }
 
 function getCompatibilityAnalysis(item, endpoint, userProfile, fallbackRank) {
-  const riskProfile = userProfile?.risk_profile || 'Balanced'
+  const riskProfile = riskLabel(userProfile?.risk_profile)
   const wellness = userProfile?.financial_wellness_score ?? 60
   const stress = userProfile?.financial_stress_index ?? 50
   const p24 = item.price_change_percentage_24h ?? 0

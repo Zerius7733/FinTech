@@ -241,6 +241,25 @@ function startCase(value) {
     .replace(/\b\w/g, char => char.toUpperCase())
 }
 
+function normalizeRiskScore(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return clamp(value, 0, 100)
+  const text = toText(value).toLowerCase()
+  if (!text) return null
+  if (text === 'low' || text === 'conservative') return 0
+  if (text === 'moderate' || text === 'medium' || text === 'balanced') return 50
+  if (text === 'high' || text === 'aggressive') return 100
+  const parsed = Number(text)
+  return Number.isFinite(parsed) ? clamp(parsed, 0, 100) : null
+}
+
+function riskLabelFromValue(value) {
+  const score = normalizeRiskScore(value)
+  if (score == null) return ''
+  if (score <= 33) return 'Conservative'
+  if (score <= 66) return 'Balanced'
+  return 'Aggressive'
+}
+
 function wrapPdfText(text, maxChars = 86) {
   const words = toText(text).split(/\s+/).filter(Boolean)
   if (!words.length) return []
@@ -1475,8 +1494,8 @@ export default function Profile() {
         if (profRes.ok) {
           const d = await profRes.json()
           setProfile(d.user)
-          // Pre-select the user's current risk profile in the UI
-          if (d.user?.risk_profile) setSelectedRisk(d.user.risk_profile.toLowerCase())
+          // Keep selected risk aligned with normalized numeric 0-100 backend format.
+          if (d.user?.risk_profile != null) setSelectedRisk(String(normalizeRiskScore(d.user.risk_profile) ?? ''))
         }
         if (portRes.ok) { const d = await portRes.json(); setPortfolio(d.portfolio) }
         if (historyRes.ok) {
@@ -1513,11 +1532,11 @@ export default function Profile() {
       const res = await fetch(`${API}/users/risk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: authUser.user_id, risk_profile: selectedRisk }),
+        body: JSON.stringify({ user_id: authUser.user_id, risk_profile: Number(selectedRisk) }),
       })
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.detail ?? `HTTP ${res.status}`) }
       // Optimistically update hero card without a re-fetch
-      setProfile(prev => prev ? { ...prev, risk_profile: selectedRisk } : prev)
+      setProfile(prev => prev ? { ...prev, risk_profile: Number(selectedRisk) } : prev)
       setRiskSaved(true)
       setTimeout(() => setRiskSaved(false), 3500)
     } catch (e) { setRiskError(e.message) }
@@ -1650,7 +1669,7 @@ export default function Profile() {
       '',
       `Generated for: ${profile?.name ?? authUser.username}`,
       `Wellness Score: ${Math.round(wellnessScore)} (${insightTone(wellnessScore).label})`,
-      `Risk Profile: ${profile?.risk_profile ?? 'Unavailable'}`,
+      `Risk Profile: ${riskLabelFromValue(profile?.risk_profile) || 'Unavailable'}`,
       '',
       'Portfolio Outlook',
       ...wrapPdfText(gptSummary || 'No summary returned.'),
@@ -1863,7 +1882,7 @@ export default function Profile() {
   }, [benchmarkOpen, authUser?.user_id, profile?.age, profile?.income, profile?.net_worth, fetchBenchmarks])
 
   // Is current selection different from what's saved?
-  const riskChanged = selectedRisk && selectedRisk !== (profile?.risk_profile ?? '').toLowerCase()
+  const riskChanged = selectedRisk && selectedRisk !== String(normalizeRiskScore(profile?.risk_profile) ?? '')
   const retirementSummary = retirementStatus(retirementPlan)
   const retirementProgress = retirementPlan?.target_retirement_fund
     ? clamp((Number(retirementPlan.projected_value_at_retirement || 0) / Number(retirementPlan.target_retirement_fund || 1)) * 100, 0, 100)
@@ -1924,14 +1943,14 @@ export default function Profile() {
           <div style={{ flex:1 }}>
             <div style={s.userName}>{profile?.name ?? authUser.username}</div>
             <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:12 }}>
-              {[['var(--teal)','Individual Investor'],['var(--gold)', profile?.risk_profile ? `Risk: ${profile.risk_profile}` : 'Risk: —']].map(([c,t]) => (
+              {[['var(--teal)','Individual Investor'],['var(--gold)', riskLabelFromValue(profile?.risk_profile) ? `Risk: ${riskLabelFromValue(profile?.risk_profile)}` : 'Risk: —']].map(([c,t]) => (
                 <span key={t} style={{ display:'flex', alignItems:'center', gap:6, fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' }}>
                   <div style={{ width:6, height:6, borderRadius:'50%', background:c }}/>{t}
                 </span>
               ))}
             </div>
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-              {profile?.risk_profile && <span style={{ background:'var(--surface2)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--gold)' }}>⚖️ {profile.risk_profile} Risk</span>}
+              {riskLabelFromValue(profile?.risk_profile) && <span style={{ background:'var(--surface2)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--gold)' }}>⚖️ {riskLabelFromValue(profile?.risk_profile)} Risk</span>}
               <span style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:20, padding:'4px 12px', fontSize:'0.74rem', color:'var(--text-dim)' }}>{positionCount} Position{positionCount !== 1 ? 's' : ''}</span>
             </div>
           </div>
@@ -2283,9 +2302,9 @@ export default function Profile() {
                     <span style={{ ...s.inlineStat, color:insightTone(wellnessScore).color, borderColor:'rgba(255,255,255,0.08)' }}>
                       Wellness {Math.round(wellnessScore)} · {insightTone(wellnessScore).label}
                     </span>
-                    {profile?.risk_profile && (
+                    {riskLabelFromValue(profile?.risk_profile) && (
                       <span style={{ ...s.inlineStat, color:'var(--gold)', borderColor:'rgba(201,168,76,0.2)' }}>
-                        Risk {profile.risk_profile}
+                        Risk {riskLabelFromValue(profile?.risk_profile)}
                       </span>
                     )}
                   </div>
@@ -2575,7 +2594,7 @@ export default function Profile() {
                       {retirementPlan?.retirement_age ?? retirementInputs.retirement_age}
                     </div>
                     <div style={{ fontSize:'0.76rem', color:'var(--text-faint)', marginTop:4 }}>
-                      Risk profile {retirementPlan?.risk_profile ?? startCase(profile?.risk_profile)}
+                      Risk profile {retirementPlan?.risk_profile ?? riskLabelFromValue(profile?.risk_profile)}
                     </div>
                   </div>
                 </div>
