@@ -522,6 +522,7 @@ export default function Survey() {
               const authUser = {
                 user_id: loginData?.user_id || loginData?.data?.user_id,
                 username: loginData?.username || loginData?.data?.username || finalUsername,
+                created_at: loginData?.created_at || loginData?.data?.created_at || null,
               }
               if (!authUser.user_id) throw new Error('login did not return user_id')
               login(authUser)
@@ -803,6 +804,5 @@ const imp = {
   spinner:   { width:44, height:44, border:'3px solid rgba(255,255,255,0.08)', borderTopColor:'var(--teal)', borderRadius:'50%', animation:'spin 0.8s linear infinite' },
   addRowBtn: { background:'transparent', border:'1.5px dashed rgba(255,255,255,0.12)', borderRadius:10, padding:'10px 20px', color:'var(--text-faint)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', cursor:'pointer', width:'100%', marginBottom:16 },
 }
-
 
 

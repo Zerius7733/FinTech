@@ -2688,29 +2688,31 @@ export default function Profile() {
             </div>
 
             {!retirementOpen ? (
-              <div style={s.retirementPreview}>
-                <div style={s.retirementPreviewBadge}>🌅</div>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontFamily:'var(--font-display)', fontSize:'1.25rem', fontWeight:800, marginBottom:8 }}>
-                    {retirementSummary.title}
+              <div style={s.retirementPreviewShell}>
+                <div style={s.retirementPreview}>
+                  <div style={s.retirementPreviewBadge}>🌅</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontFamily:'var(--font-display)', fontSize:'1.25rem', fontWeight:800, marginBottom:8 }}>
+                      {retirementSummary.title}
+                    </div>
+                    <div style={{ fontSize:'0.92rem', color:'var(--text-dim)', lineHeight:1.75, marginBottom:14 }}>
+                      {retirementPlan
+                        ? `See whether your current assets, spending, and savings pace can get you to ${fmtCompactCurrency(retirementPlan.target_retirement_fund)} by age ${retirementPlan.retirement_age}.`
+                        : 'Generate a retirement snapshot from your portfolio, income, and spending to see if you are on track.'}
+                    </div>
+                    <div style={s.retirementPreviewMeta}>
+                      <span style={s.retirementPreviewPill}>Goal {fmtCompactCurrency(retirementPlan?.target_retirement_fund)}</span>
+                      <span style={s.retirementPreviewPill}>Top-up {fmt$(retirementPlan?.required_monthly_contribution)}</span>
+                    </div>
                   </div>
-                  <div style={{ fontSize:'0.92rem', color:'var(--text-dim)', lineHeight:1.75, marginBottom:14 }}>
-                    {retirementPlan
-                      ? `See whether your current assets, spending, and savings pace can get you to ${fmtCompactCurrency(retirementPlan.target_retirement_fund)} by age ${retirementPlan.retirement_age}.`
-                      : 'Generate a retirement snapshot from your portfolio, income, and spending to see if you are on track.'}
-                  </div>
-                  <div style={s.retirementPreviewMeta}>
-                    <span style={s.retirementPreviewPill}>Goal {fmtCompactCurrency(retirementPlan?.target_retirement_fund)}</span>
-                    <span style={s.retirementPreviewPill}>Top-up {fmt$(retirementPlan?.required_monthly_contribution)}</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setRetirementOpen(true)}
+                    style={{ ...s.btnTeal, minWidth:150, alignSelf:'center' }}
+                  >
+                    Plan Retirement
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setRetirementOpen(true)}
-                  style={{ ...s.btnTeal, minWidth:150, alignSelf:'center' }}
-                >
-                  Plan Retirement
-                </button>
               </div>
             ) : (
               <>
@@ -3190,6 +3192,11 @@ const s = {
     display:'flex',
     alignItems:'center',
     gap:18,
+  },
+  retirementPreviewShell: {
+    minHeight:260,
+    display:'flex',
+    alignItems:'center',
   },
   retirementPreviewBadge: {
     width:72,
