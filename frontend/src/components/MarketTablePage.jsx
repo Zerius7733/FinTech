@@ -206,7 +206,8 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
   if (!item) return null
 
   const displayRank = item.market_cap_rank ?? item.__displayRank ?? null
-  const analysis = getCompatibilityAnalysis(item, endpoint, profile, displayRank)
+  const hasUserContext = Boolean(userId && profile)
+  const analysis = hasUserContext ? getCompatibilityAnalysis(item, endpoint, profile, displayRank) : null
   const positive24 = (item.price_change_percentage_24h ?? 0) >= 0
   const positive7 = (item.price_change_percentage_7d ?? 0) >= 0
 
@@ -265,25 +266,45 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
 
           <div style={{ ...MD.card, ...MD.scoreCard }}>
             <div style={MD.cardLabel}>Compatibility Score</div>
-            <div style={{ ...MD.scoreValue, color: analysis.tone.color }}>{analysis.score}</div>
-            <div style={{ ...MD.scorePill, color: analysis.tone.color, background: analysis.tone.bg, borderColor: analysis.tone.border }}>
-              {analysis.tone.label}
-            </div>
-            <div style={MD.scoreBody}>
-              Calculated from your risk profile, current wellness, stress level, and this asset&apos;s recent market behavior.
-            </div>
+            {hasUserContext ? (
+              <>
+                <div style={{ ...MD.scoreValue, color: analysis.tone.color }}>{analysis.score}</div>
+                <div style={{ ...MD.scorePill, color: analysis.tone.color, background: analysis.tone.bg, borderColor: analysis.tone.border }}>
+                  {analysis.tone.label}
+                </div>
+                <div style={MD.scoreBody}>
+                  Calculated from your risk profile, current wellness, stress level, and this asset&apos;s recent market behavior.
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ ...MD.scoreValue, color: 'var(--text-faint)', fontSize: '2.1rem' }}>—</div>
+                <div style={{ ...MD.scorePill, color: 'var(--text-faint)', background: 'rgba(148,163,184,0.08)', borderColor: 'rgba(148,163,184,0.18)' }}>
+                  Locked
+                </div>
+                <div style={MD.scoreBody}>
+                  Sign in to see your compatibility score.
+                </div>
+              </>
+            )}
           </div>
 
           <div style={MD.card}>
             <div style={MD.cardLabel}>Why It Fits</div>
-            <div style={MD.reasonList}>
-              {analysis.reasons.map(reason => (
-                <div key={reason} style={MD.reasonRow}>
-                  <span style={MD.reasonDot} />
-                  <span>{reason}</span>
-                </div>
-              ))}
-            </div>
+            {hasUserContext ? (
+              <div style={MD.reasonList}>
+                {analysis.reasons.map(reason => (
+                  <div key={reason} style={MD.reasonRow}>
+                    <span style={MD.reasonDot} />
+                    <span>{reason}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={MD.scoreBody}>
+                Sign in to see how this asset fits your risk profile, wellness, and stress level.
+              </div>
+            )}
           </div>
 
           <div style={{ ...MD.card, gridColumn: '1 / -1' }}>
@@ -294,7 +315,7 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
                 { label: '7d move', value: fmt.pct(item.price_change_percentage_7d), color: positive7 ? 'var(--green)' : 'var(--red)' },
                 { label: 'Volume', value: fmt.vol(item.total_volume), color: 'var(--text)' },
                 { label: 'Market cap', value: fmt.cap(item.market_cap), color: 'var(--text)' },
-                ...analysis.stats,
+                ...(analysis?.stats ?? []),
               ].map(stat => (
                 <div key={stat.label} style={MD.metricCard}>
                   <div style={MD.metricLabel}>{stat.label}</div>
@@ -306,7 +327,9 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
 
           <div style={{ ...MD.card, gridColumn: '1 / -1' }}>
             <div style={MD.cardLabel}>Suggested Read</div>
-            <div style={MD.actionText}>{analysis.action}</div>
+            <div style={MD.actionText}>
+              {analysis?.action ?? 'Sign in to get a personalised read on whether this asset suits your current financial profile.'}
+            </div>
           </div>
 
           <div style={{ gridColumn: '1 / -1' }}>
@@ -350,7 +373,7 @@ const SK = {
   circle: { borderRadius: '50%', background: 'rgba(255,255,255,0.06)', flexShrink: 0 },
 }
 
-const MarketRow = forwardRef(function MarketRow({ item, rank, style, onClick, highlightState, fmt }, ref) {
+const MarketRow = forwardRef(function MarketRow({ item, rank, style, onClick, highlightState, highlightTone = 'green', fmt }, ref) {
   const [hovered, setHovered] = useState(false)
   const p24 = item.price_change_percentage_24h
   const p7 = item.price_change_percentage_7d
@@ -358,6 +381,9 @@ const MarketRow = forwardRef(function MarketRow({ item, rank, style, onClick, hi
   const pos7 = p7 >= 0
   const isHighlighted = highlightState === 'active' || highlightState === 'fading'
   const highlightOpacity = highlightState === 'active' ? 1 : highlightState === 'fading' ? 0 : 0
+  const highlightColor = highlightTone === 'red'
+    ? { bg: `rgba(248,113,113,${0.14 * highlightOpacity})`, border: `rgba(248,113,113,${0.28 * highlightOpacity})` }
+    : { bg: `rgba(45,212,191,${0.14 * highlightOpacity})`, border: `rgba(45,212,191,${0.28 * highlightOpacity})` }
 
   return (
     <div
@@ -366,12 +392,12 @@ const MarketRow = forwardRef(function MarketRow({ item, rank, style, onClick, hi
         ...R.row,
         ...style,
         background: isHighlighted
-          ? `rgba(45,212,191,${0.14 * highlightOpacity})`
+          ? highlightColor.bg
           : hovered
             ? 'rgba(255,255,255,0.04)'
             : style?.background ?? 'transparent',
-        boxShadow: isHighlighted ? `inset 0 0 0 1px rgba(45,212,191,${0.28 * highlightOpacity})` : 'none',
-        transition: 'background 1s ease, box-shadow 1s ease',
+        boxShadow: isHighlighted ? `inset 0 0 0 1px ${highlightColor.border}` : 'none',
+        transition: 'background 2.2s ease, box-shadow 2.2s ease',
       }}
       onClick={() => onClick?.(item)}
       onMouseEnter={() => setHovered(true)}
@@ -542,7 +568,9 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
   const [favourites, setFavourites] = useState(() => loadFaves())
   const [showFavourites, setShowFavourites] = useState(false)
   const [highlightedItemKey, setHighlightedItemKey] = useState(null)
+  const [highlightedTone, setHighlightedTone] = useState('green')
   const [fadingItemKey, setFadingItemKey] = useState(null)
+  const [fadingTone, setFadingTone] = useState('green')
   const cacheRef = useRef({})
   const tableRef = useRef(null)
   const rowRefs = useRef({})
@@ -620,22 +648,25 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
     }))
   }
 
-  const scrollToItem = useCallback((item) => {
+  const scrollToItem = useCallback((item, tone = 'green') => {
     const key = item?.id ?? item?.symbol
     const row = key ? rowRefs.current[key] : null
     if (!row) return
     if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current)
     if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current)
     setHighlightedItemKey(key)
+    setHighlightedTone(tone)
     setFadingItemKey(null)
+    setFadingTone(tone)
     row.scrollIntoView({ behavior: 'smooth', block: 'center' })
     highlightTimeoutRef.current = setTimeout(() => {
       setHighlightedItemKey(current => (current === key ? null : current))
       setFadingItemKey(key)
+      setFadingTone(tone)
       fadeTimeoutRef.current = setTimeout(() => {
         setFadingItemKey(current => (current === key ? null : current))
-      }, 1000)
-    }, 700)
+      }, 2200)
+    }, 1800)
   }, [])
 
   useEffect(() => () => {
@@ -742,7 +773,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
               <button
                 key={pill.label}
                 type="button"
-                onClick={() => pill.item && scrollToItem(pill.item)}
+                onClick={() => pill.item && scrollToItem(pill.item, pill.label === 'Top loser' ? 'red' : 'green')}
                 style={{
                   ...PS.pill,
                   cursor: pill.item ? 'pointer' : 'default',
@@ -809,6 +840,13 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
                     : fadingItemKey === (item.id ?? item.symbol)
                       ? 'fading'
                       : 'idle'
+                }
+                highlightTone={
+                  highlightedItemKey === (item.id ?? item.symbol)
+                    ? highlightedTone
+                    : fadingItemKey === (item.id ?? item.symbol)
+                      ? fadingTone
+                      : 'green'
                 }
                 ref={node => {
                   const key = item.id ?? item.symbol
@@ -1210,5 +1248,3 @@ const MD = {
     color: 'var(--text-dim)',
   },
 }
-
-

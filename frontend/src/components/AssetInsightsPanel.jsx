@@ -36,6 +36,30 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
   const [requested, setRequested] = useState(false)
   const [requestVersion, setRequestVersion] = useState(0)
   const [state, setState] = useState({ loading: false, error: '', data: null })
+  const hasUserContext = Boolean(userId)
+
+  useEffect(() => {
+    if (hasUserContext) return
+    setRequested(false)
+    setRequestVersion(0)
+    setState({ loading: false, error: '', data: null })
+  }, [hasUserContext])
+
+  if (!hasUserContext) {
+    return (
+      <div style={S.card}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div style={S.label}>Market Insight</div>
+            <div style={{ fontSize: '0.84rem', color: 'var(--text-dim)', lineHeight: 1.7, marginTop: 10, maxWidth: 620 }}>
+              Sign in to generate a personalised market insight for this asset.
+            </div>
+          </div>
+          <div style={S.lockedPill}>Sign In Required</div>
+        </div>
+      </div>
+    )
+  }
 
   useEffect(() => {
     if (!requested) {
@@ -332,6 +356,17 @@ const S = {
     fontWeight: 700,
     cursor: 'pointer',
     boxShadow: '0 10px 24px rgba(17,24,39,0.16)',
+  },
+  lockedPill: {
+    border: '1px solid rgba(148,163,184,0.18)',
+    background: 'rgba(148,163,184,0.08)',
+    color: 'var(--text-faint)',
+    borderRadius: 999,
+    padding: '10px 14px',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.68rem',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
   },
   ghostBtn: {
     background: 'rgba(255,255,255,0.72)',
