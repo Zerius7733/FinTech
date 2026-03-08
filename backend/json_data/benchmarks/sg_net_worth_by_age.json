@@ -1,0 +1,30 @@
+{
+  "country": "Singapore",
+  "currency": "SGD",
+  "metric": "estimated_net_worth",
+  "methodology": "Estimated age-band net-worth reference curve for consumer benchmarking. Values are designed for percentile interpolation and should be presented as a Singapore reference baseline, not a government-mandated target.",
+  "sources": [
+    {
+      "name": "Central Provident Fund Board",
+      "label": "CPF retirement milestones and savings guidance",
+      "type": "official_reference"
+    },
+    {
+      "name": "Singapore Department of Statistics",
+      "label": "Household balance sheet and wealth context",
+      "type": "official_reference"
+    }
+  ],
+  "bands": [
+    { "label": "18-24", "min_age": 18, "max_age": 24, "p10": 1000, "p25": 6000, "p50": 18000, "p75": 40000, "p90": 80000 },
+    { "label": "25-29", "min_age": 25, "max_age": 29, "p10": 4000, "p25": 15000, "p50": 45000, "p75": 110000, "p90": 220000 },
+    { "label": "30-34", "min_age": 30, "max_age": 34, "p10": 10000, "p25": 35000, "p50": 95000, "p75": 220000, "p90": 420000 },
+    { "label": "35-39", "min_age": 35, "max_age": 39, "p10": 18000, "p25": 70000, "p50": 180000, "p75": 380000, "p90": 700000 },
+    { "label": "40-44", "min_age": 40, "max_age": 44, "p10": 30000, "p25": 110000, "p50": 290000, "p75": 560000, "p90": 1000000 },
+    { "label": "45-49", "min_age": 45, "max_age": 49, "p10": 50000, "p25": 160000, "p50": 420000, "p75": 760000, "p90": 1350000 },
+    { "label": "50-54", "min_age": 50, "max_age": 54, "p10": 70000, "p25": 220000, "p50": 560000, "p75": 960000, "p90": 1650000 },
+    { "label": "55-59", "min_age": 55, "max_age": 59, "p10": 90000, "p25": 280000, "p50": 700000, "p75": 1180000, "p90": 1950000 },
+    { "label": "60-64", "min_age": 60, "max_age": 64, "p10": 100000, "p25": 300000, "p50": 760000, "p75": 1230000, "p90": 2050000 },
+    { "label": "65+", "min_age": 65, "max_age": 100, "p10": 90000, "p25": 260000, "p50": 680000, "p75": 1120000, "p90": 1880000 }
+  ]
+}

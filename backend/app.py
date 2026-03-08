@@ -604,6 +604,27 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
 
 
 @app.get(
+    "/users/{user_id}/benchmarks",
+    tags=["Users"],
+    summary="Get Singapore peer benchmarking for a user",
+)
+def get_user_peer_benchmarks(user_id: str) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        result = api.build_peer_benchmarks(user)
+        return {"status": "ok", "user_id": user_id, **result}
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"peer benchmarking failed: {exc}") from exc
+
+
+@app.get(
     "/users/{user_id}/financials",
     tags=["Users"],
     summary="Get editable financial items by user ID",

@@ -12,6 +12,10 @@ function fmt$(n) {
   if (n == null) return '—'
   return new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:2 }).format(n)
 }
+function fmtSgd(n) {
+  if (n == null) return '—'
+  return new Intl.NumberFormat('en-SG', { style:'currency', currency:'SGD', maximumFractionDigits:0 }).format(n)
+}
 function fmtPct(n) { return n == null ? '—' : `${n >= 0 ? '+' : ''}${n.toFixed(2)}%` }
 function initials(name) {
   if (!name) return '??'
@@ -642,6 +646,68 @@ function buildWrappedPrintHtml({ ownerName, year, slides }) {
       </script>
     </body>
   </html>`
+}
+
+function benchmarkTone(percentile) {
+  if (percentile >= 75) return { color:'var(--green)', rail:'rgba(34,197,94,0.16)' }
+  if (percentile >= 50) return { color:'var(--teal)', rail:'rgba(42,184,163,0.16)' }
+  if (percentile >= 25) return { color:'var(--gold)', rail:'rgba(201,168,76,0.18)' }
+  return { color:'var(--red)', rail:'rgba(248,113,113,0.14)' }
+}
+
+function BenchmarkMeter({ title, data, icon }) {
+  const tone = benchmarkTone(Number(data?.percentile || 0))
+  const percentile = Math.max(1, Math.min(99, Number(data?.percentile || 0)))
+  return (
+    <div style={s.benchmarkMetricCard}>
+      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:14, marginBottom:12 }}>
+        <div>
+          <div style={s.benchmarkMetricLabel}>{title}</div>
+          <div style={{ fontFamily:'var(--font-display)', fontSize:'1.5rem', fontWeight:800, lineHeight:1.05 }}>
+            {percentile}<span style={{ fontSize:'0.82rem', color:'var(--text-faint)', marginLeft:4 }}>th percentile</span>
+          </div>
+        </div>
+        <div style={{ ...s.benchmarkIcon, color:tone.color }}>{icon}</div>
+      </div>
+      <div style={{ ...s.benchmarkRail, background:tone.rail }}>
+        <div style={{ ...s.benchmarkFill, width:`${percentile}%`, background:tone.color }} />
+      </div>
+      <div style={{ display:'flex', justifyContent:'space-between', gap:10, marginTop:10, fontFamily:'var(--font-mono)', fontSize:'0.63rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+        <span>P25 {fmtSgd(data?.p25)}</span>
+        <span>Median {fmtSgd(data?.median)}</span>
+        <span>P75 {fmtSgd(data?.p75)}</span>
+      </div>
+      <div style={{ marginTop:12, fontSize:'0.86rem', color:'var(--text-dim)', lineHeight:1.68 }}>
+        {data?.headline}
+      </div>
+      <div style={{ marginTop:8, fontSize:'0.78rem', color:'var(--text-faint)', lineHeight:1.6 }}>
+        Your value: <strong style={{ color:'var(--text)' }}>{fmtSgd(data?.user_value)}</strong> for ages {data?.age_band}.
+      </div>
+    </div>
+  )
+}
+
+function BenchmarkMiniCard({ title, data, accent, icon }) {
+  const percentile = Math.max(1, Math.min(99, Number(data?.percentile || 0)))
+  return (
+    <div style={s.benchmarkMiniCard}>
+      <div style={{ display:'flex', justifyContent:'space-between', gap:12, alignItems:'flex-start', marginBottom:10 }}>
+        <div>
+          <div style={s.benchmarkMiniLabel}>{title}</div>
+          <div style={{ fontFamily:'var(--font-display)', fontSize:'1.18rem', fontWeight:800, lineHeight:1.08 }}>
+            {percentile}<span style={{ fontSize:'0.72rem', color:'var(--text-faint)', marginLeft:4 }}>th percentile</span>
+          </div>
+        </div>
+        <div style={{ ...s.benchmarkMiniIcon, color:accent }}>{icon}</div>
+      </div>
+      <div style={s.benchmarkMiniTrack}>
+        <div style={{ ...s.benchmarkMiniFill, width:`${percentile}%`, background:accent }} />
+      </div>
+      <div style={{ marginTop:10, fontSize:'0.78rem', color:'var(--text-dim)', lineHeight:1.6 }}>
+        {data?.headline}
+      </div>
+    </div>
+  )
 }
 
 const WRAPPED_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -1384,6 +1450,10 @@ export default function Profile() {
   const [retirementLoading, setRetirementLoading] = useState(false)
   const [retirementError, setRetirementError] = useState('')
   const [retirementOpen, setRetirementOpen] = useState(false)
+  const [benchmarks, setBenchmarks] = useState(null)
+  const [benchmarkLoading, setBenchmarkLoading] = useState(false)
+  const [benchmarkError, setBenchmarkError] = useState('')
+  const [benchmarkOpen, setBenchmarkOpen] = useState(false)
 
   // ── Initial data fetch ────────────────────────────────────────────────────
   useEffect(() => {
@@ -1460,6 +1530,23 @@ export default function Profile() {
       setGptRecs(await res.json())
     } catch (e) { setGptError(e.message) }
     finally     { setGptLoading(false) }
+  }, [authUser?.user_id])
+
+  const fetchBenchmarks = useCallback(async () => {
+    if (!authUser?.user_id) return
+    setBenchmarkLoading(true)
+    setBenchmarkError('')
+    try {
+      const res = await fetch(`${API}/users/${authUser.user_id}/benchmarks`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.detail ?? `HTTP ${res.status}`)
+      setBenchmarks(data)
+    } catch (err) {
+      setBenchmarks(null)
+      setBenchmarkError(err.message || 'Could not load peer benchmarks.')
+    } finally {
+      setBenchmarkLoading(false)
+    }
   }, [authUser?.user_id])
 
   // ── Derived values ────────────────────────────────────────────────────────
@@ -1765,6 +1852,11 @@ export default function Profile() {
   // Initial seeded load only. Manual edits refresh through the card button.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [retirementInitialized, authUser?.user_id])
+
+  useEffect(() => {
+    if (!benchmarkOpen || !authUser?.user_id || !profile) return
+    fetchBenchmarks()
+  }, [benchmarkOpen, authUser?.user_id, profile?.age, profile?.income, profile?.net_worth, fetchBenchmarks])
 
   // Is current selection different from what's saved?
   const riskChanged = selectedRisk && selectedRisk !== (profile?.risk_profile ?? '').toLowerCase()
@@ -2334,23 +2426,90 @@ export default function Profile() {
 
         {/* Insights + Retirement */}
         <div style={s.twoCol}>
-          {[{ icon:'💡', label:'Peer Age Benchmarking' }].map(item => (
-            <div key={item.label} style={{ ...s.card, position:'relative', overflow:'hidden' }}>
-              <div style={{ position:'absolute', inset:0, background:'rgba(8,12,20,0.75)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, borderRadius:18 }}>
-                <div style={{ textAlign:'center' }}>
-                  <div style={{ fontSize:'1.8rem', marginBottom:6 }}>{item.icon}</div>
-                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:'var(--blue)', marginBottom:6 }}>{item.label}</div>
-                  <FutureTag />
-                </div>
-              </div>
-              <div style={{ opacity:0.1, pointerEvents:'none' }}>
-                <div style={s.secLabel}>{item.label}</div>
-                <div style={{ height:140, background:'var(--surface2)', borderRadius:10 }} />
-              </div>
+          <div style={{ ...s.card, ...s.featureCard, background:'linear-gradient(180deg, rgba(42,184,163,0.06), rgba(109,141,247,0.04) 100%)' }}>
+            <div style={s.secLabel}>
+              Peer Age Benchmarking
+              <span style={{ ...s.inlineStat, color:'var(--teal)', borderColor:'rgba(42,184,163,0.18)' }}>
+                {benchmarks?.income?.age_band ?? 'SG cohort'}
+              </span>
             </div>
-          ))}
 
-          <div style={{ ...s.card, background:'linear-gradient(180deg, rgba(109,141,247,0.06), rgba(42,184,163,0.04) 100%)' }}>
+            <div style={{ ...s.featureCardBody, ...(benchmarkOpen ? s.featureCardBodyExpanded : {}) }}>
+              {!benchmarkOpen ? (
+                <div style={s.retirementPreview}>
+                  <div style={s.retirementPreviewBadge}>👥</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontFamily:'var(--font-display)', fontSize:'1.25rem', fontWeight:800, marginBottom:8 }}>
+                      See where you stand against your age cohort
+                    </div>
+                    <div style={{ fontSize:'0.92rem', color:'var(--text-dim)', lineHeight:1.75, marginBottom:14 }}>
+                      Compare your income and net worth against Singapore reference bands for your age. Open the view only when you want the percentile breakdown.
+                    </div>
+                    <div style={s.retirementPreviewMeta}>
+                      <span style={s.retirementPreviewPill}>Age {profile?.age ?? '—'}</span>
+                      <span style={s.retirementPreviewPill}>Income {fmtSgd(profile?.income)}</span>
+                      <span style={s.retirementPreviewPill}>Net worth {fmtSgd(profile?.net_worth)}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBenchmarkOpen(true)
+                      if (!benchmarks && !benchmarkLoading) fetchBenchmarks()
+                    }}
+                    style={{ ...s.btnTeal, minWidth:170, alignSelf:'center' }}
+                  >
+                    {benchmarkLoading ? 'Loading…' : 'View Benchmarking'}
+                  </button>
+                </div>
+              ) : benchmarkError ? (
+                <div style={s.errBox}>
+                  {benchmarkError}
+                </div>
+              ) : !benchmarks ? (
+                <div style={{ fontSize:'0.9rem', color:'var(--text-dim)', lineHeight:1.75 }}>
+                  Loading your Singapore benchmark snapshot...
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontFamily:'var(--font-display)', fontSize:'1.25rem', fontWeight:800, marginBottom:8 }}>
+                    Singapore percentile snapshot
+                  </div>
+                  <div style={{ fontSize:'0.9rem', color:'var(--text-dim)', lineHeight:1.75, marginBottom:16 }}>
+                    A compact view of how your income and net worth compare with others in your age band.
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:12, marginBottom:14 }}>
+                    <BenchmarkMiniCard title="Income" data={benchmarks.income} accent="var(--teal)" icon="S$" />
+                    <BenchmarkMiniCard title="Net Worth" data={benchmarks.net_worth} accent="var(--blue)" icon="◔" />
+                  </div>
+                  <div style={s.retirementPreviewMeta}>
+                    <span style={s.retirementPreviewPill}>Income {fmtSgd(benchmarks.income?.user_value)}</span>
+                    <span style={s.retirementPreviewPill}>Net worth {fmtSgd(benchmarks.net_worth?.user_value)}</span>
+                    <span style={s.retirementPreviewPill}>Median {fmtSgd(benchmarks.income?.median)} income</span>
+                  </div>
+                  <div style={{ marginTop:14, display:'flex', justifyContent:'flex-end', gap:10 }}>
+                    <button
+                      type="button"
+                      onClick={fetchBenchmarks}
+                      disabled={benchmarkLoading}
+                      style={{ ...s.retirementSecondaryBtn, opacity:benchmarkLoading ? 0.6 : 1 }}
+                    >
+                      {benchmarkLoading ? 'Refreshing…' : 'Refresh'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBenchmarkOpen(false)}
+                      style={s.retirementSecondaryBtn}
+                    >
+                      Hide
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div style={{ ...s.card, ...s.featureCard, background:'linear-gradient(180deg, rgba(109,141,247,0.06), rgba(42,184,163,0.04) 100%)' }}>
             <div style={s.secLabel}>
               Retirement Outlook
               <span style={{ ...s.inlineStat, color:retirementSummary.tone, borderColor:'rgba(109,141,247,0.18)' }}>
@@ -2358,6 +2517,7 @@ export default function Profile() {
               </span>
             </div>
 
+            <div style={s.featureCardBody}>
             {!retirementOpen ? (
               <div style={s.retirementPreview}>
                 <div style={s.retirementPreviewBadge}>🌅</div>
@@ -2510,73 +2670,7 @@ export default function Profile() {
                 </div>
               </>
             )}
-          </div>
-        </div>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            SECTION 1 — Risk Profile Update
-            PATCH /users/risk  { user_id, risk_profile }
-        ══════════════════════════════════════════════════════════════════ */}
-        <div style={{ ...s.card, marginTop:24, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.38s' }}>
-          <div style={s.secLabel}>
-            Risk Profile
-            {profile?.risk_profile && (
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--gold)', background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.25)', borderRadius:8, padding:'2px 10px' }}>
-                Saved: {profile.risk_profile}
-              </span>
-            )}
-          </div>
-
-          <p style={{ fontSize:'0.83rem', color:'var(--text-dim)', lineHeight:1.65, marginBottom:20 }}>
-            Your risk profile shapes every recommendation and wellness calculation. Select the tolerance level that best matches your investment approach, then save to update the backend.
-          </p>
-
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:22 }}>
-            {RISK_OPTIONS.map(opt => {
-              const active = selectedRisk === opt.key
-              return (
-                <div
-                  key={opt.key}
-                  onClick={() => { setSelectedRisk(opt.key); setRiskSaved(false); setRiskError('') }}
-                  style={{
-                    border:      active ? `1.5px solid ${opt.glow}` : '1.5px solid var(--border)',
-                    background:  active ? `${opt.color}12` : 'var(--surface2)',
-                    borderRadius:14, padding:'18px 16px', cursor:'pointer',
-                    transition:'all 0.2s', position:'relative',
-                  }}
-                >
-                  <div style={{ position:'absolute', top:12, right:12, width:10, height:10, borderRadius:'50%', background: active ? opt.color : 'var(--border)', boxShadow: active ? `0 0 8px ${opt.color}` : 'none', transition:'all 0.2s' }} />
-                  <div style={{ fontSize:'1.6rem', marginBottom:10 }}>{opt.icon}</div>
-                  <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.92rem', marginBottom:4, color: active ? opt.color : 'var(--text)' }}>{opt.label}</div>
-                  <div style={{ fontSize:'0.76rem', color:'var(--text-dim)', lineHeight:1.55 }}>{opt.desc}</div>
-                </div>
-              )
-            })}
-          </div>
-
-          <div style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
-            <button
-              onClick={saveRiskProfile}
-              disabled={riskSaving || !riskChanged}
-              style={{
-                ...s.btnGold,
-                opacity: (riskSaving || !riskChanged) ? 0.4 : 1,
-                cursor:  (riskSaving || !riskChanged) ? 'not-allowed' : 'pointer',
-                display:'flex', alignItems:'center', gap:8,
-              }}
-            >
-              {riskSaving
-                ? <><Spinner size={14} color="#080c14" /> Saving…</>
-                : riskSaved ? '✓ Saved' : 'Update Risk Profile'}
-            </button>
-            {riskSaved && (
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.74rem', color:'var(--green)', animation:'profileFadeUp 0.3s ease' }}>
-                Risk profile updated successfully
-              </span>
-            )}
-            {riskError && (
-              <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.74rem', color:'var(--red)' }}>⚠ {riskError}</span>
-            )}
+            </div>
           </div>
         </div>
 
@@ -2653,6 +2747,20 @@ const s = {
   userName:  { fontFamily:'var(--font-display)', fontSize:'1.45rem', fontWeight:800, marginBottom:6 },
   twoCol:    { display:'grid', gridTemplateColumns:'1fr 1fr', gap:22, marginBottom:22 },
   card:      { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, padding:24 },
+  featureCard: {
+    minHeight:320,
+    display:'flex',
+    flexDirection:'column',
+  },
+  featureCardBody: {
+    flex:1,
+    display:'flex',
+    alignItems:'center',
+  },
+  featureCardBodyExpanded: {
+    display:'block',
+    width:'100%',
+  },
   trendPanel: {
     background:'linear-gradient(180deg, rgba(139,92,246,0.08) 0%, rgba(139,92,246,0.02) 55%, rgba(255,255,255,0) 100%)',
     border:'1px solid rgba(139,92,246,0.12)',
@@ -2896,7 +3004,9 @@ const s = {
   retirementPreview: {
     display:'flex',
     alignItems:'center',
+    justifyContent:'center',
     gap:18,
+    width:'100%',
   },
   retirementPreviewBadge: {
     width:72,
@@ -3011,6 +3121,109 @@ const s = {
     fontSize:'0.82rem',
     fontWeight:600,
     cursor:'pointer',
+  },
+  benchmarkGrid: {
+    display:'grid',
+    gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',
+    gap:14,
+  },
+  benchmarkMetricCard: {
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:18,
+    background:'linear-gradient(180deg, rgba(255,255,255,0.8), rgba(247,249,252,0.9))',
+    padding:'18px 18px 16px',
+    boxShadow:'0 18px 36px rgba(15,23,42,0.04)',
+  },
+  benchmarkMetricLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.66rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.1em',
+    marginBottom:8,
+  },
+  benchmarkIcon: {
+    width:42,
+    height:42,
+    borderRadius:12,
+    background:'rgba(255,255,255,0.86)',
+    border:'1px solid rgba(15,23,42,0.08)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontFamily:'var(--font-display)',
+    fontSize:'1.1rem',
+    fontWeight:800,
+    flexShrink:0,
+  },
+  benchmarkRail: {
+    height:12,
+    borderRadius:999,
+    overflow:'hidden',
+    border:'1px solid rgba(15,23,42,0.06)',
+  },
+  benchmarkFill: {
+    height:'100%',
+    borderRadius:999,
+    boxShadow:'0 8px 20px rgba(15,23,42,0.12)',
+    transition:'width 0.35s ease',
+  },
+  benchmarkSummaryRow: {
+    display:'flex',
+    gap:10,
+    flexWrap:'wrap',
+    marginTop:16,
+  },
+  benchmarkSummaryPill: {
+    fontFamily:'var(--font-body)',
+    fontSize:'0.8rem',
+    lineHeight:1.55,
+    color:'var(--text-dim)',
+    background:'rgba(255,255,255,0.72)',
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:999,
+    padding:'9px 13px',
+  },
+  benchmarkMiniCard: {
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:14,
+    background:'rgba(255,255,255,0.68)',
+    padding:'14px 14px 12px',
+    minWidth:0,
+  },
+  benchmarkMiniLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.1em',
+    marginBottom:6,
+  },
+  benchmarkMiniIcon: {
+    width:34,
+    height:34,
+    borderRadius:10,
+    background:'rgba(255,255,255,0.84)',
+    border:'1px solid rgba(15,23,42,0.08)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontFamily:'var(--font-display)',
+    fontSize:'0.94rem',
+    fontWeight:800,
+    flexShrink:0,
+  },
+  benchmarkMiniTrack: {
+    height:10,
+    borderRadius:999,
+    background:'rgba(148,163,184,0.14)',
+    overflow:'hidden',
+    border:'1px solid rgba(15,23,42,0.05)',
+  },
+  benchmarkMiniFill: {
+    height:'100%',
+    borderRadius:999,
+    transition:'width 0.35s ease',
   },
   compBtnAsset: {
     background:'linear-gradient(135deg,var(--teal),#0e9f84)',

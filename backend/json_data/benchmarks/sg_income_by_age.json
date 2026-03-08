@@ -1,0 +1,30 @@
+{
+  "country": "Singapore",
+  "currency": "SGD",
+  "metric": "gross_monthly_income",
+  "methodology": "Reference age-band income distribution used for percentile interpolation. Values are intended as a pragmatic Singapore baseline and can be replaced with newer official tables without changing the API contract.",
+  "sources": [
+    {
+      "name": "Ministry of Manpower",
+      "label": "Labour Force in Singapore / Yearbook of Manpower Statistics",
+      "type": "official_reference"
+    },
+    {
+      "name": "Singapore Department of Statistics",
+      "label": "Census of Population income distribution tables",
+      "type": "official_reference"
+    }
+  ],
+  "bands": [
+    { "label": "18-24", "min_age": 18, "max_age": 24, "p10": 2200, "p25": 3200, "p50": 4300, "p75": 5600, "p90": 7200 },
+    { "label": "25-29", "min_age": 25, "max_age": 29, "p10": 3000, "p25": 4100, "p50": 5200, "p75": 7000, "p90": 9300 },
+    { "label": "30-34", "min_age": 30, "max_age": 34, "p10": 3600, "p25": 5000, "p50": 6500, "p75": 8700, "p90": 11800 },
+    { "label": "35-39", "min_age": 35, "max_age": 39, "p10": 4000, "p25": 5600, "p50": 7300, "p75": 9800, "p90": 13500 },
+    { "label": "40-44", "min_age": 40, "max_age": 44, "p10": 4200, "p25": 5900, "p50": 7800, "p75": 10400, "p90": 14300 },
+    { "label": "45-49", "min_age": 45, "max_age": 49, "p10": 4300, "p25": 6000, "p50": 7900, "p75": 10600, "p90": 14500 },
+    { "label": "50-54", "min_age": 50, "max_age": 54, "p10": 4000, "p25": 5600, "p50": 7300, "p75": 9800, "p90": 13200 },
+    { "label": "55-59", "min_age": 55, "max_age": 59, "p10": 3500, "p25": 5000, "p50": 6600, "p75": 8900, "p90": 12000 },
+    { "label": "60-64", "min_age": 60, "max_age": 64, "p10": 2800, "p25": 4100, "p50": 5600, "p75": 7600, "p90": 10300 },
+    { "label": "65+", "min_age": 65, "max_age": 100, "p10": 2200, "p25": 3200, "p50": 4500, "p75": 6100, "p90": 8400 }
+  ]
+}

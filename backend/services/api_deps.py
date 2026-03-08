@@ -39,6 +39,7 @@ from backend.services.screenshot_importer import confirm_import
 from backend.services.insights_service import InsightError
 from backend.services.insights_service import build_insights
 from backend.services.retirement import build_retirement_plan
+from backend.services.peer_benchmarking import build_peer_benchmarks
 from backend.services.user_profile_registry import normalize_users_data
 from backend.services.user_profile_registry import rewrite_user_profiles_with_order
 __all__ = [
@@ -74,4 +75,5 @@ __all__ = [
     "update_stock_prices_file",
     "update_wellness_file",
     "build_insights",
+    "build_peer_benchmarks",
 ]
