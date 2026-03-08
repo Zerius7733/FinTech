@@ -1,6 +1,8 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 
+const API = 'http://localhost:8000'
 const NAV_LINKS = [
   { label: 'Globe',      path: '/' },
   { label: 'Markets',    path: '/stocks' },
@@ -10,11 +12,83 @@ export default function Navbar() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { user, logout } = useAuth()
+  const [navProfile, setNavProfile] = useState(null)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [expandedNotifId, setExpandedNotifId] = useState(null)
+  const notifRef = useRef(null)
 
   function handleSignOut() {
     logout()
     navigate('/')
   }
+
+  useEffect(() => {
+    if (!user?.user_id) {
+      setNavProfile(null)
+      return
+    }
+    let cancelled = false
+    async function loadUser() {
+      try {
+        const res = await fetch(`${API}/users/${user.user_id}`)
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setNavProfile(data.user ?? null)
+      } catch {
+        if (!cancelled) setNavProfile(null)
+      }
+    }
+    loadUser()
+    return () => { cancelled = true }
+  }, [user?.user_id, pathname])
+
+  useEffect(() => {
+    if (!notifOpen) return
+    function handleClickOutside(event) {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setNotifOpen(false)
+      }
+    }
+    function handleEscape(event) {
+      if (event.key === 'Escape') setNotifOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [notifOpen])
+
+  const notifications = useMemo(() => {
+    if (!navProfile) return []
+    const cashBalance = Number(navProfile.cash_balance || 0)
+    const monthlyIncome = Number(navProfile.income || 0)
+    const reserveTarget = Math.max(monthlyIncome * 3, 10000)
+    const idleCash = Math.max(0, cashBalance - reserveTarget)
+    const potentialAnnualGrowth = idleCash * 0.05
+    const items = []
+
+    if (idleCash >= 5000) {
+      const suggestedMove = Math.round(idleCash * 0.6)
+      items.push({
+        id:'latent-growth-idle-cash',
+        tone:'var(--teal)',
+        label:'Latent growth detected',
+        title:`Potential +${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(potentialAnnualGrowth)}/year from idle cash`,
+        body:`About ${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(idleCash)} is sitting above a 3-month reserve. Redirecting part of it into your portfolio could improve long-term growth.`,
+        detailTitle:'Suggested next step',
+        details:[
+          `Keep about ${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(reserveTarget)} in cash as your current emergency reserve.`,
+          `Consider moving roughly ${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(suggestedMove)} of the excess into long-term investments instead of leaving it idle.`,
+          'Do it gradually in 2 to 4 entries if you want to reduce timing risk.',
+        ],
+        cta:'Review optimization',
+      })
+    }
+
+    return items
+  }, [navProfile])
 
   return (
     <nav style={S.nav}>
@@ -52,6 +126,60 @@ export default function Navbar() {
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         {user ? (
           <>
+            <div ref={notifRef} style={{ position:'relative' }}>
+              <button
+                type="button"
+                aria-label="Notifications"
+                onClick={() => setNotifOpen(open => !open)}
+                style={S.bellBtn}
+              >
+                <span style={{ fontSize:'1rem', lineHeight:1 }}>🔔</span>
+                {notifications.length > 0 && (
+                  <span style={S.bellBadge}>{notifications.length}</span>
+                )}
+              </button>
+              {notifOpen && (
+                <div style={S.notifPanel}>
+                  <div style={S.notifHeader}>
+                    <span>Notifications</span>
+                    <span style={S.notifCount}>{notifications.length}</span>
+                  </div>
+                  <div style={S.notifList}>
+                    {notifications.length === 0 ? (
+                      <div style={S.notifEmpty}>No new notifications.</div>
+                    ) : (
+                      notifications.map(item => (
+                        <div key={item.id} style={S.notifCard}>
+                          <div style={{ ...S.notifTag, color:item.tone, borderColor:`${item.tone}33` }}>{item.label}</div>
+                          <div style={S.notifTitle}>{item.title}</div>
+                          <div style={S.notifBody}>{item.body}</div>
+                          {expandedNotifId === item.id && (
+                            <div style={S.notifDetailBox}>
+                              <div style={S.notifDetailTitle}>{item.detailTitle}</div>
+                              <div style={S.notifDetailList}>
+                                {item.details?.map((detail, index) => (
+                                  <div key={`${item.id}-${index}`} style={S.notifDetailRow}>
+                                    <span style={{ ...S.notifDetailDot, background:item.tone }} />
+                                    <span>{detail}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            style={{ ...S.notifAction, color:item.tone }}
+                            onClick={() => setExpandedNotifId(current => current === item.id ? null : item.id)}
+                          >
+                            {expandedNotifId === item.id ? 'Hide optimization' : item.cta}
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <button
               style={S.btnGold}
               onClick={() => navigate('/profile')}
@@ -187,5 +315,158 @@ const S = {
     cursor: 'pointer',
     boxShadow: '0 10px 24px rgba(21,28,45,0.12)',
     transition: 'opacity 0.18s',
+  },
+  bellBtn: {
+    position:'relative',
+    width:46,
+    height:46,
+    borderRadius:14,
+    border:'1px solid var(--border)',
+    background:'var(--surface)',
+    color:'var(--text)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    cursor:'pointer',
+    boxShadow:'0 10px 24px rgba(21,28,45,0.08)',
+  },
+  bellBadge: {
+    position:'absolute',
+    top:6,
+    right:6,
+    minWidth:18,
+    height:18,
+    padding:'0 5px',
+    borderRadius:999,
+    background:'var(--teal)',
+    color:'#041015',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    fontWeight:700,
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    border:'1px solid rgba(42,184,163,0.22)',
+  },
+  notifPanel: {
+    position:'absolute',
+    top:'calc(100% + 12px)',
+    right:0,
+    width:360,
+    maxHeight:420,
+    background:'rgba(255,255,255,0.98)',
+    border:'1px solid var(--border)',
+    borderRadius:18,
+    boxShadow:'0 24px 48px rgba(15,23,42,0.16)',
+    overflow:'hidden',
+  },
+  notifHeader: {
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'space-between',
+    padding:'14px 16px 12px',
+    borderBottom:'1px solid var(--border)',
+    fontFamily:'var(--font-display)',
+    fontSize:'0.98rem',
+    fontWeight:700,
+    color:'var(--text)',
+  },
+  notifCount: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    color:'var(--teal)',
+    background:'rgba(42,184,163,0.08)',
+    border:'1px solid rgba(42,184,163,0.18)',
+    borderRadius:999,
+    padding:'4px 8px',
+  },
+  notifList: {
+    maxHeight:360,
+    overflowY:'auto',
+    padding:12,
+    display:'grid',
+    gap:10,
+  },
+  notifEmpty: {
+    padding:'18px 12px',
+    fontSize:'0.84rem',
+    color:'var(--text-faint)',
+    textAlign:'center',
+  },
+  notifCard: {
+    background:'linear-gradient(135deg, rgba(109,141,247,0.04), rgba(42,184,163,0.04))',
+    border:'1px solid var(--border)',
+    borderRadius:14,
+    padding:'14px 14px 12px',
+  },
+  notifTag: {
+    display:'inline-flex',
+    alignItems:'center',
+    border:'1px solid',
+    background:'rgba(255,255,255,0.7)',
+    borderRadius:999,
+    padding:'4px 8px',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    letterSpacing:'0.05em',
+    marginBottom:10,
+  },
+  notifTitle: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1rem',
+    fontWeight:700,
+    color:'var(--text)',
+    lineHeight:1.35,
+    marginBottom:8,
+  },
+  notifBody: {
+    fontSize:'0.82rem',
+    color:'var(--text-dim)',
+    lineHeight:1.65,
+    marginBottom:10,
+  },
+  notifDetailBox: {
+    background:'rgba(255,255,255,0.72)',
+    border:'1px solid var(--border)',
+    borderRadius:12,
+    padding:'12px 12px 10px',
+    marginBottom:10,
+  },
+  notifDetailTitle: {
+    fontFamily:'var(--font-display)',
+    fontSize:'0.86rem',
+    fontWeight:700,
+    color:'var(--text)',
+    marginBottom:8,
+  },
+  notifDetailList: {
+    display:'grid',
+    gap:8,
+  },
+  notifDetailRow: {
+    display:'flex',
+    alignItems:'flex-start',
+    gap:8,
+    fontSize:'0.78rem',
+    color:'var(--text-dim)',
+    lineHeight:1.6,
+  },
+  notifDetailDot: {
+    width:7,
+    height:7,
+    borderRadius:'50%',
+    marginTop:6,
+    flexShrink:0,
+  },
+  notifAction: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    border:'none',
+    background:'transparent',
+    padding:0,
+    fontFamily:'var(--font-body)',
+    fontSize:'0.8rem',
+    fontWeight:700,
+    cursor:'pointer',
   },
 }

@@ -82,6 +82,8 @@ export default function SettingsModal({ onClose }) {
   const [profileLoaded, setProfileLoaded] = useState(false)
   const [toggles, setToggles]           = useState({ twofa: true, biometric: true, bgSync: true, labels: true, pulses: true })
   const [selects, setSelects]           = useState({ sessionTimeout: '1 hour', syncFreq: 'Every 15 minutes', currency: 'SGD', numFmt: '$1,234,567' })
+  const [extensionGuideOpen, setExtensionGuideOpen] = useState(false)
+  const [extensionStatus, setExtensionStatus] = useState('')
 
   const mark = () => setUnsaved(true)
   const setToggle = (k, v) => { setToggles(p => ({ ...p, [k]: v })); mark() }
@@ -123,6 +125,31 @@ export default function SettingsModal({ onClose }) {
     }
     setSaved(true); setUnsaved(false)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  const extensionPath = 'FinTech/chrome-extension'
+
+  const handleInstallExtension = () => {
+    let opened = false
+    try {
+      const popup = window.open('chrome://extensions', '_blank')
+      opened = !!popup
+    } catch {
+      opened = false
+    }
+    setExtensionGuideOpen(true)
+    setExtensionStatus(opened
+      ? 'Chrome extensions opened. Use Load unpacked and select the WealthSphere extension folder.'
+      : 'Automatic install is not supported by the browser, so use the guide below to load the extension manually.')
+  }
+
+  const handleCopyExtensionPath = async () => {
+    try {
+      await navigator.clipboard.writeText(extensionPath)
+      setExtensionStatus('Extension folder path copied. Paste it into Chrome after clicking Load unpacked.')
+    } catch {
+      setExtensionStatus(`Extension folder: ${extensionPath}`)
+    }
   }
 
   const riskInfo = RISK_KEY_TO_INFO[profileRisk] ?? RISK_KEY_TO_INFO.Moderate
@@ -301,6 +328,46 @@ export default function SettingsModal({ onClose }) {
           {active === 'data' && (
             <div style={s.content}>
               <p style={s.pageSub}>Control how WealthSphere syncs and connects to external services.</p>
+              <Card title="Browser Extension" icon="🧩">
+                <div style={s.extensionHero}>
+                  <div style={s.extensionIcon}>↗</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', marginBottom:6 }}>
+                      Install the WealthSphere importer
+                    </div>
+                    <div style={{ fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.65 }}>
+                      Capture broker screenshots, parse holdings, and send them straight into your WealthSphere portfolio.
+                    </div>
+                  </div>
+                  <button style={s.btnInstall} onClick={handleInstallExtension}>Install Extension</button>
+                </div>
+                {extensionStatus && (
+                  <div style={s.extensionNotice}>{extensionStatus}</div>
+                )}
+                {extensionGuideOpen && (
+                  <div style={s.extensionGuide}>
+                    <div style={s.extensionGuideTitle}>Manual install guide</div>
+                    <div style={s.extensionSteps}>
+                      {[
+                        'Open chrome://extensions in Chrome.',
+                        'Turn on Developer mode in the top-right corner.',
+                        'Click Load unpacked.',
+                        'Select the WealthSphere extension folder.',
+                        'Pin the extension and sign in before using imports.',
+                      ].map((step, index) => (
+                        <div key={step} style={s.extensionStep}>
+                          <div style={s.extensionStepNum}>{index + 1}</div>
+                          <div>{step}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={s.extensionPathRow}>
+                      <div style={s.extensionPathBox}>{extensionPath}</div>
+                      <button style={s.btnGhost} onClick={handleCopyExtensionPath}>Copy path</button>
+                    </div>
+                  </div>
+                )}
+              </Card>
               <Card title="Sync Settings" icon="⚙️">
                 <Row name="Auto-sync frequency" desc="How often WealthSphere pulls fresh data from connected sources.">
                   <SelInput value={selects.syncFreq} opts={['Every 5 minutes','Every 15 minutes','Every hour','Manual only']} onChange={v => setSelect('syncFreq', v)} />
@@ -447,5 +514,107 @@ const s = {
     background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)',
     padding: '8px 14px', borderRadius: 10, fontFamily: 'var(--font-display)',
     fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0,
+  },
+  extensionHero: {
+    display:'flex',
+    alignItems:'center',
+    gap:16,
+    padding:'4px 0 2px',
+  },
+  extensionIcon: {
+    width:52,
+    height:52,
+    borderRadius:16,
+    background:'linear-gradient(135deg, rgba(109,141,247,0.14), rgba(42,184,163,0.18))',
+    border:'1px solid rgba(109,141,247,0.16)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontSize:'1.3rem',
+    color:'var(--teal)',
+    flexShrink:0,
+  },
+  btnInstall: {
+    background:'linear-gradient(135deg,var(--teal),#0e9f84)',
+    border:'none',
+    color:'#061218',
+    padding:'10px 16px',
+    borderRadius:12,
+    fontFamily:'var(--font-body)',
+    fontSize:'0.84rem',
+    fontWeight:700,
+    cursor:'pointer',
+    boxShadow:'0 10px 22px rgba(42,184,163,0.18)',
+    flexShrink:0,
+  },
+  extensionNotice: {
+    marginTop:14,
+    background:'rgba(109,141,247,0.06)',
+    border:'1px solid rgba(109,141,247,0.14)',
+    borderRadius:12,
+    padding:'10px 12px',
+    fontSize:'0.78rem',
+    color:'var(--text-dim)',
+    lineHeight:1.6,
+  },
+  extensionGuide: {
+    marginTop:14,
+    background:'var(--surface2)',
+    border:'1px solid var(--border)',
+    borderRadius:14,
+    padding:'14px 14px 12px',
+  },
+  extensionGuideTitle: {
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    fontSize:'0.92rem',
+    marginBottom:10,
+  },
+  extensionSteps: {
+    display:'grid',
+    gap:10,
+  },
+  extensionStep: {
+    display:'flex',
+    alignItems:'flex-start',
+    gap:10,
+    fontSize:'0.8rem',
+    color:'var(--text-dim)',
+    lineHeight:1.6,
+  },
+  extensionStepNum: {
+    width:22,
+    height:22,
+    borderRadius:'50%',
+    background:'rgba(42,184,163,0.12)',
+    border:'1px solid rgba(42,184,163,0.18)',
+    color:'var(--teal)',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.72rem',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    flexShrink:0,
+    marginTop:1,
+  },
+  extensionPathRow: {
+    display:'flex',
+    alignItems:'center',
+    gap:10,
+    marginTop:14,
+  },
+  extensionPathBox: {
+    flex:1,
+    minWidth:0,
+    background:'rgba(255,255,255,0.72)',
+    border:'1px solid var(--border)',
+    borderRadius:10,
+    padding:'10px 12px',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.74rem',
+    color:'var(--text-dim)',
+    overflow:'hidden',
+    textOverflow:'ellipsis',
+    whiteSpace:'nowrap',
   },
 }

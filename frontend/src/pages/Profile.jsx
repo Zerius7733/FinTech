@@ -1494,6 +1494,7 @@ export default function Profile() {
   }, {})
   const manualAssetRows = Object.values(manualAssetGroups)
   const manualAssetTotal = manualAssetRows.reduce((sum, item) => sum + item.total, 0)
+  const hasRealEstate = manualAssetRows.some(item => item.key === 'real_estate')
   const totalAUM       = portfolioValue + (profile?.cash_balance ?? 0)
   const positionCount  = stocks.length + commodities.length + cryptos.length
   const currentIncome  = incomeStreams.length
@@ -1519,6 +1520,7 @@ export default function Profile() {
       color: item.color,
     })),
     currentIncome > 0 && { icon:'🏛️', name:'Fixed Income', pct:null, val:`${fmt$(currentIncome)} / mo`, color:'var(--purple)', special:'income' },
+    !hasRealEstate && { icon:'🏠', name:'Real Estate', pct:null, val:'To be added', color:'var(--gold)', special:'placeholder' },
   ].filter(Boolean)
 
   const gptPayload = gptRecs?.gpt_recommendations ?? gptRecs?.recommendations ?? gptRecs ?? null
@@ -1987,10 +1989,17 @@ export default function Profile() {
                   <div key={c.name} style={{ display:'flex', alignItems:'center', gap:12 }}>
                     <div style={{ width:36, height:36, borderRadius:10, background:`${c.color}20`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>{c.icon}</div>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:500, fontSize:'0.87rem', marginBottom:4 }}>{c.name}</div>
+                      <div style={{ fontWeight:500, fontSize:'0.87rem', marginBottom:4 }}>
+                        {c.name}
+                        {c.special === 'placeholder' && <FutureTag />}
+                      </div>
                       {c.special === 'income' ? (
                         <div style={{ fontSize:'0.72rem', color:'var(--text-faint)', fontFamily:'var(--font-mono)' }}>
                           Current monthly income across {incomeStreams.length || 1} stream{(incomeStreams.length || 1) !== 1 ? 's' : ''}
+                        </div>
+                      ) : c.special === 'placeholder' ? (
+                        <div style={{ height:4, background:'var(--surface2)', borderRadius:2, overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:'40%', background:'rgba(96,165,250,0.25)', borderRadius:2 }} />
                         </div>
                       ) : (
                         <div style={{ height:4, background:'var(--surface2)', borderRadius:2, overflow:'hidden' }}>
@@ -1999,7 +2008,9 @@ export default function Profile() {
                       )}
                     </div>
                     <div style={{ textAlign:'right' }}>
-                      <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem' }}>{c.special === 'income' ? 'Monthly' : `${c.pct}%`}</div>
+                      <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem' }}>
+                        {c.special === 'income' ? 'Monthly' : c.special === 'placeholder' ? '—' : `${c.pct}%`}
+                      </div>
                       <div style={{ fontSize:'0.7rem', color:'var(--text-faint)' }}>{c.val}</div>
                     </div>
                   </div>

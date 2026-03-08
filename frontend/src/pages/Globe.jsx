@@ -1348,20 +1348,13 @@ export default function Globe() {
             { label:'Wellness Score',
               val: userProfile?.financial_wellness_score != null ? `${Math.round(userProfile.financial_wellness_score)} / 100` : '— / 100',
               sub: userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'Excellent':userProfile.financial_wellness_score>=55?'On Track':userProfile.financial_wellness_score>=35?'Needs Work':'At Risk') : 'diversification',
-              c:   userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'var(--green)':userProfile.financial_wellness_score>=55?'#d4a63a':userProfile.financial_wellness_score>=35?'var(--orange)':'var(--red)') : 'var(--teal)',
-              ring: true },
+              c:   userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'var(--green)':userProfile.financial_wellness_score>=55?'#d4a63a':userProfile.financial_wellness_score>=35?'var(--orange)':'var(--red)') : 'var(--teal)' },
             { label:'Active Positions', val: String(activePositions), sub: userProfile ? `${activePositions} holdings` : 'across 12 portfolios', c:'var(--gold)' },
           ].map((s,i) => (
             <div key={s.label} style={{ ...S.statItem, borderRight: i<3 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:4 }}>{s.label}</div>
-              {s.ring ? (
-                <div style={{ display:'flex', justifyContent:'center', padding:'6px 0 4px' }}>
-                  <WellnessRing score={userProfile?.financial_wellness_score != null ? Math.round(userProfile.financial_wellness_score) : 0} size={74} />
-                </div>
-              ) : (
-                <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.15rem', color:s.c }}>{s.val}</div>
-              )}
-              <div style={{ fontSize:'0.7rem', color:'var(--text-faint)', marginTop:2 }}>{s.sub}</div>
+              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:8 }}>{s.label}</div>
+              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.15rem', color:s.c, minHeight:50, display:'flex', alignItems:'center', justifyContent:'center' }}>{s.val}</div>
+              <div style={{ fontSize:'0.7rem', color:'var(--text-faint)', marginTop:4, maxWidth:220, marginInline:'auto', lineHeight:1.45 }}>{s.sub}</div>
             </div>
           ))}
         </div>
@@ -1626,12 +1619,22 @@ const S = {
   },
   statsBar: {
     display:'flex', zIndex:3,
+    alignItems:'stretch',
     background:'var(--surface)', border:'1px solid var(--border)',
     borderRadius:14, overflow:'hidden', marginTop:36,
     animation:'fadeUp 1s ease 0.4s both',
     boxShadow:'0 8px 40px rgba(0,0,0,0.3)',
   },
-  statItem: { padding:'16px 28px', textAlign:'center' },
+  statItem: {
+    flex:1,
+    minWidth:0,
+    padding:'18px 28px',
+    textAlign:'center',
+    display:'flex',
+    flexDirection:'column',
+    justifyContent:'center',
+    alignItems:'center',
+  },
   sectionEyebrow: {
     fontFamily:'var(--font-mono)', fontSize:'0.7rem', color:'var(--teal)',
     textTransform:'uppercase', letterSpacing:'0.2em', marginBottom:14,
