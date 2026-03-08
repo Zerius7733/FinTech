@@ -51,7 +51,7 @@ export default function Login() {
         {/* Logo */}
         <div style={S.logoRow}>
           <div style={S.logoDot}>◉</div>
-          <span style={S.logoText}>WealthSphere</span>
+          <span style={S.logoText}>Unova</span>
         </div>
 
         {/* Tabs */}

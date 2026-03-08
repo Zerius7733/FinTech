@@ -463,7 +463,7 @@ export default function Survey() {
         <h2 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:800, marginBottom:12 }}>
           You're all set, <span style={{ color:'var(--green)' }}>{firstName || user?.username || 'Investor'}</span>
         </h2>
-        <p style={{ color:'var(--text-dim)', fontSize:'0.92rem', lineHeight:1.7, marginBottom:20 }}>Your WealthSphere is calibrated. Your personalised globe awaits.</p>
+        <p style={{ color:'var(--text-dim)', fontSize:'0.92rem', lineHeight:1.7, marginBottom:20 }}>Your Unova is calibrated. Your personalised globe awaits.</p>
         <div style={{ display:'flex', flexWrap:'wrap', gap:10, justifyContent:'center', marginBottom:16 }}>
           {[['Age',ageGroup],['Risk',`${riskLevel}/100`],['Assets',`${selectedAssets.size} classes`],['Horizon',`${horizon}yr`]].map(([k,v]) => (
             <div key={k} style={cs.pill}>{k}: <span style={{ color:'var(--gold)' }}>{v}</span></div>
@@ -584,7 +584,7 @@ export default function Survey() {
           } catch (err) {
             setSubmitErr(err?.message || 'Failed to complete setup. Please try again.')
           }
-        }}>Enter My WealthSphere →</button>
+        }}>Enter My Unova →</button>
         {submitErr && <div style={{ color:'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.74rem', margin:'12px 0 0' }}>{submitErr}</div>}
       </div>
     </div>
@@ -596,7 +596,7 @@ export default function Survey() {
       <div style={cs.bgGrid} />
 
       <aside style={cs.leftPanel}>
-        <div style={cs.logo}><div style={cs.logoDot} />WealthSphere</div>
+        <div style={cs.logo}><div style={cs.logoDot} />Unova</div>
         <nav style={{ flex:1 }}>
           {STEPS.map((s,i) => {
             const n=i+1, isActive=n===step, isDone=n<step, isAI=n===5
@@ -803,7 +803,6 @@ const imp = {
   spinner:   { width:44, height:44, border:'3px solid rgba(255,255,255,0.08)', borderTopColor:'var(--teal)', borderRadius:'50%', animation:'spin 0.8s linear infinite' },
   addRowBtn: { background:'transparent', border:'1.5px dashed rgba(255,255,255,0.12)', borderRadius:10, padding:'10px 20px', color:'var(--text-faint)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', cursor:'pointer', width:'100%', marginBottom:16 },
 }
-
 
 
 

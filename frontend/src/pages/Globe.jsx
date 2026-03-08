@@ -1431,7 +1431,7 @@ export default function Globe() {
         <div style={{ textAlign:'center', marginBottom:64 }}>
           <div style={S.sectionEyebrow}>Platform Features</div>
           <h2 style={S.sectionTitle}>Everything in <em style={{ fontStyle:'normal', color:'var(--gold)' }}>one orbit</em></h2>
-          <p style={S.sectionDesc}>From fragmented ecosystems to a unified command centre. WealthSphere turns financial complexity into clear, actionable intelligence.</p>
+          <p style={S.sectionDesc}>From fragmented ecosystems to a unified command centre. Unova turns financial complexity into clear, actionable intelligence.</p>
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20 }}>
           {FEATURES.map(f => (
@@ -1508,8 +1508,8 @@ export default function Globe() {
       {/* ── Second ticker + Footer ── */}
       {/* <TickerBar /> */}
       <footer style={{ padding:'40px 48px', display:'flex', alignItems:'center', justifyContent:'space-between', borderTop:'1px solid var(--border)', color:'var(--text-faint)', fontSize:'0.8rem' }}>
-        <div style={{ fontFamily:'var(--font-display)', fontWeight:700, color:'var(--gold)', fontSize:'1rem' }}>WealthSphere</div>
-        <div>© 2025 WealthSphere · Schroders Hackathon Prototype</div>
+        <div style={{ fontFamily:'var(--font-display)', fontWeight:700, color:'var(--gold)', fontSize:'1rem' }}>Unova</div>
+        <div>© 2025 Unova · Schroders Hackathon Prototype</div>
         <div>Built with Three.js · Open Finance APIs</div>
       </footer>
 

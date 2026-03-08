@@ -6,7 +6,7 @@ import SettingsModal from './SettingsModal.jsx'
 
 const API = 'http://localhost:8000'
 const NAV_LINKS = [
-  { label: 'Finance Universe',      path: '/' },
+  { label: 'Home',                  path: '/' },
   { label: 'Markets',    path: '/stocks' },
 ]
 
@@ -119,7 +119,7 @@ export default function Navbar() {
       {/* Logo */}
       <div style={S.logo} onClick={() => navigate('/')}>
         <div style={S.logoDot}>◉</div>
-        WealthSphere
+        Unova
       </div>
 
       {/* Links */}
@@ -321,10 +321,14 @@ const S = {
     boxShadow: '0 10px 24px rgba(21,28,45,0.18)',
   },
   links: {
+    position: 'absolute',
+    left: '50%',
+    transform: 'translateX(-50%)',
     display: 'flex',
     gap: 32,
     listStyle: 'none',
     margin: 0, padding: 0,
+    alignItems: 'center',
   },
   link: {
     color: 'var(--text-dim)',

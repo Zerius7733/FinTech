@@ -500,7 +500,7 @@ export default function SettingsModal({ onClose }) {
                 {[
                   { title: 'Export portfolio data',     desc: 'Download a full CSV export of your portfolio history.',         btn: 'Export CSV',      red: false },
                   { title: 'Delete all portfolio data', desc: 'Permanently erase all portfolio data. Cannot be undone.',        btn: 'Delete Data',     red: true  },
-                  { title: 'Close account',             desc: 'Permanently delete your WealthSphere account and all data.',     btn: 'Close Account',   red: true  },
+                  { title: 'Close account',             desc: 'Permanently delete your Unova account and all data.',     btn: 'Close Account',   red: true  },
                 ].map(d => (
                   <div key={d.title} style={{ background: d.red ? 'rgba(248,113,113,0.04)' : 'var(--surface2)',
                     border: `1px solid ${d.red ? 'rgba(248,113,113,0.18)' : 'var(--border)'}`,
@@ -527,10 +527,10 @@ export default function SettingsModal({ onClose }) {
                   <div style={s.extensionIcon}>{'\u{1F4F8}'}</div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', marginBottom:6 }}>
-                      Install the WealthSphere importer
+                      Install the Unova importer
                     </div>
                     <div style={{ fontSize:'0.8rem', color:'var(--text-dim)', lineHeight:1.65 }}>
-                      Capture broker screenshots, parse holdings, and send them straight into your WealthSphere portfolio.
+                      Capture broker screenshots, parse holdings, and send them straight into your Unova portfolio.
                     </div>
                   </div>
                 </div>
@@ -544,7 +544,7 @@ export default function SettingsModal({ onClose }) {
                       'Open chrome://extensions in Chrome.',
                       'Turn on Developer mode in the top-right corner.',
                       'Click Load unpacked.',
-                      'Select the WealthSphere extension folder.',
+                      'Select the Unova extension folder.',
                       'Pin the extension and sign in before using imports.',
                     ].map((step, index) => (
                       <div key={step} style={s.extensionStep}>
@@ -594,7 +594,7 @@ export default function SettingsModal({ onClose }) {
               <p style={s.pageSub}>Find answers, read documentation, or get in touch with our team.</p>
               <Card title="Quick Links" icon={'\u{1F517}'}>
                 {[
-                  { icon: '\u{1F4D6}', title: 'Documentation',       desc: 'Full guides for every WealthSphere feature.',       href: '#' },
+                  { icon: '\u{1F4D6}', title: 'Documentation',       desc: 'Full guides for every Unova feature.',       href: '#' },
                   { icon: '\u{1F3A5}', title: 'Video Tutorials',      desc: 'Step-by-step walkthroughs for new users.',          href: '#' },
                   { icon: '\u{1F4EE}', title: 'Contact Support',      desc: 'Reach our team - we reply within 24 hours.',        href: '#' },
                 ].map(l => (
@@ -835,7 +835,6 @@ const s = {
     whiteSpace:'nowrap',
   },
 }
-
 
 
 
