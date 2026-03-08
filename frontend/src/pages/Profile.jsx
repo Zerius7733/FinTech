@@ -258,6 +258,66 @@ function escapePdfText(text) {
   return toText(text).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
 }
 
+function fmtCompactCurrency(n) {
+  if (n == null) return '—'
+  return new Intl.NumberFormat('en-US', {
+    style:'currency',
+    currency:'USD',
+    notation:'compact',
+    maximumFractionDigits:1,
+  }).format(n)
+}
+
+function retirementStatus(plan) {
+  if (!plan) return { title:'Building your retirement path', tone:'var(--blue)' }
+  const gap = Number(plan.projected_gap_at_retirement || 0)
+  if (gap <= 0) return { title:'On track for retirement', tone:'var(--green)' }
+  if (gap <= plan.target_retirement_fund * 0.15) return { title:'Within reach with a small top-up', tone:'var(--gold)' }
+  return { title:'A savings gap still needs closing', tone:'var(--red)' }
+}
+
+function retirementTopMix(plan) {
+  const top = toArray(plan?.recommended_vehicle_mix)
+    .slice()
+    .sort((a, b) => Number(b.target_weight || 0) - Number(a.target_weight || 0))
+    .slice(0, 2)
+  if (!top.length) return 'No allocation guidance available yet.'
+  return top.map(item => `${startCase(item.vehicle)} ${Math.round(Number(item.target_weight || 0))}%`).join(' · ')
+}
+
+function parseApiError(detail, fallback) {
+  if (typeof detail === 'string' && detail.trim()) return detail
+  if (Array.isArray(detail)) {
+    const text = detail
+      .map(item => {
+        if (typeof item === 'string') return item
+        if (item && typeof item === 'object') {
+          const field = Array.isArray(item.loc) ? item.loc[item.loc.length - 1] : ''
+          const message = toText(item.msg)
+          return [field ? startCase(field) : '', message].filter(Boolean).join(': ')
+        }
+        return ''
+      })
+      .filter(Boolean)
+      .join(' · ')
+    if (text) return text
+  }
+  if (detail && typeof detail === 'object') {
+    if (typeof detail.message === 'string' && detail.message.trim()) return detail.message
+    if (typeof detail.detail === 'string' && detail.detail.trim()) return detail.detail
+  }
+  return fallback
+}
+
+function escapeHtml(text) {
+  return toText(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function buildSimplePdf(lines) {
   const pageWidth = 612
   const pageHeight = 792
@@ -305,6 +365,459 @@ function buildSimplePdf(lines) {
   for (let i = 1; i < offsets.length; i += 1) pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`
   pdf += `trailer\n<< /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`
   return new Blob([pdf], { type: 'application/pdf' })
+}
+
+function buildWrappedPrintHtml({ ownerName, year, slides }) {
+  const sections = slides.map((slide, index) => {
+    const stats = slide.stats?.length
+      ? `
+        <div class="stats">
+          ${slide.stats.map(stat => `
+            <div class="stat">
+              <div class="stat-label">${escapeHtml(stat.label)}</div>
+              <div class="stat-value">${escapeHtml(stat.value)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `
+      : ''
+
+    const bullets = slide.bullets?.length
+      ? `
+        <div class="bullets">
+          ${slide.bullets.map(point => `<div class="bullet">${escapeHtml(point)}</div>`).join('')}
+        </div>
+      `
+      : ''
+
+    return `
+      <section class="slide">
+        <div class="slide-top">
+          <div class="slide-index">Story ${index + 1}</div>
+          <div class="slide-icon">${escapeHtml(slide.icon)}</div>
+        </div>
+        <div class="slide-eyebrow">${escapeHtml(slide.eyebrow)}</div>
+        <h2>${escapeHtml(slide.title)}</h2>
+        <p class="body">${escapeHtml(slide.body)}</p>
+        ${slide.support ? `<p class="support">${escapeHtml(slide.support)}</p>` : ''}
+        ${stats}
+        ${bullets}
+      </section>
+    `
+  }).join('')
+
+  return `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>WealthSphere Wrapped ${year}</title>
+      <style>
+        @page { size: A4; margin: 14mm; }
+        * { box-sizing: border-box; }
+        body {
+          margin: 0;
+          font-family: "Helvetica Neue", Arial, sans-serif;
+          color: #101828;
+          background:
+            radial-gradient(circle at top left, rgba(109, 141, 247, 0.16), transparent 28%),
+            radial-gradient(circle at top right, rgba(42, 184, 163, 0.16), transparent 26%),
+            linear-gradient(180deg, #f7f8fc 0%, #eef2ff 100%);
+        }
+        .page {
+          padding: 28px;
+        }
+        .hero {
+          background: linear-gradient(135deg, #172033 0%, #202a46 48%, #2a3859 100%);
+          color: #ffffff;
+          border-radius: 28px;
+          padding: 28px 30px;
+          box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+          margin-bottom: 18px;
+        }
+        .eyebrow {
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.24em;
+          color: #8fe7d9;
+          margin-bottom: 14px;
+        }
+        .hero h1 {
+          margin: 0 0 10px;
+          font-size: 34px;
+          line-height: 1.05;
+        }
+        .hero p {
+          margin: 0;
+          font-size: 16px;
+          line-height: 1.65;
+          color: rgba(255,255,255,0.78);
+          max-width: 620px;
+        }
+        .hero-meta {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 18px;
+        }
+        .pill {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.14);
+          background: rgba(255,255,255,0.08);
+          padding: 8px 12px;
+          font-size: 12px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+        .slide {
+          break-inside: avoid;
+          background: rgba(255,255,255,0.92);
+          border: 1px solid rgba(148, 163, 184, 0.16);
+          border-radius: 24px;
+          padding: 22px;
+          box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+          min-height: 240px;
+        }
+        .slide-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        }
+        .slide-index {
+          font-size: 11px;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #667085;
+        }
+        .slide-icon {
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 16px;
+          background: linear-gradient(135deg, rgba(109, 141, 247, 0.14), rgba(42, 184, 163, 0.12));
+          font-size: 22px;
+        }
+        .slide-eyebrow {
+          font-size: 12px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #2a7f74;
+          margin-bottom: 8px;
+        }
+        .slide h2 {
+          margin: 0 0 10px;
+          font-size: 25px;
+          line-height: 1.12;
+        }
+        .body, .support {
+          margin: 0;
+          font-size: 15px;
+          line-height: 1.72;
+          color: #475467;
+        }
+        .support { margin-top: 10px; color: #667085; }
+        .stats {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          gap: 10px;
+          margin-top: 16px;
+        }
+        .stat {
+          border-radius: 16px;
+          background: #f8fafc;
+          border: 1px solid rgba(148, 163, 184, 0.16);
+          padding: 12px;
+        }
+        .stat-label {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #98a2b3;
+          margin-bottom: 6px;
+        }
+        .stat-value {
+          font-size: 18px;
+          font-weight: 700;
+          color: #1d2939;
+        }
+        .bullets {
+          margin-top: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .bullet {
+          position: relative;
+          padding-left: 18px;
+          font-size: 14px;
+          line-height: 1.65;
+          color: #475467;
+        }
+        .bullet::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          top: 8px;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #8b5cf6, #2ab8a3);
+        }
+        .footer {
+          margin-top: 18px;
+          font-size: 12px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #667085;
+          text-align: center;
+        }
+        .actions {
+          position: sticky;
+          top: 12px;
+          z-index: 20;
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 14px;
+        }
+        .print-btn {
+          border: none;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #2ab8a3, #179582);
+          color: #081019;
+          padding: 12px 18px;
+          font-size: 13px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          cursor: pointer;
+          box-shadow: 0 16px 34px rgba(42, 184, 163, 0.22);
+        }
+        .print-note {
+          margin-right: auto;
+          align-self: center;
+          font-size: 12px;
+          color: #667085;
+          letter-spacing: 0.04em;
+        }
+        @media print {
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .page { padding: 0; }
+          .actions { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="page">
+        <div class="actions">
+          <div class="print-note">Use the print dialog and choose "Save as PDF".</div>
+          <button class="print-btn" onclick="window.print()">Save as PDF</button>
+        </div>
+        <header class="hero">
+          <div class="eyebrow">WealthSphere Financial Year Wrapped</div>
+          <h1>${escapeHtml(ownerName)}'s ${year} money story</h1>
+          <p>A visual recap of growth, wins, conviction holdings, and portfolio behavior across the year.</p>
+          <div class="hero-meta">
+            <span class="pill">Year ${escapeHtml(year)}</span>
+            <span class="pill">${escapeHtml(ownerName)}</span>
+            <span class="pill">${escapeHtml(String(slides.length))} key moments</span>
+          </div>
+        </header>
+        <main class="grid">${sections}</main>
+        <div class="footer">Generated by WealthSphere</div>
+      </div>
+      <script>
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            try { window.print(); } catch (e) {}
+          }, 450);
+        });
+      </script>
+    </body>
+  </html>`
+}
+
+const WRAPPED_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function hashSeed(input) {
+  return toText(input).split('').reduce((total, char, index) => total + char.charCodeAt(0) * (index + 1), 0)
+}
+
+function buildIncomeHistory(userId, year) {
+  if (userId === 'u001') {
+    return [5900, 6050, 6180, 6400, 6620, 6900, 7150, 7420, 7690, 7930, 8210, 8540].map((value, index) => ({
+      month: WRAPPED_MONTHS[index],
+      year,
+      value,
+    }))
+  }
+
+  const seed = hashSeed(userId || String(year))
+  const start = 4300 + (seed % 1700)
+  const slope = 120 + (seed % 60)
+  return WRAPPED_MONTHS.map((month, index) => ({
+    month,
+    year,
+    value: Math.round(start + slope * index + Math.sin((seed + index) / 3) * 90),
+  }))
+}
+
+function buildFinancialWrapped({ userId, profile, stocks, allHoldings, year }) {
+  const sortedStocks = [...stocks].sort((a, b) => (a.symbol || '').localeCompare(b.symbol || ''))
+  const desiredNewCount = userId === 'u001'
+    ? Math.min(3, Math.max(sortedStocks.length - 1, 1))
+    : Math.min(2, Math.max(1, Math.floor(sortedStocks.length / 4)))
+  const priorStockCutoff = Math.max(sortedStocks.length - desiredNewCount, 0)
+  const priorSymbols = new Set(sortedStocks.slice(0, priorStockCutoff).map(stock => stock.symbol))
+
+  const stockTimeline = sortedStocks.map((stock, index) => {
+    const seed = hashSeed(`${userId}-${stock.symbol}-${index}`)
+    const isNew = !priorSymbols.has(stock.symbol)
+    const acquiredYear = isNew ? year : year - (1 + (seed % 5))
+    const acquiredMonthIndex = isNew ? (seed % 10) : (seed % 12)
+    const previousQty = isNew
+      ? 0
+      : Math.max(1, Math.round((stock.qty ?? 0) * (0.38 + (seed % 28) / 100)))
+    return {
+      ...stock,
+      acquiredLabel: `${WRAPPED_MONTHS[acquiredMonthIndex]} ${acquiredYear}`,
+      acquiredStamp: new Date(acquiredYear, acquiredMonthIndex, 1).getTime(),
+      previousQty,
+      addedQty: Math.max(0, Math.round((stock.qty ?? 0) - previousQty)),
+      isNew,
+    }
+  })
+
+  const incomeHistory = buildIncomeHistory(userId, year)
+  const firstIncome = incomeHistory[0]?.value ?? 0
+  const lastIncome = incomeHistory[incomeHistory.length - 1]?.value ?? 0
+  const incomeGrowthPct = firstIncome > 0 ? ((lastIncome - firstIncome) / firstIncome) * 100 : 0
+  const bestIncomeMonth = incomeHistory.slice(1).reduce((best, entry, index) => {
+    const delta = entry.value - incomeHistory[index].value
+    if (!best || delta > best.delta) return { month: entry.month, delta }
+    return best
+  }, null)
+
+  const returnLeader = [...allHoldings]
+    .map(holding => ({ ...holding, gain: gainPct(holding.current_price, holding.avg_price) }))
+    .filter(holding => holding.gain != null)
+    .sort((a, b) => b.gain - a.gain)[0] ?? null
+
+  const newStocks = stockTimeline.filter(stock => stock.isNew)
+  const longestHeld = [...stockTimeline].sort((a, b) => a.acquiredStamp - b.acquiredStamp)[0] ?? null
+  const mostAccumulated = [...stockTimeline].sort((a, b) => b.addedQty - a.addedQty)[0] ?? null
+  const highestValueHolding = [...allHoldings].sort((a, b) => (b.market_value ?? 0) - (a.market_value ?? 0))[0] ?? null
+
+  const summaryPoints = [
+    `Income trajectory moved from ${fmt$(firstIncome)} to ${fmt$(lastIncome)}, a ${fmtPct(incomeGrowthPct)} change across ${year}.`,
+    returnLeader
+      ? `${returnLeader.symbol} delivered your strongest position gain at ${fmtPct(returnLeader.gain)} versus average cost.`
+      : 'Your wrapped did not find enough cost-basis data to name a top return leader.',
+    newStocks.length
+      ? `You introduced ${newStocks.length} new stock${newStocks.length === 1 ? '' : 's'} to the portfolio, expanding your opportunity set.`
+      : 'You kept a stable stock roster this year without adding new stock names.',
+    longestHeld
+      ? `${longestHeld.symbol} remains your longest-held stock, carried since ${longestHeld.acquiredLabel}.`
+      : 'No stock holding age data was available for a longest-held insight.',
+    mostAccumulated
+      ? `You accumulated ${mostAccumulated.addedQty} more share${mostAccumulated.addedQty === 1 ? '' : 's'} of ${mostAccumulated.symbol} this year.`
+      : 'No clear accumulation leader was found this year.',
+  ]
+
+  return {
+    year,
+    incomeHistory,
+    summaryPoints,
+    slides: [
+      {
+        key: 'income',
+        icon: '💸',
+        eyebrow: `${year} income growth`,
+        title: `${fmtPct(incomeGrowthPct)} income growth`,
+        body: `Estimated monthly income rose from ${fmt$(firstIncome)} in ${incomeHistory[0]?.month} to ${fmt$(lastIncome)} by ${incomeHistory[incomeHistory.length - 1]?.month}.`,
+        support: bestIncomeMonth ? `${bestIncomeMonth.month} was your strongest month-to-month jump at ${fmt$(bestIncomeMonth.delta)}.` : 'Income stayed broadly steady through the year.',
+        stats: [
+          { label: 'Start', value: fmt$(firstIncome), color: 'var(--text)' },
+          { label: 'End', value: fmt$(lastIncome), color: 'var(--green)' },
+          { label: 'Best month', value: bestIncomeMonth?.month ?? '—', color: 'var(--teal)' },
+        ],
+      },
+      {
+        key: 'returns',
+        icon: '📈',
+        eyebrow: 'Highest returns growth',
+        title: returnLeader ? `${returnLeader.symbol} led your gains` : 'No gain leader yet',
+        body: returnLeader
+          ? `${returnLeader.symbol} returned ${fmtPct(returnLeader.gain)} against your average cost basis, climbing from ${fmt$(returnLeader.avg_price)} to ${fmt$(returnLeader.current_price)}.`
+          : 'We need both average cost and current price data to spotlight your top return leader.',
+        support: returnLeader ? `${returnLeader.type} position · Market value ${fmt$(returnLeader.market_value)}.` : 'Add cost basis data to make this insight more precise.',
+        stats: returnLeader ? [
+          { label: 'Avg price', value: fmt$(returnLeader.avg_price), color: 'var(--text)' },
+          { label: 'Current', value: fmt$(returnLeader.current_price), color: 'var(--green)' },
+          { label: 'Gain', value: fmtPct(returnLeader.gain), color: 'var(--green)' },
+        ] : [],
+      },
+      {
+        key: 'new-stocks',
+        icon: '✨',
+        eyebrow: 'Fun fact',
+        title: newStocks.length ? `You added ${newStocks.length} new stock${newStocks.length === 1 ? '' : 's'}` : 'No new stock names this year',
+        body: newStocks.length
+          ? `This year you expanded beyond your previous stock list with ${newStocks.map(stock => stock.symbol).slice(0, 4).join(', ')}${newStocks.length > 4 ? '…' : ''}.`
+          : 'Your stock roster stayed consistent, which usually signals a conviction year over an exploration year.',
+        support: highestValueHolding ? `${highestValueHolding.symbol} finished as your largest current position by market value at ${fmt$(highestValueHolding.market_value)}.` : 'No position-size comparison was available.',
+        stats: [
+          { label: 'New stocks', value: String(newStocks.length), color: 'var(--purple)' },
+          { label: 'Current roster', value: String(sortedStocks.length), color: 'var(--text)' },
+        ],
+      },
+      {
+        key: 'longest-held',
+        icon: '⏳',
+        eyebrow: 'Longest-held stock',
+        title: longestHeld ? `${longestHeld.symbol} is still your marathon holding` : 'No holding-age leader found',
+        body: longestHeld
+          ? `You have kept ${longestHeld.symbol} in the portfolio since ${longestHeld.acquiredLabel}, making it your longest-running stock conviction.`
+          : 'We could not infer a reliable longest-held stock from the available data.',
+        support: longestHeld ? `${longestHeld.name || longestHeld.symbol} currently sits at ${fmt$(longestHeld.market_value)} in market value.` : '',
+        stats: longestHeld ? [
+          { label: 'Held since', value: longestHeld.acquiredLabel, color: 'var(--gold)' },
+          { label: 'Qty', value: String(longestHeld.qty ?? '—'), color: 'var(--text)' },
+        ] : [],
+      },
+      {
+        key: 'accumulation',
+        icon: '🧺',
+        eyebrow: 'Most accumulated stock',
+        title: mostAccumulated ? `${mostAccumulated.symbol} was your biggest add` : 'No accumulation leader found',
+        body: mostAccumulated
+          ? `You accumulated ${mostAccumulated.addedQty} more share${mostAccumulated.addedQty === 1 ? '' : 's'} of ${mostAccumulated.symbol} over the year, more than any other stock in the portfolio.`
+          : 'We could not identify a standout accumulation trend this year.',
+        support: mostAccumulated ? `Position size moved from ${mostAccumulated.previousQty} to ${mostAccumulated.qty} shares.` : '',
+        stats: mostAccumulated ? [
+          { label: 'Previous qty', value: String(mostAccumulated.previousQty), color: 'var(--text)' },
+          { label: 'Current qty', value: String(mostAccumulated.qty), color: 'var(--text)' },
+          { label: 'Added', value: `+${mostAccumulated.addedQty}`, color: 'var(--teal)' },
+        ] : [],
+      },
+      {
+        key: 'summary',
+        icon: '🪩',
+        eyebrow: `${year} summary`,
+        title: `${profile?.name ?? 'Your portfolio'} wrapped up`,
+        body: `Your year was defined by ${fmtPct(incomeGrowthPct)} income growth, ${newStocks.length} new stock additions, and a strongest holding gain from ${returnLeader?.symbol ?? 'your top return leader'}.`,
+        support: 'Download this wrapped recap to keep a snapshot of the year and share it later.',
+        bullets: summaryPoints,
+      },
+    ],
+  }
 }
 
 function priorityTone(priority) {
@@ -402,6 +915,331 @@ function HoldingInsightModal({ holding, onClose, userId }) {
         </div>
 
         <AssetInsightsPanel assetType={assetType} symbol={holding.symbol} months={3} userId={userId} />
+      </div>
+    </div>
+  )
+}
+
+function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, year, ownerName }) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = event => {
+      if (event.key === 'Escape') onClose()
+      if (event.key === 'ArrowRight') setIndex(current => Math.min(current + 1, slides.length - 1))
+      if (event.key === 'ArrowLeft') setIndex(current => Math.max(current - 1, 0))
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose, setIndex, slides.length])
+
+  if (!open || !slides.length) return null
+  const slide = slides[index]
+  const isSummary = slide.key === 'summary'
+
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()} style={yw.backdrop}>
+      <div style={yw.panel}>
+        <div style={yw.topBar} />
+        <div style={yw.header}>
+          <div>
+            <div style={yw.eyebrow}>Financial Year Wrapped</div>
+            <div style={yw.titleRow}>
+              <h2 style={yw.title}>{ownerName} · {year}</h2>
+              <span style={yw.countPill}>{index + 1} / {slides.length}</span>
+            </div>
+          </div>
+          <button onClick={onClose} style={yw.closeBtn}>✕</button>
+        </div>
+
+        <div style={yw.dots}>
+          {slides.map((item, dotIndex) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setIndex(dotIndex)}
+              style={{ ...yw.dot, ...(dotIndex === index ? yw.dotActive : {}) }}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => !isSummary && setIndex(current => Math.min(current + 1, slides.length - 1))}
+          style={{ ...yw.slide, cursor: isSummary ? 'default' : 'pointer' }}
+        >
+          <div style={yw.slideIcon}>{slide.icon}</div>
+          <div style={yw.slideEyebrow}>{slide.eyebrow}</div>
+          <div style={yw.slideTitle}>{slide.title}</div>
+          <div style={yw.slideBody}>{slide.body}</div>
+          {slide.support ? <div style={yw.slideSupport}>{slide.support}</div> : null}
+
+          {slide.stats?.length ? (
+            <div style={yw.statsGrid}>
+              {slide.stats.map(stat => (
+                <div key={stat.label} style={yw.statCard}>
+                  <div style={yw.statLabel}>{stat.label}</div>
+                  <div style={{ ...yw.statValue, color: stat.color || 'var(--text)' }}>{stat.value}</div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {slide.bullets?.length ? (
+            <div style={yw.summaryList}>
+              {slide.bullets.map(point => (
+                <div key={point} style={yw.summaryRow}>
+                  <span style={yw.summaryDot} />
+                  <span>{point}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {!isSummary ? <div style={yw.tapHint}>Click anywhere on this card to keep going</div> : null}
+        </button>
+
+        <div style={yw.footer}>
+          <button
+            type="button"
+            onClick={() => setIndex(current => Math.max(current - 1, 0))}
+            disabled={index === 0}
+            style={{ ...yw.navBtn, opacity: index === 0 ? 0.4 : 1, cursor: index === 0 ? 'not-allowed' : 'pointer' }}
+          >
+            ← Previous
+          </button>
+
+          <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+            {isSummary && (
+              <button type="button" onClick={e => { e.stopPropagation(); onDownload() }} style={yw.downloadBtn}>
+                Download Wrapped
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => isSummary ? onClose() : setIndex(current => Math.min(current + 1, slides.length - 1))}
+              style={yw.nextBtn}
+            >
+              {isSummary ? 'Close' : 'Next Fact →'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FinancialManagerModal({
+  open,
+  activeTab,
+  setActiveTab,
+  profile,
+  onClose,
+  onSubmit,
+  onRemove,
+  busy,
+}) {
+  const [assetForm, setAssetForm] = useState({ label:'', category:'real_estate', value:'' })
+  const [liabilityForm, setLiabilityForm] = useState({ label:'', amount:'' })
+  const [incomeForm, setIncomeForm] = useState({ label:'', monthly_amount:'' })
+
+  useEffect(() => {
+    if (!open) return
+    setAssetForm({ label:'', category:'real_estate', value:'' })
+    setLiabilityForm({ label:'', amount:'' })
+    setIncomeForm({ label:'', monthly_amount:'' })
+  }, [open, activeTab])
+
+  if (!open) return null
+
+  const tabMap = {
+    assets: {
+      title: 'Manual Assets',
+      description: 'Add non-market assets like real estate, business ownership, or private holdings.',
+      items: profile?.manual_assets ?? [],
+    },
+    liabilities: {
+      title: 'Liabilities',
+      description: 'Track loans, credit balances, and other obligations affecting your net worth.',
+      items: profile?.liability_items ?? [],
+    },
+    income: {
+      title: 'Income Streams',
+      description: 'Track monthly salary, rental inflows, dividends, or side-income sources.',
+      items: profile?.income_streams ?? [],
+    },
+  }
+
+  const currentTab = tabMap[activeTab]
+
+  const submitCurrent = event => {
+    event.preventDefault()
+    if (activeTab === 'assets') {
+      onSubmit('assets', {
+        label: assetForm.label,
+        category: assetForm.category,
+        value: Number(assetForm.value),
+      })
+    }
+    if (activeTab === 'liabilities') {
+      onSubmit('liabilities', {
+        label: liabilityForm.label,
+        amount: Number(liabilityForm.amount),
+      })
+    }
+    if (activeTab === 'income') {
+      onSubmit('income', {
+        label: incomeForm.label,
+        monthly_amount: Number(incomeForm.monthly_amount),
+      })
+    }
+  }
+
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()} style={fm.backdrop}>
+      <div style={fm.panel}>
+        <div style={fm.topBar} />
+        <div style={fm.header}>
+          <div>
+            <div style={fm.eyebrow}>Manage Profile Financials</div>
+            <h2 style={fm.title}>Assets, liabilities, and income</h2>
+            <div style={fm.subline}>Changes recalculate net worth and wellness immediately.</div>
+          </div>
+          <button onClick={onClose} style={fm.closeBtn}>✕</button>
+        </div>
+
+        <div style={fm.tabs}>
+          {[
+            ['assets', 'Assets'],
+            ['liabilities', 'Liabilities'],
+            ['income', 'Income'],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              style={{ ...fm.tab, ...(activeTab === key ? fm.tabActive : {}) }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div style={fm.body}>
+          <div>
+            <div style={fm.sectionTitle}>{currentTab.title}</div>
+            <div style={fm.sectionBody}>{currentTab.description}</div>
+          </div>
+
+          <form onSubmit={submitCurrent} style={fm.form}>
+            {activeTab === 'assets' && (
+              <>
+                <input
+                  value={assetForm.label}
+                  onChange={e => setAssetForm(prev => ({ ...prev, label:e.target.value }))}
+                  placeholder="Asset label"
+                  style={fm.input}
+                />
+                <select
+                  value={assetForm.category}
+                  onChange={e => setAssetForm(prev => ({ ...prev, category:e.target.value }))}
+                  style={fm.input}
+                >
+                  <option value="real_estate">Real Estate</option>
+                  <option value="business">Business</option>
+                  <option value="private_asset">Private Asset</option>
+                  <option value="other">Other</option>
+                </select>
+                <input
+                  value={assetForm.value}
+                  onChange={e => setAssetForm(prev => ({ ...prev, value:e.target.value }))}
+                  placeholder="Value"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  style={fm.input}
+                />
+              </>
+            )}
+            {activeTab === 'liabilities' && (
+              <>
+                <input
+                  value={liabilityForm.label}
+                  onChange={e => setLiabilityForm(prev => ({ ...prev, label:e.target.value }))}
+                  placeholder="Liability label"
+                  style={fm.input}
+                />
+                <input
+                  value={liabilityForm.amount}
+                  onChange={e => setLiabilityForm(prev => ({ ...prev, amount:e.target.value }))}
+                  placeholder="Amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  style={fm.input}
+                />
+              </>
+            )}
+            {activeTab === 'income' && (
+              <>
+                <input
+                  value={incomeForm.label}
+                  onChange={e => setIncomeForm(prev => ({ ...prev, label:e.target.value }))}
+                  placeholder="Income label"
+                  style={fm.input}
+                />
+                <input
+                  value={incomeForm.monthly_amount}
+                  onChange={e => setIncomeForm(prev => ({ ...prev, monthly_amount:e.target.value }))}
+                  placeholder="Monthly amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  style={fm.input}
+                />
+              </>
+            )}
+            <button type="submit" style={fm.submitBtn} disabled={busy}>
+              {busy ? 'Saving…' : `Add ${activeTab === 'income' ? 'Income' : activeTab === 'liabilities' ? 'Liability' : 'Asset'}`}
+            </button>
+          </form>
+
+          <div style={fm.list}>
+            {currentTab.items.length === 0 ? (
+              <div style={fm.empty}>Nothing added yet.</div>
+            ) : currentTab.items.map(item => {
+              const value = activeTab === 'assets'
+                ? fmt$(item.value)
+                : activeTab === 'liabilities'
+                  ? fmt$(item.amount)
+                  : `${fmt$(item.monthly_amount)} / mo`
+              return (
+                <div key={item.id} style={fm.listItem}>
+                  <div>
+                    <div style={fm.itemTitle}>{item.label}</div>
+                    <div style={fm.itemMeta}>
+                      {activeTab === 'assets'
+                        ? startCase(item.category)
+                        : activeTab === 'income'
+                          ? 'Monthly income stream'
+                          : 'Liability'}
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                    <div style={fm.itemValue}>{value}</div>
+                    <button
+                      type="button"
+                      onClick={() => onRemove(activeTab, item.id)}
+                      style={fm.removeBtn}
+                      disabled={busy}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -531,6 +1369,21 @@ export default function Profile() {
   const [analysisMode, setAnalysisMode] = useState('lite')
   const [selectedScenario, setSelectedScenario] = useState('base_case')
   const [wellnessHint, setWellnessHint] = useState(null)
+  const [wrappedOpen, setWrappedOpen] = useState(false)
+  const [wrappedIndex, setWrappedIndex] = useState(0)
+  const [financialModalOpen, setFinancialModalOpen] = useState(false)
+  const [financialTab, setFinancialTab] = useState('assets')
+  const [financialBusy, setFinancialBusy] = useState(false)
+  const [retirementInputs, setRetirementInputs] = useState({
+    retirement_age: 65,
+    monthly_expenses: 0,
+    essential_monthly_expenses: 0,
+  })
+  const [retirementInitialized, setRetirementInitialized] = useState(false)
+  const [retirementPlan, setRetirementPlan] = useState(null)
+  const [retirementLoading, setRetirementLoading] = useState(false)
+  const [retirementError, setRetirementError] = useState('')
+  const [retirementOpen, setRetirementOpen] = useState(false)
 
   // ── Initial data fetch ────────────────────────────────────────────────────
   useEffect(() => {
@@ -564,6 +1417,19 @@ export default function Profile() {
     fetchAll()
     return () => { cancelled = true }
   }, [authUser?.user_id])
+
+  useEffect(() => {
+    if (!profile || retirementInitialized) return
+    const currentIncomeValue = Number(profile.income ?? 0)
+    const expenseBase = Number(profile.expenses ?? 0) || (currentIncomeValue > 0 ? currentIncomeValue * 0.43 : 3500)
+    const essentialBase = Math.min(expenseBase, expenseBase * 0.7)
+    setRetirementInputs({
+      retirement_age: clamp((Number(profile.age) || 40) + 25, 55, 70),
+      monthly_expenses: Math.round(expenseBase),
+      essential_monthly_expenses: Math.round(essentialBase),
+    })
+    setRetirementInitialized(true)
+  }, [profile, retirementInitialized])
 
   // ── Section 1: PATCH /users/risk ─────────────────────────────────────────
   const saveRiskProfile = useCallback(async () => {
@@ -600,6 +1466,9 @@ export default function Profile() {
   const stocks         = portfolio?.stocks  ?? []
   const commodities    = portfolio?.commodities ?? []
   const cryptos        = portfolio?.cryptos ?? []
+  const manualAssets   = profile?.manual_assets ?? []
+  const liabilityItems = profile?.liability_items ?? []
+  const incomeStreams  = profile?.income_streams ?? []
   const allHoldings    = [
     ...stocks.map(h => ({ ...h, type:'Stock' })),
     ...commodities.map(h => ({ ...h, type:'Commodity' })),
@@ -609,8 +1478,27 @@ export default function Profile() {
   const commoditiesValue = commodities.reduce((s,h) => s + (h.market_value ?? 0), 0)
   const cryptosValue   = cryptos.reduce((s,h) => s + (h.market_value ?? 0), 0)
   const portfolioValue = stocksValue + commoditiesValue + cryptosValue
+  const manualAssetGroups = manualAssets.reduce((groups, item) => {
+    const key = item.category || 'other'
+    if (!groups[key]) {
+      groups[key] = {
+        key,
+        icon: key === 'real_estate' ? '🏠' : key === 'business' ? '🏢' : key === 'private_asset' ? '🧾' : '🗂️',
+        name: startCase(key),
+        color: key === 'real_estate' ? 'var(--gold)' : key === 'business' ? 'var(--purple)' : 'var(--teal)',
+        total: 0,
+      }
+    }
+    groups[key].total += Number(item.value || 0)
+    return groups
+  }, {})
+  const manualAssetRows = Object.values(manualAssetGroups)
+  const manualAssetTotal = manualAssetRows.reduce((sum, item) => sum + item.total, 0)
   const totalAUM       = portfolioValue + (profile?.cash_balance ?? 0)
   const positionCount  = stocks.length + commodities.length + cryptos.length
+  const currentIncome  = incomeStreams.length
+    ? incomeStreams.reduce((sum, item) => sum + Number(item.monthly_amount || 0), 0)
+    : Number(profile?.income ?? 0)
   const wellness       = profile?.wellness_metrics ?? {}
   const wellnessScore  = profile?.financial_wellness_score ?? 0
   const stressIndex    = profile?.financial_stress_index   ?? null
@@ -618,15 +1506,20 @@ export default function Profile() {
   const [trendRange, setTrendRange] = useState('6M')
   const [trendView, setTrendView] = useState('combined')
 
+  const compositionBase = portfolioValue + manualAssetTotal
   const COMPOSITION_REAL = [
-    portfolioValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / portfolioValue * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
-    portfolioValue > 0 && commoditiesValue > 0 && { icon:'🪙', name:'Commodities', pct:Math.round(commoditiesValue / portfolioValue * 100), val:fmt$(commoditiesValue), color:'#d4a63a' },
-    portfolioValue > 0 && { icon:'₿',  name:'Digital Assets',    pct:Math.round(cryptosValue / portfolioValue * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
+    compositionBase > 0 && stocksValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / compositionBase * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
+    compositionBase > 0 && commoditiesValue > 0 && { icon:'🪙', name:'Commodities', pct:Math.round(commoditiesValue / compositionBase * 100), val:fmt$(commoditiesValue), color:'#d4a63a' },
+    compositionBase > 0 && cryptosValue > 0 && { icon:'₿',  name:'Digital Assets', pct:Math.round(cryptosValue / compositionBase * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
+    ...manualAssetRows.map(item => ({
+      icon: item.icon,
+      name: item.name,
+      pct: compositionBase > 0 ? Math.round(item.total / compositionBase * 100) : 0,
+      val: fmt$(item.total),
+      color: item.color,
+    })),
+    currentIncome > 0 && { icon:'🏛️', name:'Fixed Income', pct:null, val:`${fmt$(currentIncome)} / mo`, color:'var(--purple)', special:'income' },
   ].filter(Boolean)
-  const COMPOSITION_FUTURE = [
-    { icon:'🏠', name:'Real Estate',  color:'var(--gold)'   },
-    { icon:'🏛️', name:'Fixed Income', color:'var(--purple)' },
-  ]
 
   const gptPayload = gptRecs?.gpt_recommendations ?? gptRecs?.recommendations ?? gptRecs ?? null
   const gptSummary = toText(gptPayload?.summary)
@@ -762,9 +1655,123 @@ export default function Profile() {
     commodities: 'Daily commodity exposure value across your commodity positions.',
     crypto: 'Daily digital-asset value across your crypto holdings.',
   }
+  const wrappedYear = new Date().getFullYear() - 1
+  const wrappedData = useMemo(() => buildFinancialWrapped({
+    userId: authUser?.user_id,
+    profile,
+    stocks,
+    allHoldings,
+    year: wrappedYear,
+  }), [authUser?.user_id, profile, stocks, allHoldings, wrappedYear])
+  const exportWrappedPdf = useCallback(() => {
+    const printWindow = window.open('', '_blank', 'width=1100,height=900')
+    if (!printWindow) return
+
+    const ownerName = profile?.name ?? authUser.username
+    const html = buildWrappedPrintHtml({
+      ownerName,
+      year: wrappedData.year,
+      slides: wrappedData.slides,
+    })
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    printWindow.location.href = url
+
+    const triggerPrint = () => {
+      printWindow.focus()
+      printWindow.print()
+      setTimeout(() => URL.revokeObjectURL(url), 2000)
+    }
+
+    printWindow.onload = () => setTimeout(triggerPrint, 300)
+  }, [authUser.username, profile?.name, wrappedData])
+  const openFinancialModal = useCallback((tab) => {
+    setFinancialTab(tab)
+    setFinancialModalOpen(true)
+  }, [])
+  const submitFinancialItem = useCallback(async (tab, payload) => {
+    if (!authUser?.user_id) return
+    setFinancialBusy(true)
+    setError('')
+    try {
+      const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
+      const res = await fetch(`${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      if (data.user) setProfile(data.user)
+    } catch (err) {
+      setError(err.message || 'Could not save financial item.')
+    } finally {
+      setFinancialBusy(false)
+    }
+  }, [authUser?.user_id])
+  const removeFinancialItem = useCallback(async (tab, itemId) => {
+    if (!authUser?.user_id) return
+    setFinancialBusy(true)
+    setError('')
+    try {
+      const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
+      const res = await fetch(`${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}/${itemId}`, {
+        method:'DELETE',
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      if (data.user) setProfile(data.user)
+    } catch (err) {
+      setError(err.message || 'Could not remove financial item.')
+    } finally {
+      setFinancialBusy(false)
+    }
+  }, [authUser?.user_id])
+
+  const fetchRetirementPlan = useCallback(async () => {
+    if (!authUser?.user_id || !retirementInitialized) return
+    setRetirementLoading(true)
+    setRetirementError('')
+    try {
+      const res = await fetch(`${API}/users/${authUser.user_id}/retirement`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify(retirementInputs),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(parseApiError(err?.detail, `HTTP ${res.status}`))
+      }
+      const data = await res.json()
+      setRetirementPlan(data)
+    } catch (err) {
+      setRetirementError(err.message || 'Could not build retirement plan.')
+    } finally {
+      setRetirementLoading(false)
+    }
+  }, [authUser?.user_id, retirementInitialized, retirementInputs])
+
+  useEffect(() => {
+    if (!retirementInitialized || !authUser?.user_id) return
+    fetchRetirementPlan()
+  // Initial seeded load only. Manual edits refresh through the card button.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retirementInitialized, authUser?.user_id])
 
   // Is current selection different from what's saved?
   const riskChanged = selectedRisk && selectedRisk !== (profile?.risk_profile ?? '').toLowerCase()
+  const retirementSummary = retirementStatus(retirementPlan)
+  const retirementProgress = retirementPlan?.target_retirement_fund
+    ? clamp((Number(retirementPlan.projected_value_at_retirement || 0) / Number(retirementPlan.target_retirement_fund || 1)) * 100, 0, 100)
+    : 0
+  const retirementGap = Number(retirementPlan?.projected_gap_at_retirement || 0)
+  const retirementRecommendedMix = retirementTopMix(retirementPlan)
 
   if (!authUser) {
     return (
@@ -856,7 +1863,7 @@ export default function Profile() {
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'2rem', lineHeight:1 }}>
                   {fmt$(trendPayload.latest)}
                 </div>
-                <div style={{ color:trendTone === 'up' ? 'var(--purple)' : 'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.8rem' }}>
+                <div style={{ color:trendTone === 'up' ? 'var(--green)' : 'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.8rem' }}>
                   {trendPayload.change >= 0 ? '+' : ''}{fmt$(trendPayload.change)} · {trendRange}
                 </div>
               </div>
@@ -930,7 +1937,7 @@ export default function Profile() {
                 <div style={{ flex:1 }}>
                   {[
                     { label:'Diversification', val:wellness.diversification_score, color:'var(--green)', hint:'How spread out your money is, so you are not relying too much on one asset.' },
-                    { label:'Liquidity',        val:wellness.liquidity_score,       color:'var(--gold)', hint:'How easily you can access cash for bills, emergencies, or short-term needs.' },
+                    { label:'Liquidity',        val:wellness.liquidity_score,       color:'var(--blue)', hint:'How easily you can access cash for bills, emergencies, or short-term needs.' },
                     { label:'Debt / Income',    val:wellness.debt_income_score,     color:'var(--orange)', hint:'How manageable your debt is compared with the income you bring in.' },
                   ].map(w => (
                     <div
@@ -966,7 +1973,14 @@ export default function Profile() {
           </div>
 
           <div style={s.card}>
-            <div style={s.secLabel}>Portfolio Composition</div>
+            <div style={s.secLabel}>
+              Portfolio Composition
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'flex-end' }}>
+                <button type="button" onClick={() => openFinancialModal('assets')} style={s.compBtnAsset}>Edit Assets</button>
+                <button type="button" onClick={() => openFinancialModal('liabilities')} style={s.compBtnLiability}>Edit Liabilities</button>
+                <button type="button" onClick={() => openFinancialModal('income')} style={s.compBtnIncome}>Edit Income</button>
+              </div>
+            </div>
             {loading ? <LoadingPulse /> : (
               <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
                 {COMPOSITION_REAL.map(c => (
@@ -974,26 +1988,28 @@ export default function Profile() {
                     <div style={{ width:36, height:36, borderRadius:10, background:`${c.color}20`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>{c.icon}</div>
                     <div style={{ flex:1 }}>
                       <div style={{ fontWeight:500, fontSize:'0.87rem', marginBottom:4 }}>{c.name}</div>
-                      <div style={{ height:4, background:'var(--surface2)', borderRadius:2, overflow:'hidden' }}>
-                        <div style={{ height:'100%', width:`${c.pct}%`, background:c.color, borderRadius:2 }} />
-                      </div>
+                      {c.special === 'income' ? (
+                        <div style={{ fontSize:'0.72rem', color:'var(--text-faint)', fontFamily:'var(--font-mono)' }}>
+                          Current monthly income across {incomeStreams.length || 1} stream{(incomeStreams.length || 1) !== 1 ? 's' : ''}
+                        </div>
+                      ) : (
+                        <div style={{ height:4, background:'var(--surface2)', borderRadius:2, overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:`${c.pct}%`, background:c.color, borderRadius:2 }} />
+                        </div>
+                      )}
                     </div>
                     <div style={{ textAlign:'right' }}>
-                      <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem' }}>{c.pct}%</div>
+                      <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem' }}>{c.special === 'income' ? 'Monthly' : `${c.pct}%`}</div>
                       <div style={{ fontSize:'0.7rem', color:'var(--text-faint)' }}>{c.val}</div>
                     </div>
                   </div>
                 ))}
-                {COMPOSITION_FUTURE.map(c => (
-                  <div key={c.name} style={{ display:'flex', alignItems:'center', gap:12, opacity:0.4 }}>
-                    <div style={{ width:36, height:36, borderRadius:10, background:`${c.color}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>{c.icon}</div>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:500, fontSize:'0.87rem', marginBottom:4, display:'flex', alignItems:'center' }}>{c.name}<FutureTag /></div>
-                      <div style={{ height:4, background:'var(--surface2)', borderRadius:2 }} />
-                    </div>
-                    <div style={{ textAlign:'right' }}><div style={{ fontFamily:'var(--font-mono)', fontSize:'0.78rem', color:'var(--text-faint)' }}>—</div></div>
+                {(liabilityItems.length > 0 || incomeStreams.length > 0) && (
+                  <div style={{ marginTop:6, display:'flex', gap:8, flexWrap:'wrap' }}>
+                    <span style={s.compMetaPill}>Liabilities {fmt$(liabilityItems.reduce((sum, item) => sum + Number(item.amount || 0), 0))}</span>
+                    <span style={s.compMetaPill}>Income Streams {incomeStreams.length}</span>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
@@ -1272,24 +2288,42 @@ export default function Profile() {
           )}
         </div>
 
-        {/* Peer Benchmarking — Future Upgrade overlay */}
-        <div style={{ ...s.card, marginBottom:24, position:'relative', overflow:'hidden' }}>
-          <div style={{ position:'absolute', inset:0, background:'rgba(8,12,20,0.75)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, borderRadius:18 }}>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ fontSize:'2rem', marginBottom:8 }}>📊</div>
-              <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.8rem', color:'var(--blue)', marginBottom:6 }}>Peer Age Benchmarking</div>
-              <FutureTag />
+        {/* Financial Year Wrapped */}
+        <button
+          type="button"
+          onClick={() => { setWrappedIndex(0); setWrappedOpen(true) }}
+          style={{
+            ...s.card,
+            ...s.wrappedEntry,
+            marginBottom:24,
+          }}
+        >
+          <div style={s.secLabel}>
+            Financial Year Wrapped
+            <span style={{ ...s.inlineStat, color:'var(--purple)', borderColor:'rgba(139,92,246,0.18)' }}>{wrappedData.year}</span>
+          </div>
+          <div style={s.wrappedEntryInner}>
+            <div style={s.wrappedBadge}>📊</div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={s.wrappedTitle}>Your {wrappedData.year} in money moments</div>
+              <div style={s.wrappedBody}>
+                Income growth, strongest return, biggest adds, longest-held stock, and a year-end summary in one tap-through recap.
+              </div>
+              <div style={s.wrappedHighlights}>
+                {wrappedData.slides.slice(0, 3).map(slide => (
+                  <span key={slide.key} style={s.wrappedMiniPill}>{slide.icon} {slide.eyebrow}</span>
+                ))}
+              </div>
+            </div>
+            <div style={s.wrappedCta}>
+              Open Wrapped →
             </div>
           </div>
-          <div style={{ opacity:0.1, pointerEvents:'none' }}>
-            <div style={s.secLabel}>Peer Age Benchmarking</div>
-            <div style={{ height:160, background:'var(--surface2)', borderRadius:10 }} />
-          </div>
-        </div>
+        </button>
 
-        {/* Insights + Activity — Future Upgrade */}
+        {/* Insights + Retirement */}
         <div style={s.twoCol}>
-          {[{ icon:'💡', label:'Personalised Insights' }, { icon:'🕒', label:'Recent Activity' }].map(item => (
+          {[{ icon:'💡', label:'Peer Age Benchmarking' }].map(item => (
             <div key={item.label} style={{ ...s.card, position:'relative', overflow:'hidden' }}>
               <div style={{ position:'absolute', inset:0, background:'rgba(8,12,20,0.75)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, borderRadius:18 }}>
                 <div style={{ textAlign:'center' }}>
@@ -1304,6 +2338,168 @@ export default function Profile() {
               </div>
             </div>
           ))}
+
+          <div style={{ ...s.card, background:'linear-gradient(180deg, rgba(109,141,247,0.06), rgba(42,184,163,0.04) 100%)' }}>
+            <div style={s.secLabel}>
+              Retirement Outlook
+              <span style={{ ...s.inlineStat, color:retirementSummary.tone, borderColor:'rgba(109,141,247,0.18)' }}>
+                {retirementLoading ? 'Updating…' : `${retirementPlan?.years_to_retirement ?? '—'} years left`}
+              </span>
+            </div>
+
+            {!retirementOpen ? (
+              <div style={s.retirementPreview}>
+                <div style={s.retirementPreviewBadge}>🌅</div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontFamily:'var(--font-display)', fontSize:'1.25rem', fontWeight:800, marginBottom:8 }}>
+                    {retirementSummary.title}
+                  </div>
+                  <div style={{ fontSize:'0.92rem', color:'var(--text-dim)', lineHeight:1.75, marginBottom:14 }}>
+                    {retirementPlan
+                      ? `See whether your current assets, spending, and savings pace can get you to ${fmtCompactCurrency(retirementPlan.target_retirement_fund)} by age ${retirementPlan.retirement_age}.`
+                      : 'Generate a retirement snapshot from your portfolio, income, and spending to see if you are on track.'}
+                  </div>
+                  <div style={s.retirementPreviewMeta}>
+                    <span style={s.retirementPreviewPill}>Goal {fmtCompactCurrency(retirementPlan?.target_retirement_fund)}</span>
+                    <span style={s.retirementPreviewPill}>Top-up {fmt$(retirementPlan?.required_monthly_contribution)}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRetirementOpen(true)}
+                  style={{ ...s.btnTeal, minWidth:150, alignSelf:'center' }}
+                >
+                  Plan Retirement
+                </button>
+              </div>
+            ) : (
+              <>
+                {retirementError && (
+                  <div style={{ ...s.errBox, marginBottom:16 }}>
+                    {retirementError}
+                  </div>
+                )}
+                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, marginBottom:14 }}>
+                  <div>
+                    <div style={{ fontFamily:'var(--font-display)', fontSize:'1.35rem', fontWeight:800, marginBottom:6 }}>
+                      {retirementSummary.title}
+                    </div>
+                    <div style={{ fontSize:'0.92rem', color:'var(--text-dim)', lineHeight:1.75, maxWidth:470 }}>
+                      {retirementPlan ? (
+                        retirementGap <= 0
+                          ? `At your current pace, you are projected to reach ${fmtCompactCurrency(retirementPlan.projected_value_at_retirement)} by age ${retirementPlan.retirement_age}, ahead of your ${fmtCompactCurrency(retirementPlan.target_retirement_fund)} target.`
+                          : `You are aiming for ${fmtCompactCurrency(retirementPlan.target_retirement_fund)} by age ${retirementPlan.retirement_age}. To close the remaining ${fmtCompactCurrency(retirementGap)} gap, WealthSphere estimates a monthly contribution of ${fmt$(retirementPlan.required_monthly_contribution)}.`
+                      ) : 'Use your current profile, spending, and portfolio to estimate whether your retirement path is on track.'}
+                    </div>
+                  </div>
+                  <div style={{ minWidth:128, textAlign:'right' }}>
+                    <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.66rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:6 }}>
+                      Target age
+                    </div>
+                    <div style={{ fontFamily:'var(--font-display)', fontSize:'1.6rem', fontWeight:800 }}>
+                      {retirementPlan?.retirement_age ?? retirementInputs.retirement_age}
+                    </div>
+                    <div style={{ fontSize:'0.76rem', color:'var(--text-faint)', marginTop:4 }}>
+                      Risk profile {retirementPlan?.risk_profile ?? startCase(profile?.risk_profile)}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={s.retirementProgressTrack}>
+                  <div
+                    style={{
+                      ...s.retirementProgressFill,
+                      width:`${retirementProgress}%`,
+                      background: retirementGap <= 0
+                        ? 'linear-gradient(90deg, rgba(34,197,94,0.92), rgba(42,184,163,0.92))'
+                        : 'linear-gradient(90deg, rgba(109,141,247,0.92), rgba(139,92,246,0.92))',
+                    }}
+                  />
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', gap:10, marginTop:8, marginBottom:18, fontFamily:'var(--font-mono)', fontSize:'0.66rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+                  <span>Projected {fmtCompactCurrency(retirementPlan?.projected_value_at_retirement)}</span>
+                  <span>Goal {fmtCompactCurrency(retirementPlan?.target_retirement_fund)}</span>
+                </div>
+
+                <div style={s.retirementStatGrid}>
+                  <div style={s.retirementStatCard}>
+                    <div style={s.retirementStatLabel}>Monthly top-up</div>
+                    <div style={{ ...s.retirementStatValue, color:retirementGap <= 0 ? 'var(--green)' : 'var(--text)' }}>
+                      {retirementPlan ? fmt$(retirementPlan.required_monthly_contribution) : '—'}
+                    </div>
+                    <div style={s.retirementStatHint}>Needed from now to retirement</div>
+                  </div>
+                  <div style={s.retirementStatCard}>
+                    <div style={s.retirementStatLabel}>Cash reserve</div>
+                    <div style={s.retirementStatValue}>
+                      {retirementPlan ? fmtCompactCurrency(retirementPlan.essential_cash_reserve_target) : '—'}
+                    </div>
+                    <div style={s.retirementStatHint}>Emergency buffer before investing</div>
+                  </div>
+                  <div style={s.retirementStatCard}>
+                    <div style={s.retirementStatLabel}>Suggested mix</div>
+                    <div style={{ ...s.retirementStatValue, fontSize:'1rem', lineHeight:1.35 }}>
+                      {retirementRecommendedMix}
+                    </div>
+                    <div style={s.retirementStatHint}>Based on risk and years remaining</div>
+                  </div>
+                </div>
+
+                <div style={s.retirementControls}>
+                  <label style={s.retirementInputWrap}>
+                    <span style={s.retirementInputLabel}>Retirement age</span>
+                    <input
+                      type="number"
+                      min="19"
+                      max="100"
+                      value={retirementInputs.retirement_age}
+                      onChange={e => setRetirementInputs(prev => ({ ...prev, retirement_age:Number(e.target.value || 0) }))}
+                      style={s.retirementInput}
+                    />
+                  </label>
+                  <label style={s.retirementInputWrap}>
+                    <span style={s.retirementInputLabel}>Monthly spend</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={retirementInputs.monthly_expenses}
+                      onChange={e => setRetirementInputs(prev => ({ ...prev, monthly_expenses:Number(e.target.value || 0) }))}
+                      style={s.retirementInput}
+                    />
+                  </label>
+                  <label style={s.retirementInputWrap}>
+                    <span style={s.retirementInputLabel}>Essential spend</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={retirementInputs.essential_monthly_expenses}
+                      onChange={e => setRetirementInputs(prev => ({ ...prev, essential_monthly_expenses:Number(e.target.value || 0) }))}
+                      style={s.retirementInput}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={fetchRetirementPlan}
+                    disabled={retirementLoading}
+                    style={{ ...s.btnTeal, minWidth:130, opacity:retirementLoading ? 0.6 : 1, alignSelf:'end' }}
+                  >
+                    {retirementLoading ? 'Updating…' : 'Refresh Plan'}
+                  </button>
+                </div>
+                <div style={{ marginTop:12, display:'flex', justifyContent:'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => setRetirementOpen(false)}
+                    style={s.retirementSecondaryBtn}
+                  >
+                    Hide planner
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════
@@ -1374,6 +2570,26 @@ export default function Profile() {
         </div>
 
         <HoldingInsightModal holding={selectedHolding} onClose={() => setSelectedHolding(null)} userId={authUser?.user_id} />
+        <FinancialManagerModal
+          open={financialModalOpen}
+          activeTab={financialTab}
+          setActiveTab={setFinancialTab}
+          profile={profile}
+          onClose={() => setFinancialModalOpen(false)}
+          onSubmit={submitFinancialItem}
+          onRemove={removeFinancialItem}
+          busy={financialBusy}
+        />
+        <YearWrappedModal
+          open={wrappedOpen}
+          slides={wrappedData.slides}
+          index={wrappedIndex}
+          setIndex={setWrappedIndex}
+          onClose={() => setWrappedOpen(false)}
+          onDownload={exportWrappedPdf}
+          year={wrappedData.year}
+          ownerName={profile?.name ?? authUser.username}
+        />
 
       </main>
     </div>
@@ -1600,6 +2816,233 @@ const s = {
     fontFamily:'var(--font-display)', fontSize:'0.78rem', fontWeight:700,
     boxShadow:'0 4px 14px rgba(45,212,191,0.22)', cursor:'pointer', transition:'opacity 0.2s',
   },
+  wrappedEntry: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    width:'100%',
+    textAlign:'left',
+    cursor:'pointer',
+    background:'linear-gradient(135deg, rgba(109,141,247,0.05), rgba(139,92,246,0.04) 52%, rgba(42,184,163,0.05))',
+    boxShadow:'0 18px 44px rgba(15,23,42,0.06)',
+  },
+  wrappedEntryInner: {
+    display:'flex',
+    alignItems:'center',
+    gap:22,
+  },
+  wrappedBadge: {
+    width:74,
+    height:74,
+    borderRadius:20,
+    background:'linear-gradient(135deg, rgba(109,141,247,0.14), rgba(139,92,246,0.18), rgba(42,184,163,0.14))',
+    border:'1px solid rgba(139,92,246,0.16)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontSize:'2rem',
+    flexShrink:0,
+  },
+  wrappedTitle: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1.5rem',
+    fontWeight:800,
+    lineHeight:1.1,
+    marginBottom:10,
+  },
+  wrappedBody: {
+    fontSize:'0.95rem',
+    lineHeight:1.75,
+    color:'var(--text-dim)',
+    maxWidth:720,
+  },
+  wrappedHighlights: {
+    display:'flex',
+    gap:8,
+    flexWrap:'wrap',
+    marginTop:14,
+  },
+  wrappedMiniPill: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.64rem',
+    letterSpacing:'0.05em',
+    color:'var(--purple)',
+    background:'rgba(139,92,246,0.08)',
+    border:'1px solid rgba(139,92,246,0.14)',
+    padding:'5px 10px',
+    borderRadius:999,
+  },
+  wrappedCta: {
+    flexShrink:0,
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    color:'var(--teal)',
+    background:'rgba(42,184,163,0.08)',
+    border:'1px solid rgba(42,184,163,0.16)',
+    borderRadius:999,
+    padding:'10px 16px',
+    alignSelf:'flex-start',
+  },
+  retirementPreview: {
+    display:'flex',
+    alignItems:'center',
+    gap:18,
+  },
+  retirementPreviewBadge: {
+    width:72,
+    height:72,
+    borderRadius:20,
+    background:'linear-gradient(135deg, rgba(109,141,247,0.14), rgba(42,184,163,0.18))',
+    border:'1px solid rgba(109,141,247,0.16)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontSize:'1.85rem',
+    flexShrink:0,
+  },
+  retirementPreviewMeta: {
+    display:'flex',
+    flexWrap:'wrap',
+    gap:8,
+  },
+  retirementPreviewPill: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.64rem',
+    color:'var(--blue)',
+    background:'rgba(109,141,247,0.08)',
+    border:'1px solid rgba(109,141,247,0.14)',
+    padding:'6px 10px',
+    borderRadius:999,
+    letterSpacing:'0.05em',
+  },
+  retirementProgressTrack: {
+    height:12,
+    borderRadius:999,
+    background:'rgba(148,163,184,0.12)',
+    overflow:'hidden',
+    border:'1px solid rgba(148,163,184,0.14)',
+  },
+  retirementProgressFill: {
+    height:'100%',
+    borderRadius:999,
+    boxShadow:'0 8px 20px rgba(109,141,247,0.18)',
+    transition:'width 0.35s ease',
+  },
+  retirementStatGrid: {
+    display:'grid',
+    gridTemplateColumns:'repeat(3, minmax(0, 1fr))',
+    gap:12,
+    marginBottom:18,
+  },
+  retirementStatCard: {
+    background:'rgba(255,255,255,0.52)',
+    border:'1px solid var(--border)',
+    borderRadius:14,
+    padding:'14px 15px',
+  },
+  retirementStatLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.1em',
+    marginBottom:8,
+  },
+  retirementStatValue: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1.15rem',
+    fontWeight:800,
+    lineHeight:1.15,
+    marginBottom:5,
+  },
+  retirementStatHint: {
+    fontSize:'0.76rem',
+    color:'var(--text-faint)',
+    lineHeight:1.55,
+  },
+  retirementControls: {
+    display:'grid',
+    gridTemplateColumns:'repeat(4, minmax(0, 1fr))',
+    gap:10,
+    alignItems:'end',
+  },
+  retirementInputWrap: {
+    display:'flex',
+    flexDirection:'column',
+    gap:6,
+  },
+  retirementInputLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.08em',
+  },
+  retirementInput: {
+    width:'100%',
+    borderRadius:12,
+    border:'1px solid var(--border)',
+    background:'rgba(255,255,255,0.74)',
+    color:'var(--text)',
+    padding:'10px 12px',
+    fontFamily:'var(--font-body)',
+    fontSize:'0.88rem',
+    outline:'none',
+  },
+  retirementSecondaryBtn: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    border:'1px solid var(--border)',
+    background:'rgba(255,255,255,0.62)',
+    color:'var(--text-dim)',
+    borderRadius:999,
+    padding:'8px 12px',
+    fontFamily:'var(--font-body)',
+    fontSize:'0.82rem',
+    fontWeight:600,
+    cursor:'pointer',
+  },
+  compBtnAsset: {
+    background:'linear-gradient(135deg,var(--teal),#0e9f84)',
+    border:'none',
+    color:'#081019',
+    padding:'8px 12px',
+    borderRadius:999,
+    fontFamily:'var(--font-display)',
+    fontSize:'0.74rem',
+    fontWeight:800,
+    cursor:'pointer',
+  },
+  compBtnLiability: {
+    background:'rgba(248,113,113,0.08)',
+    border:'1px solid rgba(248,113,113,0.16)',
+    color:'var(--red)',
+    padding:'8px 12px',
+    borderRadius:999,
+    fontFamily:'var(--font-display)',
+    fontSize:'0.74rem',
+    fontWeight:700,
+    cursor:'pointer',
+  },
+  compBtnIncome: {
+    background:'rgba(139,92,246,0.08)',
+    border:'1px solid rgba(139,92,246,0.16)',
+    color:'var(--purple)',
+    padding:'8px 12px',
+    borderRadius:999,
+    fontFamily:'var(--font-display)',
+    fontSize:'0.74rem',
+    fontWeight:700,
+    cursor:'pointer',
+  },
+  compMetaPill: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.64rem',
+    color:'var(--text-faint)',
+    border:'1px solid var(--border)',
+    background:'var(--surface2)',
+    borderRadius:999,
+    padding:'5px 10px',
+  },
 }
 
 const hm = {
@@ -1689,5 +3132,405 @@ const hm = {
     fontFamily:'var(--font-display)',
     fontWeight:700,
     fontSize:'1rem',
+  },
+}
+
+const fm = {
+  backdrop: {
+    position:'fixed',
+    inset:0,
+    zIndex:315,
+    background:'rgba(15,23,42,0.22)',
+    backdropFilter:'blur(14px)',
+    WebkitBackdropFilter:'blur(14px)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    padding:'24px',
+  },
+  panel: {
+    width:'min(860px, 100%)',
+    background:'linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,249,252,0.98))',
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:24,
+    boxShadow:'0 36px 90px rgba(15,23,42,0.2)',
+    overflow:'hidden',
+  },
+  topBar: { height:2, background:'linear-gradient(90deg, var(--teal), #8b5cf6, var(--gold))' },
+  header: {
+    display:'flex',
+    alignItems:'flex-start',
+    justifyContent:'space-between',
+    gap:16,
+    padding:'26px 28px 16px',
+  },
+  eyebrow: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.66rem',
+    color:'var(--teal)',
+    textTransform:'uppercase',
+    letterSpacing:'0.16em',
+    marginBottom:8,
+  },
+  title: {
+    margin:0,
+    fontFamily:'var(--font-display)',
+    fontSize:'1.5rem',
+    lineHeight:1.1,
+  },
+  subline: { marginTop:8, fontSize:'0.84rem', color:'var(--text-dim)' },
+  closeBtn: {
+    width:40,
+    height:40,
+    borderRadius:10,
+    border:'1px solid var(--border)',
+    background:'rgba(255,255,255,0.92)',
+    color:'var(--text-faint)',
+    cursor:'pointer',
+  },
+  tabs: {
+    display:'flex',
+    gap:8,
+    padding:'0 28px 16px',
+  },
+  tab: {
+    border:'1px solid var(--border)',
+    background:'var(--surface2)',
+    color:'var(--text-dim)',
+    padding:'8px 12px',
+    borderRadius:999,
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.7rem',
+    cursor:'pointer',
+  },
+  tabActive: {
+    background:'rgba(42,184,163,0.1)',
+    borderColor:'rgba(42,184,163,0.22)',
+    color:'var(--teal)',
+  },
+  body: {
+    padding:'0 28px 28px',
+    display:'flex',
+    flexDirection:'column',
+    gap:18,
+  },
+  sectionTitle: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1.05rem',
+    fontWeight:700,
+    marginBottom:6,
+  },
+  sectionBody: {
+    fontSize:'0.86rem',
+    color:'var(--text-dim)',
+    lineHeight:1.7,
+  },
+  form: {
+    display:'grid',
+    gridTemplateColumns:'repeat(4, minmax(0, 1fr))',
+    gap:10,
+  },
+  input: {
+    background:'rgba(255,255,255,0.95)',
+    border:'1px solid var(--border)',
+    color:'var(--text)',
+    borderRadius:12,
+    padding:'11px 12px',
+    fontFamily:'var(--font-body)',
+    fontSize:'0.84rem',
+    outline:'none',
+  },
+  submitBtn: {
+    background:'linear-gradient(135deg,var(--teal),#0e9f84)',
+    border:'none',
+    color:'#081019',
+    borderRadius:12,
+    fontFamily:'var(--font-display)',
+    fontWeight:800,
+    fontSize:'0.82rem',
+    cursor:'pointer',
+  },
+  list: {
+    display:'flex',
+    flexDirection:'column',
+    gap:10,
+  },
+  empty: {
+    border:'1px dashed rgba(148,163,184,0.24)',
+    borderRadius:14,
+    padding:'18px',
+    color:'var(--text-faint)',
+    fontSize:'0.84rem',
+  },
+  listItem: {
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'space-between',
+    gap:14,
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:16,
+    background:'rgba(255,255,255,0.8)',
+    padding:'14px 16px',
+  },
+  itemTitle: {
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    fontSize:'0.95rem',
+    marginBottom:4,
+  },
+  itemMeta: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.64rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.08em',
+  },
+  itemValue: {
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    fontSize:'0.95rem',
+  },
+  removeBtn: {
+    background:'rgba(248,113,113,0.08)',
+    border:'1px solid rgba(248,113,113,0.16)',
+    color:'var(--red)',
+    borderRadius:10,
+    padding:'8px 10px',
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    cursor:'pointer',
+  },
+}
+
+const yw = {
+  backdrop: {
+    position:'fixed',
+    inset:0,
+    zIndex:320,
+    background:'rgba(15,23,42,0.28)',
+    backdropFilter:'blur(16px)',
+    WebkitBackdropFilter:'blur(16px)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    padding:'24px',
+  },
+  panel: {
+    width:'min(920px, 100%)',
+    background:'linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,248,252,0.98))',
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:28,
+    boxShadow:'0 36px 90px rgba(15,23,42,0.2)',
+    overflow:'hidden',
+  },
+  topBar: { height:3, background:'linear-gradient(90deg, #6d8df7, #8b5cf6, #2ab8a3)' },
+  header: {
+    display:'flex',
+    alignItems:'flex-start',
+    justifyContent:'space-between',
+    gap:16,
+    padding:'26px 28px 14px',
+  },
+  eyebrow: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    color:'var(--teal)',
+    textTransform:'uppercase',
+    letterSpacing:'0.16em',
+    marginBottom:8,
+  },
+  titleRow: {
+    display:'flex',
+    alignItems:'center',
+    gap:12,
+    flexWrap:'wrap',
+  },
+  title: {
+    margin:0,
+    fontFamily:'var(--font-display)',
+    fontSize:'1.7rem',
+    lineHeight:1.1,
+  },
+  countPill: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    color:'var(--purple)',
+    background:'rgba(139,92,246,0.08)',
+    border:'1px solid rgba(139,92,246,0.16)',
+    borderRadius:999,
+    padding:'5px 10px',
+  },
+  closeBtn: {
+    width:42,
+    height:42,
+    borderRadius:12,
+    border:'1px solid var(--border)',
+    background:'rgba(255,255,255,0.92)',
+    color:'var(--text-faint)',
+    cursor:'pointer',
+    flexShrink:0,
+  },
+  dots: {
+    display:'flex',
+    gap:8,
+    padding:'0 28px 16px',
+  },
+  dot: {
+    width:10,
+    height:10,
+    borderRadius:'50%',
+    border:'none',
+    background:'rgba(148,163,184,0.28)',
+    cursor:'pointer',
+  },
+  dotActive: {
+    width:30,
+    borderRadius:999,
+    background:'linear-gradient(90deg, #8b5cf6, #2ab8a3)',
+  },
+  slide: {
+    margin:'0 28px',
+    width:'calc(100% - 56px)',
+    border:'1px solid rgba(139,92,246,0.14)',
+    borderRadius:24,
+    background:'linear-gradient(135deg, rgba(109,141,247,0.05), rgba(139,92,246,0.05) 50%, rgba(42,184,163,0.05))',
+    padding:'34px 30px 28px',
+    textAlign:'left',
+  },
+  slideIcon: {
+    width:76,
+    height:76,
+    borderRadius:22,
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontSize:'2.1rem',
+    marginBottom:20,
+    background:'rgba(255,255,255,0.72)',
+    border:'1px solid rgba(139,92,246,0.14)',
+    boxShadow:'0 16px 30px rgba(15,23,42,0.06)',
+  },
+  slideEyebrow: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.72rem',
+    color:'var(--teal)',
+    textTransform:'uppercase',
+    letterSpacing:'0.14em',
+    marginBottom:10,
+  },
+  slideTitle: {
+    fontFamily:'var(--font-display)',
+    fontSize:'2.15rem',
+    fontWeight:800,
+    lineHeight:1.04,
+    marginBottom:14,
+    maxWidth:680,
+  },
+  slideBody: {
+    fontSize:'1.02rem',
+    lineHeight:1.85,
+    color:'var(--text-dim)',
+    maxWidth:720,
+  },
+  slideSupport: {
+    marginTop:12,
+    fontSize:'0.86rem',
+    lineHeight:1.72,
+    color:'var(--text-faint)',
+    maxWidth:680,
+  },
+  statsGrid: {
+    display:'grid',
+    gridTemplateColumns:'repeat(auto-fit, minmax(170px, 1fr))',
+    gap:12,
+    marginTop:22,
+  },
+  statCard: {
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:16,
+    padding:'15px 15px 13px',
+    background:'rgba(255,255,255,0.74)',
+  },
+  statLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.08em',
+    marginBottom:8,
+  },
+  statValue: {
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    fontSize:'1.05rem',
+  },
+  tapHint: {
+    marginTop:22,
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.1em',
+  },
+  summaryList: {
+    display:'flex',
+    flexDirection:'column',
+    gap:12,
+    marginTop:20,
+    maxWidth:760,
+    color:'var(--text-dim)',
+    fontSize:'0.92rem',
+    lineHeight:1.72,
+  },
+  summaryRow: {
+    display:'flex',
+    gap:10,
+    alignItems:'flex-start',
+  },
+  summaryDot: {
+    width:8,
+    height:8,
+    borderRadius:'50%',
+    marginTop:7,
+    background:'var(--teal)',
+    flexShrink:0,
+  },
+  footer: {
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'space-between',
+    gap:16,
+    padding:'18px 28px 28px',
+    flexWrap:'wrap',
+  },
+  navBtn: {
+    background:'var(--surface2)',
+    border:'1px solid var(--border)',
+    color:'var(--text-dim)',
+    padding:'10px 16px',
+    borderRadius:12,
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+  },
+  nextBtn: {
+    background:'linear-gradient(135deg,var(--teal),#0e9f84)',
+    border:'none',
+    color:'#081019',
+    padding:'10px 18px',
+    borderRadius:12,
+    fontFamily:'var(--font-display)',
+    fontWeight:800,
+    cursor:'pointer',
+    boxShadow:'0 10px 24px rgba(42,184,163,0.2)',
+  },
+  downloadBtn: {
+    background:'var(--surface2)',
+    border:'1px solid rgba(29,39,56,0.14)',
+    color:'var(--gold)',
+    padding:'10px 16px',
+    borderRadius:12,
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    cursor:'pointer',
   },
 }

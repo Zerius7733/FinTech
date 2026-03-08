@@ -8,11 +8,14 @@ USER_FIELD_ORDER = [
     "age",
     "cash_balance",
     "liability",
+    "liability_items",
     "portfolio",
+    "manual_assets",
     "portfolio_value",
     "total_balance",
     "net_worth",
     "income",
+    "income_streams",
     "mortgage",
     "estate",
     "wellness_metrics",
@@ -28,11 +31,14 @@ def _build_default_user_profile(name: str) -> Dict[str, Any]:
         "age": None,
         "cash_balance": 0.0,
         "liability": 0.0,
+        "liability_items": [],
         "portfolio": {"stocks": [], "cryptos": [], "commodities": []},
+        "manual_assets": [],
         "portfolio_value": 0.0,
         "total_balance": 0.0,
         "net_worth": 0.0,
         "income": 0.0,
+        "income_streams": [],
         "mortgage": 0.0,
         "estate": 0.0,
         "wellness_metrics": {
@@ -53,6 +59,9 @@ def normalize_user_profile(user: Dict[str, Any]) -> Dict[str, Any]:
     normalized = dict(user)
     if "age" not in normalized:
         normalized["age"] = None
+    normalized.setdefault("manual_assets", [])
+    normalized.setdefault("liability_items", [])
+    normalized.setdefault("income_streams", [])
     normalized.pop("monthly_expenses", None)
     normalized.pop("essential_monthly_expenses", None)
     return _reorder_user_fields(normalized)

@@ -4,6 +4,13 @@
     "age": 40,
     "cash_balance": 58620.45,
     "liability": 145000.0,
+    "liability_items": [
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 145000.0
+      }
+    ],
     "portfolio": {
       "stocks": [
         {
@@ -105,12 +112,20 @@
         }
       ]
     },
+    "manual_assets": [],
     "portfolio_value": 213920.68,
     "total_balance": 272541.13,
-    "net_worth": 127541.13,
+    "net_worth": 123341.13,
     "income": 9800.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 9800.0
+      }
+    ],
     "mortgage": 145000.0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 5.98,
       "liquidity_score": 99.69,
@@ -129,6 +144,7 @@
     "age": 26,
     "cash_balance": 6400.75,
     "liability": 6400.75,
+    "liability_items": [],
     "portfolio": {
       "stocks": [
         {
@@ -173,10 +189,12 @@
         }
       ]
     },
+    "manual_assets": [],
     "portfolio_value": 0.0,
     "total_balance": 6400.75,
     "net_worth": 0.0,
     "income": 4000.0,
+    "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -197,6 +215,7 @@
     "age": 28,
     "cash_balance": 9000.2,
     "liability": 9000.2,
+    "liability_items": [],
     "portfolio": {
       "stocks": [
         {
@@ -247,10 +266,12 @@
         }
       ]
     },
+    "manual_assets": [],
     "portfolio_value": 7147.84,
     "total_balance": 16148.04,
     "net_worth": 7147.84,
     "income": 3000.0,
+    "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -271,6 +292,7 @@
     "age": 23,
     "cash_balance": 7350.4,
     "liability": 7350.4,
+    "liability_items": [],
     "portfolio": {
       "stocks": [
         {
@@ -305,10 +327,12 @@
         }
       ]
     },
+    "manual_assets": [],
     "portfolio_value": 7754.45,
     "total_balance": 15104.85,
     "net_worth": 7754.45,
     "income": 4500.0,
+    "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -329,6 +353,7 @@
     "age": 35,
     "cash_balance": 12600.25,
     "liability": 12600.25,
+    "liability_items": [],
     "portfolio": {
       "stocks": [
         {
@@ -363,10 +388,12 @@
         }
       ]
     },
+    "manual_assets": [],
     "portfolio_value": 11167.34,
     "total_balance": 23767.59,
     "net_worth": 11167.34,
     "income": 4600.0,
+    "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -387,6 +414,7 @@
     "age": 37,
     "cash_balance": 8490.1,
     "liability": 8490.1,
+    "liability_items": [],
     "portfolio": {
       "stocks": [
         {
@@ -421,10 +449,12 @@
         }
       ]
     },
+    "manual_assets": [],
     "portfolio_value": 6701.15,
     "total_balance": 15191.25,
     "net_worth": 6701.15,
     "income": 4750.0,
+    "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -445,6 +475,7 @@
     "age": 55,
     "cash_balance": 3350.75,
     "liability": 3350.75,
+    "liability_items": [],
     "portfolio": {
       "stocks": [
         {
@@ -479,10 +510,12 @@
         }
       ]
     },
+    "manual_assets": [],
     "portfolio_value": 7261.4,
     "total_balance": 10612.15,
     "net_worth": 7261.4,
     "income": 4800.0,
+    "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -503,6 +536,7 @@
     "age": 36,
     "cash_balance": 9150.5,
     "liability": 9150.5,
+    "liability_items": [],
     "portfolio": {
       "stocks": [
         {
@@ -537,10 +571,12 @@
         }
       ]
     },
+    "manual_assets": [],
     "portfolio_value": 9748.97,
     "total_balance": 18899.47,
     "net_worth": 9748.97,
     "income": 5200.0,
+    "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -561,6 +597,7 @@
     "age": 29,
     "cash_balance": 2940.25,
     "liability": 2940.25,
+    "liability_items": [],
     "portfolio": {
       "stocks": [
         {
@@ -595,10 +632,12 @@
         }
       ]
     },
+    "manual_assets": [],
     "portfolio_value": 8606.56,
     "total_balance": 11546.81,
     "net_worth": 8606.56,
     "income": 3500.0,
+    "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -619,6 +658,7 @@
     "age": 21,
     "cash_balance": 7700.0,
     "liability": 7700.0,
+    "liability_items": [],
     "portfolio": {
       "stocks": [
         {
@@ -679,10 +719,12 @@
       ],
       "commodities": []
     },
+    "manual_assets": [],
     "portfolio_value": 37747.34,
     "total_balance": 45447.34,
     "net_worth": 37747.34,
     "income": 4900.0,
+    "income_streams": [],
     "mortgage": 0.0,
     "estate": 0.0,
     "wellness_metrics": {

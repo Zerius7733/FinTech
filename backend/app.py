@@ -1,6 +1,7 @@
 import asyncio,os
 import json
 import time
+import uuid
 from dotenv import load_dotenv
 from collections import defaultdict, deque
 from pathlib import Path
@@ -180,6 +181,102 @@ def _enforce_insights_rate_limit(subject: str) -> None:
     bucket.append(now)
 
 
+def _sum_portfolio_positions(user: Dict[str, Any]) -> float:
+    portfolio = user.get("portfolio", {})
+    if isinstance(portfolio, list):
+        positions = portfolio
+    elif isinstance(portfolio, dict):
+        positions = []
+        for bucket in ("stocks", "cryptos", "commodities"):
+            bucket_positions = portfolio.get(bucket, [])
+            if isinstance(bucket_positions, list):
+                positions.extend(bucket_positions)
+    else:
+        positions = []
+    return round(sum(float(position.get("market_value", 0.0) or 0.0) for position in positions), 2)
+
+
+def _normalize_manual_asset_category(value: str) -> str:
+    normalized = (value or "").strip().lower().replace("-", "_").replace(" ", "_")
+    allowed = {"real_estate", "business", "private_asset", "other"}
+    if normalized not in allowed:
+        raise ValueError("asset category must be one of: real_estate, business, private_asset, other")
+    return normalized
+
+
+def _ensure_financial_collections(user: Dict[str, Any]) -> Dict[str, Any]:
+    manual_assets = user.get("manual_assets")
+    if not isinstance(manual_assets, list):
+        manual_assets = []
+    liability_items = user.get("liability_items")
+    if not isinstance(liability_items, list):
+        liability_items = []
+    income_streams = user.get("income_streams")
+    if not isinstance(income_streams, list):
+        income_streams = []
+
+    if not manual_assets and float(user.get("estate", 0.0) or 0.0) > 0:
+        manual_assets = [{
+            "id": "estate-seed",
+            "label": "Property",
+            "category": "real_estate",
+            "value": round(float(user.get("estate", 0.0) or 0.0), 2),
+        }]
+    if not liability_items and float(user.get("liability", 0.0) or 0.0) > 0:
+        liability_items = [{
+            "id": "liability-seed",
+            "label": "Existing Liabilities",
+            "amount": round(float(user.get("liability", 0.0) or 0.0), 2),
+        }]
+    if not income_streams and float(user.get("income", 0.0) or 0.0) > 0:
+        income_streams = [{
+            "id": "income-seed",
+            "label": "Primary Income",
+            "monthly_amount": round(float(user.get("income", 0.0) or 0.0), 2),
+        }]
+
+    user["manual_assets"] = manual_assets
+    user["liability_items"] = liability_items
+    user["income_streams"] = income_streams
+    return user
+
+
+def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
+    user = _ensure_financial_collections(user)
+    manual_assets = user.get("manual_assets", [])
+    liability_items = user.get("liability_items", [])
+    income_streams = user.get("income_streams", [])
+
+    real_estate_value = round(sum(
+        float(item.get("value", 0.0) or 0.0)
+        for item in manual_assets
+        if item.get("category") == "real_estate"
+    ), 2)
+    non_estate_asset_value = round(sum(
+        float(item.get("value", 0.0) or 0.0)
+        for item in manual_assets
+        if item.get("category") != "real_estate"
+    ), 2)
+    liability_total = round(sum(float(item.get("amount", 0.0) or 0.0) for item in liability_items), 2)
+    income_total = round(sum(float(item.get("monthly_amount", 0.0) or 0.0) for item in income_streams), 2)
+    portfolio_total = _sum_portfolio_positions(user)
+    cash_balance = round(float(user.get("cash_balance", 0.0) or 0.0), 2)
+    expenses = round(float(user.get("expenses", 0.0) or 0.0), 2)
+
+    user["estate"] = real_estate_value
+    user["liability"] = liability_total
+    user["income"] = income_total
+    user["portfolio_value"] = portfolio_total
+    user["total_balance"] = round(cash_balance + portfolio_total + real_estate_value + non_estate_asset_value, 2)
+    user["net_worth"] = round(user["total_balance"] - liability_total - expenses, 2)
+
+    wellness_result = api.calculate_user_wellness(user)
+    user["wellness_metrics"] = wellness_result["wellness_metrics"]
+    user["financial_wellness_score"] = wellness_result["financial_wellness_score"]
+    user["financial_stress_index"] = wellness_result["financial_stress_index"]
+    return user
+
+
 class UserRiskUpdateRequest(BaseModel):
     user_id: str
     risk_profile: str = Field(
@@ -196,6 +293,23 @@ class RetirementPlanRequest(BaseModel):
     retirement_age: int = Field(..., ge=19, le=100)
     monthly_expenses: float = Field(..., ge=0)
     essential_monthly_expenses: float = Field(..., ge=0)
+
+
+class ManualAssetCreateRequest(BaseModel):
+    label: str = Field(..., min_length=1, max_length=80)
+    category: str = Field(..., min_length=1, max_length=40)
+    value: float = Field(..., ge=0)
+
+
+class LiabilityItemCreateRequest(BaseModel):
+    label: str = Field(..., min_length=1, max_length=80)
+    amount: float = Field(..., ge=0)
+
+
+class IncomeStreamCreateRequest(BaseModel):
+    label: str = Field(..., min_length=1, max_length=80)
+    monthly_amount: float = Field(..., ge=0)
+
 
 class RegisterRequest(BaseModel):
     username: str
@@ -481,11 +595,204 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
         user = data.get(user_id)
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
         return {"status": "ok", "user_id": user_id, "user": user}
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read user failed: {exc}") from exc
+
+
+@app.get(
+    "/users/{user_id}/financials",
+    tags=["Users"],
+    summary="Get editable financial items by user ID",
+)
+def get_user_financial_items(user_id: str) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "manual_assets": user.get("manual_assets", []),
+            "liability_items": user.get("liability_items", []),
+            "income_streams": user.get("income_streams", []),
+            "summary": {
+                "income": user.get("income", 0.0),
+                "liability": user.get("liability", 0.0),
+                "estate": user.get("estate", 0.0),
+                "portfolio_value": user.get("portfolio_value", 0.0),
+                "net_worth": user.get("net_worth", 0.0),
+            },
+            "user": user,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"read financial items failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/financials/assets",
+    tags=["Users"],
+    summary="Add a manual asset to a user profile",
+)
+def add_user_manual_asset(user_id: str, payload: ManualAssetCreateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        item = {
+            "id": str(uuid.uuid4()),
+            "label": payload.label.strip(),
+            "category": _normalize_manual_asset_category(payload.category),
+            "value": round(float(payload.value), 2),
+        }
+        user["manual_assets"].append(item)
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"asset create failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/financials/assets/{item_id}",
+    tags=["Users"],
+    summary="Remove a manual asset from a user profile",
+)
+def remove_user_manual_asset(user_id: str, item_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        before = len(user["manual_assets"])
+        user["manual_assets"] = [item for item in user["manual_assets"] if item.get("id") != item_id]
+        if len(user["manual_assets"]) == before:
+            raise HTTPException(status_code=404, detail=f"asset item '{item_id}' not found")
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"asset delete failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/financials/liabilities",
+    tags=["Users"],
+    summary="Add a liability item to a user profile",
+)
+def add_user_liability_item(user_id: str, payload: LiabilityItemCreateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        item = {
+            "id": str(uuid.uuid4()),
+            "label": payload.label.strip(),
+            "amount": round(float(payload.amount), 2),
+        }
+        user["liability_items"].append(item)
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"liability create failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/financials/liabilities/{item_id}",
+    tags=["Users"],
+    summary="Remove a liability item from a user profile",
+)
+def remove_user_liability_item(user_id: str, item_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        before = len(user["liability_items"])
+        user["liability_items"] = [item for item in user["liability_items"] if item.get("id") != item_id]
+        if len(user["liability_items"]) == before:
+            raise HTTPException(status_code=404, detail=f"liability item '{item_id}' not found")
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"liability delete failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/financials/income",
+    tags=["Users"],
+    summary="Add an income stream to a user profile",
+)
+def add_user_income_stream(user_id: str, payload: IncomeStreamCreateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        item = {
+            "id": str(uuid.uuid4()),
+            "label": payload.label.strip(),
+            "monthly_amount": round(float(payload.monthly_amount), 2),
+        }
+        user["income_streams"].append(item)
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"income create failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/financials/income/{item_id}",
+    tags=["Users"],
+    summary="Remove an income stream from a user profile",
+)
+def remove_user_income_stream(user_id: str, item_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        before = len(user["income_streams"])
+        user["income_streams"] = [item for item in user["income_streams"] if item.get("id") != item_id]
+        if len(user["income_streams"]) == before:
+            raise HTTPException(status_code=404, detail=f"income stream '{item_id}' not found")
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"income delete failed: {exc}") from exc
 
 
 @app.post(

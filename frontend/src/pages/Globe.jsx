@@ -197,6 +197,27 @@ function PriceChart({ mtd, nodeColor }) {
 }
 
 function WellnessRing({ score, size = 84 }) {
+  const [animatedScore, setAnimatedScore] = useState(0)
+
+  useEffect(() => {
+    let frameId = 0
+    let start = null
+    const target = Math.max(0, Math.min(100, Number(score) || 0))
+    const duration = 1400
+
+    const tick = ts => {
+      if (start == null) start = ts
+      const progress = Math.min((ts - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setAnimatedScore(Math.round(target * eased))
+      if (progress < 1) frameId = requestAnimationFrame(tick)
+    }
+
+    setAnimatedScore(0)
+    frameId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frameId)
+  }, [score])
+
   const r     = size * 0.42
   const circ  = 2 * Math.PI * r
   const color = score >= 75 ? '#34d399' : score >= 55 ? '#c9a84c' : '#f87171'
@@ -211,10 +232,11 @@ function WellnessRing({ score, size = 84 }) {
         </defs>
         <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={size*0.085} />
         <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={`url(#wg_${score})`} strokeWidth={size*0.085}
-          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - score/100)} />
+          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - animatedScore/100)}
+          style={{ transition: 'stroke-dashoffset 0.08s linear' }} />
       </svg>
       <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:size*0.24, color:'var(--text)', lineHeight:1 }}>{score}</span>
+        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:size*0.24, color:'var(--text)', lineHeight:1 }}>{animatedScore}</span>
         <span style={{ fontFamily:'var(--font-mono)', fontSize:size*0.11, color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.07em', marginTop:2 }}>score</span>
       </div>
     </div>
@@ -1326,12 +1348,19 @@ export default function Globe() {
             { label:'Wellness Score',
               val: userProfile?.financial_wellness_score != null ? `${Math.round(userProfile.financial_wellness_score)} / 100` : '— / 100',
               sub: userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'Excellent':userProfile.financial_wellness_score>=55?'On Track':userProfile.financial_wellness_score>=35?'Needs Work':'At Risk') : 'diversification',
-              c:   userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'var(--green)':userProfile.financial_wellness_score>=55?'#d4a63a':userProfile.financial_wellness_score>=35?'var(--orange)':'var(--red)') : 'var(--teal)' },
+              c:   userProfile?.financial_wellness_score != null ? (userProfile.financial_wellness_score>=75?'var(--green)':userProfile.financial_wellness_score>=55?'#d4a63a':userProfile.financial_wellness_score>=35?'var(--orange)':'var(--red)') : 'var(--teal)',
+              ring: true },
             { label:'Active Positions', val: String(activePositions), sub: userProfile ? `${activePositions} holdings` : 'across 12 portfolios', c:'var(--gold)' },
           ].map((s,i) => (
             <div key={s.label} style={{ ...S.statItem, borderRight: i<3 ? '1px solid var(--border)' : 'none' }}>
               <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:4 }}>{s.label}</div>
-              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.15rem', color:s.c }}>{s.val}</div>
+              {s.ring ? (
+                <div style={{ display:'flex', justifyContent:'center', padding:'6px 0 4px' }}>
+                  <WellnessRing score={userProfile?.financial_wellness_score != null ? Math.round(userProfile.financial_wellness_score) : 0} size={74} />
+                </div>
+              ) : (
+                <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.15rem', color:s.c }}>{s.val}</div>
+              )}
               <div style={{ fontSize:'0.7rem', color:'var(--text-faint)', marginTop:2 }}>{s.sub}</div>
             </div>
           ))}
