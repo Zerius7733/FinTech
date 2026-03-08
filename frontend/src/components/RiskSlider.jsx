@@ -77,9 +77,6 @@ export default function RiskSlider({ initialPct = 50, onChange }) {
       <div style={s.detail}>
         <div style={s.detailLeft}>
           <div style={s.detailTitle}>{payload.name} Portfolio</div>
-          <div style={s.detailDesc}>
-            Wellness ratio: Diversification {payload.diversification}% / Liquidity {payload.liquidity}% / Debt-Income {payload.debt}%
-          </div>
         </div>
         <div style={s.impactRow}>
           {[

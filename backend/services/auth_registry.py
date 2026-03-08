@@ -43,7 +43,14 @@ def _load_login_rows(login_csv_path: Path) -> list[Dict[str, str]]:
         return []
     with open(login_csv_path, "r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        return [row for row in reader]
+        rows: list[Dict[str, str]] = []
+        for row in reader:
+            normalized: Dict[str, str] = {}
+            for key, value in (row or {}).items():
+                clean_key = str(key or "").lstrip("\ufeff")
+                normalized[clean_key] = value
+            rows.append(normalized)
+        return rows
 
 
 def _ensure_login_csv_exists(login_csv_path: Path) -> None:
@@ -132,7 +139,10 @@ def authenticate_login_user(login_csv_path: Path, username: str, password: str) 
 
     target_row = None
     for row in rows:
-        if (row.get("username") or "").strip().lower() == normalized_username.lower():
+        username_value = (row.get("username") or "").strip().lower()
+        email_value = (row.get("email") or "").strip().lower()
+        user_id_value = (row.get("user_id") or "").strip().lower()
+        if normalized_username.lower() in {username_value, email_value, user_id_value}:
             target_row = row
             break
 

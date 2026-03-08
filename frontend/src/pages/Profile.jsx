@@ -3565,11 +3565,14 @@ const fm = {
   },
   panel: {
     width:'min(860px, 100%)',
+    maxHeight:'90vh',
     background:'linear-gradient(180deg, var(--surface), var(--surface2))',
     border:'1px solid var(--border)',
     borderRadius:24,
     boxShadow:'0 36px 90px rgba(0,0,0,0.45)',
     overflow:'hidden',
+    display:'flex',
+    flexDirection:'column',
   },
   topBar: { height:2, background:'linear-gradient(90deg, var(--teal), #8b5cf6, var(--gold))' },
   header: {
@@ -3624,10 +3627,13 @@ const fm = {
     color:'var(--teal)',
   },
   body: {
+    flex:1,
     padding:'0 28px 28px',
     display:'flex',
     flexDirection:'column',
     gap:18,
+    overflowY:'auto',
+    minHeight:0,
   },
   sectionTitle: {
     fontFamily:'var(--font-display)',

@@ -3,12 +3,14 @@ import csv
 import json
 import time
 import uuid
+import io
 from dotenv import load_dotenv
 from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import AliasChoices, BaseModel, Field
 import backend.services.api_deps as api
 
@@ -28,6 +30,8 @@ INSIGHTS_RATE_LIMIT_ENABLED = os.getenv("INSIGHTS_RATE_LIMIT_ENABLED", "1").stri
 INSIGHTS_RATE_LIMIT_WINDOW_SECONDS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_WINDOW_SECONDS", "3600")))
 INSIGHTS_RATE_LIMIT_MAX_REQUESTS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_MAX_REQUESTS", "10")))
 _INSIGHTS_RATE_LIMIT_BUCKETS: dict[str, deque[float]] = defaultdict(deque)
+YOUTUBE_HELP_VIDEO_URL = "https://youtu.be/1yTlB7DJeT8"
+YOUTUBE_HELP_EMBED_URL = "https://www.youtube.com/embed/1yTlB7DJeT8"
 
 app = FastAPI(
     title="FinTech Wellness API",
@@ -463,6 +467,28 @@ def _read_user_csv_profile(user_id: str) -> Dict[str, Any]:
     return {}
 
 
+def _load_users_csv() -> tuple[list[Dict[str, str]], list[str]]:
+    if ASSETS_CSV_PATH.exists():
+        with open(ASSETS_CSV_PATH, "r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            rows = [dict(row) for row in reader]
+            fieldnames = list(reader.fieldnames or [])
+    else:
+        rows = []
+        fieldnames = []
+    return rows, fieldnames
+
+
+def _write_users_csv(rows: list[Dict[str, str]], fieldnames: list[str]) -> None:
+    if not fieldnames:
+        return
+    with open(ASSETS_CSV_PATH, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({key: row.get(key, "") for key in fieldnames})
+
+
 class UserRiskUpdateRequest(BaseModel):
     user_id: str
     risk_profile: float | str = Field(
@@ -649,6 +675,15 @@ class InsightsResponse(BaseModel):
 @app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/app/content/video", tags=["Health"], summary="Get app help video URL")
+def get_app_help_video() -> Dict[str, str]:
+    return {
+        "status": "ok",
+        "youtube_url": YOUTUBE_HELP_VIDEO_URL,
+        "embed_url": YOUTUBE_HELP_EMBED_URL,
+    }
 
 
 @app.post("/auth/login", tags=["Users"], summary="Authenticate a user")
@@ -905,6 +940,121 @@ def get_profile_details(user_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"profile details read failed: {exc}") from exc
+
+
+@app.get(
+    "/users/{user_id}/danger/export",
+    tags=["Users"],
+    summary="Export current portfolio holdings as CSV",
+)
+def export_user_portfolio_csv(user_id: str) -> Response:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        portfolio = user.get("portfolio", {})
+        rows: list[Dict[str, Any]] = []
+        if isinstance(portfolio, dict):
+            for asset_class in ("stocks", "cryptos", "commodities"):
+                entries = portfolio.get(asset_class, [])
+                if not isinstance(entries, list):
+                    continue
+                for item in entries:
+                    qty = float(item.get("qty", 0.0) or 0.0)
+                    avg_price = float(item.get("avg_price", 0.0) or 0.0)
+                    current_price = float(item.get("current_price", 0.0) or 0.0)
+                    market_value = float(item.get("market_value", qty * current_price) or 0.0)
+                    rows.append(
+                        {
+                            "user_id": user_id,
+                            "asset_class": asset_class,
+                            "symbol": str(item.get("symbol", "") or ""),
+                            "name": str(item.get("name", "") or ""),
+                            "qty": round(qty, 8),
+                            "avg_price": round(avg_price, 6),
+                            "current_price": round(current_price, 6),
+                            "market_value": round(market_value, 2),
+                        }
+                    )
+
+        output = io.StringIO()
+        headers = ["user_id", "asset_class", "symbol", "name", "qty", "avg_price", "current_price", "market_value"]
+        writer = csv.DictWriter(output, fieldnames=headers)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+        csv_data = output.getvalue()
+        filename = f"{user_id}_portfolio_export.csv"
+        return Response(
+            content=csv_data,
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"portfolio export failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/danger/portfolio",
+    tags=["Users"],
+    summary="Delete all portfolio holdings for a user",
+)
+def delete_user_portfolio_data(user_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        user["portfolio"] = {"stocks": [], "cryptos": [], "commodities": []}
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+
+        history_path = USER_PORTFOLIO_DIR / f"{user_id}.json"
+        if history_path.exists():
+            history_path.unlink()
+
+        return {"status": "ok", "user_id": user_id, "message": "portfolio data deleted"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"portfolio delete failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/danger/account",
+    tags=["Users"],
+    summary="Permanently delete account and all related data",
+)
+def delete_user_account(user_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        if not isinstance(users.get(user_id), dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        users.pop(user_id, None)
+        _write_users_data(users)
+
+        rows, fieldnames = _load_users_csv()
+        if fieldnames:
+            rows = [row for row in rows if (row.get("user_id") or "").strip() != user_id]
+            _write_users_csv(rows, fieldnames)
+
+        history_path = USER_PORTFOLIO_DIR / f"{user_id}.json"
+        if history_path.exists():
+            history_path.unlink()
+
+        return {"status": "ok", "user_id": user_id, "message": "account deleted"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"account delete failed: {exc}") from exc
 
 
 @app.get("/users", tags=["Users"], summary="Get all users")

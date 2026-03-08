@@ -777,11 +777,11 @@
       "cryptos": [
         {
           "symbol": "BTC-USD",
-          "qty": 2.0,
-          "avg_price": 67241.0938,
-          "current_price": 67063.4531,
-          "market_value": 134126.91,
-          "name": "BTC"
+          "qty": 20.0,
+          "avg_price": 67768.87,
+          "current_price": 67916.6345,
+          "name": "Bitcoin",
+          "market_value": 1358332.69
         }
       ],
       "commodities": []
@@ -800,9 +800,9 @@
         "value": 100000.0
       }
     ],
-    "portfolio_value": 134641.83,
-    "total_balance": 244741.83,
-    "net_worth": 234741.83,
+    "portfolio_value": 1358847.61,
+    "total_balance": 1468947.61,
+    "net_worth": 1458947.61,
     "income": 5000.0,
     "expenses": 0.0,
     "income_streams": [
@@ -817,14 +817,14 @@
     "wellness_metrics": {
       "liquidity_months": 2.02,
       "liquidity_score": 33.67,
-      "diversification_hhi": 0.9924,
-      "diversification_score": 1.6,
+      "diversification_hhi": 0.9992,
+      "diversification_score": 0.16,
       "debt_income_ratio": 0.1667,
       "debt_income_score": 100.0
     },
     "risk_profile": 15.0,
-    "financial_wellness_score": 50.2,
-    "financial_stress_index": 46.21,
+    "financial_wellness_score": 50.05,
+    "financial_stress_index": 46.5,
     "email": "zerius@example.com",
     "country": "Singapore"
   },
@@ -870,46 +870,5 @@
     "financial_stress_index": 100.0,
     "email": "Zerius@awd.drg",
     "country": "Singapore"
-  },
-  "u013": {
-    "name": "ahbeng heng",
-    "age": null,
-    "cash_balance": 0.0,
-    "liability": 0.0,
-    "liability_items": [],
-    "portfolio": {
-      "stocks": [],
-      "cryptos": [
-        {
-          "symbol": "BTC-USD",
-          "qty": 20.0,
-          "avg_price": 67768.87,
-          "current_price": 67916.63,
-          "name": "Bitcoin",
-          "market_value": 1358332.6
-        }
-      ],
-      "commodities": []
-    },
-    "manual_assets": [],
-    "portfolio_value": 1358332.6,
-    "total_balance": 1358332.6,
-    "net_worth": 1358332.6,
-    "income": 0.0,
-    "expenses": 0.0,
-    "income_streams": [],
-    "mortgage": 0,
-    "estate": 0.0,
-    "wellness_metrics": {
-      "liquidity_months": 0.0,
-      "liquidity_score": 0.0,
-      "diversification_hhi": 1.0,
-      "diversification_score": 0.0,
-      "debt_income_ratio": 999.0,
-      "debt_income_score": 0.0
-    },
-    "risk_profile": 100.0,
-    "financial_wellness_score": 0.0,
-    "financial_stress_index": 100.0
   }
 }

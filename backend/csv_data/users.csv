@@ -1,4 +1,4 @@
-﻿user_id,username,password,email,name,dbs,uob,ocbc,other_banks,liability,income,estate,expense,age,age_group,country,investor_type,currency
+user_id,username,password,email,name,dbs,uob,ocbc,other_banks,liability,income,estate,expense,age,age_group,country,investor_type,currency
 u001,Alice,password,alice@gmail.com,Alice Tan,152000.50,0,0,1400.00,45_000,5000.00,500_000.00,1000.00,34,30-44,Singapore,Individual Investor,SGD
 u002,Brandon,password,brandon@example.com,Brandon Lim,0,2300.00,0,4100.75,6400.75,4000.00,0,1500.00,27,18-29,,,
 u003,Cheryl,password,cheryl@example.com,Cheryl Ng,7800.20,1200.00,0,0,9000.20,3000.00,0,2000.00,29,18-29,,,
@@ -11,5 +11,3 @@ u009,Isabella,password,isabella@example.com,Isabella Goh,0,1200.00,980.25,760.00
 u010,Jason,password,jason@example.com,Jason Teo,0,0,3500.00,4200.00,7700.00,4900.00,0,1800.00,29,18-29,,,
 u011,Zerius,password,zerius@example.com,Zerius,0,0,100.00,10000.00,10000.00,5000.00,100000.00,0,25,18-29,Singapore,Individual Investor,USD
 u012,orangi,password,Zerius@awd.drg,orangi juice,0,0,0,0.00,0.00,0.00,0.00,0,33,30-44,Singapore,,
-u013,ah,passowrd,ahah@ah.ah,ahbeng heng,0,0,0,0.00,0.00,0.00,0.00,0,31,30-44,Singapore,,
-

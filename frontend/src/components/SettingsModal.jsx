@@ -7,7 +7,6 @@ import { refreshPage } from '../utils/refreshPage.js'
 const API = 'http://localhost:8000'
 const GLOBE_PREFS_KEY = 'ws_globe_prefs'
 const GLOBE_PREFS_EVENT = 'ws:globe-prefs'
-const YOUTUBE_EMBED_KEY = 'ws_youtube_embed_url'
 
 function normalizeRiskProfileValue(value) {
   if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, Math.min(100, value))
@@ -20,37 +19,12 @@ function normalizeRiskProfileValue(value) {
   return 50
 }
 
-function toYouTubeEmbedUrl(rawUrl) {
-  const value = String(rawUrl || '').trim()
-  if (!value) return ''
-  try {
-    const url = new URL(value)
-    const host = url.hostname.replace(/^www\./i, '').toLowerCase()
-    if (host === 'youtu.be') {
-      const id = url.pathname.split('/').filter(Boolean)[0]
-      return id ? `https://www.youtube.com/embed/${id}` : ''
-    }
-    if (host === 'youtube.com' || host === 'm.youtube.com') {
-      if (url.pathname === '/watch') {
-        const id = url.searchParams.get('v')
-        return id ? `https://www.youtube.com/embed/${id}` : ''
-      }
-      const parts = url.pathname.split('/').filter(Boolean)
-      if (parts[0] === 'embed' && parts[1]) return `https://www.youtube.com/embed/${parts[1]}`
-      if (parts[0] === 'shorts' && parts[1]) return `https://www.youtube.com/embed/${parts[1]}`
-    }
-  } catch {
-    return ''
-  }
-  return ''
-}
-
 const SECTIONS = [
   { key: 'risk',     icon: '\u2696\uFE0F', label: 'Risk Profile' },
   { key: 'profile',  icon: '\u{1F464}', label: 'Profile Details' },
   { key: 'display',  icon: '\u{1F3A8}', label: 'Appearance' },
   { key: 'security', icon: '\u{1F510}', label: 'Security & Privacy' },
-  { key: 'data',     icon: '\u{1F4E1}', label: 'Data & API' },
+  { key: 'data',     icon: '\u{1F4E1}', label: 'Browser Extension' },
   { key: 'help',     icon: '\u2753', label: 'Help Centre' },
 ]
 
@@ -124,7 +98,7 @@ function Card({ title, icon, children }) {
 }
 
 export default function SettingsModal({ onClose }) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [active, setActive]             = useState('risk')
   const [saved, setSaved]               = useState(false)
   const [unsaved, setUnsaved]           = useState(false)
@@ -132,8 +106,7 @@ export default function SettingsModal({ onClose }) {
   const [riskLevel, setRiskLevel]       = useState(null)
   const [profileRisk, setProfileRisk]   = useState(null)
   const [profileLoaded, setProfileLoaded] = useState(false)
-  const [toggles, setToggles]           = useState({ twofa: true, biometric: true, bgSync: true, labels: true, pulses: true })
-  const [selects, setSelects]           = useState({ sessionTimeout: '1 hour', syncFreq: 'Every 15 minutes', currency: 'SGD', numFmt: '$1,234,567' })
+  const [toggles, setToggles]           = useState({ labels: true, pulses: true })
   const [displayPrefs, setDisplayPrefs] = useState(() => {
     try {
       const parsed = JSON.parse(localStorage.getItem(GLOBE_PREFS_KEY) || '{}')
@@ -150,9 +123,11 @@ export default function SettingsModal({ onClose }) {
   const [extensionStatus, setExtensionStatus] = useState(
     'Automatic install is not supported by the browser, so use the guide below to load the extension manually.'
   )
-  const [youtubeUrl, setYoutubeUrl] = useState(() => localStorage.getItem(YOUTUBE_EMBED_KEY) || '')
+  const [youtubeEmbedUrl, setYoutubeEmbedUrl] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [dangerBusy, setDangerBusy] = useState('')
+  const [dangerMsg, setDangerMsg] = useState('')
   const [profileForm, setProfileForm] = useState({
     firstName: '',
     lastName: '',
@@ -168,8 +143,6 @@ export default function SettingsModal({ onClose }) {
     setProfileForm(prev => ({ ...prev, [key]: value }))
     mark()
   }
-  const setToggle = (k, v) => { setToggles(p => ({ ...p, [k]: v })); mark() }
-  const setSelect = (k, v) => { setSelects(p => ({ ...p, [k]: v })); mark() }
   const updateDisplayPref = (key, value) => {
     const nextValue = Math.max(0, Math.min(100, Number(value) || 0))
     setDisplayPrefs(prev => {
@@ -200,8 +173,14 @@ export default function SettingsModal({ onClose }) {
   }, [displayPrefs.labels, displayPrefs.pulses])
 
   useEffect(() => {
-    localStorage.setItem(YOUTUBE_EMBED_KEY, youtubeUrl)
-  }, [youtubeUrl])
+    fetch(`${API}/app/content/video`)
+      .then(r => r.json())
+      .then(data => {
+        const embed = String(data?.embed_url || '')
+        if (embed) setYoutubeEmbedUrl(embed)
+      })
+      .catch(() => {})
+  }, [])
 
   // Load user's current risk profile
   useEffect(() => {
@@ -292,6 +271,81 @@ export default function SettingsModal({ onClose }) {
       setTimeout(() => setSaved(false), 2000)
     }
     if (didPersist) refreshPage()
+  }
+
+  const downloadCsv = (filename, text) => {
+    const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportPortfolio = async () => {
+    if (!user?.user_id || dangerBusy) return
+    setDangerBusy('export')
+    setDangerMsg('')
+    try {
+      const res = await fetch(`${API}/users/${user.user_id}/danger/export`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail || `export failed (${res.status})`)
+      }
+      const contentDisposition = res.headers.get('content-disposition') || ''
+      const filenameMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i)
+      const filename = filenameMatch?.[1] || `${user.user_id}_portfolio_export.csv`
+      const text = await res.text()
+      downloadCsv(filename, text)
+      setDangerMsg('Portfolio CSV exported.')
+    } catch (err) {
+      setDangerMsg(err?.message || 'Portfolio export failed.')
+    } finally {
+      setDangerBusy('')
+    }
+  }
+
+  const handleDeletePortfolio = async () => {
+    if (!user?.user_id || dangerBusy) return
+    if (!window.confirm('Delete all portfolio data for this account? This cannot be undone.')) return
+    setDangerBusy('delete')
+    setDangerMsg('')
+    try {
+      const res = await fetch(`${API}/users/${user.user_id}/danger/portfolio`, { method: 'DELETE' })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail || `delete failed (${res.status})`)
+      }
+      setDangerMsg('Portfolio data deleted.')
+      refreshPage()
+    } catch (err) {
+      setDangerMsg(err?.message || 'Portfolio delete failed.')
+    } finally {
+      setDangerBusy('')
+    }
+  }
+
+  const handleCloseAccount = async () => {
+    if (!user?.user_id || dangerBusy) return
+    if (!window.confirm('Close account and delete all data permanently?')) return
+    setDangerBusy('close')
+    setDangerMsg('')
+    try {
+      const res = await fetch(`${API}/users/${user.user_id}/danger/account`, { method: 'DELETE' })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail || `close account failed (${res.status})`)
+      }
+      logout()
+      onClose()
+      window.location.assign('/')
+    } catch (err) {
+      setDangerMsg(err?.message || 'Account close failed.')
+      setDangerBusy('')
+    }
   }
 
   const extensionPath = 'FinTech/chrome-extension'
@@ -487,24 +541,13 @@ export default function SettingsModal({ onClose }) {
           {active === 'security' && (
             <div style={s.content}>
               <p style={s.pageSub}>Manage your account security, 2FA, and data privacy preferences.</p>
-              <Card title="Authentication" icon="🔐">
-                <Row name="Two-factor authentication" desc="Require a second factor (authenticator app) on every login.">
-                  <Toggle on={toggles.twofa} onChange={v => setToggle('twofa', v)} />
-                </Row>
-                <Row name="Biometric login" desc="Allow Face ID or fingerprint for quick access on mobile.">
-                  <Toggle on={toggles.biometric} onChange={v => setToggle('biometric', v)} />
-                </Row>
-                <Row name="Session timeout" desc="Automatically log out after a period of inactivity.">
-                  <SelInput value={selects.sessionTimeout} opts={['15 minutes','1 hour','4 hours','Never']} onChange={v => setSelect('sessionTimeout', v)} />
-                </Row>
-              </Card>
               <Card title="Danger Zone" icon="⚠️">
                 {[
-                  { title: 'Export portfolio data',     desc: 'Download a full CSV export of your portfolio history.',         btn: 'Export CSV',      red: false },
-                  { title: 'Delete all portfolio data', desc: 'Permanently erase all portfolio data. Cannot be undone.',        btn: 'Delete Data',     red: true  },
-                  { title: 'Close account',             desc: 'Permanently delete your WealthSphere account and all data.',     btn: 'Close Account',   red: true  },
+                  { key: 'export', title: 'Export portfolio data', desc: 'Download a full CSV export of your current portfolio holdings.', btn: 'Export CSV', red: false, onClick: handleExportPortfolio },
+                  { key: 'delete', title: 'Delete all portfolio data', desc: 'Permanently erase all portfolio holdings and history. Cannot be undone.', btn: 'Delete Data', red: true, onClick: handleDeletePortfolio },
+                  { key: 'close', title: 'Close account', desc: 'Permanently delete your WealthSphere account and all data.', btn: 'Close Account', red: true, onClick: handleCloseAccount },
                 ].map(d => (
-                  <div key={d.title} style={{ background: d.red ? 'rgba(248,113,113,0.04)' : 'var(--surface2)',
+                  <div key={d.key} style={{ background: d.red ? 'rgba(248,113,113,0.04)' : 'var(--surface2)',
                     border: `1px solid ${d.red ? 'rgba(248,113,113,0.18)' : 'var(--border)'}`,
                     borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 8 }}>
                     <div>
@@ -513,9 +556,19 @@ export default function SettingsModal({ onClose }) {
                     </div>
                     <button style={{ background: 'transparent', border: `1px solid ${d.red ? 'rgba(248,113,113,0.4)' : 'var(--border)'}`,
                       color: d.red ? 'var(--red)' : 'var(--text)', padding: '8px 14px', borderRadius: 8,
-                      fontFamily: 'var(--font-display)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>{d.btn}</button>
+                      fontFamily: 'var(--font-display)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0, opacity: dangerBusy ? 0.6 : 1 }}
+                      disabled={Boolean(dangerBusy)}
+                      onClick={d.onClick}
+                    >
+                      {dangerBusy === d.key ? 'Working...' : d.btn}
+                    </button>
                   </div>
                 ))}
+                {dangerMsg && (
+                  <div style={{ marginTop: 8, fontSize: '0.76rem', color: dangerMsg.toLowerCase().includes('failed') ? 'var(--red)' : 'var(--text-dim)' }}>
+                    {dangerMsg}
+                  </div>
+                )}
               </Card>
             </div>
           )}
@@ -562,20 +615,11 @@ export default function SettingsModal({ onClose }) {
                 </div>
               </Card>
               <Card title="YouTube Embed" icon={'\u{1F4FA}'}>
-                <div style={{ marginBottom: 10 }}>
-                  <div style={s.formLabel}>YouTube Link</div>
-                  <input
-                    style={s.formInput}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    value={youtubeUrl}
-                    onChange={e => { setYoutubeUrl(e.target.value); mark() }}
-                  />
-                </div>
-                {toYouTubeEmbedUrl(youtubeUrl) ? (
+                {youtubeEmbedUrl ? (
                   <div style={{ border:'1px solid var(--border)', borderRadius:12, overflow:'hidden', background:'var(--surface2)' }}>
                     <iframe
                       title="youtube-embed-preview"
-                      src={toYouTubeEmbedUrl(youtubeUrl)}
+                      src={youtubeEmbedUrl}
                       style={{ width:'100%', height:280, border:'none' }}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowFullScreen
@@ -583,7 +627,7 @@ export default function SettingsModal({ onClose }) {
                   </div>
                 ) : (
                   <div style={{ fontSize:'0.78rem', color:'var(--text-faint)' }}>
-                    Paste a valid YouTube watch, youtu.be, shorts, or embed link to preview.
+                    Help video unavailable right now.
                   </div>
                 )}
               </Card>
