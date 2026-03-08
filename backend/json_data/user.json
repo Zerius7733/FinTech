@@ -888,7 +888,7 @@
   "u013": {
     "name": "ahbeng heng",
     "age": null,
-    "cash_balance": 255000.0,
+    "cash_balance": 200000.0,
     "liability": 0.0,
     "liability_items": [],
     "portfolio": {
@@ -907,21 +907,15 @@
     },
     "manual_assets": [
       {
-        "id": "588f6d91-04e4-4ea6-b534-d9606d175700",
+        "id": "0196ea8d-20a1-486f-a062-2071a11173fe",
         "label": "cash",
         "category": "banks",
-        "value": 5000.0
-      },
-      {
-        "id": "8e6cce43-9fdf-45a8-8838-9949c734ae36",
-        "label": "cash",
-        "category": "banks",
-        "value": 250000.0
+        "value": 200000.0
       }
     ],
     "portfolio_value": 1358332.6,
-    "total_balance": 1613332.6,
-    "net_worth": 1613332.6,
+    "total_balance": 1558332.6,
+    "net_worth": 1558332.6,
     "income": 10000.0,
     "expenses": 0.0,
     "income_streams": [
@@ -934,7 +928,7 @@
     "mortgage": 0,
     "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 25.5,
+      "liquidity_months": 20.0,
       "liquidity_score": 100.0,
       "diversification_hhi": 1.0,
       "diversification_score": 0.0,
