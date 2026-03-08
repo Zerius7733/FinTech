@@ -6,9 +6,9 @@ import RiskSlider from './RiskSlider.jsx'
 const API = 'http://localhost:8000'
 const RISK_KEY_TO_PCT  = { Low: 0, Moderate: 50, High: 100 }
 const RISK_KEY_TO_INFO = {
-  Low:      { label: 'Conservative Portfolio', factor: '1.0' },
-  Moderate: { label: 'Balanced Portfolio',      factor: '0.7' },
-  High:     { label: 'Aggressive Portfolio',    factor: '0.5' },
+  Low:      { label: 'Conservative Portfolio', ratio: 'Liquidity 50% + Diversification 15% + Debt-Income 35%' },
+  Moderate: { label: 'Balanced Portfolio', ratio: 'Liquidity 35% + Diversification 30% + Debt-Income 35%' },
+  High:     { label: 'Aggressive Portfolio', ratio: 'Liquidity 20% + Diversification 50% + Debt-Income 30%' },
 }
 const SLIDER_KEY_TO_RISK = { conservative: 'Low', balanced: 'Moderate', aggressive: 'High' }
 const GLOBE_PREFS_KEY = 'ws_globe_prefs'
@@ -242,7 +242,7 @@ export default function SettingsModal({ onClose }) {
                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>⚖️</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.95rem', marginBottom: 2 }}>{riskInfo.label}</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--teal)' }}>Scoring Factor: {riskInfo.factor}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--teal)' }}>Wellness ratio: {riskInfo.ratio}</div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: 3 }}>
                       {profileRisk ? 'Saved to your profile' : 'Default — not yet saved'}
                     </div>
@@ -262,15 +262,6 @@ export default function SettingsModal({ onClose }) {
                 )}
               </Card>
 
-              <Card title="Rebalancing" icon="🎯">
-                <Row name="Auto-rebalance suggestions" desc="AI-driven rebalancing when allocation drifts beyond target.">
-                  <Toggle on={toggles.rebal ?? true} onChange={v => setToggle('rebal', v)} />
-                </Row>
-                <Row name="Rebalancing frequency" desc="How often to check if your portfolio needs rebalancing.">
-                  <SelInput value={selects.rebalFreq ?? 'Quarterly'} opts={['Monthly','Quarterly','Semi-annually','Annually']}
-                    onChange={v => setSelect('rebalFreq', v)} />
-                </Row>
-              </Card>
             </div>
           )}
 
@@ -662,6 +653,8 @@ const s = {
     whiteSpace:'nowrap',
   },
 }
+
+
 
 
 
