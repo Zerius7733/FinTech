@@ -18,8 +18,25 @@ def _portfolio_positions(user: Dict[str, Any]):
     if isinstance(portfolio, dict):
         stocks = portfolio.get("stocks", []) if isinstance(portfolio.get("stocks", []), list) else []
         cryptos = portfolio.get("cryptos", []) if isinstance(portfolio.get("cryptos", []), list) else []
-        return stocks + cryptos
+        commodities = portfolio.get("commodities", []) if isinstance(portfolio.get("commodities", []), list) else []
+        return stocks + cryptos + commodities
     return []
+
+
+def _refresh_position_market_values(user: Dict[str, Any]) -> None:
+    for position in _portfolio_positions(user):
+        qty = position.get("qty")
+        current_price = position.get("current_price")
+        if qty is None or current_price is None:
+            continue
+        try:
+            quantity = float(qty)
+            price = float(current_price)
+        except (TypeError, ValueError):
+            continue
+        if quantity < 0 or price < 0:
+            continue
+        position["market_value"] = round(quantity * price, 2)
 
 
 def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, Any]:
@@ -42,6 +59,7 @@ def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, An
             # Support both legacy "expense" and newer "expenses" CSV columns.
             expense_value = row.get("expenses") if row.get("expenses") not in (None, "") else row.get("expense")
             user["expenses"] = round(_to_float(expense_value), 2)
+            _refresh_position_market_values(user)
             portfolio_total = sum(float(p.get("market_value", 0)) for p in _portfolio_positions(user))
             user["portfolio_value"] = round(portfolio_total, 2)
             user["total_balance"] = round(user["cash_balance"] + portfolio_total + user["estate"], 2)
