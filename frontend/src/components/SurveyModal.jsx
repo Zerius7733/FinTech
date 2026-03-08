@@ -588,7 +588,7 @@ export default function SurveyModal({ open, onClose }) {
             {submitErr && <div style={{ color:'var(--red)', fontSize:'0.73rem', marginBottom:12 }}>{submitErr}</div>}
             <div style={{ display:'flex', justifyContent:'flex-end', gap:10 }}>
               <button style={S.btnBack} onClick={onClose}>Cancel</button>
-              <button style={S.submit} onClick={goNextFromProfile}>Continue -></button>
+              <button style={S.submit} onClick={goNextFromProfile}>Continue</button>
             </div>
           </div>
         )}
@@ -603,7 +603,7 @@ export default function SurveyModal({ open, onClose }) {
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', gap:10 }}>
               <button style={S.btnBack} onClick={goBack}>Back</button>
-              <button style={S.submit} onClick={goNext}>Continue -></button>
+              <button style={S.submit} onClick={goNext}>Continue</button>
             </div>
           </div>
         )}
@@ -628,7 +628,7 @@ export default function SurveyModal({ open, onClose }) {
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', gap:10 }}>
               <button style={S.btnBack} onClick={goBack}>Back</button>
-              <button style={S.submit} onClick={goNext}>Continue -></button>
+              <button style={S.submit} onClick={goNext}>Continue</button>
             </div>
           </div>
         )}
@@ -665,7 +665,7 @@ export default function SurveyModal({ open, onClose }) {
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', gap:10 }}>
               <button style={S.btnBack} onClick={goBack}>Back</button>
-              <button style={S.submit} onClick={goNext}>Continue -></button>
+              <button style={S.submit} onClick={goNext}>Continue</button>
             </div>
           </div>
         )}

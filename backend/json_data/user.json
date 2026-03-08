@@ -843,7 +843,7 @@
     "country": "Singapore"
   },
   "u012": {
-    "name": "orangi juice",
+    "name": "awd awd",
     "age": null,
     "cash_balance": 0.0,
     "liability": 0.0,
@@ -892,9 +892,12 @@
       "debt_income_ratio": 999.0,
       "debt_income_score": 0.0
     },
-    "risk_profile": 100.0,
+    "risk_profile": 50.0,
     "financial_wellness_score": 0.0,
-    "financial_stress_index": 100.0
+    "financial_stress_index": 100.0,
+    "age_group": "18-29",
+    "email": "awd2@faw.c",
+    "country": "Singapore"
   },
   "u013": {
     "name": "orangi juice",
