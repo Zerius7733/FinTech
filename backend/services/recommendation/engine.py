@@ -23,6 +23,29 @@ def _metric_value(metric_name: str, user: Dict[str, Any]) -> float:
     return float(metrics.get(metric_name, 0.0))
 
 
+def _risk_profile_bucket(value: Any) -> str:
+    if isinstance(value, (int, float)):
+        numeric = max(0.0, min(100.0, float(value)))
+        if numeric <= 33.33:
+            return "Low"
+        if numeric <= 66.66:
+            return "Moderate"
+        return "High"
+
+    normalized = str(value or "").strip().lower()
+    if normalized in {"low", "conservative"}:
+        return "Low"
+    if normalized in {"moderate", "medium", "balanced"}:
+        return "Moderate"
+    if normalized in {"high", "aggressive"}:
+        return "High"
+
+    try:
+        return _risk_profile_bucket(float(normalized))
+    except ValueError:
+        return "Moderate"
+
+
 def _conditions_match(conditions: Dict[str, Any], user: Dict[str, Any]) -> bool:
     for metric, threshold in (conditions.get("metric_lt") or {}).items():
         if _metric_value(metric, user) >= float(threshold):
@@ -42,8 +65,8 @@ def _conditions_match(conditions: Dict[str, Any], user: Dict[str, Any]) -> bool:
 
     allowed_risk_profiles = conditions.get("risk_profile_in") or []
     if allowed_risk_profiles:
-        risk_profile = str(user.get("risk_profile", "")).strip().title()
-        normalized_allowed = {str(v).strip().title() for v in allowed_risk_profiles}
+        risk_profile = _risk_profile_bucket(user.get("risk_profile", 50.0))
+        normalized_allowed = {_risk_profile_bucket(v) for v in allowed_risk_profiles}
         if risk_profile not in normalized_allowed:
             return False
 

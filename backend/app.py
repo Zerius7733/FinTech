@@ -150,17 +150,31 @@ def _parse_market_query(query: str) -> Dict[str, str]:
     return {"asset_type": asset_type, "ticker": ticker}
 
 
-def _normalize_risk_profile(value: str) -> str:
-    normalized = (value or "").strip().lower()
-    mapping = {
-        "low": "Low",
-        "moderate": "Moderate",
-        "medium": "Moderate",
-        "high": "High",
-    }
-    if normalized not in mapping:
-        raise ValueError("risk_appetite must be one of: Low, Moderate, High")
-    return mapping[normalized]
+def _normalize_risk_profile(value: Any) -> float:
+    if isinstance(value, (int, float)):
+        numeric = float(value)
+    else:
+        normalized = str(value or "").strip().lower()
+        mapping = {
+            "low": 0.0,
+            "conservative": 0.0,
+            "moderate": 50.0,
+            "medium": 50.0,
+            "balanced": 50.0,
+            "high": 100.0,
+            "aggressive": 100.0,
+        }
+        if normalized in mapping:
+            numeric = mapping[normalized]
+        else:
+            try:
+                numeric = float(normalized)
+            except ValueError as exc:
+                raise ValueError("risk_profile must be a number between 0 and 100") from exc
+
+    if numeric < 0 or numeric > 100:
+        raise ValueError("risk_profile must be between 0 and 100")
+    return round(numeric, 2)
 
 
 def _enforce_insights_rate_limit(subject: str) -> None:
@@ -279,7 +293,7 @@ def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
 
 class UserRiskUpdateRequest(BaseModel):
     user_id: str
-    risk_profile: str = Field(
+    risk_profile: float | str = Field(
         validation_alias=AliasChoices("risk_profile", "risk_appetite", "risk_appetitie")
     )
 

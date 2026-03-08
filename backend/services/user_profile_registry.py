@@ -51,10 +51,34 @@ def _build_default_user_profile(name: str) -> Dict[str, Any]:
             "debt_income_ratio": 999.0,
             "debt_income_score": 0.0,
         },
-        "risk_profile": "Moderate",
+        "risk_profile": 50.0,
         "financial_wellness_score": 0.0,
         "financial_stress_index": 100.0,
     }
+
+
+def _normalize_risk_profile_value(value: Any) -> float:
+    if isinstance(value, (int, float)):
+        numeric = float(value)
+    else:
+        text = str(value or "").strip().lower()
+        mapping = {
+            "low": 0.0,
+            "conservative": 0.0,
+            "moderate": 50.0,
+            "medium": 50.0,
+            "balanced": 50.0,
+            "high": 100.0,
+            "aggressive": 100.0,
+        }
+        if text in mapping:
+            numeric = mapping[text]
+        else:
+            try:
+                numeric = float(text)
+            except ValueError:
+                numeric = 50.0
+    return round(max(0.0, min(100.0, numeric)), 2)
 
 
 def normalize_user_profile(user: Dict[str, Any]) -> Dict[str, Any]:
@@ -81,6 +105,7 @@ def normalize_user_profile(user: Dict[str, Any]) -> Dict[str, Any]:
     merged_wellness = dict(default_wellness)
     merged_wellness.update(wellness)
     normalized["wellness_metrics"] = merged_wellness
+    normalized["risk_profile"] = _normalize_risk_profile_value(normalized.get("risk_profile", 50.0))
 
     normalized.pop("monthly_expenses", None)
     normalized.pop("essential_monthly_expenses", None)
