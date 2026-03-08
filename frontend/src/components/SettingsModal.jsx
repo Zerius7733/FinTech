@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import RiskSlider from './RiskSlider.jsx'
+import { refreshPage } from '../utils/refreshPage.js'
 
 const API = 'http://localhost:8000'
 const GLOBE_PREFS_KEY = 'ws_globe_prefs'
@@ -159,19 +160,23 @@ export default function SettingsModal({ onClose }) {
   }, [])
 
   const handleSave = async () => {
+    let didPersist = false
     if (user?.user_id) {
       const riskValue = normalizeRiskProfileValue(riskLevel?.value ?? profileRisk ?? 50)
       try {
-        await fetch(`${API}/users/risk`, {
+        const res = await fetch(`${API}/users/risk`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: user.user_id, risk_profile: riskValue }),
         })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
         setProfileRisk(riskValue)
+        didPersist = true
       } catch (_) {}
     }
     setSaved(true); setUnsaved(false)
     setTimeout(() => setSaved(false), 2000)
+    if (didPersist) refreshPage()
   }
 
   const extensionPath = 'FinTech/chrome-extension'

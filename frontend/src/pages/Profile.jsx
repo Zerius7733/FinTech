@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
 import AssetInsightsPanel from '../components/AssetInsightsPanel.jsx'
+import { refreshPage } from '../utils/refreshPage.js'
 
 const API = 'http://localhost:8000'
 
@@ -1539,6 +1540,7 @@ export default function Profile() {
       setProfile(prev => prev ? { ...prev, risk_profile: Number(selectedRisk) } : prev)
       setRiskSaved(true)
       setTimeout(() => setRiskSaved(false), 3500)
+      refreshPage()
     } catch (e) { setRiskError(e.message) }
     finally     { setRiskSaving(false) }
   }, [selectedRisk, authUser?.user_id])
@@ -1818,6 +1820,7 @@ export default function Profile() {
       }
       const data = await res.json()
       if (data.user) setProfile(data.user)
+      refreshPage()
     } catch (err) {
       setError(err.message || 'Could not save financial item.')
     } finally {
@@ -1839,6 +1842,7 @@ export default function Profile() {
       }
       const data = await res.json()
       if (data.user) setProfile(data.user)
+      refreshPage()
     } catch (err) {
       setError(err.message || 'Could not remove financial item.')
     } finally {

@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext.jsx'
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 const API = 'http://localhost:8000'
-const SLIDER_KEY_TO_RISK = { conservative: 'Low', balanced: 'Moderate', aggressive: 'High' }
 
 // Paste your OpenAI API key here. In production, proxy this through your backend.
 const OPENAI_API_KEY = ''   // ← e.g. 'sk-...'
@@ -353,7 +352,7 @@ export default function Survey() {
   const [selectedAssets, setSelectedAssets] = useState(new Set(['Equities','Fixed Income']))
   const [selectedGoals,  setSelectedGoals]  = useState(new Set(['Wealth Growth']))
   const [horizon,        setHorizon]        = useState('3–5')
-  const [riskLevel,      setRiskLevel]      = useState('balanced')
+  const [riskLevel,      setRiskLevel]      = useState(50)
 
   const goNext = () => step < 5 ? setStep(s => s+1) : null
   const goBack = () => setStep(s => s-1)
@@ -371,7 +370,7 @@ export default function Survey() {
         </h2>
         <p style={{ color:'var(--text-dim)', fontSize:'0.92rem', lineHeight:1.7, marginBottom:20 }}>Your WealthSphere is calibrated. Your personalised globe awaits.</p>
         <div style={{ display:'flex', flexWrap:'wrap', gap:10, justifyContent:'center', marginBottom:16 }}>
-          {[['Age',ageGroup],['Risk',riskLevel],['Assets',`${selectedAssets.size} classes`],['Horizon',`${horizon}yr`]].map(([k,v]) => (
+          {[['Age',ageGroup],['Risk',`${riskLevel}/100`],['Assets',`${selectedAssets.size} classes`],['Horizon',`${horizon}yr`]].map(([k,v]) => (
             <div key={k} style={cs.pill}>{k}: <span style={{ color:'var(--gold)' }}>{v}</span></div>
           ))}
         </div>
@@ -387,12 +386,12 @@ export default function Survey() {
           </div>
         )}
         <button style={cs.btnLaunch} onClick={async () => {
-          if (user?.user_id && riskLevel) {
+          if (user?.user_id && riskLevel != null) {
             try {
               await fetch(`${API}/users/risk`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: user.user_id, risk_profile: SLIDER_KEY_TO_RISK[riskLevel] }),
+                body: JSON.stringify({ user_id: user.user_id, risk_profile: Number(riskLevel) }),
               })
             } catch (_) {}
           }
@@ -468,7 +467,7 @@ export default function Survey() {
             <h1 style={cs.heading}>Your <em style={{ fontStyle:'normal', color:'var(--gold)' }}>risk horizon</em></h1>
             <p style={cs.subtext}>Drag the slider or choose a preset. This shapes every recommendation you receive.</p>
             <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:28, marginBottom:24 }}>
-              <RiskSlider initialPct={50} onChange={(l) => setRiskLevel(l.key)} />
+              <RiskSlider initialPct={50} onChange={(l) => setRiskLevel(Number(l.value ?? 50))} />
             </div>
             <Footer onNext={goNext} onBack={goBack} />
           </div>
