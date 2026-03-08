@@ -1279,6 +1279,18 @@ function FinancialManagerModal({
       asset_class: 'cryptos',
       symbol: item.symbol || item.name || '',
     })})),
+    ...((profile?.portfolio?.commodities ?? []).map((item, index) => {
+      const fallbackValue = Number(item.qty || 0) * Number(item.current_price || 0)
+      const marketValue = item.market_value ?? fallbackValue
+      return ({
+      id: `portfolio-commodity-${index}-${item.symbol ?? item.name ?? 'item'}`,
+      label: item.name || item.symbol || `Commodity ${index + 1}`,
+      category: 'commodities',
+      value: Number(marketValue || 0),
+      source: 'portfolio',
+      asset_class: 'commodities',
+      symbol: item.symbol || item.name || '',
+    })})),
   ]
   const renderItems = activeTab === 'assets'
     ? [

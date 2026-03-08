@@ -272,9 +272,10 @@ function WellnessRing({ score, size = 84, centerText = null, subLabel = 'score' 
   )
 }
 
-function BentoDashboard({ node, show, onClose, themeId = 'default' }) {
+function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = false, themeId = 'default' }) {
   const [entered, setEntered] = useState(false)
   const [chartHoverIndex, setChartHoverIndex] = useState(null)
+  const [isCompactViewport, setIsCompactViewport] = useState(() => window.innerWidth < 1200)
   const stableChartPts = useMemo(() => (
     node ? genPriceSeries(node.mtd) : []
   ), [node?.id, node?.mtd])
@@ -285,6 +286,21 @@ function BentoDashboard({ node, show, onClose, themeId = 'default' }) {
   useEffect(() => {
     setChartHoverIndex(null)
   }, [node?.id, show])
+  useEffect(() => {
+    const onResize = () => setIsCompactViewport(window.innerWidth < 1200)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  useEffect(() => {
+    if (!show) return
+    const onKeyDown = (event) => {
+      if (!canNavigate) return
+      if (event.key === 'ArrowLeft') onPrev?.()
+      if (event.key === 'ArrowRight') onNext?.()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [show, canNavigate, onPrev, onNext])
 
   if (!node) return null
   const hex   = '#' + node.color.toString(16).padStart(6,'0')
@@ -340,19 +356,24 @@ function BentoDashboard({ node, show, onClose, themeId = 'default' }) {
         onClick={e => e.target === e.currentTarget && onClose()}
         style={{
           position: 'fixed', inset: 0, zIndex: 300,
-          background: 'rgba(16,24,40,0.22)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'linear-gradient(90deg, rgba(8,12,22,0.22) 0%, rgba(8,12,22,0.1) 44%, rgba(8,12,22,0.03) 100%)',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
           padding: '20px 16px',
           opacity: entered ? 1 : 0,
           transition: 'opacity 0.35s ease',
         }}
       >
+        <div style={{
+          position: 'relative',
+          width: isCompactViewport ? '100%' : 'clamp(320px, 56vw, 860px)',
+          marginLeft: 0,
+        }}>
         {/* ── Panel ── */}
         <div style={{
-          width: '100%', maxWidth: 980,
-          maxHeight: '92vh', overflowY: 'auto',
+          width: '100%',
+          maxHeight: '86vh', overflowY: 'auto',
           background: panelSurface,
           border: panelBorder,
           borderTop: `2px solid ${hex}`,
@@ -402,15 +423,65 @@ function BentoDashboard({ node, show, onClose, themeId = 'default' }) {
                   </div>
                 </div>
               </div>
-              <button onClick={onClose} style={{
-                background: closeSurface, border: closeBorder,
-                color:'var(--text-faint)', width:38, height:38, borderRadius:10,
-                fontSize:'1rem', display:'flex', alignItems:'center', justifyContent:'center',
-                cursor:'pointer', transition:'all 0.2s', flexShrink:0,
-              }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.18)'; e.currentTarget.style.color='var(--text)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.08)'; e.currentTarget.style.color='var(--text-faint)' }}
-              >✕</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                {canNavigate && (
+                  <>
+                    <button
+                      onClick={onPrev}
+                      aria-label="Previous asset"
+                      style={{
+                        background: closeSurface,
+                        border: closeBorder,
+                        color: 'var(--text-faint)',
+                        width: 34,
+                        height: 34,
+                        borderRadius: 10,
+                        fontSize: '1.05rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.18)'; e.currentTarget.style.color='var(--text)' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.08)'; e.currentTarget.style.color='var(--text-faint)' }}
+                    >
+                      ‹
+                    </button>
+                    <button
+                      onClick={onNext}
+                      aria-label="Next asset"
+                      style={{
+                        background: closeSurface,
+                        border: closeBorder,
+                        color: 'var(--text-faint)',
+                        width: 34,
+                        height: 34,
+                        borderRadius: 10,
+                        fontSize: '1.05rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.18)'; e.currentTarget.style.color='var(--text)' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.08)'; e.currentTarget.style.color='var(--text-faint)' }}
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
+                <button onClick={onClose} style={{
+                  background: closeSurface, border: closeBorder,
+                  color:'var(--text-faint)', width:38, height:38, borderRadius:10,
+                  fontSize:'1rem', display:'flex', alignItems:'center', justifyContent:'center',
+                  cursor:'pointer', transition:'all 0.2s', flexShrink:0,
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.18)'; e.currentTarget.style.color='var(--text)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(15,23,42,0.08)'; e.currentTarget.style.color='var(--text-faint)' }}
+                >✕</button>
+              </div>
             </div>
 
             {/* ════ BENTO GRID ════ */}
@@ -546,6 +617,7 @@ function BentoDashboard({ node, show, onClose, themeId = 'default' }) {
               })}
             </div>
           </div>
+        </div>
         </div>
       </div>
     </>
@@ -900,6 +972,10 @@ export default function Globe() {
   const [zonePos,        setZonePos]     = useState({ x:0, y:0 })
   const [selectedZone, setSelectedZone] = useState(null)
   const [legendHoverZone, setLegendHoverZone] = useState(null)
+  const focusMode = dashShow
+  const blurredUiStyle = focusMode
+    ? { filter: 'blur(8px)', opacity: 0.35, transition: 'filter 0.28s ease, opacity 0.28s ease' }
+    : { filter: 'none', opacity: 1, transition: 'filter 0.28s ease, opacity 0.28s ease' }
   const riskLevel = RISK_DEFS.find(r => riskPct >= r.min && riskPct <= r.max) || RISK_DEFS[1]
   const heroNameStyle = activeTheme?.id === 'silent-night'
     ? {
@@ -917,6 +993,11 @@ export default function Globe() {
   const riskTrackRef  = useRef(null)
   const riskDragRef   = useRef(false)
   const rotationTargetRef = useRef(null)
+  const rotateToNode = useCallback((node) => {
+    if (!node) return
+    rotationTargetRef.current = getRotationForLatLng(node.lat, node.lng)
+    if (node.region) setSelectedZone(node.region)
+  }, [])
 
   // Wellness score + portfolio nodes for logged-in hero
   const [userProfile, setUserProfile] = useState(null)
@@ -1016,13 +1097,26 @@ export default function Globe() {
       setFlyingIn(false)
       setDashNode(node)
       setDashShow(true)
+      rotateToNode(node)
     }, 320)
-  }, [])
+  }, [rotateToNode])
 
   const closeDashboard = useCallback(() => {
     setDashShow(false)
     setTimeout(() => setDashNode(null), 420)
   }, [])
+
+  const cycleDashboardNode = useCallback((step) => {
+    if (!dashNode) return
+    const nodes = globeNodesRef.current || []
+    if (nodes.length < 2) return
+    const currentIndex = nodes.findIndex(item => item.id === dashNode.id)
+    const startIndex = currentIndex >= 0 ? currentIndex : 0
+    const nextIndex = (startIndex + step + nodes.length) % nodes.length
+    const nextNode = nodes[nextIndex]
+    setDashNode(nextNode)
+    rotateToNode(nextNode)
+  }, [dashNode, rotateToNode])
 
   const rotateToZone = useCallback((zoneLabel) => {
     const target = ZONE_ROTATION_TARGETS[zoneLabel]
@@ -1322,10 +1416,12 @@ export default function Globe() {
       {/* <TickerBar style={{ position:'fixed', top:0, left:0, right:0, zIndex:102 }} /> */}
 
       {/* ── NAV ── */}
-      <Navbar />
+      <div style={blurredUiStyle}>
+        <Navbar />
+      </div>
 
       {/* ── DOM star layer (CSS, complements WebGL) ── */}
-      <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0 }} aria-hidden>
+      <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0, ...blurredUiStyle }} aria-hidden>
         {STARS.map((s, i) => (
           <div key={i} style={{
             position:'absolute', borderRadius:'50%', background:'white',
@@ -1345,7 +1441,7 @@ export default function Globe() {
         <div style={S.heroSplit}>
 
           {/* ── LEFT column ── */}
-          <div style={{ ...S.heroLeft, alignItems: user ? 'center' : 'flex-start' }}>
+          <div style={{ ...S.heroLeft, alignItems: user ? 'center' : 'flex-start', ...blurredUiStyle }}>
 
         {/* Hero text */}
         <div style={{ ...S.heroText, textAlign: user ? 'center' : 'left' }}>
@@ -1502,7 +1598,7 @@ export default function Globe() {
         </div>{/* /heroSplit */}
 
         {/* Stats bar */}
-        <div style={S.statsBar}>
+        <div style={{ ...S.statsBar, ...blurredUiStyle }}>
           {[
             { label:'Total Portfolio', val:`$${aum.toLocaleString()}`,
               sub: (() => {
@@ -1544,7 +1640,7 @@ export default function Globe() {
       {/* FEATURES SECTION  (guests only)                   */}
       {/* ══════════════════════════════════════════════════ */}
       {!user && (
-      <section style={{ position:'relative', zIndex:3, padding:'100px 48px', maxWidth:1200, margin:'0 auto' }}>
+      <section style={{ position:'relative', zIndex:3, padding:'100px 48px', maxWidth:1200, margin:'0 auto', ...blurredUiStyle }}>
         <div style={{ textAlign:'center', marginBottom:64 }}>
           <div style={S.sectionEyebrow}>Platform Features</div>
           <h2 style={S.sectionTitle}>Everything in <em style={{ fontStyle:'normal', color:'var(--gold)' }}>one orbit</em></h2>
@@ -1576,7 +1672,15 @@ export default function Globe() {
       </section>
       )} {/* /!user features */}
       {/* ══ LAYER 4 — BENTO DASHBOARD ══ */}
-      <BentoDashboard node={dashNode} show={dashShow} onClose={closeDashboard} themeId={activeTheme?.id} />
+      <BentoDashboard
+        node={dashNode}
+        show={dashShow}
+        onClose={closeDashboard}
+        onPrev={() => cycleDashboardNode(-1)}
+        onNext={() => cycleDashboardNode(1)}
+        canNavigate={(globeNodesRef.current?.length || 0) > 1}
+        themeId={activeTheme?.id}
+      />
 
       {/* Global keyframes */}
       <style>{`

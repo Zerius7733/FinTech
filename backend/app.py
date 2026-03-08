@@ -1306,7 +1306,7 @@ def add_user_portfolio_holding(user_id: str, payload: PortfolioHoldingCreateRequ
 @app.delete(
     "/users/{user_id}/financials/portfolio/{asset_class}/{symbol}",
     tags=["Users"],
-    summary="Remove a portfolio holding (stocks or cryptos) from a user profile",
+    summary="Remove a portfolio holding (stocks, cryptos, or commodities) from a user profile",
 )
 def remove_user_portfolio_holding(user_id: str, asset_class: str, symbol: str) -> Dict[str, Any]:
     try:
@@ -1324,8 +1324,10 @@ def remove_user_portfolio_holding(user_id: str, asset_class: str, symbol: str) -
             bucket = "stocks"
         elif bucket in {"crypto", "cryptos", "digital_assets", "digital_asset"}:
             bucket = "cryptos"
+        elif bucket in {"commodity", "commodities"}:
+            bucket = "commodities"
         else:
-            raise HTTPException(status_code=400, detail="asset_class must be stocks or cryptos")
+            raise HTTPException(status_code=400, detail="asset_class must be stocks, cryptos, or commodities")
 
         entries = portfolio.get(bucket, [])
         if not isinstance(entries, list):
