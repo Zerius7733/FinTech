@@ -1,4 +1,5 @@
 import asyncio,os
+import csv
 import json
 import time
 import uuid
@@ -212,9 +213,9 @@ def _sum_portfolio_positions(user: Dict[str, Any]) -> float:
 
 def _normalize_manual_asset_category(value: str) -> str:
     normalized = (value or "").strip().lower().replace("-", "_").replace(" ", "_")
-    allowed = {"real_estate", "business", "private_asset", "other"}
+    allowed = {"real_estate", "business", "private_asset", "banks", "other"}
     if normalized not in allowed:
-        raise ValueError("asset category must be one of: real_estate, business, private_asset, other")
+        raise ValueError("asset category must be one of: real_estate, business, private_asset, banks, other")
     return normalized
 
 
@@ -241,7 +242,15 @@ def _ensure_financial_collections(user: Dict[str, Any]) -> Dict[str, Any]:
             "id": "liability-seed",
             "label": "Existing Liabilities",
             "amount": round(float(user.get("liability", 0.0) or 0.0), 2),
+            "is_mortgage": False,
         }]
+    if float(user.get("mortgage", 0.0) or 0.0) > 0 and not any(bool(item.get("is_mortgage")) for item in liability_items):
+        liability_items.append({
+            "id": "mortgage-seed",
+            "label": "Mortgage",
+            "amount": round(float(user.get("mortgage", 0.0) or 0.0), 2),
+            "is_mortgage": True,
+        })
     if not income_streams and float(user.get("income", 0.0) or 0.0) > 0:
         income_streams = [{
             "id": "income-seed",
@@ -271,7 +280,16 @@ def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
         for item in manual_assets
         if item.get("category") != "real_estate"
     ), 2)
-    liability_total = round(sum(float(item.get("amount", 0.0) or 0.0) for item in liability_items), 2)
+    liability_total = round(sum(
+        float(item.get("amount", 0.0) or 0.0)
+        for item in liability_items
+        if not bool(item.get("is_mortgage"))
+    ), 2)
+    mortgage_total = round(sum(
+        float(item.get("amount", 0.0) or 0.0)
+        for item in liability_items
+        if bool(item.get("is_mortgage"))
+    ), 2)
     income_total = round(sum(float(item.get("monthly_amount", 0.0) or 0.0) for item in income_streams), 2)
     portfolio_total = _sum_portfolio_positions(user)
     cash_balance = round(float(user.get("cash_balance", 0.0) or 0.0), 2)
@@ -279,6 +297,7 @@ def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
 
     user["estate"] = real_estate_value
     user["liability"] = liability_total
+    user["mortgage"] = mortgage_total
     user["income"] = income_total
     user["portfolio_value"] = portfolio_total
     user["total_balance"] = round(cash_balance + portfolio_total + real_estate_value + non_estate_asset_value, 2)
@@ -289,6 +308,67 @@ def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
     user["financial_wellness_score"] = wellness_result["financial_wellness_score"]
     user["financial_stress_index"] = wellness_result["financial_stress_index"]
     return user
+
+
+def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
+    csv_path = ASSETS_CSV_PATH
+    default_headers = [
+        "user_id", "name", "dbs", "uob", "ocbc", "other_banks", "liability", "income", "estate", "expense"
+    ]
+
+    if csv_path.exists():
+        with open(csv_path, "r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            rows = [dict(row) for row in reader]
+            fieldnames = list(reader.fieldnames or [])
+    else:
+        rows = []
+        fieldnames = default_headers[:]
+
+    if "other_banks" not in fieldnames and "other_bank" not in fieldnames:
+        fieldnames.append("other_banks")
+
+    for required in ("user_id", "name", "liability", "income", "estate"):
+        if required not in fieldnames:
+            fieldnames.append(required)
+
+    other_bank_col = "other_banks" if "other_banks" in fieldnames else "other_bank"
+    banks_total = round(sum(
+        float(item.get("value", 0.0) or 0.0)
+        for item in (user.get("manual_assets") or [])
+        if str(item.get("category", "")).strip().lower() == "banks"
+    ), 2)
+
+    target_index = None
+    for idx, row in enumerate(rows):
+        if (row.get("user_id") or "").strip() == user_id:
+            target_index = idx
+            break
+
+    if target_index is None:
+        row = {key: "" for key in fieldnames}
+        row["user_id"] = user_id
+        row["name"] = str(user.get("name", "") or "")
+        row.setdefault("dbs", "0")
+        row.setdefault("uob", "0")
+        row.setdefault("ocbc", "0")
+        row.setdefault("expense", str(user.get("expenses", 0.0) or 0.0))
+        rows.append(row)
+        target_index = len(rows) - 1
+
+    target = rows[target_index]
+    target["name"] = str(user.get("name", target.get("name", "")) or "")
+    target["liability"] = f"{round(float(user.get('liability', 0.0) or 0.0), 2):.2f}"
+    target["income"] = f"{round(float(user.get('income', 0.0) or 0.0), 2):.2f}"
+    target["estate"] = f"{round(float(user.get('estate', 0.0) or 0.0), 2):.2f}"
+    target[other_bank_col] = f"{banks_total:.2f}"
+
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            clean_row = {key: row.get(key, "") for key in fieldnames}
+            writer.writerow(clean_row)
 
 
 class UserRiskUpdateRequest(BaseModel):
@@ -318,6 +398,7 @@ class ManualAssetCreateRequest(BaseModel):
 class LiabilityItemCreateRequest(BaseModel):
     label: str = Field(..., min_length=1, max_length=80)
     amount: float = Field(..., ge=0)
+    is_mortgage: bool = False
 
 
 class IncomeStreamCreateRequest(BaseModel):
@@ -659,6 +740,7 @@ def get_user_financial_items(user_id: str) -> Dict[str, Any]:
             "summary": {
                 "income": user.get("income", 0.0),
                 "liability": user.get("liability", 0.0),
+                "mortgage": user.get("mortgage", 0.0),
                 "estate": user.get("estate", 0.0),
                 "portfolio_value": user.get("portfolio_value", 0.0),
                 "net_worth": user.get("net_worth", 0.0),
@@ -692,6 +774,7 @@ def add_user_manual_asset(user_id: str, payload: ManualAssetCreateRequest) -> Di
         user["manual_assets"].append(item)
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
     except HTTPException:
         raise
@@ -699,6 +782,61 @@ def add_user_manual_asset(user_id: str, payload: ManualAssetCreateRequest) -> Di
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"asset create failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/financials/portfolio/{asset_class}/{symbol}",
+    tags=["Users"],
+    summary="Remove a portfolio holding (stocks or cryptos) from a user profile",
+)
+def remove_user_portfolio_holding(user_id: str, asset_class: str, symbol: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        portfolio = user.get("portfolio")
+        if not isinstance(portfolio, dict):
+            raise HTTPException(status_code=400, detail="user portfolio is not in expected format")
+
+        bucket = asset_class.strip().lower()
+        if bucket in {"stock", "stocks", "equity", "equities"}:
+            bucket = "stocks"
+        elif bucket in {"crypto", "cryptos", "digital_assets", "digital_asset"}:
+            bucket = "cryptos"
+        else:
+            raise HTTPException(status_code=400, detail="asset_class must be stocks or cryptos")
+
+        entries = portfolio.get(bucket, [])
+        if not isinstance(entries, list):
+            raise HTTPException(status_code=400, detail=f"portfolio bucket '{bucket}' is invalid")
+
+        target = symbol.strip().lower()
+        if not target:
+            raise HTTPException(status_code=400, detail="symbol is required")
+
+        remove_index = next(
+            (
+                idx
+                for idx, item in enumerate(entries)
+                if str(item.get("symbol", "")).strip().lower() == target
+            ),
+            None,
+        )
+        if remove_index is None:
+            raise HTTPException(status_code=404, detail=f"holding '{symbol}' not found in {bucket}")
+
+        entries.pop(remove_index)
+        portfolio[bucket] = entries
+        user["portfolio"] = portfolio
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "asset_class": bucket, "symbol": symbol, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"portfolio holding delete failed: {exc}") from exc
 
 
 @app.delete(
@@ -719,6 +857,7 @@ def remove_user_manual_asset(user_id: str, item_id: str) -> Dict[str, Any]:
             raise HTTPException(status_code=404, detail=f"asset item '{item_id}' not found")
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "user": users[user_id]}
     except HTTPException:
         raise
@@ -742,10 +881,12 @@ def add_user_liability_item(user_id: str, payload: LiabilityItemCreateRequest) -
             "id": str(uuid.uuid4()),
             "label": payload.label.strip(),
             "amount": round(float(payload.amount), 2),
+            "is_mortgage": bool(payload.is_mortgage),
         }
         user["liability_items"].append(item)
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
     except HTTPException:
         raise
@@ -771,6 +912,7 @@ def remove_user_liability_item(user_id: str, item_id: str) -> Dict[str, Any]:
             raise HTTPException(status_code=404, detail=f"liability item '{item_id}' not found")
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "user": users[user_id]}
     except HTTPException:
         raise
@@ -798,6 +940,7 @@ def add_user_income_stream(user_id: str, payload: IncomeStreamCreateRequest) -> 
         user["income_streams"].append(item)
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
     except HTTPException:
         raise
@@ -823,6 +966,7 @@ def remove_user_income_stream(user_id: str, item_id: str) -> Dict[str, Any]:
             raise HTTPException(status_code=404, detail=f"income stream '{item_id}' not found")
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "user": users[user_id]}
     except HTTPException:
         raise

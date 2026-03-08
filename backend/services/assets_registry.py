@@ -17,7 +17,7 @@ def _ensure_csv_exists(csv_path: Path) -> None:
     with open(csv_path, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=["user_id", "name", "dbs", "uob", "ocbc", "liability", "income", "estate", "expense"],
+            fieldnames=["user_id", "name", "dbs", "uob", "ocbc", "other_banks", "liability", "income", "estate", "expense"],
         )
         writer.writeheader()
 
@@ -31,7 +31,7 @@ def add_default_assets_row(csv_path: Path, user_id: str, name: str) -> None:
     with open(csv_path, "a", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=["user_id", "name", "dbs", "uob", "ocbc", "liability", "income", "estate", "expense"],
+            fieldnames=["user_id", "name", "dbs", "uob", "ocbc", "other_banks", "liability", "income", "estate", "expense"],
         )
         writer.writerow(
             {
@@ -40,6 +40,7 @@ def add_default_assets_row(csv_path: Path, user_id: str, name: str) -> None:
                 "dbs": "0",
                 "uob": "0",
                 "ocbc": "0",
+                "other_banks": "0",
                 "liability": "0",
                 "income": "0",
                 "estate": "0",

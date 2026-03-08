@@ -1125,13 +1125,13 @@ function FinancialManagerModal({
   busy,
 }) {
   const [assetForm, setAssetForm] = useState({ label:'', category:'real_estate', value:'' })
-  const [liabilityForm, setLiabilityForm] = useState({ label:'', amount:'' })
+  const [liabilityForm, setLiabilityForm] = useState({ label:'', amount:'', is_mortgage:false })
   const [incomeForm, setIncomeForm] = useState({ label:'', monthly_amount:'' })
 
   useEffect(() => {
     if (!open) return
     setAssetForm({ label:'', category:'real_estate', value:'' })
-    setLiabilityForm({ label:'', amount:'' })
+    setLiabilityForm({ label:'', amount:'', is_mortgage:false })
     setIncomeForm({ label:'', monthly_amount:'' })
   }, [open, activeTab])
 
@@ -1156,6 +1156,38 @@ function FinancialManagerModal({
   }
 
   const currentTab = tabMap[activeTab]
+  const portfolioAssetItems = [
+    ...((profile?.portfolio?.stocks ?? []).map((item, index) => {
+      const fallbackValue = Number(item.qty || 0) * Number(item.current_price || 0)
+      const marketValue = item.market_value ?? fallbackValue
+      return ({
+      id: `portfolio-stock-${index}-${item.symbol ?? item.name ?? 'item'}`,
+      label: item.name || item.symbol || `Stock ${index + 1}`,
+      category: 'stocks',
+      value: Number(marketValue || 0),
+      source: 'portfolio',
+      asset_class: 'stocks',
+      symbol: item.symbol || item.name || '',
+    })})),
+    ...((profile?.portfolio?.cryptos ?? []).map((item, index) => {
+      const fallbackValue = Number(item.qty || 0) * Number(item.current_price || 0)
+      const marketValue = item.market_value ?? fallbackValue
+      return ({
+      id: `portfolio-crypto-${index}-${item.symbol ?? item.name ?? 'item'}`,
+      label: item.name || item.symbol || `Crypto ${index + 1}`,
+      category: 'cryptos',
+      value: Number(marketValue || 0),
+      source: 'portfolio',
+      asset_class: 'cryptos',
+      symbol: item.symbol || item.name || '',
+    })})),
+  ]
+  const renderItems = activeTab === 'assets'
+    ? [
+        ...(currentTab.items ?? []).map(item => ({ ...item, source:'manual' })),
+        ...portfolioAssetItems,
+      ]
+    : (currentTab.items ?? [])
 
   const submitCurrent = event => {
     event.preventDefault()
@@ -1170,6 +1202,7 @@ function FinancialManagerModal({
       onSubmit('liabilities', {
         label: liabilityForm.label,
         amount: Number(liabilityForm.amount),
+        is_mortgage: Boolean(liabilityForm.is_mortgage),
       })
     }
     if (activeTab === 'income') {
@@ -1231,6 +1264,7 @@ function FinancialManagerModal({
                   style={fm.input}
                 >
                   <option value="real_estate">Real Estate</option>
+                  <option value="banks">Banks</option>
                   <option value="business">Business</option>
                   <option value="private_asset">Private Asset</option>
                   <option value="other">Other</option>
@@ -1263,6 +1297,14 @@ function FinancialManagerModal({
                   step="0.01"
                   style={fm.input}
                 />
+                <label style={{ display:'flex', alignItems:'center', gap:8, color:'var(--text-dim)', fontSize:'0.82rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(liabilityForm.is_mortgage)}
+                    onChange={e => setLiabilityForm(prev => ({ ...prev, is_mortgage:e.target.checked }))}
+                  />
+                  Mortgage
+                </label>
               </>
             )}
             {activeTab === 'income' && (
@@ -1290,9 +1332,9 @@ function FinancialManagerModal({
           </form>
 
           <div style={fm.list}>
-            {currentTab.items.length === 0 ? (
+            {renderItems.length === 0 ? (
               <div style={fm.empty}>Nothing added yet.</div>
-            ) : currentTab.items.map(item => {
+            ) : renderItems.map(item => {
               const value = activeTab === 'assets'
                 ? fmt$(item.value)
                 : activeTab === 'liabilities'
@@ -1304,17 +1346,19 @@ function FinancialManagerModal({
                     <div style={fm.itemTitle}>{item.label}</div>
                     <div style={fm.itemMeta}>
                       {activeTab === 'assets'
-                        ? startCase(item.category)
+                        ? (item.source === 'portfolio'
+                          ? `${startCase(item.category)} holding`
+                          : startCase(item.category))
                         : activeTab === 'income'
                           ? 'Monthly income stream'
-                          : 'Liability'}
+                          : (item.is_mortgage ? 'Mortgage' : 'Non-mortgage liability')}
                     </div>
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                     <div style={fm.itemValue}>{value}</div>
                     <button
                       type="button"
-                      onClick={() => onRemove(activeTab, item.id)}
+                      onClick={() => onRemove(activeTab, item.id, item)}
                       style={fm.removeBtn}
                       disabled={busy}
                     >
@@ -1827,15 +1871,25 @@ export default function Profile() {
       setFinancialBusy(false)
     }
   }, [authUser?.user_id])
-  const removeFinancialItem = useCallback(async (tab, itemId) => {
+  const removeFinancialItem = useCallback(async (tab, itemId, itemMeta = null) => {
     if (!authUser?.user_id) return
     setFinancialBusy(true)
     setError('')
     try {
-      const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
-      const res = await fetch(`${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}/${itemId}`, {
-        method:'DELETE',
-      })
+      let res
+      if (tab === 'assets' && itemMeta?.source === 'portfolio') {
+        const bucket = itemMeta?.asset_class
+        const symbol = String(itemMeta?.symbol || '').trim()
+        if (!symbol || !bucket) throw new Error('Missing holding symbol for removal.')
+        res = await fetch(`${API}/users/${authUser.user_id}/financials/portfolio/${bucket}/${encodeURIComponent(symbol)}`, {
+          method:'DELETE',
+        })
+      } else {
+        const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
+        res = await fetch(`${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}/${itemId}`, {
+          method:'DELETE',
+        })
+      }
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err?.detail ?? `HTTP ${res.status}`)
