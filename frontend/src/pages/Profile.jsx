@@ -2007,7 +2007,7 @@ export default function Profile() {
             <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--teal)', textTransform:'uppercase', letterSpacing:'0.2em', marginBottom:8, display:'flex', alignItems:'center', gap:10 }}>
               <div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>Personal Finance<div style={{ width:24, height:1, background:'var(--teal)', opacity:0.5 }}/>
             </div>
-            <div style={s.pageTitle}>My <span style={{ background:'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Portfolio</span></div>
+            <div style={s.pageTitle}><span style={{ background:'linear-gradient(135deg,var(--gold-light),var(--gold),var(--teal))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Portfolio</span></div>
           </div>
           <div style={{ display:'flex', gap:14, alignItems:'center' }}>
             {!loading && profile && <div style={{ ...s.badgePill, borderColor:'rgba(201,168,76,0.25)', color:'var(--gold)' }}>Wellness {Math.round(wellnessScore)}/100</div>}
@@ -2893,23 +2893,24 @@ const s = {
   rangeTab: {
     appearance:'none',
     WebkitAppearance:'none',
-    background:'rgba(255,255,255,0.64)',
-    border:'1px solid rgba(29,33,48,0.06)',
-    color:'var(--text-dim)',
+    background:'var(--surface2)',
+    border:'1px solid var(--border-act)',
+    color:'var(--text)',
     borderRadius:999,
     padding:'8px 12px',
     fontFamily:'var(--font-mono)',
     fontSize:'0.68rem',
+    fontWeight:600,
     letterSpacing:'0.08em',
     textTransform:'uppercase',
     outline:'none',
     boxShadow:'none',
   },
   rangeTabActive: {
-    background:'rgba(139,92,246,0.14)',
-    borderColor:'rgba(139,92,246,0.28)',
-    color:'#7c3aed',
-    boxShadow:'0 8px 20px rgba(139,92,246,0.14)',
+    background:'var(--teal)',
+    borderColor:'var(--teal)',
+    color:'#0b0f14',
+    boxShadow:'var(--glow-teal)',
   },
   secSubhead: {
     fontFamily:'var(--font-display)', fontSize:'1.02rem', fontWeight:700,
@@ -3334,7 +3335,7 @@ const s = {
   },
   compBtnAsset: {
     background:'linear-gradient(135deg,var(--teal),#0e9f84)',
-    border:'none',
+    border:'1px solid var(--border-act)',
     color:'#081019',
     padding:'8px 12px',
     borderRadius:999,
@@ -3344,25 +3345,25 @@ const s = {
     cursor:'pointer',
   },
   compBtnLiability: {
-    background:'rgba(248,113,113,0.08)',
-    border:'1px solid rgba(248,113,113,0.16)',
-    color:'var(--red)',
+    background:'rgba(226,85,85,0.18)',
+    border:'1px solid rgba(226,85,85,0.52)',
+    color:'var(--text)',
     padding:'8px 12px',
     borderRadius:999,
     fontFamily:'var(--font-display)',
     fontSize:'0.74rem',
-    fontWeight:700,
+    fontWeight:800,
     cursor:'pointer',
   },
   compBtnIncome: {
-    background:'rgba(139,92,246,0.08)',
-    border:'1px solid rgba(139,92,246,0.16)',
-    color:'var(--purple)',
+    background:'rgba(143,126,246,0.18)',
+    border:'1px solid rgba(143,126,246,0.52)',
+    color:'var(--text)',
     padding:'8px 12px',
     borderRadius:999,
     fontFamily:'var(--font-display)',
     fontSize:'0.74rem',
-    fontWeight:700,
+    fontWeight:800,
     cursor:'pointer',
   },
   compMetaPill: {
