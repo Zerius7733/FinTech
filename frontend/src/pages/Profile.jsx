@@ -147,7 +147,10 @@ function TrendChart({ points = [], tone = 'up', valueLabel = 'Value', comparison
 
   const handlePointerMove = event => {
     const rect = event.currentTarget.getBoundingClientRect()
-    const relativeX = ((event.clientX - rect.left) / rect.width) * width
+    const renderedWidth = Math.min(rect.width, rect.height * (width / height))
+    const offsetX = (rect.width - renderedWidth) / 2
+    const localX = clamp(event.clientX - rect.left - offsetX, 0, renderedWidth)
+    const relativeX = (localX / Math.max(renderedWidth, 1)) * width
     const closestIndex = chartPoints.reduce((best, point, index) => (
       Math.abs(point.x - relativeX) < Math.abs(chartPoints[best].x - relativeX) ? index : best
     ), 0)
