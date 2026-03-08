@@ -50,7 +50,7 @@ export default function Login() {
       <div style={S.card}>
         {/* Logo */}
         <div style={S.logoRow}>
-          <div style={S.logoDot}>◉</div>
+          <img src="/logo.png" alt="Logo" style={S.logoImage} />
           <span style={S.logoText}>Unova</span>
         </div>
 
@@ -174,22 +174,16 @@ const S = {
     marginBottom: 28,
     justifyContent: 'center',
   },
-  logoDot: {
-    width: 34,
-    height: 34,
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, var(--gold), var(--teal))',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '0.9rem',
-    boxShadow: '0 0 16px rgba(201,168,76,0.35)',
-    color: '#fff',
+  logoImage: {
+    height: 50,
+    width: 'auto',
+    objectFit: 'contain',
+    background: 'transparent',
   },
   logoText: {
     fontFamily: 'var(--font-display)',
     fontSize: '1.25rem',
-    fontWeight: 600,
+    fontWeight: 700,
     letterSpacing: '0.02em',
     color: 'var(--text)',
   },

@@ -82,3 +82,58 @@ input, select { font-family: var(--font-body); }
   from { opacity: 0; transform: scale(0.94); }
   to   { opacity: 1; transform: scale(1); }
 }
+
+/* Bell notification animation */
+.bell-container {
+  --bell-color: var(--text-dim);
+  --bell-size: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  font-size: var(--bell-size);
+  user-select: none;
+  fill: var(--bell-color);
+  pointer-events: none;
+}
+
+.bell-container .bell-regular {
+  position: absolute;
+  animation: bell-fill 0.5s;
+  transition: fill 0.2s;
+}
+
+.bell-container .bell-solid {
+  position: absolute;
+  display: none;
+  animation: bell-fill 0.5s;
+}
+
+.bell-container input:checked ~ .bell-regular {
+  display: none;
+}
+
+.bell-container input:checked ~ .bell-solid {
+  display: block;
+}
+
+.bell-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+  pointer-events: none;
+}
+
+/* Hover effect */
+div[style*="cursor:pointer"]:has(.bell-container):hover .bell-container {
+  --bell-color: var(--text);
+}
+
+@keyframes bell-fill {
+  0% { opacity: 0; }
+  25% { transform: rotate(25deg); }
+  50% { transform: rotate(-20deg) scale(1.2); }
+  75% { transform: rotate(15deg); }
+}
