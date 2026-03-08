@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
 import AssetInsightsPanel, { getCachedInsight } from '../components/AssetInsightsPanel.jsx'
@@ -1070,7 +1071,7 @@ function HoldingInsightModal({ holding, onClose, userId }) {
   )
 }
 
-function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, year, ownerName }) {
+function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, year, ownerName, themeId = 'default' }) {
   useEffect(() => {
     if (!open) return
     const onKey = event => {
@@ -1085,10 +1086,41 @@ function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, 
   if (!open || !slides.length) return null
   const slide = slides[index]
   const isSummary = slide.key === 'summary'
+  const isSilentNight = themeId === 'silent-night'
+  const panelStyle = isSilentNight
+    ? {
+        ...yw.panel,
+        background: 'linear-gradient(180deg, rgba(15,18,25,0.98), rgba(11,14,20,0.98))',
+        border: '1px solid rgba(190,183,164,0.2)',
+        boxShadow: '0 36px 90px rgba(0,0,0,0.58)',
+      }
+    : yw.panel
+  const closeBtnStyle = isSilentNight
+    ? { ...yw.closeBtn, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(190,183,164,0.18)', color:'var(--text-dim)' }
+    : yw.closeBtn
+  const slideStyle = isSilentNight
+    ? {
+        ...yw.slide,
+        border: '1px solid rgba(190,183,164,0.2)',
+        background: 'linear-gradient(135deg, rgba(110,95,170,0.14), rgba(30,38,55,0.72) 45%, rgba(20,70,80,0.14))',
+      }
+    : yw.slide
+  const slideIconStyle = isSilentNight
+    ? { ...yw.slideIcon, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(190,183,164,0.22)', boxShadow:'0 16px 30px rgba(0,0,0,0.28)' }
+    : yw.slideIcon
+  const statCardStyle = isSilentNight
+    ? { ...yw.statCard, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(190,183,164,0.2)' }
+    : yw.statCard
+  const navBtnStyle = isSilentNight
+    ? { ...yw.navBtn, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(190,183,164,0.2)', color:'var(--text-dim)' }
+    : yw.navBtn
+  const downloadBtnStyle = isSilentNight
+    ? { ...yw.downloadBtn, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(190,183,164,0.2)' }
+    : yw.downloadBtn
 
   return (
     <div onClick={e => e.target === e.currentTarget && onClose()} style={yw.backdrop}>
-      <div style={yw.panel}>
+      <div style={panelStyle}>
         <div style={yw.topBar} />
         <div style={yw.header}>
           <div>
@@ -1098,7 +1130,7 @@ function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, 
               <span style={yw.countPill}>{index + 1} / {slides.length}</span>
             </div>
           </div>
-          <button onClick={onClose} style={yw.closeBtn}>×</button>
+          <button onClick={onClose} style={closeBtnStyle}>×</button>
         </div>
 
         <div style={yw.dots}>
@@ -1115,9 +1147,9 @@ function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, 
         <button
           type="button"
           onClick={() => !isSummary && setIndex(current => Math.min(current + 1, slides.length - 1))}
-          style={{ ...yw.slide, cursor: isSummary ? 'default' : 'pointer' }}
+          style={{ ...slideStyle, cursor: isSummary ? 'default' : 'pointer' }}
         >
-          <div style={yw.slideIcon}>{slide.icon}</div>
+          <div style={slideIconStyle}>{slide.icon}</div>
           <div style={yw.slideEyebrow}>{slide.eyebrow}</div>
           <div style={yw.slideTitle}>{slide.title}</div>
           <div style={yw.slideBody}>{slide.body}</div>
@@ -1126,7 +1158,7 @@ function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, 
           {slide.stats?.length ? (
             <div style={yw.statsGrid}>
               {slide.stats.map(stat => (
-                <div key={stat.label} style={yw.statCard}>
+                <div key={stat.label} style={statCardStyle}>
                   <div style={yw.statLabel}>{stat.label}</div>
                   <div style={{ ...yw.statValue, color: stat.color || 'var(--text)' }}>{stat.value}</div>
                 </div>
@@ -1153,14 +1185,14 @@ function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, 
             type="button"
             onClick={() => setIndex(current => Math.max(current - 1, 0))}
             disabled={index === 0}
-            style={{ ...yw.navBtn, opacity: index === 0 ? 0.4 : 1, cursor: index === 0 ? 'not-allowed' : 'pointer' }}
+            style={{ ...navBtnStyle, opacity: index === 0 ? 0.4 : 1, cursor: index === 0 ? 'not-allowed' : 'pointer' }}
           >
             ← Previous
           </button>
 
           <div style={{ display:'flex', gap:10, alignItems:'center' }}>
             {isSummary && (
-              <button type="button" onClick={e => { e.stopPropagation(); onDownload() }} style={yw.downloadBtn}>
+              <button type="button" onClick={e => { e.stopPropagation(); onDownload() }} style={downloadBtnStyle}>
                 Download Wrapped
               </button>
             )}
@@ -1250,6 +1282,15 @@ function FinancialManagerModal({
   ]
   const renderItems = activeTab === 'assets'
     ? [
+        ...(Number(profile?.cash_balance || 0) > 0
+          ? [{
+              id: 'cash-balance-row',
+              label: 'Cash',
+              category: 'banks',
+              value: Number(profile?.cash_balance || 0),
+              source: 'cash',
+            }]
+          : []),
         ...(currentTab.items ?? []).map(item => ({ ...item, source:'manual' })),
         ...portfolioAssetItems,
       ]
@@ -1345,10 +1386,9 @@ function FinancialManagerModal({
                   value={assetForm.value}
                   onChange={e => setAssetForm(prev => ({ ...prev, value:e.target.value }))}
                   placeholder={needsExactSymbol ? 'Quantity' : 'Value'}
-                  type="number"
-                  min="0"
-                  step={needsExactSymbol ? '0.000001' : '0.01'}
-                  style={fm.input}
+                  type="text"
+                  inputMode="decimal"
+                  style={{ ...fm.input, ...fm.numberInput }}
                 />
                 {needsExactSymbol && (
                   <div style={{ gridColumn:'1 / span 3', fontSize:'0.76rem', color:'var(--text-faint)' }}>
@@ -1369,10 +1409,9 @@ function FinancialManagerModal({
                   value={liabilityForm.amount}
                   onChange={e => setLiabilityForm(prev => ({ ...prev, amount:e.target.value }))}
                   placeholder="Amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  style={fm.input}
+                  type="text"
+                  inputMode="decimal"
+                  style={{ ...fm.input, ...fm.numberInput }}
                 />
                 <label style={{ display:'flex', alignItems:'center', gap:8, color:'var(--text-dim)', fontSize:'0.82rem' }}>
                   <input
@@ -1396,10 +1435,9 @@ function FinancialManagerModal({
                   value={incomeForm.monthly_amount}
                   onChange={e => setIncomeForm(prev => ({ ...prev, monthly_amount:e.target.value }))}
                   placeholder="Monthly amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  style={fm.input}
+                  type="text"
+                  inputMode="decimal"
+                  style={{ ...fm.input, ...fm.numberInput }}
                 />
               </>
             )}
@@ -1425,6 +1463,8 @@ function FinancialManagerModal({
                       {activeTab === 'assets'
                         ? (item.source === 'portfolio'
                           ? `${startCase(item.category)} holding`
+                          : item.source === 'cash'
+                            ? 'Cash balance from linked banks'
                           : startCase(item.category))
                         : activeTab === 'income'
                           ? 'Monthly income stream'
@@ -1433,14 +1473,16 @@ function FinancialManagerModal({
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                     <div style={fm.itemValue}>{value}</div>
-                    <button
-                      type="button"
-                      onClick={() => onRemove(activeTab, item.id, item)}
-                      style={fm.removeBtn}
-                      disabled={busy}
-                    >
-                      Remove
-                    </button>
+                    {!(activeTab === 'assets' && item.source === 'cash') && (
+                      <button
+                        type="button"
+                        onClick={() => onRemove(activeTab, item.id, item)}
+                        style={fm.removeBtn}
+                        disabled={busy}
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 </div>
               )
@@ -1555,6 +1597,8 @@ function RecCard({ rec, i, tint = false, compact = false }) {
 export default function Profile() {
   const navigate = useNavigate()
   const { user: authUser } = useAuth()
+  const { activeTheme } = useTheme()
+  const isSilentNight = activeTheme?.id === 'silent-night'
 
   const [profile,   setProfile]   = useState(null)
   const [portfolio, setPortfolio] = useState(null)
@@ -1596,6 +1640,12 @@ export default function Profile() {
   const [benchmarkError, setBenchmarkError] = useState('')
   const [benchmarkOpen, setBenchmarkOpen] = useState(false)
   const [priceRefreshing, setPriceRefreshing] = useState(false)
+  const holdingsStrongText = isSilentNight ? 'rgba(248,250,252,0.96)' : 'var(--text)'
+  const holdingsDimText = isSilentNight ? 'rgba(226,232,240,0.88)' : 'var(--text-dim)'
+  const holdingsGoldText = isSilentNight ? '#d4bd92' : 'var(--gold)'
+  const holdingsHeaderText = isSilentNight ? 'rgba(203,213,225,0.8)' : 'var(--text-faint)'
+  const holdingsRowBorder = isSilentNight ? '1px solid rgba(248,250,252,0.06)' : '1px solid rgba(255,255,255,0.04)'
+  const holdingsHeadBorder = isSilentNight ? '1px solid rgba(248,250,252,0.12)' : '1px solid var(--border)'
 
   // â”€â”€ Initial data fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
@@ -1714,6 +1764,7 @@ export default function Profile() {
   const portfolioValue = stocksValue + commoditiesValue + cryptosValue
   const manualAssetGroups = manualAssets.reduce((groups, item) => {
     const key = item.category || 'other'
+    if (key === 'banks') return groups
     if (!groups[key]) {
       groups[key] = {
         key,
@@ -1728,6 +1779,7 @@ export default function Profile() {
   }, {})
   const manualAssetRows = Object.values(manualAssetGroups)
   const manualAssetTotal = manualAssetRows.reduce((sum, item) => sum + item.total, 0)
+  const cashBalance = Number(profile?.cash_balance ?? 0)
   const totalAUM       = portfolioValue + (profile?.cash_balance ?? 0)
   const positionCount  = stocks.length + commodities.length + cryptos.length
   const currentIncome  = incomeStreams.length
@@ -1741,11 +1793,12 @@ export default function Profile() {
   const [trendView, setTrendView] = useState('combined')
   const [showTrendInfo, setShowTrendInfo] = useState(false)
 
-  const compositionBase = portfolioValue + manualAssetTotal
+  const compositionBase = portfolioValue + manualAssetTotal + cashBalance
   const COMPOSITION_REAL = [
     compositionBase > 0 && stocksValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / compositionBase * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
     compositionBase > 0 && commoditiesValue > 0 && { icon:'🪙', name:'Commodities', pct:Math.round(commoditiesValue / compositionBase * 100), val:fmt$(commoditiesValue), color:'#d4a63a' },
     compositionBase > 0 && cryptosValue > 0 && { icon:'₿',  name:'Digital Assets', pct:Math.round(cryptosValue / compositionBase * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
+    compositionBase > 0 && cashBalance > 0 && { icon:'🏦', name:'Cash / Banks', pct:Math.round(cashBalance / compositionBase * 100), val:fmt$(cashBalance), color:'#7dd3fc' },
     ...manualAssetRows.map(item => ({
       icon: item.icon,
       name: item.name,
@@ -2427,9 +2480,9 @@ export default function Profile() {
             <div style={{ overflowX:'auto' }}>
               <table style={{ width:'100%', borderCollapse:'collapse', fontFamily:'var(--font-mono)', fontSize:'0.8rem' }}>
                 <thead>
-                  <tr style={{ color:'var(--text-faint)', textTransform:'uppercase', fontSize:'0.65rem', letterSpacing:'0.08em' }}>
+                  <tr style={{ color:holdingsHeaderText, textTransform:'uppercase', fontSize:'0.65rem', letterSpacing:'0.08em' }}>
                     {['Symbol','Type','Qty','Avg Cost','Current Price','Market Value','Gain / Loss'].map((h,i) => (
-                      <th key={h} style={{ textAlign: i===0 ? 'left' : 'right', padding:'8px 12px', borderBottom:'1px solid var(--border)', fontWeight:500 }}>{h}</th>
+                      <th key={h} style={{ textAlign: i===0 ? 'left' : 'right', padding:'8px 12px', borderBottom:holdingsHeadBorder, fontWeight:500 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -2438,27 +2491,27 @@ export default function Profile() {
                     const gain = gainPct(h.current_price, h.avg_price)
                     const gainColor = gain == null ? 'var(--text-faint)' : gain >= 0 ? 'var(--green)' : 'var(--red)'
                     return (
-                      <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)', cursor:'pointer' }}
+                      <tr key={i} style={{ borderBottom:holdingsRowBorder, cursor:'pointer' }}
                         onClick={() => setSelectedHolding(h)}
                         onMouseEnter={e => e.currentTarget.style.background='var(--surface2)'}
                         onMouseLeave={e => e.currentTarget.style.background='transparent'}>
-                        <td style={{ padding:'12px 12px', color:'var(--text)', fontWeight:600 }}>{h.symbol}</td>
+                        <td style={{ padding:'12px 12px', color:holdingsStrongText, fontWeight:isSilentNight ? 700 : 600 }}>{h.symbol}</td>
                         <td style={{ padding:'12px 12px', textAlign:'right' }}>
                           <span style={{ background: h.type==='Stock' ? 'rgba(96,165,250,0.1)' : 'rgba(45,212,191,0.1)', color: h.type==='Stock' ? 'var(--blue)' : 'var(--teal)', padding:'2px 8px', borderRadius:6, fontSize:'0.65rem' }}>{h.type}</span>
                         </td>
-                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--text-dim)' }}>{h.qty}</td>
-                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--text-dim)' }}>{fmt$(h.avg_price)}</td>
-                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--text)' }}>{fmt$(h.current_price)}</td>
-                        <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--gold)', fontWeight:600 }}>{fmt$(h.market_value)}</td>
-                        <td style={{ padding:'12px 12px', textAlign:'right', color:gainColor, fontWeight:600 }}>{gain != null ? fmtPct(gain) : '—'}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsDimText }}>{h.qty}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsDimText }}>{fmt$(h.avg_price)}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsStrongText, fontWeight:isSilentNight ? 600 : 400 }}>{fmt$(h.current_price)}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsGoldText, fontWeight:isSilentNight ? 700 : 600 }}>{fmt$(h.market_value)}</td>
+                        <td style={{ padding:'12px 12px', textAlign:'right', color:gainColor, fontWeight:isSilentNight ? 700 : 600 }}>{gain != null ? fmtPct(gain) : '—'}</td>
                       </tr>
                     )
                   })}
                 </tbody>
                 <tfoot>
-                  <tr style={{ borderTop:'1px solid var(--border)' }}>
-                    <td colSpan={5} style={{ padding:'12px 12px', color:'var(--text-faint)', fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>Total Portfolio Value</td>
-                    <td style={{ padding:'12px 12px', textAlign:'right', color:'var(--gold)', fontWeight:700, fontSize:'0.9rem' }}>{fmt$(portfolioValue)}</td>
+                  <tr style={{ borderTop:holdingsHeadBorder }}>
+                    <td colSpan={5} style={{ padding:'12px 12px', color:holdingsHeaderText, fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>Total Portfolio Value</td>
+                    <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsGoldText, fontWeight:700, fontSize:'0.9rem' }}>{fmt$(portfolioValue)}</td>
                     <td />
                   </tr>
                 </tfoot>
@@ -2597,6 +2650,17 @@ export default function Profile() {
                   </div>
                 )}
               </div>
+              {analysisMode !== 'comprehensive' && (
+                <div style={{
+                  marginTop: -6,
+                  fontFamily:'var(--font-mono)',
+                  fontSize:'0.72rem',
+                  color:'var(--text-faint)',
+                  letterSpacing:'0.04em',
+                }}>
+                  Tip: Switch to <span style={{ color:'var(--teal)' }}>Comprehensive</span> for more details.
+                </div>
+              )}
 
               {analysisMode === 'comprehensive' && (
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:12 }}>
@@ -2994,6 +3058,7 @@ export default function Profile() {
           onDownload={exportWrappedPdf}
           year={wrappedData.year}
           ownerName={profile?.name ?? authUser.username}
+          themeId={activeTheme?.id}
         />
 
       </main>
@@ -3815,6 +3880,13 @@ const fm = {
     fontFamily:'var(--font-body)',
     fontSize:'0.84rem',
     outline:'none',
+  },
+  numberInput: {
+    appearance:'textfield',
+    WebkitAppearance:'none',
+    MozAppearance:'textfield',
+    lineHeight:1.2,
+    paddingRight:12,
   },
   submitBtn: {
     background:'linear-gradient(135deg,var(--teal),#0e9f84)',

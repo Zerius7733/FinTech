@@ -1112,7 +1112,18 @@ def get_user_peer_benchmarks(user_id: str) -> Dict[str, Any]:
         user = data.get(user_id)
         if user is None:
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-        result = api.build_peer_benchmarks(user)
+        benchmark_user = dict(user) if isinstance(user, dict) else {}
+        raw_age = benchmark_user.get("age")
+        needs_csv_age = raw_age in (None, "", 0, "0")
+        if needs_csv_age:
+            csv_profile = _read_user_csv_profile(user_id)
+            csv_age = (csv_profile.get("age") or "").strip()
+            if csv_age:
+                try:
+                    benchmark_user["age"] = int(float(csv_age))
+                except Exception:
+                    pass
+        result = api.build_peer_benchmarks(benchmark_user)
         return {"status": "ok", "user_id": user_id, **result}
     except HTTPException:
         raise
@@ -1869,9 +1880,20 @@ def build_user_retirement_plan(user_id: str, payload: RetirementPlanRequest) -> 
         user = users.get(user_id)
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        plan_user = dict(user)
+        raw_age = plan_user.get("age")
+        needs_csv_age = raw_age in (None, "", 0, "0")
+        if needs_csv_age:
+            csv_profile = _read_user_csv_profile(user_id)
+            csv_age = (csv_profile.get("age") or "").strip()
+            if csv_age:
+                try:
+                    plan_user["age"] = int(float(csv_age))
+                except Exception:
+                    pass
 
         plan = api.build_retirement_plan(
-            user=user,
+            user=plan_user,
             retirement_age=payload.retirement_age,
             monthly_expenses=payload.monthly_expenses,
             essential_monthly_expenses=payload.essential_monthly_expenses,

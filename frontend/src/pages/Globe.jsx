@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
@@ -176,13 +176,33 @@ function Sparkline({ dir, color, h = 32 }) {
   )
 }
 
-function PriceChart({ mtd, nodeColor }) {
+function PriceChart({ mtd, nodeColor, points = null, hoveredIndex = null, onHoverIndexChange = null }) {
   const hex  = '#' + (nodeColor || 0x2dd4bf).toString(16).padStart(6,'0')
-  const pts  = genPriceSeries(mtd)
+  const pts  = Array.isArray(points) && points.length > 1 ? points : genPriceSeries(mtd)
+  const W = 800
+  const H = 110
   const path = pts.map((v, i) => `${i===0?'M':'L'}${(i/(pts.length-1))*800},${110-v*100}`).join(' ')
   const area = path + ' L800,110 L0,110 Z'
+  const activeIndex = typeof hoveredIndex === 'number'
+    ? Math.min(Math.max(hoveredIndex, 0), pts.length - 1)
+    : null
+  const markerX = activeIndex != null ? (activeIndex / (pts.length - 1)) * W : null
+  const markerY = activeIndex != null ? H - pts[activeIndex] * 100 : null
+  const handlePointer = event => {
+    if (typeof onHoverIndexChange !== 'function') return
+    const rect = event.currentTarget.getBoundingClientRect()
+    const x = Math.min(Math.max(event.clientX - rect.left, 0), rect.width || 1)
+    const idx = Math.round((x / Math.max(rect.width || 1, 1)) * (pts.length - 1))
+    onHoverIndexChange(Math.min(Math.max(idx, 0), pts.length - 1))
+  }
   return (
-    <svg viewBox="0 0 800 110" style={{ width:'100%', height:100 }} preserveAspectRatio="none">
+    <svg
+      viewBox="0 0 800 110"
+      style={{ width:'100%', height:100, cursor:'crosshair' }}
+      preserveAspectRatio="none"
+      onMouseMove={handlePointer}
+      onMouseLeave={() => { if (typeof onHoverIndexChange === 'function') onHoverIndexChange(null) }}
+    >
       <defs>
         <linearGradient id={`pg_${nodeColor}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.28" />
@@ -191,11 +211,17 @@ function PriceChart({ mtd, nodeColor }) {
       </defs>
       <path d={area} fill={`url(#pg_${nodeColor})`} />
       <path d={path} stroke="#7c3aed" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      {activeIndex != null && (
+        <>
+          <line x1={markerX} x2={markerX} y1={6} y2={106} stroke="rgba(124,58,237,0.28)" strokeWidth="1.2" strokeDasharray="4 4" />
+          <circle cx={markerX} cy={markerY} r="4.6" fill="#fff" stroke="#7c3aed" strokeWidth="2.2" />
+        </>
+      )}
     </svg>
   )
 }
 
-function WellnessRing({ score, size = 84 }) {
+function WellnessRing({ score, size = 84, centerText = null, subLabel = 'score' }) {
   const [animatedScore, setAnimatedScore] = useState(0)
 
   useEffect(() => {
@@ -219,7 +245,7 @@ function WellnessRing({ score, size = 84 }) {
 
   const r     = size * 0.42
   const circ  = 2 * Math.PI * r
-  const color = score >= 75 ? '#34d399' : score >= 55 ? '#c9a84c' : '#f87171'
+  const color = score <= 5 ? '#34d399' : score <= 20 ? '#c9a84c' : '#f87171'
   return (
     <div style={{ position:'relative', width:size, height:size, flexShrink:0 }}>
       <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ transform:'rotate(-90deg)' }}>
@@ -235,8 +261,12 @@ function WellnessRing({ score, size = 84 }) {
           style={{ transition: 'stroke-dashoffset 0.08s linear' }} />
       </svg>
       <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:size*0.24, color:'var(--text)', lineHeight:1 }}>{animatedScore}</span>
-        <span style={{ fontFamily:'var(--font-mono)', fontSize:size*0.11, color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.07em', marginTop:2 }}>score</span>
+        <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:size*0.24, color:'var(--text)', lineHeight:1 }}>
+          {centerText ?? animatedScore}
+        </span>
+        <span style={{ fontFamily:'var(--font-mono)', fontSize:size*0.11, color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.07em', marginTop:2 }}>
+          {subLabel}
+        </span>
       </div>
     </div>
   )
@@ -244,10 +274,17 @@ function WellnessRing({ score, size = 84 }) {
 
 function BentoDashboard({ node, show, onClose, themeId = 'default' }) {
   const [entered, setEntered] = useState(false)
+  const [chartHoverIndex, setChartHoverIndex] = useState(null)
+  const stableChartPts = useMemo(() => (
+    node ? genPriceSeries(node.mtd) : []
+  ), [node?.id, node?.mtd])
   useEffect(() => {
     if (show) { const t = setTimeout(() => setEntered(true), 30); return () => clearTimeout(t) }
     else setEntered(false)
   }, [show])
+  useEffect(() => {
+    setChartHoverIndex(null)
+  }, [node?.id, show])
 
   if (!node) return null
   const hex   = '#' + node.color.toString(16).padStart(6,'0')
@@ -379,11 +416,22 @@ function BentoDashboard({ node, show, onClose, themeId = 'default' }) {
             {/* ════ BENTO GRID ════ */}
             {(() => {
               const h0 = node.holdings[0]
-              const avgCost = h0 ? (node.aum / h0.shares || 0) : 0
-              const gain = node.aum - (h0 ? h0.shares * (avgCost / (1 + node.mtd / 100)) : 0)
+              const chartPts = stableChartPts.length > 1 ? stableChartPts : genPriceSeries(node.mtd)
               // recalculate cost basis
               const costBasis = h0 ? h0.shares * (h0.price / (1 + node.mtd / 100)) : 0
               const gainAbs = node.aum - costBasis
+              const lastPoint = chartPts.length ? chartPts[chartPts.length - 1] : 0
+              const peakPoint = chartPts.length ? Math.max(...chartPts) : 0
+              const currentPrice = Number(h0?.price || 0)
+              const hoveredPoint = typeof chartHoverIndex === 'number'
+                ? chartPts[Math.min(Math.max(chartHoverIndex, 0), chartPts.length - 1)]
+                : lastPoint
+              const hoveredPrice = currentPrice > 0 && lastPoint > 0 ? (currentPrice * hoveredPoint) / lastPoint : currentPrice
+              const athPrice = currentPrice > 0 && lastPoint > 0 ? (currentPrice * peakPoint) / lastPoint : currentPrice
+              const dropFromAthPct = athPrice > 0 ? Math.max(0, ((athPrice - hoveredPrice) / athPrice) * 100) : 0
+              const latestDropFromAthPct = athPrice > 0 ? Math.max(0, ((athPrice - currentPrice) / athPrice) * 100) : 0
+              const displayDropPct = dropFromAthPct < 0.005 ? 0 : dropFromAthPct
+              const displayLatestDropPct = latestDropFromAthPct < 0.005 ? 0 : latestDropFromAthPct
               return (
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gridTemplateRows:'auto auto', gap:14, marginBottom:14 }}>
 
@@ -395,17 +443,32 @@ function BentoDashboard({ node, show, onClose, themeId = 'default' }) {
                     {node.returnPct} return
                   </span>
                 </div>
-                <PriceChart mtd={node.mtd} nodeColor={node.color} />
+                <PriceChart
+                  mtd={node.mtd}
+                  nodeColor={node.color}
+                  points={chartPts}
+                  hoveredIndex={chartHoverIndex}
+                  onHoverIndexChange={setChartHoverIndex}
+                />
               </div>
 
               {/* Cell B — Return ring */}
                <div style={{ ...BC_LOCAL, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10 }}>
-                <WellnessRing score={Math.min(100, Math.max(0, 50 + node.mtd))} size={90} />
+                <WellnessRing
+                  score={Math.min(100, displayDropPct)}
+                  centerText={`${displayDropPct.toFixed(1)}%`}
+                  subLabel="below ATH"
+                  size={90}
+                />
                 <div style={{ textAlign:'center' }}>
-                  <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', color: isPos?'var(--green)':'var(--red)', marginBottom:2 }}>
-                    {isPos?'+':''}{node.mtd}%
+                  <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', color:'var(--red)', marginBottom:2 }}>
+                    {displayLatestDropPct > 0 ? `-${displayLatestDropPct.toFixed(2)}%` : '0.00%'}
                   </div>
-                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)' }}>since avg cost</div>
+                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)' }}>
+                    {athPrice > 0
+                      ? `Latest $${currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} vs ATH $${athPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                      : 'Latest price vs ATH unavailable'}
+                  </div>
                 </div>
               </div>
 
