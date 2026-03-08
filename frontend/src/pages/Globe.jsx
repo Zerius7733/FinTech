@@ -1462,61 +1462,6 @@ export default function Globe() {
         </div>
       </section>
       )} {/* /!user features */}
-
-      {/* ══════════════════════════════════════════════════ */}
-      {/* RISK SURVEY SECTION  (guests only)                */}
-      {/* ══════════════════════════════════════════════════ */}
-      {!user && (
-      <section style={{ padding:'80px 48px', maxWidth:900, margin:'0 auto' }}>
-        <div style={{ textAlign:'center', marginBottom:48 }}>
-          <div style={S.sectionEyebrow}>Onboarding</div>
-          <h2 style={S.sectionTitle}>Define your <em style={{ fontStyle:'normal', color:'var(--gold)' }}>risk horizon</em></h2>
-        </div>
-        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:40, position:'relative', overflow:'hidden' }}>
-          <div style={{ position:'absolute', top:'-50%', right:'-10%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle,rgba(45,212,191,0.06),transparent 70%)', pointerEvents:'none' }} />
-          <p style={{ color:'var(--text-dim)', fontSize:'0.9rem', marginBottom:28, maxWidth:480 }}>
-            Before we map your world, we calibrate to you. Drag to set your risk appetite — this shapes every recommendation you receive.
-          </p>
-          <div style={{ marginBottom:28 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', fontFamily:'var(--font-mono)', fontSize:'0.68rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:20 }}>
-              <span>Conservative</span><span>Balanced</span><span>Aggressive</span>
-            </div>
-            <div
-              ref={riskTrackRef}
-              style={{ position:'relative', height:8, background:'var(--surface2)', borderRadius:4, cursor:'pointer' }}
-              onClick={e => { const r=riskTrackRef.current.getBoundingClientRect(); setRiskPct(Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100))) }}
-            >
-              <div style={{ position:'absolute', top:0, left:0, height:'100%', borderRadius:4, width:`${riskPct}%`, background:`linear-gradient(90deg,var(--green),${riskLevel.color})`, transition:'width 0.15s' }} />
-              <div
-                style={{ position:'absolute', top:'50%', left:`${riskPct}%`, transform:'translate(-50%,-50%)', width:24, height:24, borderRadius:'50%', background:'var(--bg2)', border:`3px solid ${riskLevel.color}`, boxShadow:`0 0 16px ${riskLevel.color}80`, cursor:'grab', transition:'border-color 0.3s,box-shadow 0.3s' }}
-                onMouseDown={e => { riskDragRef.current=true; e.preventDefault() }}
-              />
-            </div>
-          </div>
-          <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 20px', display:'flex', alignItems:'center', gap:16, marginBottom:28 }}>
-            <div style={{ width:48, height:48, borderRadius:12, background:'rgba(201,168,76,0.15)', border:'1px solid rgba(201,168,76,0.3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem', flexShrink:0 }}>
-              {riskLevel.icon}
-            </div>
-            <div>
-              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem', marginBottom:4 }}>{riskLevel.title}</div>
-              <div style={{ fontSize:'0.8rem', color:'var(--text-dim)' }}>{riskLevel.desc}</div>
-            </div>
-          </div>
-          <button style={{ background:'var(--gold)', border:'none', color:'#ffffff', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.9rem', fontWeight:700, cursor:'pointer', boxShadow:'0 10px 24px rgba(17,24,39,0.16)' }} onClick={() => navigate('/survey')}>
-            Continue to Full Onboarding →
-          </button>
-        </div>
-      </section>
-      )} {/* /!user onboarding */}
-
-      {/* ── Second ticker + Footer ── */}
-      {/* <TickerBar /> */}
-      <footer style={{ padding:'40px 48px', display:'flex', alignItems:'center', justifyContent:'space-between', borderTop:'1px solid var(--border)', color:'var(--text-faint)', fontSize:'0.8rem' }}>
-        <div style={{ fontFamily:'var(--font-display)', fontWeight:700, color:'var(--gold)', fontSize:'1rem' }}>Unova</div>
-        <div>© 2025 Unova · Schroders Hackathon Prototype</div>
-        <div>Built with Three.js · Open Finance APIs</div>
-      </footer>
-
       {/* ══ LAYER 4 — BENTO DASHBOARD ══ */}
       <BentoDashboard node={dashNode} show={dashShow} onClose={closeDashboard} />
 
