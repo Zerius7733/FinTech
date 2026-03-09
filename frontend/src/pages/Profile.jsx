@@ -1798,6 +1798,12 @@ export default function Profile() {
     ? incomeStreams.reduce((sum, item) => sum + Number(item.monthly_amount || 0), 0)
     : Number(profile?.income ?? 0)
   const wellness       = profile?.wellness_metrics ?? {}
+  const behavioralResilienceScore =
+    profile?.behavioral_resilience_score
+    ?? profile?.financial_resilience_score
+    ?? wellness?.behavioral_resilience_score
+    ?? wellness?.financial_resilience_score
+    ?? null
   const wellnessScore  = profile?.financial_wellness_score ?? 0
   const stressIndex    = profile?.financial_stress_index   ?? null
   const netWorth       = profile?.net_worth ?? null
@@ -2531,10 +2537,28 @@ export default function Profile() {
                       </div>
                     </div>
                   ))}
-                  <FutureBar
-                    label="Behavioural Resilience"
-                    onHoverChange={active => setWellnessHint(active ? 'How likely you are to stay calm and avoid panic decisions when markets swing.' : null)}
-                  />
+                  <div
+                    style={{ marginBottom:12 }}
+                    onMouseEnter={() => setWellnessHint('How likely you are to stay calm and avoid panic decisions when markets swing.')}
+                    onMouseLeave={() => setWellnessHint(null)}
+                  >
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:4 }}>
+                      <span>Behavioural Resilience</span>
+                      <span style={{ fontFamily:'var(--font-mono)', color:'var(--text)' }}>
+                        {behavioralResilienceScore != null ? Math.round(behavioralResilienceScore) : '—'}
+                      </span>
+                    </div>
+                    <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
+                      <div
+                        style={{
+                          height:'100%',
+                          width:`${Math.min(behavioralResilienceScore ?? 0, 100)}%`,
+                          background:'#9fbce8',
+                          borderRadius:3,
+                        }}
+                      />
+                    </div>
+                  </div>
                   <FutureBar
                     label="Currency Exposure"
                     onHoverChange={active => setWellnessHint(active ? 'How much exchange-rate moves could affect your portfolio if you hold assets in different currencies.' : null)}

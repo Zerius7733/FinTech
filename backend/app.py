@@ -581,8 +581,14 @@ def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
 
     wellness_result = api.calculate_user_wellness(user)
     user["wellness_metrics"] = wellness_result["wellness_metrics"]
+    user["behavioral_resilience_score"] = wellness_result["behavioral_resilience_score"]
+    user["financial_resilience_score"] = wellness_result["financial_resilience_score"]
     user["financial_wellness_score"] = wellness_result["financial_wellness_score"]
     user["financial_stress_index"] = wellness_result["financial_stress_index"]
+    user["confidence"] = wellness_result["confidence"]
+    user["resilience_summary"] = wellness_result["resilience_summary"]
+    user["resilience_breakdown"] = wellness_result["resilience_breakdown"]
+    user["action_insights"] = wellness_result["action_insights"]
     return user
 
 
@@ -2084,8 +2090,14 @@ def update_user_risk_and_recalibrate(payload: UserRiskUpdateRequest) -> Dict[str
         user["risk_profile"] = _normalize_risk_profile(payload.risk_profile)
         wellness_result = api.calculate_user_wellness(user)
         user["wellness_metrics"] = wellness_result["wellness_metrics"]
+        user["behavioral_resilience_score"] = wellness_result["behavioral_resilience_score"]
+        user["financial_resilience_score"] = wellness_result["financial_resilience_score"]
         user["financial_wellness_score"] = wellness_result["financial_wellness_score"]
         user["financial_stress_index"] = wellness_result["financial_stress_index"]
+        user["confidence"] = wellness_result["confidence"]
+        user["resilience_summary"] = wellness_result["resilience_summary"]
+        user["resilience_breakdown"] = wellness_result["resilience_breakdown"]
+        user["action_insights"] = wellness_result["action_insights"]
         users[payload.user_id] = user
         _write_users_data(users)
 
@@ -2093,9 +2105,15 @@ def update_user_risk_and_recalibrate(payload: UserRiskUpdateRequest) -> Dict[str
             "status": "ok",
             "user_id": payload.user_id,
             "risk_profile": user["risk_profile"],
+            "behavioral_resilience_score": user["behavioral_resilience_score"],
+            "financial_resilience_score": user["financial_resilience_score"],
             "wellness_metrics": user["wellness_metrics"],
             "financial_wellness_score": user["financial_wellness_score"],
             "financial_stress_index": user["financial_stress_index"],
+            "confidence": user["confidence"],
+            "resilience_summary": user["resilience_summary"],
+            "resilience_breakdown": user["resilience_breakdown"],
+            "action_insights": user["action_insights"],
         }
     except HTTPException:
         raise

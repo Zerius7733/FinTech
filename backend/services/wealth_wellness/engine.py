@@ -1,26 +1,11 @@
 import json
 from typing import Any, Dict
 
-from backend.services.wealth_wellness.debt_income_metric import calculate_debt_income_metric
-from backend.services.wealth_wellness.diversification_metric import calculate_diversification_metric
-from backend.services.wealth_wellness.liquidity_metric import calculate_liquidity_metric
-from backend.services.wealth_wellness.score import calculate_financial_wellness_score
-from backend.services.wealth_wellness.stress_index import calculate_financial_stress_index
+from backend.services.wealth_wellness.behavioral_resilience import calculate_behavioral_resilience
 
 
 def calculate_user_wellness(user: Dict[str, Any]) -> Dict[str, Any]:
-    liquidity = calculate_liquidity_metric(user)
-    diversification = calculate_diversification_metric(user)
-    debt_income = calculate_debt_income_metric(user)
-
-    metrics = {**liquidity, **diversification, **debt_income}
-    score = calculate_financial_wellness_score(metrics,user)
-    stress_index = calculate_financial_stress_index(metrics)
-    return {
-        "wellness_metrics": metrics,
-        "financial_wellness_score": score,
-        "financial_stress_index": stress_index,
-    }
+    return calculate_behavioral_resilience(user)
 
 
 def update_wellness_file(json_path: str = "json_data/user.json") -> Dict[str, Any]:
@@ -35,8 +20,14 @@ def update_wellness_file(json_path: str = "json_data/user.json") -> Dict[str, An
             continue
         result = calculate_user_wellness(user)
         user["wellness_metrics"] = result["wellness_metrics"]
+        user["behavioral_resilience_score"] = result["behavioral_resilience_score"]
+        user["financial_resilience_score"] = result["financial_resilience_score"]
         user["financial_wellness_score"] = result["financial_wellness_score"]
         user["financial_stress_index"] = result["financial_stress_index"]
+        user["confidence"] = result["confidence"]
+        user["resilience_summary"] = result["resilience_summary"]
+        user["resilience_breakdown"] = result["resilience_breakdown"]
+        user["action_insights"] = result["action_insights"]
         results[user_id] = result
 
     with open(json_path, "w", encoding="utf-8") as f:

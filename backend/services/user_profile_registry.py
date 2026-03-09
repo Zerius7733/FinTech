@@ -21,8 +21,14 @@ USER_FIELD_ORDER = [
     "estate",
     "wellness_metrics",
     "risk_profile",
+    "behavioral_resilience_score",
+    "financial_resilience_score",
     "financial_wellness_score",
     "financial_stress_index",
+    "confidence",
+    "resilience_summary",
+    "resilience_breakdown",
+    "action_insights",
 ]
 
 
@@ -50,10 +56,26 @@ def _build_default_user_profile(name: str) -> Dict[str, Any]:
             "diversification_score": 0.0,
             "debt_income_ratio": 999.0,
             "debt_income_score": 0.0,
+            "housing_score": None,
+            "risk_alignment_score": 50.0,
+            "behavioral_resilience_score": 0.0,
+            "financial_resilience_score": 0.0,
+            "financial_stress_index": 100.0,
+            "confidence": "Low",
+            "derived_metrics": {},
+            "resilience_breakdown": {},
+            "resilience_summary": "",
+            "action_insights": [],
         },
         "risk_profile": 50.0,
+        "behavioral_resilience_score": 0.0,
+        "financial_resilience_score": 0.0,
         "financial_wellness_score": 0.0,
         "financial_stress_index": 100.0,
+        "confidence": "Low",
+        "resilience_summary": "",
+        "resilience_breakdown": {},
+        "action_insights": [],
     }
 
 
