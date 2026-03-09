@@ -12,6 +12,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import AliasChoices, BaseModel, Field
+import yfinance as yf
 import backend.services.api_deps as api
 
 load_dotenv()
@@ -284,6 +285,35 @@ def _build_stock_ath_index() -> Dict[str, Dict[str, Any]]:
     return index
 
 
+def _fetch_stock_ath_payload(symbol: Any) -> Dict[str, Any] | None:
+    symbol_text = str(symbol or "").strip().upper()
+    if not symbol_text:
+        return None
+    try:
+        ticker = yf.Ticker(symbol_text)
+        info = ticker.info or {}
+        fast_info = getattr(ticker, "fast_info", {}) or {}
+        ath = _safe_float(
+            info.get("fiftyTwoWeekHigh")
+            or fast_info.get("yearHigh")
+            or fast_info.get("fiftyTwoWeekHigh")
+        )
+        current_price = _safe_float(
+            fast_info.get("lastPrice")
+            or fast_info.get("last_price")
+            or info.get("regularMarketPrice")
+            or info.get("currentPrice")
+        )
+        if ath is None:
+            return None
+        return {
+            "ath": ath,
+            "ath_change_percentage": _compute_ath_change_percentage(current_price, ath),
+        }
+    except Exception:
+        return None
+
+
 def _lookup_ath_payload(
     bucket: str,
     symbol: Any,
@@ -306,7 +336,10 @@ def _lookup_ath_payload(
         if symbol_key in COMMON_COMMODITY_ETFS:
             return stock_index.get(symbol_key)
         return None
-    return stock_index.get(symbol_key)
+    cached_payload = stock_index.get(symbol_key)
+    if cached_payload:
+        return cached_payload
+    return _fetch_stock_ath_payload(symbol)
 
 
 def _enrich_portfolio_with_ath(user: Dict[str, Any]) -> Dict[str, Any]:

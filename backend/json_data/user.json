@@ -1408,6 +1408,14 @@
           "current_price": 257.46,
           "market_value": 257.46,
           "name": "AAPL"
+        },
+        {
+          "symbol": "SPY",
+          "qty": 1.0,
+          "avg_price": 668.775,
+          "current_price": 668.775,
+          "market_value": 668.77,
+          "name": "SPY"
         }
       ],
       "cryptos": [],
@@ -1421,9 +1429,9 @@
         "value": 100000.0
       }
     ],
-    "portfolio_value": 257.46,
-    "total_balance": 100357.46,
-    "net_worth": 90357.46,
+    "portfolio_value": 926.23,
+    "total_balance": 101026.23,
+    "net_worth": 91026.23,
     "income": 5000.0,
     "expenses": 0.0,
     "income_streams": [
@@ -1438,15 +1446,15 @@
     "wellness_metrics": {
       "liquidity_months": 0.03,
       "liquidity_score": 1.35,
-      "diversification_hhi": 1.0,
-      "diversification_score": 0.0,
+      "diversification_hhi": 0.5986,
+      "diversification_score": 55.25,
       "debt_income_ratio": 0.1667,
       "debt_income_score": 86.9,
       "housing_score": 95.0,
       "risk_alignment_score": 90.25,
-      "behavioral_resilience_score": 45.41,
-      "financial_resilience_score": 45.41,
-      "financial_stress_index": 60.16,
+      "behavioral_resilience_score": 56.46,
+      "financial_resilience_score": 56.46,
+      "financial_stress_index": 50.21,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 5000.0,
@@ -1464,17 +1472,17 @@
         "non_mortgage_debt_to_annual_income": 0.1667,
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
-        "stock_total": 257.46,
+        "stock_total": 926.23,
         "crypto_total": 0.0,
         "commodity_total": 0.0,
-        "computed_portfolio_value": 257.46,
-        "portfolio_value": 257.46,
+        "computed_portfolio_value": 926.23,
+        "portfolio_value": 926.23,
         "portfolio_value_source": "portfolio_positions",
         "crypto_exposure_ratio": 0.0,
-        "diversification_hhi": 1.0,
+        "diversification_hhi": 0.5986,
         "asset_class_hhi": 1.0,
-        "position_hhi": 1.0,
-        "position_count": 1,
+        "position_hhi": 0.5986,
+        "position_count": 2,
         "expenses_estimated": true,
         "expenses_missing": false
       },
@@ -1482,7 +1490,7 @@
         "liquidity_score": 1.35,
         "debt_score": 86.9,
         "housing_score": 95.0,
-        "diversification_score": 0.0,
+        "diversification_score": 55.25,
         "risk_alignment_score": 90.25
       },
       "resilience_summary": "Vulnerable: Manageable debt pressure supports stability, but limited liquid reserves could amplify stress during shocks.",
@@ -1492,17 +1500,17 @@
       ]
     },
     "risk_profile": 80.0,
-    "behavioral_resilience_score": 45.41,
-    "financial_resilience_score": 45.41,
-    "financial_wellness_score": 45.41,
-    "financial_stress_index": 60.16,
+    "behavioral_resilience_score": 56.46,
+    "financial_resilience_score": 56.46,
+    "financial_wellness_score": 56.46,
+    "financial_stress_index": 50.21,
     "confidence": "High",
     "resilience_summary": "Vulnerable: Manageable debt pressure supports stability, but limited liquid reserves could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 1.35,
       "debt_score": 86.9,
       "housing_score": 95.0,
-      "diversification_score": 0.0,
+      "diversification_score": 55.25,
       "risk_alignment_score": 90.25
     },
     "action_insights": [
