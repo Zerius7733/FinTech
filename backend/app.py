@@ -59,15 +59,21 @@ app = FastAPI(
     ],
 )
 
-# CORS Configuration - read from environment variables
-ALLOWED_ORIGINS = os.getenv(
+# CORS configuration
+def _parse_csv_env(name: str, default: str) -> list[str]:
+    return [value.strip() for value in os.getenv(name, default).split(",") if value.strip()]
+
+
+ALLOWED_ORIGINS = _parse_csv_env(
     "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,http://localhost:8080"
-).split(",")
+    "http://localhost:5173,http://localhost:3000,http://localhost:8080,http://127.0.0.1:5173",
+)
+ALLOWED_ORIGIN_REGEX = os.getenv("ALLOWED_ORIGIN_REGEX", r"https://.*\.up\.railway\.app")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

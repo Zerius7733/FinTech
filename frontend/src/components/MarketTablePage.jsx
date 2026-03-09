@@ -3,9 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import AssetInsightsPanel, { getCachedInsight } from './AssetInsightsPanel.jsx'
+import { API_BASE } from '../utils/api.js'
 import { convertCurrency, formatCompactCurrency, formatCurrency, normalizeCurrencyCode } from '../utils/currency.js'
-
-const API_BASE = 'http://127.0.0.1:8000'
 const PAGE_SIZE = 100
 const CACHE_TTL_MS = 30 * 60_000
 

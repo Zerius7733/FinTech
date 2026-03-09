@@ -7,10 +7,9 @@ import { useTheme } from '../context/ThemeContext.jsx'
 import TickerBar from '../components/TickerBar.jsx'
 import Navbar from '../components/Navbar.jsx'
 import AssetInsightsPanel, { getCachedInsight } from '../components/AssetInsightsPanel.jsx'
+import { API_BASE as API } from '../utils/api.js'
 import { refreshPage } from '../utils/refreshPage.js'
 import { convertCurrency, formatCurrency, normalizeCurrencyCode } from '../utils/currency.js'
-
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 let DISPLAY_CURRENCY = 'USD'
 function setDisplayCurrency(code) {
   DISPLAY_CURRENCY = normalizeCurrencyCode(code || 'USD')

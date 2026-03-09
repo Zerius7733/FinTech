@@ -5,9 +5,8 @@ import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLoginModal } from '../context/LoginModalContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
+import { API_BASE as API } from '../utils/api.js'
 import { MOCK_NODES, genPriceSeries, genSparkline } from '../data.js'
-
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const COMMODITY_PROXY_MAP = {
   GLD: 'GC=F',
   IAU: 'GC=F',

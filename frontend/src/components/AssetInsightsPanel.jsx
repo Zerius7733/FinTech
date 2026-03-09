@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react'
 
-const INSIGHTS_API = 'http://localhost:8000'
+import { API_BASE } from '../utils/api.js'
+
 const insightsCache = new Map()
 
 function fmtPct(value) {
@@ -94,7 +95,7 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
     let cancelled = false
     setState({ loading: true, error: '', data: null })
 
-    fetch(`${INSIGHTS_API}/api/insights?type=${encodeURIComponent(target.type)}&symbol=${encodeURIComponent(target.symbol)}&months=${months}&user_id=${encodeURIComponent(userId || 'anonymous')}`)
+    fetch(`${API_BASE}/api/insights?type=${encodeURIComponent(target.type)}&symbol=${encodeURIComponent(target.symbol)}&months=${months}&user_id=${encodeURIComponent(userId || 'anonymous')}`)
       .then(async res => {
         if (!res.ok) {
           const payload = await res.json().catch(() => ({}))

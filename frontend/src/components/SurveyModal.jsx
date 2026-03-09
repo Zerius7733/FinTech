@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import RiskSlider from './RiskSlider.jsx'
-
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+import { API_BASE as API } from '../utils/api.js'
 const OPENAI_API_KEY = ''
 
 async function fileToBase64(file) {
@@ -268,7 +267,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
         <div style={{ display:'flex', gap:8 }}>
           <button style={{ ...S.btnBack, color:'var(--text-faint)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => onComplete([])}>Skip</button>
           <button style={{ ...S.submit, opacity: preview ? 1 : 0.4, cursor: preview ? 'pointer' : 'not-allowed', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => preview && parse()}>
-            Extract ->
+            Extract {'->'}
           </button>
         </div>
       </div>

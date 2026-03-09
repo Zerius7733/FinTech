@@ -1,6 +1,8 @@
 // ── App config ─────────────────────────────────────────────────────────────
+import { API_API_BASE } from './utils/api.js'
+
 export const WS_CONFIG = {
-  API_BASE: 'http://localhost:8000/api',
+  API_BASE: API_API_BASE,
   RISK_FACTORS: { conservative: 1.0, balanced: 0.7, aggressive: 0.5 },
   RISK_ALLOCATIONS: {
     conservative: { equity: 30, bonds: 60, alt: 10 },

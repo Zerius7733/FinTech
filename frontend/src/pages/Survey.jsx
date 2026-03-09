@@ -2,9 +2,9 @@ import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RiskSlider from '../components/RiskSlider.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { API_BASE as API } from '../utils/api.js'
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 // Paste your OpenAI API key here. In production, proxy this through your backend.
 const OPENAI_API_KEY = ''   // ← e.g. 'sk-...'

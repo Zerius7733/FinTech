@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import RiskSlider from './RiskSlider.jsx'
+import { API_BASE as API } from '../utils/api.js'
 import { refreshPage } from '../utils/refreshPage.js'
-
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const GLOBE_PREFS_KEY = 'ws_globe_prefs'
 const GLOBE_PREFS_EVENT = 'ws:globe-prefs'
 
@@ -648,7 +647,7 @@ export default function SettingsModal({ onClose }) {
                 ))}
               </Card>
               <Card title="App Info" icon={'\u2139\uFE0F'}>
-                {[['Version','1.0.0-beta'],['Last updated','10 March 2026'],['Backend','FastAPI - localhost:8000'],['Frontend','React 18 + Vite']].map(([k,v]) => (
+                {[['Version','1.0.0-beta'],['Last updated','10 March 2026'],['Backend','FastAPI (configured API URL)'],['Frontend','React 18 + Vite']].map(([k,v]) => (
                   <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0',
                     borderBottom: '1px solid var(--border)', fontSize: '0.83rem' }}>
                     <span style={{ color: 'var(--text-dim)' }}>{k}</span>
