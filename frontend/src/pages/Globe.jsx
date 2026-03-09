@@ -894,7 +894,7 @@ function spreadPositions(n, baseLat, baseLng, latRadius, lngRadius) {
 }
 
 function buildGlobeNodes(profile, commodityDisplayMap = {}) {
-  if (!profile?.portfolio) return MOCK_NODES
+  if (!profile?.portfolio) return []
 
   const fmt2 = n => Math.round(n * 100) / 100
   const { stocks = [], cryptos = [], commodities = [] } = profile.portfolio
@@ -973,7 +973,7 @@ function buildGlobeNodes(profile, commodityDisplayMap = {}) {
     nodes.push(makeNode(h, 'commodities', commPos[i].lat, commPos[i].lng, 0xfbbf24, 'Commodities', '🪙'))
   )
 
-  return nodes.length ? nodes : MOCK_NODES
+  return nodes
 }
 
 export default function Globe() {
@@ -1068,7 +1068,9 @@ export default function Globe() {
 
   // Rebuild globe nodes whenever profile loads / changes
   useEffect(() => {
-    globeNodesRef.current = (user && userProfile) ? buildGlobeNodes(userProfile, commodityDisplayMap) : MOCK_NODES
+    globeNodesRef.current = user
+      ? (userProfile ? buildGlobeNodes(userProfile, commodityDisplayMap) : [])
+      : MOCK_NODES
     buildParticlesRef.current?.()   // regenerate cluster particles for new node set
   }, [user, userProfile, commodityDisplayMap])
 

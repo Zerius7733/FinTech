@@ -386,12 +386,14 @@ export default function SurveyModal({ open, onClose }) {
       return
     }
     const parsedAge = Number(age)
-    if (Number.isFinite(parsedAge) && parsedAge > 0) {
-      if (parsedAge <= 29) setAgeGroup('18-29')
-      else if (parsedAge <= 44) setAgeGroup('30-44')
-      else if (parsedAge <= 59) setAgeGroup('45-59')
-      else setAgeGroup('60+')
+    if (!Number.isFinite(parsedAge) || parsedAge < 18 || parsedAge > 100) {
+      setSubmitErr('Please enter a valid age between 18 and 100.')
+      return
     }
+    if (parsedAge <= 29) setAgeGroup('18-29')
+    else if (parsedAge <= 44) setAgeGroup('30-44')
+    else if (parsedAge <= 59) setAgeGroup('45-59')
+    else setAgeGroup('60+')
     setSubmitErr('')
     goNext()
   }
@@ -409,7 +411,7 @@ export default function SurveyModal({ open, onClose }) {
           </h2>
           <p style={{ color:'var(--text-dim)', fontSize:'0.85rem', lineHeight:1.6, marginBottom:16 }}>Your WealthSphere is calibrated.</p>
           <div style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center', marginBottom:16 }}>
-            {[['Age', ageGroup], ['Risk', `${riskLevel}/100`], ['Assets', `${selectedAssets.size}`], ['Horizon', `${horizon}y`]].map(([k,v]) => (
+            {[['Age', ageGroup], ['Risk', `${riskLevel}/100`], ['Assets', `${importedHoldings.length}`], ['Horizon', `${horizon}y`]].map(([k,v]) => (
               <div key={k} style={{ ...S.pill, fontSize:'0.7rem' }}>{k}: <span style={{ color:'var(--gold)' }}>{v}</span></div>
             ))}
           </div>
@@ -880,7 +882,5 @@ const imp = {
   spinner: { width: 36, height: 36, border: '3px solid rgba(255,255,255,0.08)', borderTopColor: 'var(--teal)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   addRowBtn: { background: 'transparent', border: '1.5px dashed rgba(255,255,255,0.12)', borderRadius: 8, padding: '8px 12px', color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', cursor: 'pointer', width: '100%' },
 }
-
-
 
 

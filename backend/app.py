@@ -148,6 +148,29 @@ def _write_users_data(data: Dict[str, Any]) -> None:
         json.dump(api.normalize_users_data(data), f, indent=2)
 
 
+def _next_available_user_id() -> str:
+    max_id = 0
+
+    if LOGIN_CSV_PATH.exists():
+        with open(LOGIN_CSV_PATH, "r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                raw = str((row or {}).get("user_id", "")).strip().lower()
+                if raw.startswith("u") and raw[1:].isdigit():
+                    max_id = max(max_id, int(raw[1:]))
+
+    try:
+        users = _read_users_data()
+    except Exception:
+        users = {}
+    for user_id in users.keys():
+        raw = str(user_id or "").strip().lower()
+        if raw.startswith("u") and raw[1:].isdigit():
+            max_id = max(max_id, int(raw[1:]))
+
+    return f"u{max_id + 1:03d}"
+
+
 def _read_json_file(path: Path) -> Dict[str, Any]:
     if not path.exists():
         return {}
@@ -1042,6 +1065,7 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
             login_csv_path=LOGIN_CSV_PATH,
             username=payload.username,
             password=payload.password,
+            user_id=_next_available_user_id(),
         )
         api.add_default_user_profile(
             json_path=USER_JSON_PATH,

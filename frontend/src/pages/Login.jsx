@@ -10,6 +10,7 @@ export default function Login() {
   const [tab, setTab]         = useState('signin')   // 'signin' | 'register'
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [age, setAge] = useState('')
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -18,22 +19,60 @@ export default function Login() {
     setError('')
     setLoading(true)
 
-    const endpoint = tab === 'signin' ? '/auth/login' : '/auth/register'
-
     try {
-      const res = await fetch(`${API}${endpoint}`, {
+      if (tab === 'signin') {
+        const res = await fetch(`${API}/auth/login`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ username, password }),
+        })
+        const data = await res.json()
+
+        if (!res.ok) {
+          setError(data.detail || 'Something went wrong.')
+          return
+        }
+
+        login(data)
+        navigate('/')
+        return
+      }
+
+      const parsedAge = Number(age)
+      if (!Number.isFinite(parsedAge) || parsedAge < 18 || parsedAge > 100) {
+        setError('Please enter a valid age between 18 and 100.')
+        return
+      }
+
+      const regRes = await fetch(`${API}/auth/register`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ username, password }),
       })
-      const data = await res.json()
+      const regData = await regRes.json()
 
-      if (!res.ok) {
-        setError(data.detail || 'Something went wrong.')
-      } else {
-        login(data)
-        navigate('/')
+      if (!regRes.ok) {
+        setError(regData.detail || 'Something went wrong.')
+        return
       }
+
+      const profileRes = await fetch(`${API}/users/survey/profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: regData.user_id,
+          first_name: username,
+          age: parsedAge,
+        }),
+      })
+      const profileData = await profileRes.json().catch(() => ({}))
+      if (!profileRes.ok) {
+        setError(profileData.detail || 'Account created, but profile setup failed.')
+        return
+      }
+
+      login(regData)
+      navigate('/')
     } catch {
       setError('Cannot reach the server. Is the backend running?')
     } finally {
@@ -101,6 +140,22 @@ export default function Login() {
               required
             />
           </label>
+
+          {tab === 'register' && (
+            <label style={S.label}>
+              Age
+              <input
+                style={S.input}
+                type="number"
+                min="18"
+                max="100"
+                placeholder="e.g. 30"
+                value={age}
+                onChange={e => setAge(e.target.value)}
+                required
+              />
+            </label>
+          )}
 
           {error && <p style={S.error}>{error}</p>}
 
