@@ -981,9 +981,8 @@ export default function Globe() {
   const heroNameStyle = activeTheme?.id === 'silent-night'
     ? {
         fontStyle: 'normal',
-        background: 'linear-gradient(135deg,#fefcf7,#e9dfcf 58%,#cdb89c)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
+        color: '#e9dfcf',
+        textShadow: '0 0 18px rgba(205,184,156,0.12)',
       }
     : {
         fontStyle: 'normal',
