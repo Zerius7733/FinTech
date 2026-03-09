@@ -5,7 +5,7 @@ import { useLoginModal } from '../context/LoginModalContext.jsx'
 import ThemeModal from './ThemeModal.jsx'
 import SettingsModal from './SettingsModal.jsx'
 
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const NAV_LINKS = [
   { label: 'Home',      path: '/' },
   { label: 'Markets',    path: '/stocks' },

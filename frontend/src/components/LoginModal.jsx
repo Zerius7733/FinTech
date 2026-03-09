@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 export default function LoginModal({ open, onClose, onSuccess, onRegisterSuccess, onOpenSurvey }) {
   const { login } = useAuth()

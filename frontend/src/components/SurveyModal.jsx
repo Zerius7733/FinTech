@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import RiskSlider from './RiskSlider.jsx'
 
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const OPENAI_API_KEY = ''
 
 async function fileToBase64(file) {

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import RiskSlider from './RiskSlider.jsx'
 import { refreshPage } from '../utils/refreshPage.js'
 
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const GLOBE_PREFS_KEY = 'ws_globe_prefs'
 const GLOBE_PREFS_EVENT = 'ws:globe-prefs'
 

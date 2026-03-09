@@ -1,0 +1,46 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fintech-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # CORS Configuration - allow frontend and local development
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8000,http://127.0.0.1:5173
+      - OLLAMA_BASE_URL=http://localhost:11434
+      - OLLAMA_MODEL=qwen2.5:7b-instruct
+      - NEWS_DEBUG=1
+      - OLLAMA_MODE=0
+      - INSIGHTS_RATE_LIMIT_ENABLED=1
+      - INSIGHTS_RATE_LIMIT_WINDOW_SECONDS=3600
+      - INSIGHTS_RATE_LIMIT_MAX_REQUESTS=10
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - fintech-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Use Railway backend URL for production-like testing
+        VITE_API_URL: https://fintech-production-d308.up.railway.app
+    container_name: fintech-frontend
+    ports:
+      - "5173:80"
+    environment:
+      # Override for development/testing
+      VITE_API_URL: https://fintech-production-d308.up.railway.app
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - fintech-network
+
+networks:
+  fintech-network:
+    driver: bridge

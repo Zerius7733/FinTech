@@ -7,7 +7,7 @@ import { useLoginModal } from '../context/LoginModalContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { MOCK_NODES, genPriceSeries, genSparkline } from '../data.js'
 
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 function animateCount(setter, target, duration = 1800) {
   let start = null

@@ -4,7 +4,7 @@ import RiskSlider from '../components/RiskSlider.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 // Paste your OpenAI API key here. In production, proxy this through your backend.
 const OPENAI_API_KEY = ''   // ← e.g. 'sk-...'

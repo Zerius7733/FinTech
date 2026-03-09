@@ -10,7 +10,7 @@ import AssetInsightsPanel, { getCachedInsight } from '../components/AssetInsight
 import { refreshPage } from '../utils/refreshPage.js'
 import { convertCurrency, formatCurrency, normalizeCurrencyCode } from '../utils/currency.js'
 
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 let DISPLAY_CURRENCY = 'USD'
 function setDisplayCurrency(code) {
   DISPLAY_CURRENCY = normalizeCurrencyCode(code || 'USD')

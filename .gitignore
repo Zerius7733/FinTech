@@ -5,6 +5,10 @@ node_modules
 .env
 frontend/node_modules/
 frontend/package-lock.json
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+.env.production
 backend/json_data/commodity_market_rankings.json
 backend/json_data/commodity_market_snapshot.json
 backend/json_data/stock_market_rankings.json
