@@ -279,7 +279,7 @@ function WellnessRing({ score, size = 84, centerText = null, subLabel = 'score' 
   )
 }
 
-function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = false, themeId = 'default', layout = null }) {
+function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = false, themeId = 'default', layout = null, showPortfolioCards = false }) {
   const [entered, setEntered] = useState(false)
   const [chartHoverIndex, setChartHoverIndex] = useState(null)
   const stableChartPts = useMemo(() => (
@@ -537,62 +537,67 @@ function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = fal
                 />
               </div>
 
-              {/* Cell B — Return ring */}
-               <div style={{ ...BC_LOCAL, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10 }}>
-                <WellnessRing
-                  score={hasAthData ? Math.min(100, displayDropPct) : 0}
-                  centerText={hasAthData ? `${displayDropPct.toFixed(1)}%` : '—'}
-                  subLabel={hasAthData ? 'below ATH' : 'ATH n/a'}
-                  size={90}
-                />
-                <div style={{ textAlign:'center' }}>
-                  <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', color:'var(--red)', marginBottom:2 }}>
-                    {hasAthData ? (displayLatestDropPct > 0 ? `-${displayLatestDropPct.toFixed(2)}%` : '0.00%') : 'ATH unavailable'}
-                  </div>
-                  <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)' }}>
-                    {hasAthData
-                      ? `Latest $${currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} vs ATH $${athPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                      : 'Latest price vs ATH unavailable'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Cell C — Position details (2 cols) */}
-               <div style={{ ...BC_LOCAL, gridColumn:'1/3' }}>
-                <div style={BL_LOCAL}><span>Position Details</span></div>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                  {[
-                    { label:'Current Price', val: h0 ? `$${h0.price.toLocaleString()}` : '—', c: 'var(--text)' },
-                    { label:'Market Value',  val: `$${node.aum.toLocaleString()}`,              c: 'var(--gold)' },
-                    { label:'Quantity',      val: h0 ? h0.shares.toLocaleString() : '—',        c: 'var(--teal)' },
-                    { label:'Unrealised P&L',val: `${gainAbs >= 0 ? '+' : ''}$${Math.round(gainAbs).toLocaleString()}`, c: gainAbs >= 0 ? 'var(--green)' : 'var(--red)' },
-                  ].map(s => (
-                    <div key={s.label} style={{ background: tileSurface, borderRadius:10, padding:'10px 14px', border: tileBorder }}>
-                      <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:5 }}>{s.label}</div>
-                      <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', color:s.c }}>{s.val}</div>
+              {showPortfolioCards && (
+                <div style={{ ...BC_LOCAL, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10 }}>
+                  <WellnessRing
+                    score={hasAthData ? Math.min(100, displayDropPct) : 0}
+                    centerText={hasAthData ? `${displayDropPct.toFixed(1)}%` : '—'}
+                    subLabel={hasAthData ? 'below ATH' : 'ATH n/a'}
+                    size={90}
+                  />
+                  <div style={{ textAlign:'center' }}>
+                    <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', color:'var(--red)', marginBottom:2 }}>
+                      {hasAthData ? (displayLatestDropPct > 0 ? `-${displayLatestDropPct.toFixed(2)}%` : '0.00%') : 'ATH unavailable'}
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Cell D — P&L summary */}
-               <div style={{ ...BC_LOCAL }}>
-                <div style={BL_LOCAL}><span>Summary</span></div>
-                <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.7rem', color: isPos?'var(--green)':'var(--red)', lineHeight:1, marginBottom:4 }}>
-                  {isPos?'+':''}{node.mtd}%
-                </div>
-                <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.65rem', color:'var(--text-faint)', marginBottom:14 }}>since avg cost</div>
-                {[
-                  ['Type',     node.region,                          'var(--teal)'],
-                  ['Value',    `$${node.aum.toLocaleString()}`,      'var(--gold)'],
-                  ['P&L',      `${gainAbs >= 0?'+':''}$${Math.round(gainAbs).toLocaleString()}`, gainAbs>=0?'var(--green)':'var(--red)'],
-                ].map(([k,v,c]) => (
-                  <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', marginBottom:6 }}>
-                    <span style={{ color:'var(--text-dim)' }}>{k}</span>
-                    <span style={{ fontFamily:'var(--font-mono)', color:c, fontWeight:600 }}>{v}</span>
+                    <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)' }}>
+                      {hasAthData
+                        ? `Latest $${currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} vs ATH $${athPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                        : 'Latest price vs ATH unavailable'}
+                    </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {showPortfolioCards && (
+                <>
+                  {/* Cell C — Position details (2 cols) */}
+                  <div style={{ ...BC_LOCAL, gridColumn:'1/3' }}>
+                    <div style={BL_LOCAL}><span>Position Details</span></div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                      {[
+                        { label:'Current Price', val: h0 ? `$${h0.price.toLocaleString()}` : '—', c: 'var(--text)' },
+                        { label:'Market Value',  val: `$${node.aum.toLocaleString()}`,              c: 'var(--gold)' },
+                        { label:'Quantity',      val: h0 ? h0.shares.toLocaleString() : '—',        c: 'var(--teal)' },
+                        { label:'Unrealised P&L',val: `${gainAbs >= 0 ? '+' : ''}$${Math.round(gainAbs).toLocaleString()}`, c: gainAbs >= 0 ? 'var(--green)' : 'var(--red)' },
+                      ].map(s => (
+                        <div key={s.label} style={{ background: tileSurface, borderRadius:10, padding:'10px 14px', border: tileBorder }}>
+                          <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:5 }}>{s.label}</div>
+                          <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', color:s.c }}>{s.val}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Cell D — P&L summary */}
+                  <div style={{ ...BC_LOCAL }}>
+                    <div style={BL_LOCAL}><span>Summary</span></div>
+                    <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.7rem', color: isPos?'var(--green)':'var(--red)', lineHeight:1, marginBottom:4 }}>
+                      {isPos?'+':''}{node.mtd}%
+                    </div>
+                    <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.65rem', color:'var(--text-faint)', marginBottom:14 }}>since avg cost</div>
+                    {[
+                      ['Type',     node.region,                          'var(--teal)'],
+                      ['Value',    `$${node.aum.toLocaleString()}`,      'var(--gold)'],
+                      ['P&L',      `${gainAbs >= 0?'+':''}$${Math.round(gainAbs).toLocaleString()}`, gainAbs>=0?'var(--green)':'var(--red)'],
+                    ].map(([k,v,c]) => (
+                      <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', marginBottom:6 }}>
+                        <span style={{ color:'var(--text-dim)' }}>{k}</span>
+                        <span style={{ fontFamily:'var(--font-mono)', color:c, fontWeight:600 }}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
 
             </div>
               )
@@ -1793,6 +1798,7 @@ export default function Globe() {
         canNavigate={(globeNodesRef.current?.length || 0) > 1}
         themeId={activeTheme?.id}
         layout={dashboardLayout}
+        showPortfolioCards={Boolean(user)}
       />
 
       {/* Global keyframes */}
