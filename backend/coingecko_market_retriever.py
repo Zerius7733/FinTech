@@ -11,6 +11,7 @@ from urllib3.util.retry import Retry
 
 COINGECKO_MARKETS_URL = "https://api.coingecko.com/api/v3/coins/markets"
 _CACHE_PATH = Path(__file__).resolve().parent / "json_data" / "coingecko_markets_cache.json"
+_DEFAULT_PREFERRED_CACHE_SECONDS = 5 * 60
 _DEFAULT_MAX_STALE_SECONDS = 24 * 60 * 60
 _DEFAULT_HEADERS = {
     "Accept": "application/json",
@@ -102,10 +103,19 @@ def fetch_coingecko_coin_listings(
     page: int = 1,
     per_page: int = 50,
     requests_module: Any = requests,
+    preferred_cache_seconds: int = _DEFAULT_PREFERRED_CACHE_SECONDS,
     max_stale_seconds: int = _DEFAULT_MAX_STALE_SECONDS,
 ) -> List[Dict[str, Any]]:
     normalized_page = max(1, int(page))
     normalized_per_page = max(1, min(250, int(per_page)))
+
+    cached = _load_cached(
+        page=normalized_page,
+        per_page=normalized_per_page,
+        max_stale_seconds=max(0, int(preferred_cache_seconds)),
+    )
+    if cached is not None:
+        return cached
 
     params = {
         "vs_currency": "usd",
@@ -151,7 +161,7 @@ def fetch_coingecko_coin_listings(
         cached = _load_cached(
             page=normalized_page,
             per_page=normalized_per_page,
-            max_stale_seconds=max_stale_seconds,
+            max_stale_seconds=max(0, int(max_stale_seconds)),
         )
         if cached is not None:
             return cached
