@@ -24,7 +24,17 @@ CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
 LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
 ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
 STOCK_LISTINGS_CACHE_PATH = BASE_DIR / "json_data" / "stock_listings_cache.json"
+COINGECKO_MARKETS_CACHE_PATH = BASE_DIR / "json_data" / "coingecko_markets_cache.json"
+COMMODITY_MARKET_RANKINGS_PATH = BASE_DIR / "json_data" / "commodity_market_rankings.json"
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
+COMMODITY_ETF_TO_UNDERLYING = {
+    "GLD": "GC=F",
+    "IAU": "GC=F",
+    "SLV": "SI=F",
+    "SIVR": "SI=F",
+    "PPLT": "PL=F",
+    "PALL": "PA=F",
+}
 STOCK_MARKET_REFRESH_INTERVAL_SECONDS = 30 * 60
 INSIGHTS_RATE_LIMIT_ENABLED = os.getenv("INSIGHTS_RATE_LIMIT_ENABLED", "1").strip().lower() in {"1", "true", "yes", "on"}
 INSIGHTS_RATE_LIMIT_WINDOW_SECONDS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_WINDOW_SECONDS", "3600")))
@@ -136,6 +146,205 @@ def _read_users_data() -> Dict[str, Any]:
 def _write_users_data(data: Dict[str, Any]) -> None:
     with open(USER_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(api.normalize_users_data(data), f, indent=2)
+
+
+def _read_json_file(path: Path) -> Dict[str, Any]:
+    if not path.exists():
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        payload = json.load(f)
+    return payload if isinstance(payload, dict) else {}
+
+
+def _normalize_lookup_symbol(value: Any) -> str:
+    text = str(value or "").strip().upper()
+    if not text:
+        return ""
+    return text.replace("-USD", "")
+
+
+def _normalize_lookup_name(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _safe_float(value: Any) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if number != number:
+        return None
+    return number
+
+
+def _compute_ath_change_percentage(current_price: Any, ath: Any) -> float | None:
+    current = _safe_float(current_price)
+    ath_value = _safe_float(ath)
+    if current is None or ath_value is None or ath_value <= 0:
+        return None
+    return round(((current - ath_value) / ath_value) * 100, 5)
+
+
+def _build_crypto_ath_index() -> Dict[str, Dict[str, Any]]:
+    payload = _read_json_file(COINGECKO_MARKETS_CACHE_PATH)
+    index: Dict[str, Dict[str, Any]] = {}
+    for entry in payload.get("entries", {}).values():
+        if not isinstance(entry, dict):
+            continue
+        for row in entry.get("rows", []):
+            if not isinstance(row, dict):
+                continue
+            normalized = {
+                "ath": _safe_float(row.get("ath")),
+                "ath_change_percentage": _safe_float(row.get("ath_change_percentage")),
+            }
+            keys = {
+                _normalize_lookup_symbol(row.get("symbol")),
+                _normalize_lookup_name(row.get("id")),
+                _normalize_lookup_name(row.get("name")),
+            }
+            for key in keys:
+                if key:
+                    index[key] = normalized
+    return index
+
+
+def _build_commodity_ath_index() -> Dict[str, Dict[str, Any]]:
+    payload = _read_json_file(COMMODITY_MARKET_RANKINGS_PATH)
+    index: Dict[str, Dict[str, Any]] = {}
+    for row in payload.get("items", []):
+        if not isinstance(row, dict):
+            continue
+        normalized = {
+            "ath": _safe_float(row.get("ath")),
+            "ath_change_percentage": _safe_float(row.get("ath_change_percentage")),
+        }
+        keys = {
+            _normalize_lookup_symbol(row.get("symbol")),
+            _normalize_lookup_name(row.get("id")),
+            _normalize_lookup_name(row.get("name")),
+        }
+        for key in keys:
+            if key:
+                index[key] = normalized
+    return index
+
+
+def _build_stock_ath_index() -> Dict[str, Dict[str, Any]]:
+    payload = _read_json_file(STOCK_LISTINGS_CACHE_PATH)
+    index: Dict[str, Dict[str, Any]] = {}
+    symbols = payload.get("symbols", {})
+    if not isinstance(symbols, dict):
+        return index
+    for symbol, row in symbols.items():
+        if not isinstance(row, dict):
+            continue
+        index[_normalize_lookup_symbol(symbol)] = {
+            "ath": _safe_float(row.get("ath")),
+            "ath_change_percentage": _compute_ath_change_percentage(
+                row.get("current_price"),
+                row.get("ath"),
+            ),
+        }
+    return index
+
+
+def _lookup_ath_payload(
+    bucket: str,
+    symbol: Any,
+    name: Any,
+    crypto_index: Dict[str, Dict[str, Any]],
+    commodity_index: Dict[str, Dict[str, Any]],
+    stock_index: Dict[str, Dict[str, Any]],
+) -> Dict[str, Any] | None:
+    symbol_key = _normalize_lookup_symbol(symbol)
+    name_key = _normalize_lookup_name(name)
+    if bucket == "cryptos":
+        for key in (symbol_key, name_key):
+            if key and key in crypto_index:
+                return crypto_index[key]
+        return None
+    if bucket == "commodities":
+        for key in (symbol_key, name_key):
+            if key and key in commodity_index:
+                return commodity_index[key]
+        if symbol_key in COMMON_COMMODITY_ETFS:
+            return stock_index.get(symbol_key)
+        return None
+    return stock_index.get(symbol_key)
+
+
+def _enrich_portfolio_with_ath(user: Dict[str, Any]) -> Dict[str, Any]:
+    portfolio = user.get("portfolio")
+    if not isinstance(portfolio, dict):
+        return user
+
+    crypto_index = _build_crypto_ath_index()
+    commodity_index = _build_commodity_ath_index()
+    stock_index = _build_stock_ath_index()
+
+    for bucket in ("stocks", "cryptos", "commodities"):
+        entries = portfolio.get(bucket, [])
+        if not isinstance(entries, list):
+            continue
+        for item in entries:
+            if not isinstance(item, dict):
+                continue
+            ath_payload = _lookup_ath_payload(
+                bucket=bucket,
+                symbol=item.get("symbol"),
+                name=item.get("name"),
+                crypto_index=crypto_index,
+                commodity_index=commodity_index,
+                stock_index=stock_index,
+            )
+            if not ath_payload:
+                continue
+            ath_value = _safe_float(ath_payload.get("ath"))
+            if ath_value is not None:
+                item["ath"] = ath_value
+            ath_change_percentage = _safe_float(ath_payload.get("ath_change_percentage"))
+            if ath_change_percentage is None:
+                ath_change_percentage = _compute_ath_change_percentage(
+                    item.get("current_price"),
+                    ath_value,
+                )
+            if ath_change_percentage is not None:
+                item["ath_change_percentage"] = ath_change_percentage
+
+            if bucket != "commodities":
+                continue
+
+            symbol_key = _normalize_lookup_symbol(item.get("symbol"))
+            name_key = _normalize_lookup_name(item.get("name"))
+            display_row = None
+            for key in (symbol_key, name_key):
+                if key and key in commodity_index:
+                    display_row = commodity_index[key]
+                    break
+            if display_row is None:
+                underlying_symbol = COMMODITY_ETF_TO_UNDERLYING.get(symbol_key)
+                if underlying_symbol:
+                    display_row = commodity_index.get(underlying_symbol)
+            if not display_row:
+                continue
+
+            if display_row.get("symbol") is not None:
+                item["commodity_display_symbol"] = str(display_row.get("symbol"))
+            if display_row.get("name") is not None:
+                item["commodity_display_name"] = str(display_row.get("name"))
+            display_price = _safe_float(display_row.get("current_price"))
+            if display_price is not None:
+                item["commodity_display_current_price"] = display_price
+            display_ath = _safe_float(display_row.get("ath"))
+            if display_ath is not None:
+                item["commodity_display_ath"] = display_ath
+            display_ath_change = _safe_float(display_row.get("ath_change_percentage"))
+            if display_ath_change is None:
+                display_ath_change = _compute_ath_change_percentage(display_price, display_ath)
+            if display_ath_change is not None:
+                item["commodity_display_ath_change_percentage"] = display_ath_change
+    return user
 
 
 def _read_user_portfolio_history(user_id: str) -> Dict[str, Any]:
@@ -1094,6 +1303,7 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
         user = _ensure_financial_collections(user)
+        user = _enrich_portfolio_with_ath(user)
         return {"status": "ok", "user_id": user_id, "user": user}
     except HTTPException:
         raise
@@ -1962,6 +2172,7 @@ def get_portfolio_by_user_id(user_id: str) -> Dict[str, Any]:
         user = data.get(user_id)
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _enrich_portfolio_with_ath(_ensure_financial_collections(user))
         return {"status": "ok", "user_id": user_id, "portfolio": user.get("portfolio", [])}
     except HTTPException:
         raise

@@ -8,6 +8,14 @@ import { useTheme } from '../context/ThemeContext.jsx'
 import { MOCK_NODES, genPriceSeries, genSparkline } from '../data.js'
 
 const API = 'http://localhost:8000'
+const COMMODITY_PROXY_MAP = {
+  GLD: 'GC=F',
+  IAU: 'GC=F',
+  SLV: 'SI=F',
+  SIVR: 'SI=F',
+  PPLT: 'PL=F',
+  PALL: 'PA=F',
+}
 
 function animateCount(setter, target, duration = 1800) {
   let start = null
@@ -491,17 +499,25 @@ function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = fal
               const costBasis = h0 ? h0.shares * (h0.price / (1 + node.mtd / 100)) : 0
               const gainAbs = node.aum - costBasis
               const lastPoint = chartPts.length ? chartPts[chartPts.length - 1] : 0
-              const peakPoint = chartPts.length ? Math.max(...chartPts) : 0
               const currentPrice = Number(h0?.price || 0)
               const hoveredPoint = typeof chartHoverIndex === 'number'
                 ? chartPts[Math.min(Math.max(chartHoverIndex, 0), chartPts.length - 1)]
                 : lastPoint
               const hoveredPrice = currentPrice > 0 && lastPoint > 0 ? (currentPrice * hoveredPoint) / lastPoint : currentPrice
-              const athPrice = currentPrice > 0 && lastPoint > 0 ? (currentPrice * peakPoint) / lastPoint : currentPrice
-              const dropFromAthPct = athPrice > 0 ? Math.max(0, ((athPrice - hoveredPrice) / athPrice) * 100) : 0
-              const latestDropFromAthPct = athPrice > 0 ? Math.max(0, ((athPrice - currentPrice) / athPrice) * 100) : 0
-              const displayDropPct = dropFromAthPct < 0.005 ? 0 : dropFromAthPct
-              const displayLatestDropPct = latestDropFromAthPct < 0.005 ? 0 : latestDropFromAthPct
+              const rawAthPrice = Number(node.ath ?? h0?.ath ?? 0)
+              const athPrice = rawAthPrice > 0 ? rawAthPrice : null
+              const rawAthChangePct = Number(node.ath_change_percentage ?? h0?.ath_change_percentage)
+              const latestDropFromAthPct = Number.isFinite(rawAthChangePct)
+                ? Math.max(0, -rawAthChangePct)
+                : athPrice && currentPrice > 0
+                  ? Math.max(0, ((athPrice - currentPrice) / athPrice) * 100)
+                  : null
+              const dropFromAthPct = athPrice && hoveredPrice > 0
+                ? Math.max(0, ((athPrice - hoveredPrice) / athPrice) * 100)
+                : null
+              const displayDropPct = dropFromAthPct != null && dropFromAthPct >= 0.005 ? dropFromAthPct : 0
+              const displayLatestDropPct = latestDropFromAthPct != null && latestDropFromAthPct >= 0.005 ? latestDropFromAthPct : 0
+              const hasAthData = athPrice != null
               return (
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gridTemplateRows:'auto auto', gap:14, marginBottom:14 }}>
 
@@ -525,17 +541,17 @@ function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = fal
               {/* Cell B — Return ring */}
                <div style={{ ...BC_LOCAL, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10 }}>
                 <WellnessRing
-                  score={Math.min(100, displayDropPct)}
-                  centerText={`${displayDropPct.toFixed(1)}%`}
-                  subLabel="below ATH"
+                  score={hasAthData ? Math.min(100, displayDropPct) : 0}
+                  centerText={hasAthData ? `${displayDropPct.toFixed(1)}%` : '—'}
+                  subLabel={hasAthData ? 'below ATH' : 'ATH n/a'}
                   size={90}
                 />
                 <div style={{ textAlign:'center' }}>
                   <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', color:'var(--red)', marginBottom:2 }}>
-                    {displayLatestDropPct > 0 ? `-${displayLatestDropPct.toFixed(2)}%` : '0.00%'}
+                    {hasAthData ? (displayLatestDropPct > 0 ? `-${displayLatestDropPct.toFixed(2)}%` : '0.00%') : 'ATH unavailable'}
                   </div>
                   <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.62rem', color:'var(--text-faint)' }}>
-                    {athPrice > 0
+                    {hasAthData
                       ? `Latest $${currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} vs ATH $${athPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                       : 'Latest price vs ATH unavailable'}
                   </div>
@@ -877,7 +893,7 @@ function spreadPositions(n, baseLat, baseLng, latRadius, lngRadius) {
   })
 }
 
-function buildGlobeNodes(profile) {
+function buildGlobeNodes(profile, commodityDisplayMap = {}) {
   if (!profile?.portfolio) return MOCK_NODES
 
   const fmt2 = n => Math.round(n * 100) / 100
@@ -886,7 +902,25 @@ function buildGlobeNodes(profile) {
 
   const makeNode = (h, ep, lat, lng, color, region, flag) => {
     const mtd = h.avg_price > 0 ? fmt2((h.current_price - h.avg_price) / h.avg_price * 100) : 0
-    const ticker = (h.symbol || '').replace('-USD', '').replace('.SI', '')
+    const rawSymbol = String(h.symbol || '').replace('-USD', '').replace('.SI', '')
+    const commodityKey = COMMODITY_PROXY_MAP[String(h.symbol || '').toUpperCase()] || String(h.symbol || '').toUpperCase()
+    const commodityDisplay = ep === 'commodities' ? commodityDisplayMap[commodityKey] || null : null
+    const commodityDisplaySymbol = ep === 'commodities'
+      ? (commodityDisplay?.symbol || h.commodity_display_symbol || h.symbol || '')
+      : (h.symbol || '')
+    const commodityDisplayName = ep === 'commodities'
+      ? (commodityDisplay?.name || h.commodity_display_name || h.name || h.symbol)
+      : (h.name || h.symbol)
+    const commodityDisplayPrice = ep === 'commodities'
+      ? (commodityDisplay?.current_price ?? h.commodity_display_current_price ?? h.current_price ?? 0)
+      : (h.current_price ?? 0)
+    const commodityDisplayAth = ep === 'commodities'
+      ? (commodityDisplay?.ath ?? h.commodity_display_ath)
+      : h.ath
+    const commodityDisplayAthChange = ep === 'commodities'
+      ? (commodityDisplay?.ath_change_percentage ?? h.commodity_display_ath_change_percentage)
+      : h.ath_change_percentage
+    const ticker = String(commodityDisplaySymbol || rawSymbol).replace('-USD', '').replace('.SI', '')
     const hexStr = '#' + color.toString(16).padStart(6, '0')
     return {
       id:       `node_${h.symbol}`,
@@ -898,13 +932,17 @@ function buildGlobeNodes(profile) {
       type:     ep === 'cryptos' ? 'crypto' : ep === 'commodities' ? 'commodity' : 'equity',
       aum:      Math.round(h.market_value ?? 0),
       mtd,
+      ath: typeof commodityDisplayAth === 'number' ? commodityDisplayAth : null,
+      ath_change_percentage: typeof commodityDisplayAthChange === 'number' ? commodityDisplayAthChange : null,
       holdings: [{
         ticker,
-        name:   h.name || h.symbol,
-        price:  h.current_price ?? 0,
+        name:   commodityDisplayName,
+        price:  commodityDisplayPrice,
         change: mtd,
         shares: h.qty,
         dir:    mtd >= 0 ? 'up' : 'dn',
+        ath: typeof commodityDisplayAth === 'number' ? commodityDisplayAth : null,
+        ath_change_percentage: typeof commodityDisplayAthChange === 'number' ? commodityDisplayAthChange : null,
       }],
       alloc: [{ label: ticker, pct: 100, color: hexStr }],
       wellness: Math.round(wm.diversification_score ?? 70),
@@ -973,6 +1011,7 @@ export default function Globe() {
   const [selectedZone, setSelectedZone] = useState(null)
   const [legendHoverZone, setLegendHoverZone] = useState(null)
   const [dashboardLayout, setDashboardLayout] = useState(null)
+  const [commodityDisplayMap, setCommodityDisplayMap] = useState({})
   const focusMode = dashShow
   const blurredUiStyle = focusMode
     ? { filter: 'blur(8px)', opacity: 0.35, transition: 'filter 0.28s ease, opacity 0.28s ease' }
@@ -1009,11 +1048,29 @@ export default function Globe() {
       .catch(() => {})
   }, [user?.user_id])
 
+  useEffect(() => {
+    fetch(`${API}/api/market/commodities?page=1&per_page=250`)
+      .then(r => (r.ok ? r.json() : []))
+      .then(rows => {
+        const next = {}
+        if (Array.isArray(rows)) {
+          rows.forEach(row => {
+            const key = String(row?.symbol || '').toUpperCase()
+            if (key) next[key] = row
+          })
+        }
+        setCommodityDisplayMap(next)
+      })
+      .catch(() => {
+        setCommodityDisplayMap({})
+      })
+  }, [])
+
   // Rebuild globe nodes whenever profile loads / changes
   useEffect(() => {
-    globeNodesRef.current = (user && userProfile) ? buildGlobeNodes(userProfile) : MOCK_NODES
+    globeNodesRef.current = (user && userProfile) ? buildGlobeNodes(userProfile, commodityDisplayMap) : MOCK_NODES
     buildParticlesRef.current?.()   // regenerate cluster particles for new node set
-  }, [user, userProfile])
+  }, [user, userProfile, commodityDisplayMap])
 
   // Count of active holdings across all asset classes
   const activePositions = (() => {
@@ -1346,6 +1403,7 @@ export default function Globe() {
           ctx.restore()
         }
       })
+
     }
 
     // ── Animation loop
