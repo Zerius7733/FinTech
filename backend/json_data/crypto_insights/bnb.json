@@ -1,0 +1,211 @@
+{
+  "type": "crypto",
+  "symbol": "BNB",
+  "updated_at": "2026-03-08T19:24:46.931548+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "crypto",
+      "symbol": "BNB",
+      "name": "BNB",
+      "period": {
+        "months": 3,
+        "start": "2025-12-08",
+        "end": "2026-03-08"
+      },
+      "metrics": {
+        "start_price": 897.4004,
+        "end_price": 617.0788,
+        "return_pct": -31.2371,
+        "volatility_annualized": 0.452874,
+        "max_drawdown_pct": -38.4764,
+        "avg_daily_volume": 1528864097.5593,
+        "volume_change_pct": -27.2548
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-07",
+          "move_pct": 8.6633,
+          "close": 657.3067,
+          "volume": 3237219518.0847487,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-26",
+          "move_pct": 7.5872,
+          "close": 628.2228,
+          "volume": 2095902853.2404492,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": -13.4905,
+          "close": 604.902,
+          "volume": 4105549455.1091533,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-01",
+          "move_pct": -8.9854,
+          "close": 780.3316,
+          "volume": 2662234945.505993,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2025-12-20",
+          "move_pct": 3.2304,
+          "close": 855.9571,
+          "volume": 5670988452.811656,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": -13.4905,
+          "close": 604.902,
+          "volume": 4105549455.1091533,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-07",
+          "headline": "Binance Coin (BNB) Market Cap Drops Below $100B Since February, Users Rotate Capital",
+          "source": "",
+          "url": "https://www.digitaljournal.com/pr/news/indnewswire/binance-coin-bnb-market-cap-117491248.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "BNB (BNB) Daily Market Analysis 15 February 2026 | CoinStats AI",
+          "source": "",
+          "url": "https://coinstats.app/ai/a/latest-news-for-binance-coin?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "BNB Price Prediction: Targets $950-$1,100 Range by February 2026",
+          "source": "",
+          "url": "https://blockchain.news/news/20260112-bnb-price-prediction-targets-950-1100-range-by-february-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Cryptocurrency News, Saturday, February 7, 2026: Bitcoin Hits Lowest Since 2024 \u00b7 Ethereum Falls Below $2000 \u00b7 Altcoins Under Pressure",
+          "source": "",
+          "url": "https://sergeytereshkin.co.nz/publications/cryptocurrency-news-key-events-february-7-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "BNB Price Risks Falling to Bear Market Lows After 20% Crash",
+          "source": "",
+          "url": "https://www.ccn.com/analysis/crypto/bnb-price-headed-to-bear-market-after-correction-new-year-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Binance Arbitration Push Denied By Judge In Crypto Loss Dispute Involving Changpeng Zhao - Benzinga",
+          "source": "",
+          "url": "https://www.benzinga.com/crypto/26/02/50922355/binance-arbitration-push-denied-by-judge-in-crypto-loss-dispute-involving-changpeng-zhao/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "BNB Slumps as Legal Cloud Lingers Over Binance",
+          "source": "",
+          "url": "https://www.ainvest.com/news/bnb-slumps-legal-cloud-lingers-binance-2603/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Binance Lawsuit Update: Court Dismisses Charges Against CZ - The Coin Republic",
+          "source": "",
+          "url": "https://www.thecoinrepublic.com/2026/03/07/binance-lawsuit-update-court-dismisses-charges-against-cz/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-26",
+          "headline": "BNB Price Prediction: Targets $950-$1,050 by February 2026 Despite Current Bearish Momentum",
+          "source": "",
+          "url": "https://blockchain.news/news/20260130-price-prediction-bnb-targets-950-1050-by-february-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-26",
+          "headline": "BNB (Binance Coin) Price Prediction for 2026, 2027, 2030, 2035 and Long-Term Outlook to 2050",
+          "source": "",
+          "url": "https://crystal-trade.org/binance-coin-bnb-price-prediction/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-26",
+          "headline": "BNB (BNB) Price Prediction 2026-2030 | DigitalCoinPrice",
+          "source": "",
+          "url": "https://digitalcoinprice.com/forecast/bnb/2033?utm_source=openai"
+        },
+        {
+          "date": "2026-02-26",
+          "headline": "BNB (BNB) Daily Market Analysis 27 February 2026 | MEXC News",
+          "source": "",
+          "url": "https://www.mexc.com/en-NG/news/810267?utm_source=openai"
+        },
+        {
+          "date": "2026-02-26",
+          "headline": "BNB (BNB) Daily Market Analysis 28 February 2026 | MEXC News",
+          "source": "",
+          "url": "https://www.mexc.co/news/819024?utm_source=openai"
+        },
+        {
+          "date": "2026-02-26",
+          "headline": "BNB Price Prediction as US Court Rejects Binance Arbitration Clause",
+          "source": "",
+          "url": "https://coinpaper.com/15052/bnb-price-prediction-as-us-court-rejects-binance-arbitration-clause?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "BNB Crypto Price Prediction",
+          "source": "",
+          "url": "https://www.youtube.com/watch?v=1SnMjhYh_Lk&utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 897.4004 to an ending price of 617.0788, the asset experienced a total return of -31.2371%. The annualized volatility was relatively high at 0.452874, with a maximum drawdown reaching -38.4764%, indicating significant price fluctuations and downside risk during the period. The largest upward move occurred on 2026-02-07, with an 8.6633% increase closing at 657.3067, coinciding with multiple news items discussing Binance Coin's market cap dropping below $100 billion and ongoing legal issues surrounding Binance, which may have influenced market sentiment [1][2][3][4][5][6][7][8]. Conversely, the largest downward day was on 2026-02-06, with a sharp decline of -13.4905% to a close of 604.902, accompanied by very high volume of 4,105,549,455.11 shares traded, possibly reflecting heightened selling pressure amid bearish price predictions and market uncertainty [9]. Another notable down day was 2026-02-01 with an -8.9854% move. A high volume day on 2025-12-20 saw 5,670,988,452.81 shares traded with a modest 3.2304% price increase, suggesting active trading interest earlier in the period. Overall, the price dynamics and volume patterns appear to be influenced by a combination of market cap shifts, legal developments, and bearish forecasts, though direct causality cannot be definitively established.",
+      "tldr": [
+        "Period return: -31.24% with annualized volatility 0.453.",
+        "Largest up day: 2026-02-07 (8.66%), largest down day: 2026-02-06 (-13.49%).",
+        "Highest volume spike was on 2025-12-20 with volume 5,670,988,452."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-31.24%) with peak drawdown of -38.48%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.digitaljournal.com/pr/news/indnewswire/binance-coin-bnb-market-cap-117491248.html?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://coinstats.app/ai/a/latest-news-for-binance-coin?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://blockchain.news/news/20260112-bnb-price-prediction-targets-950-1100-range-by-february-2026?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://sergeytereshkin.co.nz/publications/cryptocurrency-news-key-events-february-7-2026?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://www.ccn.com/analysis/crypto/bnb-price-headed-to-bear-market-after-correction-new-year-2026/?utm_source=openai"
+        },
+        {
+          "id": 6,
+          "url": "https://www.benzinga.com/crypto/26/02/50922355/binance-arbitration-push-denied-by-judge-in-crypto-loss-dispute-involving-changpeng-zhao/?utm_source=openai"
+        },
+        {
+          "id": 7,
+          "url": "https://www.ainvest.com/news/bnb-slumps-legal-cloud-lingers-binance-2603/?utm_source=openai"
+        },
+        {
+          "id": 8,
+          "url": "https://www.thecoinrepublic.com/2026/03/07/binance-lawsuit-update-court-dismisses-charges-against-cz/?utm_source=openai"
+        },
+        {
+          "id": 9,
+          "url": "https://www.youtube.com/watch?v=1SnMjhYh_Lk&utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

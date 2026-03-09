@@ -272,10 +272,9 @@ function WellnessRing({ score, size = 84, centerText = null, subLabel = 'score' 
   )
 }
 
-function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = false, themeId = 'default' }) {
+function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = false, themeId = 'default', layout = null }) {
   const [entered, setEntered] = useState(false)
   const [chartHoverIndex, setChartHoverIndex] = useState(null)
-  const [isCompactViewport, setIsCompactViewport] = useState(() => window.innerWidth < 1200)
   const stableChartPts = useMemo(() => (
     node ? genPriceSeries(node.mtd) : []
   ), [node?.id, node?.mtd])
@@ -286,11 +285,6 @@ function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = fal
   useEffect(() => {
     setChartHoverIndex(null)
   }, [node?.id, show])
-  useEffect(() => {
-    const onResize = () => setIsCompactViewport(window.innerWidth < 1200)
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
   useEffect(() => {
     if (!show) return
     const onKeyDown = (event) => {
@@ -322,6 +316,10 @@ function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = fal
   const chipSurface = isSilentNight ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)'
   const closeSurface = isSilentNight ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.86)'
   const closeBorder = isSilentNight ? '1px solid rgba(190,183,164,0.16)' : '1px solid rgba(15,23,42,0.08)'
+  const isCompactViewport = layout?.mode === 'compact'
+  const panelWidth = isCompactViewport
+    ? '100%'
+    : `${Math.round(layout?.panelWidth ?? 860)}px`
   const BC_LOCAL = {
     background: cardSurface,
     border: cardBorder,
@@ -367,8 +365,9 @@ function BentoDashboard({ node, show, onClose, onPrev, onNext, canNavigate = fal
       >
         <div style={{
           position: 'relative',
-          width: isCompactViewport ? '100%' : 'clamp(320px, 56vw, 860px)',
-          marginLeft: 0,
+          width: panelWidth,
+          marginLeft: isCompactViewport ? 0 : `${Math.round(layout?.panelLeft ?? 0)}px`,
+          transition: 'margin-left 0.4s cubic-bezier(0.16,1,0.3,1), width 0.4s cubic-bezier(0.16,1,0.3,1)',
         }}>
         {/* ── Panel ── */}
         <div style={{
@@ -946,6 +945,7 @@ export default function Globe() {
   const { activeTheme } = useTheme()
   const canvasRef   = useRef(null)
   const globeRef    = useRef(null)   // THREE globe mesh
+  const globeWrapRef = useRef(null)
   // 2D canvas globe refs
   const isDragRef        = useRef(false)
   const animIdRef        = useRef(null)
@@ -972,6 +972,7 @@ export default function Globe() {
   const [zonePos,        setZonePos]     = useState({ x:0, y:0 })
   const [selectedZone, setSelectedZone] = useState(null)
   const [legendHoverZone, setLegendHoverZone] = useState(null)
+  const [dashboardLayout, setDashboardLayout] = useState(null)
   const focusMode = dashShow
   const blurredUiStyle = focusMode
     ? { filter: 'blur(8px)', opacity: 0.35, transition: 'filter 0.28s ease, opacity 0.28s ease' }
@@ -1124,6 +1125,50 @@ export default function Globe() {
     rotationTargetRef.current = target
     setSelectedZone(zoneLabel)
   }, [])
+
+  useEffect(() => {
+    if (!dashShow) {
+      setDashboardLayout(null)
+      return
+    }
+
+    const computeDashboardLayout = () => {
+      const viewportWidth = window.innerWidth
+      const globeRect = globeWrapRef.current?.getBoundingClientRect()
+      const globeWidth = Math.round(globeRect?.width ?? 580)
+      const idealPanelWidth = Math.min(860, Math.max(320, viewportWidth * 0.56))
+      const gap = 32
+      const sidePadding = 32
+      const requiredWidth = idealPanelWidth + gap + globeWidth + sidePadding
+
+      if (viewportWidth < requiredWidth) {
+        setDashboardLayout({
+          mode: 'compact',
+          panelWidth: Math.max(320, viewportWidth - 32),
+          panelLeft: 0,
+          globeShiftX: 0,
+        })
+        return
+      }
+
+      const groupLeft = Math.max(16, (viewportWidth - (idealPanelWidth + gap + globeWidth)) / 2)
+      const targetGlobeCenterX = groupLeft + idealPanelWidth + gap + globeWidth / 2
+      const currentGlobeCenterX = globeRect
+        ? globeRect.left + globeRect.width / 2
+        : viewportWidth / 2
+
+      setDashboardLayout({
+        mode: 'split',
+        panelWidth: idealPanelWidth,
+        panelLeft: groupLeft,
+        globeShiftX: targetGlobeCenterX - currentGlobeCenterX,
+      })
+    }
+
+    computeDashboardLayout()
+    window.addEventListener('resize', computeDashboardLayout)
+    return () => window.removeEventListener('resize', computeDashboardLayout)
+  }, [dashShow])
 
   // ═══ 2D CANVAS GLOBE ════════════════════════════════════════
   useEffect(() => {
@@ -1486,10 +1531,19 @@ export default function Globe() {
           </div>{/* /heroLeft */}
 
           {/* ── RIGHT column ── */}
-          <div style={S.heroRight}>
+          <div style={{
+            ...S.heroRight,
+            transform: focusMode && dashboardLayout?.mode === 'split'
+              ? `translateX(${dashboardLayout.globeShiftX}px)`
+              : 'translateX(0)',
+            transition: 'transform 0.45s cubic-bezier(0.16,1,0.3,1)',
+          }}>
 
         {/* ── Globe container — Layers 0-3 ── */}
-        <div style={{ ...S.globeWrap, filter: flyingIn ? 'brightness(1.4)' : 'brightness(1)', transition:'filter 0.3s' }}>
+        <div
+          ref={globeWrapRef}
+          style={{ ...S.globeWrap, filter: flyingIn ? 'brightness(1.4)' : 'brightness(1)', transition:'filter 0.3s' }}
+        >
           <canvas ref={canvasRef} style={{ width:'100%', height:'100%', borderRadius:'50%', cursor:'grab', display:'block' }} />
 
           {/* ── Layer 3 — Glassmorphic hover card ── */}
@@ -1680,6 +1734,7 @@ export default function Globe() {
         onNext={() => cycleDashboardNode(1)}
         canNavigate={(globeNodesRef.current?.length || 0) > 1}
         themeId={activeTheme?.id}
+        layout={dashboardLayout}
       />
 
       {/* Global keyframes */}
