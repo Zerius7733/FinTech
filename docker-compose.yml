@@ -1,8 +1,8 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: fintech-backend
     ports:
       - "8000:8000"
@@ -27,7 +27,6 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        # Use Railway backend URL for production-like testing
         VITE_API_URL: https://fintech-production-d308.up.railway.app
     container_name: fintech-frontend
     ports:
