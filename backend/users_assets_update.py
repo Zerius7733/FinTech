@@ -75,8 +75,14 @@ def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, An
 
             wellness = calculate_user_wellness(user)
             user["wellness_metrics"] = wellness["wellness_metrics"]
+            user["behavioral_resilience_score"] = wellness["behavioral_resilience_score"]
+            user["financial_resilience_score"] = wellness["financial_resilience_score"]
             user["financial_wellness_score"] = wellness["financial_wellness_score"]
             user["financial_stress_index"] = wellness["financial_stress_index"]
+            user["confidence"] = wellness["confidence"]
+            user["resilience_summary"] = wellness["resilience_summary"]
+            user["resilience_breakdown"] = wellness["resilience_breakdown"]
+            user["action_insights"] = wellness["action_insights"]
     return updated
 
 def update_assets_file(

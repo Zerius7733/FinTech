@@ -1,7 +1,7 @@
 {
   "_meta": {
     "source": "yfinance",
-    "ingested_at_epoch": 1773038055,
+    "ingested_at_epoch": 1773050542,
     "symbol_count": 503,
     "failed_count": 0
   },

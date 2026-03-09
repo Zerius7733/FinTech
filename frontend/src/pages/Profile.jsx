@@ -959,6 +959,141 @@ function FutureBar({ label, onHoverChange }) {
   )
 }
 
+function BehavioralResilienceModal({
+  open,
+  onClose,
+  score,
+  confidence,
+  summary,
+  breakdown,
+  insights,
+  derivedMetrics,
+}) {
+  if (!open) return null
+  const [activeFact, setActiveFact] = useState(null)
+
+  const rows = [
+    { key:'liquidity_score', label:'Liquidity', color:'var(--blue)' },
+    { key:'debt_score', label:'Debt', color:'var(--orange)' },
+    { key:'housing_score', label:'Housing', color:'var(--gold)' },
+    { key:'diversification_score', label:'Diversification', color:'var(--green)' },
+    { key:'risk_alignment_score', label:'Risk Alignment', color:'var(--teal)' },
+  ]
+  const confidenceTone =
+    confidence === 'High' ? { color:'var(--green)', bg:'rgba(52,211,153,0.12)', border:'rgba(52,211,153,0.28)' }
+    : confidence === 'Medium' ? { color:'var(--gold)', bg:'rgba(201,168,76,0.12)', border:'rgba(201,168,76,0.28)' }
+    : { color:'var(--red)', bg:'rgba(248,113,113,0.12)', border:'rgba(248,113,113,0.28)' }
+
+  const quickFacts = [
+    {
+      key:'liquidity_buffer',
+      label:'Liquidity buffer',
+      value: derivedMetrics?.liquidity_months != null ? `${Number(derivedMetrics.liquidity_months).toFixed(1)} mo` : '—',
+      explanation:'Months of expenses your cash buffer can cover. Higher values mean more room to absorb income shocks or emergencies.',
+    },
+    {
+      key:'debt_income',
+      label:'Debt / income',
+      value: derivedMetrics?.debt_to_annual_income != null ? `${Math.round(Number(derivedMetrics.debt_to_annual_income) * 100)}%` : '—',
+      explanation:'Total liabilities relative to annual income. Lower is generally stronger because debt is easier to service.',
+    },
+    {
+      key:'housing_cushion',
+      label:'Housing cushion',
+      value: derivedMetrics?.housing_cushion != null && Number(derivedMetrics.housing_cushion) > 0 ? `${Number(derivedMetrics.housing_cushion).toFixed(2)}x` : 'N/A',
+      explanation:'Property value compared with mortgage balance. A larger cushion means more equity protection in housing.',
+    },
+    {
+      key:'crypto_exposure',
+      label:'Crypto exposure',
+      value: derivedMetrics?.crypto_exposure_ratio != null ? `${Math.round(Number(derivedMetrics.crypto_exposure_ratio) * 100)}%` : '—',
+      explanation:'Share of portfolio held in crypto. Higher concentration can increase volatility and weaken resilience for conservative profiles.',
+    },
+  ]
+
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()} style={brm.backdrop}>
+      <div style={brm.panel}>
+        <div style={brm.topBar} />
+        <div style={brm.header}>
+          <div style={brm.headerCopy}>
+            <div style={brm.eyebrow}>Behavioral Resilience</div>
+            <div style={brm.title}>Why this score looks the way it does</div>
+            <div style={brm.subtext}>
+              {summary || 'This score reflects liquidity, debt load, housing cushion, diversification, and fit with your stated risk tolerance.'}
+            </div>
+          </div>
+          <div style={brm.headerRail}>
+            <div style={brm.scoreBadge}>
+              <span style={brm.scoreValue}>{score != null ? Math.round(score) : '—'}</span>
+              <span style={brm.scoreLabel}>/ 100</span>
+            </div>
+            <div style={{ ...brm.confidencePill, color:confidenceTone.color, background:confidenceTone.bg, borderColor:confidenceTone.border }}>
+              {confidence || 'Unknown'} confidence
+            </div>
+            <button type="button" onClick={onClose} style={brm.closeBtn} aria-label="Close behavioral resilience details">×</button>
+          </div>
+        </div>
+
+        <div style={brm.body}>
+          <div style={brm.grid}>
+            <div style={brm.card}>
+              <div style={brm.sectionLabel}>Pillar Breakdown</div>
+              <div style={brm.breakdownList}>
+                {rows.map(row => {
+                  const value = breakdown?.[row.key]
+                  return (
+                    <div key={row.key} style={brm.breakdownRow}>
+                      <div style={brm.breakdownHead}>
+                        <span>{row.label}</span>
+                        <span style={brm.breakdownValue}>{value != null ? Math.round(value) : 'N/A'}</span>
+                      </div>
+                      <div style={brm.breakdownTrack}>
+                        <div style={{ ...brm.breakdownFill, width:`${Math.min(value ?? 0, 100)}%`, background:row.color, opacity:value == null ? 0.35 : 1 }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            <div style={brm.sideColumn}>
+              <div style={brm.card}>
+                <div style={brm.sectionLabel}>Key Facts</div>
+                <div style={brm.factGrid}>
+                  {quickFacts.map(item => (
+                    <div
+                      key={item.key}
+                      style={brm.factItem}
+                      onMouseEnter={() => setActiveFact(item.key)}
+                      onMouseLeave={() => setActiveFact(null)}
+                    >
+                      <div style={brm.factLabel}>{item.label}</div>
+                      <div style={brm.factValue}>{item.value}</div>
+                      {activeFact === item.key && (
+                        <div style={brm.factTooltip}>
+                          {item.explanation}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={brm.card}>
+                <div style={brm.sectionLabel}>Suggested Actions</div>
+                <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                  {(Array.isArray(insights) && insights.length ? insights : ['No action insights available.']).map(item => (
+                    <div key={item} style={brm.insightItem}>{item}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function LoadingPulse() {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
@@ -1632,6 +1767,7 @@ export default function Profile() {
   const [analysisMode, setAnalysisMode] = useState('lite')
   const [selectedScenario, setSelectedScenario] = useState('base_case')
   const [wellnessHint, setWellnessHint] = useState(null)
+  const [behavioralResilienceOpen, setBehavioralResilienceOpen] = useState(false)
   const [wrappedOpen, setWrappedOpen] = useState(false)
   const [wrappedIndex, setWrappedIndex] = useState(0)
   const [financialModalOpen, setFinancialModalOpen] = useState(false)
@@ -1798,6 +1934,32 @@ export default function Profile() {
     ? incomeStreams.reduce((sum, item) => sum + Number(item.monthly_amount || 0), 0)
     : Number(profile?.income ?? 0)
   const wellness       = profile?.wellness_metrics ?? {}
+  const behavioralResilienceScore =
+    profile?.behavioral_resilience_score
+    ?? profile?.financial_resilience_score
+    ?? wellness?.behavioral_resilience_score
+    ?? wellness?.financial_resilience_score
+    ?? null
+  const behavioralResilienceSummary =
+    profile?.resilience_summary
+    ?? wellness?.resilience_summary
+    ?? ''
+  const behavioralResilienceConfidence =
+    profile?.confidence
+    ?? wellness?.confidence
+    ?? null
+  const behavioralResilienceBreakdown =
+    profile?.resilience_breakdown
+    ?? wellness?.resilience_breakdown
+    ?? {}
+  const behavioralResilienceInsights =
+    profile?.action_insights
+    ?? wellness?.action_insights
+    ?? []
+  const behavioralResilienceDerived =
+    profile?.derived_metrics
+    ?? wellness?.derived_metrics
+    ?? {}
   const wellnessScore  = profile?.financial_wellness_score ?? 0
   const stressIndex    = profile?.financial_stress_index   ?? null
   const netWorth       = profile?.net_worth ?? null
@@ -2522,19 +2684,41 @@ export default function Profile() {
                       onMouseEnter={() => setWellnessHint(w.hint)}
                       onMouseLeave={() => setWellnessHint(null)}
                     >
-                      <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'var(--text-dim)', marginBottom:4 }}>
-                        <span>{w.label}</span>
-                        <span style={{ fontFamily:'var(--font-mono)', color:'var(--text)' }}>{w.val != null ? Math.round(w.val) : '—'}</span>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
+                        <span style={{ fontSize:'0.87rem', fontWeight:500, color:'var(--text)' }}>{w.label}</span>
+                        <span style={{ fontFamily:'var(--font-display)', fontSize:'0.87rem', fontWeight:700, color:'var(--text)' }}>{w.val != null ? Math.round(w.val) : '—'}</span>
                       </div>
                       <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
                         <div style={{ height:'100%', width:`${Math.min(w.val ?? 0, 100)}%`, background:w.color, borderRadius:3 }} />
                       </div>
                     </div>
                   ))}
-                  <FutureBar
-                    label="Behavioural Resilience"
-                    onHoverChange={active => setWellnessHint(active ? 'How likely you are to stay calm and avoid panic decisions when markets swing.' : null)}
-                  />
+                  <button
+                    type="button"
+                    style={{ marginBottom:12, display:'block', width:'100%', padding:0, background:'transparent', border:'none', textAlign:'left', cursor:behavioralResilienceScore != null ? 'pointer' : 'default' }}
+                    onClick={() => behavioralResilienceScore != null && setBehavioralResilienceOpen(true)}
+                    onMouseEnter={() => setWellnessHint('How likely you are to stay calm and avoid panic decisions when markets swing.')}
+                    onMouseLeave={() => setWellnessHint(null)}
+                    aria-label="Open behavioral resilience details"
+                    title="Open behavioral resilience details"
+                  >
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
+                      <span style={{ fontSize:'0.87rem', fontWeight:500, color:'var(--text)' }}>Behavioural Resilience</span>
+                      <span style={{ fontFamily:'var(--font-display)', fontSize:'0.87rem', fontWeight:700, color:'var(--text)' }}>
+                        {behavioralResilienceScore != null ? Math.round(behavioralResilienceScore) : '—'}
+                      </span>
+                    </div>
+                    <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
+                      <div
+                        style={{
+                          height:'100%',
+                          width:`${Math.min(behavioralResilienceScore ?? 0, 100)}%`,
+                          background:'#9fbce8',
+                          borderRadius:3,
+                        }}
+                      />
+                    </div>
+                  </button>
                   <FutureBar
                     label="Currency Exposure"
                     onHoverChange={active => setWellnessHint(active ? 'How much exchange-rate moves could affect your portfolio if you hold assets in different currencies.' : null)}
@@ -3189,6 +3373,16 @@ export default function Profile() {
           </div>
         </div>
 
+        <BehavioralResilienceModal
+          open={behavioralResilienceOpen}
+          onClose={() => setBehavioralResilienceOpen(false)}
+          score={behavioralResilienceScore}
+          confidence={behavioralResilienceConfidence}
+          summary={behavioralResilienceSummary}
+          breakdown={behavioralResilienceBreakdown}
+          insights={behavioralResilienceInsights}
+          derivedMetrics={behavioralResilienceDerived}
+        />
         <HoldingInsightModal holding={selectedHolding} onClose={() => setSelectedHolding(null)} userId={authUser?.user_id} />
         <FinancialManagerModal
           open={financialModalOpen}
@@ -4331,5 +4525,236 @@ const yw = {
     fontFamily:'var(--font-display)',
     fontWeight:700,
     cursor:'pointer',
+  },
+}
+
+const brm = {
+  backdrop: {
+    position:'fixed',
+    inset:0,
+    zIndex:340,
+    background:'rgba(15,23,42,0.32)',
+    backdropFilter:'blur(16px)',
+    WebkitBackdropFilter:'blur(16px)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    padding:'24px',
+  },
+  panel: {
+    width:'min(920px, 100%)',
+    background:'linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,248,252,0.98))',
+    border:'1px solid rgba(15,23,42,0.08)',
+    borderRadius:28,
+    boxShadow:'0 36px 90px rgba(15,23,42,0.22)',
+    overflow:'hidden',
+  },
+  topBar: { height:3, background:'linear-gradient(90deg, #6d8df7, #8b5cf6, #2ab8a3)' },
+  header: {
+    display:'grid',
+    gridTemplateColumns:'minmax(0, 1.2fr) minmax(220px, 0.8fr)',
+    alignItems:'start',
+    gap:22,
+    padding:'26px 28px 22px',
+  },
+  headerCopy: {
+    minWidth:0,
+  },
+  headerRail: {
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'flex-end',
+    gap:12,
+    flexWrap:'nowrap',
+  },
+  eyebrow: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    color:'var(--teal)',
+    textTransform:'uppercase',
+    letterSpacing:'0.16em',
+    marginBottom:8,
+  },
+  title: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1.5rem',
+    fontWeight:800,
+    lineHeight:1.08,
+    marginBottom:10,
+  },
+  subtext: {
+    fontSize:'0.92rem',
+    color:'var(--text-dim)',
+    lineHeight:1.72,
+    maxWidth:460,
+  },
+  scoreBadge: {
+    minWidth:118,
+    minHeight:52,
+    padding:'0 14px',
+    borderRadius:999,
+    background:'linear-gradient(180deg, rgba(109,141,247,0.16), rgba(42,184,163,0.1))',
+    border:'1px solid rgba(109,141,247,0.24)',
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    gap:8,
+  },
+  scoreValue: {
+    fontFamily:'var(--font-display)',
+    fontSize:'0.98rem',
+    fontWeight:800,
+    lineHeight:1,
+    color:'var(--text)',
+  },
+  scoreLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.82rem',
+    color:'var(--text-faint)',
+    letterSpacing:'0.08em',
+  },
+  closeBtn: {
+    width:52,
+    height:52,
+    minWidth:52,
+    minHeight:52,
+    aspectRatio:'1 / 1',
+    boxSizing:'border-box',
+    display:'inline-flex',
+    alignItems:'center',
+    justifyContent:'center',
+    background:'rgba(255,255,255,0.78)',
+    border:'1px solid var(--border)',
+    color:'var(--text-dim)',
+    padding:0,
+    borderRadius:'50%',
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    fontSize:'1.15rem',
+    lineHeight:1,
+    cursor:'pointer',
+  },
+  body: {
+    padding:'0 28px 28px',
+    display:'flex',
+    flexDirection:'column',
+    gap:18,
+  },
+  sectionLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    color:'var(--text-faint)',
+    textTransform:'uppercase',
+    letterSpacing:'0.12em',
+    marginBottom:10,
+  },
+  confidencePill: {
+    border:'1px solid',
+    borderRadius:999,
+    minHeight:52,
+    padding:'0 18px',
+    whiteSpace:'nowrap',
+    display:'inline-flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontFamily:'var(--font-display)',
+    fontSize:'0.98rem',
+    fontWeight:800,
+  },
+  breakdownList: {
+    display:'flex',
+    flexDirection:'column',
+    gap:12,
+  },
+  breakdownRow: {
+    display:'flex',
+    flexDirection:'column',
+    gap:6,
+  },
+  breakdownHead: {
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'space-between',
+    fontSize:'0.88rem',
+    color:'var(--text-dim)',
+  },
+  breakdownValue: {
+    fontFamily:'var(--font-mono)',
+    color:'var(--text)',
+  },
+  breakdownTrack: {
+    height:6,
+    background:'var(--surface2)',
+    borderRadius:999,
+    overflow:'hidden',
+  },
+  breakdownFill: {
+    height:'100%',
+    borderRadius:999,
+  },
+  grid: {
+    display:'grid',
+    gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',
+    gap:16,
+  },
+  sideColumn: {
+    display:'flex',
+    flexDirection:'column',
+    gap:16,
+  },
+  card: {
+    border:'1px solid var(--border)',
+    borderRadius:22,
+    background:'rgba(255,255,255,0.62)',
+    padding:'18px',
+  },
+  factGrid: {
+    display:'grid',
+    gridTemplateColumns:'repeat(2, minmax(0, 1fr))',
+    gap:12,
+  },
+  factItem: {
+    border:'1px solid var(--border)',
+    borderRadius:16,
+    background:'var(--surface)',
+    padding:'12px 14px',
+    position:'relative',
+  },
+  factLabel: {
+    fontSize:'0.87rem',
+    fontWeight:500,
+    color:'var(--text)',
+    marginBottom:8,
+  },
+  factValue: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1.05rem',
+    fontWeight:700,
+  },
+  factTooltip: {
+    position:'absolute',
+    left:'50%',
+    bottom:'calc(100% + 10px)',
+    transform:'translateX(-50%)',
+    width:'min(260px, calc(100vw - 64px))',
+    padding:'10px 12px',
+    borderRadius:14,
+    background:'#172033',
+    color:'rgba(241,245,249,0.96)',
+    fontSize:'0.78rem',
+    lineHeight:1.6,
+    boxShadow:'0 18px 40px rgba(15,23,42,0.26)',
+    border:'1px solid rgba(148,163,184,0.18)',
+    zIndex:2,
+    pointerEvents:'none',
+  },
+  insightItem: {
+    border:'1px solid rgba(42,184,163,0.14)',
+    borderRadius:16,
+    background:'rgba(42,184,163,0.06)',
+    padding:'12px 14px',
+    fontSize:'0.88rem',
+    color:'var(--text-dim)',
+    lineHeight:1.65,
   },
 }
