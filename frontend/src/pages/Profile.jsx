@@ -719,23 +719,30 @@ function BenchmarkMeter({ title, data, icon }) {
   )
 }
 
-function BenchmarkMiniCard({ title, data, accent, icon }) {
+function BenchmarkMiniCard({ title, data, accent, icon, darkMode = false }) {
   const percentile = Math.max(1, Math.min(99, Number(data?.percentile || 0)))
   return (
-    <div style={s.benchmarkMiniCard}>
+    <div style={{
+      ...s.benchmarkMiniCard,
+      ...(darkMode ? {
+        border:'1px solid rgba(148,163,184,0.18)',
+        background:'linear-gradient(180deg, rgba(15,23,42,0.78), rgba(15,23,42,0.66))',
+        boxShadow:'inset 0 1px 0 rgba(255,255,255,0.04)',
+      } : {}),
+    }}>
       <div style={{ display:'flex', justifyContent:'space-between', gap:12, alignItems:'flex-start', marginBottom:10 }}>
         <div>
-          <div style={s.benchmarkMiniLabel}>{title}</div>
+          <div style={{ ...s.benchmarkMiniLabel, color: darkMode ? 'rgba(226,232,240,0.68)' : 'var(--text-faint)' }}>{title}</div>
           <div style={{ fontFamily:'var(--font-display)', fontSize:'1.18rem', fontWeight:800, lineHeight:1.08, color:'var(--text)' }}>
-            {percentile}<span style={{ fontSize:'0.72rem', color:'rgba(226,232,240,0.68)', marginLeft:4 }}>th percentile</span>
+            {percentile}<span style={{ fontSize:'0.72rem', color: darkMode ? 'rgba(226,232,240,0.68)' : 'var(--text-faint)', marginLeft:4 }}>th percentile</span>
           </div>
         </div>
-        <div style={{ ...s.benchmarkMiniIcon, color:accent }}>{icon}</div>
+        <div style={{ ...s.benchmarkMiniIcon, ...(darkMode ? { background:'rgba(255,255,255,0.1)', border:'1px solid rgba(148,163,184,0.18)' } : {}), color:accent }}>{icon}</div>
       </div>
-      <div style={s.benchmarkMiniTrack}>
+      <div style={{ ...s.benchmarkMiniTrack, ...(darkMode ? { background:'rgba(148,163,184,0.18)', border:'1px solid rgba(148,163,184,0.12)' } : {}) }}>
         <div style={{ ...s.benchmarkMiniFill, width:`${percentile}%`, background:accent }} />
       </div>
-      <div style={{ marginTop:10, fontSize:'0.78rem', color:'rgba(226,232,240,0.82)', lineHeight:1.6 }}>
+      <div style={{ marginTop:10, fontSize:'0.78rem', color: darkMode ? 'rgba(226,232,240,0.82)' : 'var(--text-dim)', lineHeight:1.6 }}>
         {data?.headline}
       </div>
     </div>
@@ -1799,6 +1806,23 @@ export default function Profile() {
   const holdingsHeaderText = isSilentNight ? 'rgba(203,213,225,0.8)' : 'var(--text-faint)'
   const holdingsRowBorder = isSilentNight ? '1px solid rgba(248,250,252,0.06)' : '1px solid rgba(255,255,255,0.04)'
   const holdingsHeadBorder = isSilentNight ? '1px solid rgba(248,250,252,0.12)' : '1px solid var(--border)'
+  const retirementStatCardStyle = isSilentNight ? {
+    background:'linear-gradient(180deg, rgba(15,23,42,0.78), rgba(15,23,42,0.66))',
+    border:'1px solid rgba(148,163,184,0.18)',
+    boxShadow:'inset 0 1px 0 rgba(255,255,255,0.04)',
+  } : {}
+  const retirementStatLabelStyle = isSilentNight ? { color:'rgba(226,232,240,0.68)' } : {}
+  const retirementStatHintStyle = isSilentNight ? { color:'rgba(226,232,240,0.72)' } : {}
+  const retirementInputLabelStyle = isSilentNight ? { color:'rgba(226,232,240,0.68)' } : {}
+  const retirementInputStyle = isSilentNight ? {
+    border:'1px solid rgba(148,163,184,0.2)',
+    background:'rgba(15,23,42,0.72)',
+  } : {}
+  const retirementSecondaryBtnStyle = isSilentNight ? {
+    border:'1px solid rgba(148,163,184,0.22)',
+    background:'rgba(15,23,42,0.72)',
+    color:'var(--text)',
+  } : {}
 
   // â”€â”€ Initial data fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
@@ -3296,8 +3320,8 @@ export default function Profile() {
                     A compact view of how your income and net worth compare with others in your age band.
                   </div>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:12, marginBottom:14 }}>
-                    <BenchmarkMiniCard title="Income" data={benchmarks.income} accent="var(--teal)" icon="S$" />
-                    <BenchmarkMiniCard title="Net Worth" data={benchmarks.net_worth} accent="var(--blue)" icon="◔" />
+                    <BenchmarkMiniCard title="Income" data={benchmarks.income} accent="var(--teal)" icon="S$" darkMode={isSilentNight} />
+                    <BenchmarkMiniCard title="Net Worth" data={benchmarks.net_worth} accent="var(--blue)" icon="◔" darkMode={isSilentNight} />
                   </div>
                   <div style={s.retirementPreviewMeta}>
                     <span style={s.retirementPreviewPill}>Income {fmtSgd(benchmarks.income?.user_value)}</span>
@@ -3309,14 +3333,14 @@ export default function Profile() {
                       type="button"
                       onClick={fetchBenchmarks}
                       disabled={benchmarkLoading}
-                      style={{ ...s.retirementSecondaryBtn, opacity:benchmarkLoading ? 0.6 : 1 }}
+                      style={{ ...s.retirementSecondaryBtn, ...retirementSecondaryBtnStyle, opacity:benchmarkLoading ? 0.6 : 1 }}
                     >
                       {benchmarkLoading ? 'Refreshing...' : 'Refresh'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setBenchmarkOpen(false)}
-                      style={s.retirementSecondaryBtn}
+                      style={{ ...s.retirementSecondaryBtn, ...retirementSecondaryBtnStyle }}
                     >
                       Hide
                     </button>
@@ -3411,61 +3435,61 @@ export default function Profile() {
                 </div>
 
                 <div style={s.retirementStatGrid}>
-                  <div style={s.retirementStatCard}>
-                    <div style={s.retirementStatLabel}>Monthly top-up</div>
+                  <div style={{ ...s.retirementStatCard, ...retirementStatCardStyle }}>
+                    <div style={{ ...s.retirementStatLabel, ...retirementStatLabelStyle }}>Monthly top-up</div>
                     <div style={{ ...s.retirementStatValue, color:retirementGap <= 0 ? 'var(--green)' : 'var(--text)' }}>
                       {retirementPlan ? fmt$(retirementPlan.required_monthly_contribution) : '—'}
                     </div>
-                    <div style={s.retirementStatHint}>Needed from now to retirement</div>
+                    <div style={{ ...s.retirementStatHint, ...retirementStatHintStyle }}>Needed from now to retirement</div>
                   </div>
-                  <div style={s.retirementStatCard}>
-                    <div style={s.retirementStatLabel}>Cash reserve</div>
+                  <div style={{ ...s.retirementStatCard, ...retirementStatCardStyle }}>
+                    <div style={{ ...s.retirementStatLabel, ...retirementStatLabelStyle }}>Cash reserve</div>
                     <div style={s.retirementStatValue}>
                       {retirementPlan ? fmtCompactCurrency(retirementPlan.essential_cash_reserve_target) : '—'}
                     </div>
-                    <div style={s.retirementStatHint}>Emergency buffer before investing</div>
+                    <div style={{ ...s.retirementStatHint, ...retirementStatHintStyle }}>Emergency buffer before investing</div>
                   </div>
-                  <div style={s.retirementStatCard}>
-                    <div style={s.retirementStatLabel}>Suggested mix</div>
+                  <div style={{ ...s.retirementStatCard, ...retirementStatCardStyle }}>
+                    <div style={{ ...s.retirementStatLabel, ...retirementStatLabelStyle }}>Suggested mix</div>
                     <div style={{ ...s.retirementStatValue, fontSize:'1rem', lineHeight:1.35 }}>
                       {retirementRecommendedMix}
                     </div>
-                    <div style={s.retirementStatHint}>Based on risk and years remaining</div>
+                    <div style={{ ...s.retirementStatHint, ...retirementStatHintStyle }}>Based on risk and years remaining</div>
                   </div>
                 </div>
 
                 <div style={s.retirementControls}>
                   <label style={s.retirementInputWrap}>
-                    <span style={s.retirementInputLabel}>Retirement age</span>
+                    <span style={{ ...s.retirementInputLabel, ...retirementInputLabelStyle }}>Retirement age</span>
                     <input
                       type="number"
                       min="19"
                       max="100"
                       value={retirementInputs.retirement_age}
                       onChange={e => setRetirementInputs(prev => ({ ...prev, retirement_age:Number(e.target.value || 0) }))}
-                      style={s.retirementInput}
+                      style={{ ...s.retirementInput, ...retirementInputStyle }}
                     />
                   </label>
                   <label style={s.retirementInputWrap}>
-                    <span style={s.retirementInputLabel}>Monthly spend</span>
+                    <span style={{ ...s.retirementInputLabel, ...retirementInputLabelStyle }}>Monthly spend</span>
                     <input
                       type="number"
                       min="0"
                       step="100"
                       value={retirementInputs.monthly_expenses}
                       onChange={e => setRetirementInputs(prev => ({ ...prev, monthly_expenses:Number(e.target.value || 0) }))}
-                      style={s.retirementInput}
+                      style={{ ...s.retirementInput, ...retirementInputStyle }}
                     />
                   </label>
                   <label style={s.retirementInputWrap}>
-                    <span style={s.retirementInputLabel}>Essential spend</span>
+                    <span style={{ ...s.retirementInputLabel, ...retirementInputLabelStyle }}>Essential spend</span>
                     <input
                       type="number"
                       min="0"
                       step="100"
                       value={retirementInputs.essential_monthly_expenses}
                       onChange={e => setRetirementInputs(prev => ({ ...prev, essential_monthly_expenses:Number(e.target.value || 0) }))}
-                      style={s.retirementInput}
+                      style={{ ...s.retirementInput, ...retirementInputStyle }}
                     />
                   </label>
                   <button
@@ -3481,7 +3505,7 @@ export default function Profile() {
                   <button
                     type="button"
                     onClick={() => setRetirementOpen(false)}
-                    style={s.retirementSecondaryBtn}
+                    style={{ ...s.retirementSecondaryBtn, ...retirementSecondaryBtnStyle }}
                   >
                     Hide planner
                   </button>
@@ -3926,17 +3950,16 @@ const s = {
     marginBottom:18,
   },
   retirementStatCard: {
-    background:'linear-gradient(180deg, rgba(15,23,42,0.78), rgba(15,23,42,0.66))',
-    border:'1px solid rgba(148,163,184,0.18)',
+    background:'rgba(255,255,255,0.52)',
+    border:'1px solid var(--border)',
     borderRadius:14,
     padding:'14px 15px',
     minWidth:0,
-    boxShadow:'inset 0 1px 0 rgba(255,255,255,0.04)',
   },
   retirementStatLabel: {
     fontFamily:'var(--font-mono)',
     fontSize:'0.62rem',
-    color:'rgba(226,232,240,0.68)',
+    color:'var(--text-faint)',
     textTransform:'uppercase',
     letterSpacing:'0.1em',
     marginBottom:8,
@@ -3952,7 +3975,7 @@ const s = {
   },
   retirementStatHint: {
     fontSize:'0.76rem',
-    color:'rgba(226,232,240,0.72)',
+    color:'var(--text-faint)',
     lineHeight:1.55,
   },
   retirementControls: {
@@ -3969,15 +3992,15 @@ const s = {
   retirementInputLabel: {
     fontFamily:'var(--font-mono)',
     fontSize:'0.62rem',
-    color:'rgba(226,232,240,0.68)',
+    color:'var(--text-faint)',
     textTransform:'uppercase',
     letterSpacing:'0.08em',
   },
   retirementInput: {
     width:'100%',
     borderRadius:12,
-    border:'1px solid rgba(148,163,184,0.2)',
-    background:'rgba(15,23,42,0.72)',
+    border:'1px solid var(--border)',
+    background:'rgba(255,255,255,0.74)',
     color:'var(--text)',
     padding:'10px 12px',
     fontFamily:'var(--font-body)',
@@ -3987,9 +4010,9 @@ const s = {
   retirementSecondaryBtn: {
     appearance:'none',
     WebkitAppearance:'none',
-    border:'1px solid rgba(148,163,184,0.22)',
-    background:'rgba(15,23,42,0.72)',
-    color:'var(--text)',
+    border:'1px solid var(--border)',
+    background:'rgba(255,255,255,0.62)',
+    color:'var(--text-dim)',
     borderRadius:999,
     padding:'8px 12px',
     fontFamily:'var(--font-body)',
@@ -4060,17 +4083,16 @@ const s = {
     padding:'9px 13px',
   },
   benchmarkMiniCard: {
-    border:'1px solid rgba(148,163,184,0.18)',
+    border:'1px solid rgba(15,23,42,0.08)',
     borderRadius:14,
-    background:'linear-gradient(180deg, rgba(15,23,42,0.78), rgba(15,23,42,0.66))',
-    boxShadow:'inset 0 1px 0 rgba(255,255,255,0.04)',
+    background:'rgba(255,255,255,0.68)',
     padding:'14px 14px 12px',
     minWidth:0,
   },
   benchmarkMiniLabel: {
     fontFamily:'var(--font-mono)',
     fontSize:'0.62rem',
-    color:'rgba(226,232,240,0.68)',
+    color:'var(--text-faint)',
     textTransform:'uppercase',
     letterSpacing:'0.1em',
     marginBottom:6,
@@ -4079,8 +4101,8 @@ const s = {
     width:34,
     height:34,
     borderRadius:10,
-    background:'rgba(255,255,255,0.1)',
-    border:'1px solid rgba(148,163,184,0.18)',
+    background:'rgba(255,255,255,0.84)',
+    border:'1px solid rgba(15,23,42,0.08)',
     display:'flex',
     alignItems:'center',
     justifyContent:'center',
@@ -4092,9 +4114,9 @@ const s = {
   benchmarkMiniTrack: {
     height:10,
     borderRadius:999,
-    background:'rgba(148,163,184,0.18)',
+    background:'rgba(148,163,184,0.14)',
     overflow:'hidden',
-    border:'1px solid rgba(148,163,184,0.12)',
+    border:'1px solid rgba(15,23,42,0.05)',
   },
   benchmarkMiniFill: {
     height:'100%',
