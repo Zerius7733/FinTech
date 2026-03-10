@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -57,7 +58,6 @@ def _build_prompt_payload(
         )
 
     return {
-        "user_id": user_id,
         "risk_profile": user.get("risk_profile"),
         "financial_wellness_score": user.get("financial_wellness_score"),
         "financial_stress_index": user.get("financial_stress_index"),
@@ -66,6 +66,27 @@ def _build_prompt_payload(
         "rule_based_recommendations": rule_based.get("recommendations", []),
         "requested_recommendation_count": limit,
     }
+
+
+_USER_ID_KEY_PATTERN = re.compile(r'("user_id"\s*:\s*)"[^"]*"', re.IGNORECASE)
+_USER_ID_VALUE_PATTERN = re.compile(r"\bu\d{3,}\b", re.IGNORECASE)
+
+
+def _sanitize_user_id_strings(value: Any) -> Any:
+    if isinstance(value, str):
+        sanitized = _USER_ID_KEY_PATTERN.sub(r'\1"[redacted]"', value)
+        sanitized = _USER_ID_VALUE_PATTERN.sub("[redacted-user-id]", sanitized)
+        return sanitized
+    if isinstance(value, list):
+        return [_sanitize_user_id_strings(item) for item in value]
+    if isinstance(value, dict):
+        sanitized_dict: Dict[str, Any] = {}
+        for key, item in value.items():
+            if str(key).lower() == "user_id":
+                continue
+            sanitized_dict[key] = _sanitize_user_id_strings(item)
+        return sanitized_dict
+    return value
 
 
 def _parse_json_content(content: str) -> Dict[str, Any]:
@@ -194,6 +215,6 @@ def generate_gpt_recommendations(
 
     return {
         "model": model,
-        "recommendations": _parse_json_content(content),
+        "recommendations": _sanitize_user_id_strings(_parse_json_content(content)),
         "raw": data,
     }
