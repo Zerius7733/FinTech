@@ -178,3 +178,87 @@ div[style*="cursor:pointer"]:has(.bell-container):hover .bell-container {
   50% { transform: rotate(-20deg) scale(1.2); }
   75% { transform: rotate(15deg); }
 }
+
+/* Navbar settings button (Uiverse-inspired, theme-aware) */
+.setting-btn {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: var(--surface);
+  border-radius: 14px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  box-shadow: 0 10px 24px rgba(21, 28, 45, 0.08);
+}
+
+.setting-btn .bar {
+  width: 50%;
+  height: 2px;
+  background-color: currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 2px;
+}
+
+.setting-btn .bar::before {
+  content: "";
+  width: 2px;
+  height: 2px;
+  background-color: var(--setting-btn-dot, var(--text-dim));
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid var(--setting-btn-dot-border, var(--surface));
+  transition: all 0.3s;
+  box-shadow: 0 0 5px var(--setting-btn-dot-border, var(--surface));
+}
+
+.setting-btn .bar1::before {
+  transform: translateX(-4px);
+}
+
+.setting-btn .bar2::before {
+  transform: translateX(4px);
+}
+
+.setting-btn:hover .bar1::before {
+  transform: translateX(4px);
+}
+
+.setting-btn:hover .bar2::before {
+  transform: translateX(-4px);
+}
+
+/* ── Financial Year Wrapped animations ────────────────────────────── */
+@keyframes wrappedModalIn {
+  from { opacity: 0; transform: scale(0.84) translateY(36px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes wrappedContentInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes wrappedContentInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.wrapped-modal-panel {
+  animation: wrappedModalIn 0.46s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.wrapped-anim-next {
+  animation: wrappedContentInRight 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.wrapped-anim-prev {
+  animation: wrappedContentInLeft 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

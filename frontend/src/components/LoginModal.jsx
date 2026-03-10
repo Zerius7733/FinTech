@@ -56,8 +56,8 @@ export default function LoginModal({ open, onClose, onSuccess, onRegisterSuccess
 
         {/* Logo */}
         <div style={S.logoRow}>
-          <div style={S.logoDot}>◉</div>
-          <span style={S.logoText}>WealthSphere</span>
+          <img src="/logo.png" alt="Unova" style={S.logoImage} />
+          <span style={S.logoText}>Unova</span>
         </div>
 
         {/* Tabs */}
@@ -203,23 +203,18 @@ const S = {
     marginBottom: 34,
     justifyContent: 'center',
   },
-  logoDot: {
-    width: 41,
-    height: 41,
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, var(--gold), var(--teal))',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.08rem',
-    boxShadow: '0 0 24px rgba(201,168,76,0.35)',
-    color: '#fff',
+  logoImage: {
+    height: 40,
+    width: 'auto',
+    objectFit: 'contain',
+    flexShrink: 0,
+    borderRadius: 8,
   },
   logoText: {
     fontFamily: 'var(--font-display)',
     fontSize: '1.5rem',
-    fontWeight: 600,
-    letterSpacing: '0.02em',
+    fontWeight: 900,
+    letterSpacing: '-0.02em',
     color: 'var(--text)',
   },
   tabs: {
