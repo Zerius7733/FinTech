@@ -246,6 +246,13 @@ function toText(value) {
   return ''
 }
 
+function redactUserIds(value) {
+  return toText(value)
+    .replace(/\buser\s+u\d{3,}\b/gi, 'User [redacted-user-id]')
+    .replace(/\bu\d{3,}\b/gi, '[redacted-user-id]')
+    .replace(/"user_id"\s*:\s*"[^"]*"/gi, '"user_id":"[redacted]"')
+}
+
 function startCase(value) {
   return toText(value)
     .replace(/[_-]+/g, ' ')
@@ -2012,14 +2019,24 @@ export default function Profile() {
   ].filter(Boolean)
 
   const gptPayload = gptRecs?.gpt_recommendations ?? gptRecs?.recommendations ?? gptRecs ?? null
-  const gptSummary = toText(gptPayload?.summary)
+  const gptSummary = redactUserIds(gptPayload?.summary)
   const gptTopRecs = toArray(gptPayload?.top_recommendations).length
-    ? toArray(gptPayload?.top_recommendations)
-    : (Array.isArray(gptPayload) ? gptPayload : [])
+    ? toArray(gptPayload?.top_recommendations).map(rec => (
+        rec && typeof rec === 'object'
+          ? Object.fromEntries(Object.entries(rec).map(([key, value]) => [key, typeof value === 'string' ? redactUserIds(value) : value]))
+          : rec
+      ))
+    : (Array.isArray(gptPayload)
+        ? gptPayload.map(rec => (
+            rec && typeof rec === 'object'
+              ? Object.fromEntries(Object.entries(rec).map(([key, value]) => [key, typeof value === 'string' ? redactUserIds(value) : value]))
+              : rec
+          ))
+        : [])
   const gptScenarios = gptPayload && typeof gptPayload?.scenario_insights === 'object' && !Array.isArray(gptPayload.scenario_insights)
-    ? gptPayload.scenario_insights
+    ? Object.fromEntries(Object.entries(gptPayload.scenario_insights).map(([key, value]) => [key, typeof value === 'string' ? redactUserIds(value) : value]))
     : null
-  const gptNextSteps = toArray(gptPayload?.immediate_next_steps)
+  const gptNextSteps = toArray(gptPayload?.immediate_next_steps).map(step => redactUserIds(step))
   const scenarioCards = [
     { key:'bullish_case', label:'Bullish Case', text:gptScenarios?.bullish_case, color:'var(--green)' },
     { key:'base_case', label:'Base Case', text:gptScenarios?.base_case, color:'var(--gold)' },
@@ -2050,7 +2067,7 @@ export default function Profile() {
       `Risk Profile: ${riskLabelFromValue(profile?.risk_profile) || 'Unavailable'}`,
       '',
       'Portfolio Outlook',
-      ...wrapPdfText(gptSummary || 'No summary returned.'),
+      ...wrapPdfText(redactUserIds(gptSummary) || 'No summary returned.'),
       '',
       'Top Recommendations',
     ]
@@ -2060,7 +2077,7 @@ export default function Profile() {
       const title = rec.title ?? rec.symbol ?? rec.asset ?? `Recommendation ${index + 1}`
       const body = rec.action ?? rec.message ?? rec.description ?? rec.reason ?? rec.why ?? rec.body
       lines.push(`${index + 1}. ${title}`)
-      wrapPdfText(body || 'No recommendation detail returned.', 82).forEach(line => lines.push(`   ${line}`))
+      wrapPdfText(redactUserIds(body) || 'No recommendation detail returned.', 82).forEach(line => lines.push(`   ${line}`))
       lines.push('')
     })
 
@@ -2068,7 +2085,7 @@ export default function Profile() {
       lines.push('Scenario Insights')
       scenarioCards.forEach(item => {
         lines.push(item.label)
-        wrapPdfText(item.text || 'No scenario detail returned.', 82).forEach(line => lines.push(`   ${line}`))
+        wrapPdfText(redactUserIds(item.text) || 'No scenario detail returned.', 82).forEach(line => lines.push(`   ${line}`))
         lines.push('')
       })
     }
@@ -2076,7 +2093,7 @@ export default function Profile() {
     if (gptNextSteps.length) {
       lines.push('Next 30 Days')
       gptNextSteps.forEach((step, index) => {
-        wrapPdfText(`${index + 1}. ${step}`, 84).forEach(line => lines.push(line))
+        wrapPdfText(`${index + 1}. ${redactUserIds(step)}`, 84).forEach(line => lines.push(line))
       })
     }
 
@@ -3226,7 +3243,7 @@ export default function Profile() {
                 </span>
               </div>
               <div style={{ fontSize: analysisMode === 'lite' ? '0.98rem' : '0.86rem', color:'var(--text-dim)', lineHeight: analysisMode === 'lite' ? 1.9 : 1.85, whiteSpace:'pre-wrap', background:'var(--surface2)', borderRadius:12, padding:'18px 20px', border:'1px solid var(--border)' }}>
-                {gptText}
+                {redactUserIds(gptText)}
               </div>
             </div>
           )}
