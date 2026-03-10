@@ -1,4 +1,4 @@
-const API_BASE = "http://127.0.0.1:8000";
+const DEFAULT_API_BASE = "https://fintech-production-d308.up.railway.app";
 const DEFAULT_MODEL = "gpt-4.1-mini";
 
 const authViewEl = document.getElementById("authView");
@@ -10,6 +10,8 @@ const loginForm = document.getElementById("loginForm");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const authStatusEl = document.getElementById("authStatus");
+const apiBaseInput = document.getElementById("apiBase");
+const saveApiBaseBtn = document.getElementById("saveApiBaseBtn");
 
 const statusEl = document.getElementById("status");
 const previewEl = document.getElementById("preview");
@@ -23,6 +25,22 @@ const confirmBtn = document.getElementById("confirmBtn");
 let screenshotDataUrl = "";
 let authUser = null;
 let currentImportId = "";
+let apiBase = DEFAULT_API_BASE;
+
+function normalizeApiBase(value) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function getApiBase() {
+  return normalizeApiBase(apiBase) || DEFAULT_API_BASE;
+}
+
+function toRawBase64(dataUrl) {
+  const text = String(dataUrl || "");
+  const marker = "base64,";
+  const idx = text.indexOf(marker);
+  return idx >= 0 ? text.slice(idx + marker.length) : text;
+}
 
 function renderPreviewState() {
   const hasPreview = Boolean(screenshotDataUrl);
@@ -158,6 +176,7 @@ async function saveSettings() {
   await chrome.storage.local.set({
     authUser,
     importId: currentImportId,
+    apiBase: getApiBase(),
   });
 }
 
@@ -175,9 +194,11 @@ function renderAuthState() {
 }
 
 async function loadSettings() {
-  const saved = await chrome.storage.local.get(["importId", "authUser"]);
+  const saved = await chrome.storage.local.get(["importId", "authUser", "apiBase"]);
   currentImportId = saved.importId || "";
   authUser = saved.authUser || null;
+  apiBase = normalizeApiBase(saved.apiBase) || DEFAULT_API_BASE;
+  apiBaseInput.value = getApiBase();
   setHoldingsToUI([]);
   setWarnings([]);
   screenshotDataUrl = "";
@@ -246,7 +267,7 @@ async function handleLogin(event) {
     loginBtn.disabled = true;
     setAuthStatus("Signing in to WealthSphere...", "busy");
 
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await fetch(`${getApiBase()}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -281,11 +302,11 @@ async function captureAndParse() {
   previewEl.src = screenshotDataUrl;
   renderPreviewState();
 
-  const res = await fetch(`${API_BASE}/users/${encodeURIComponent(authUser.user_id)}/imports/screenshot/parse`, {
+  const res = await fetch(`${getApiBase()}/users/${encodeURIComponent(authUser.user_id)}/imports/screenshot/parse`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      image_base64: screenshotDataUrl,
+      image_base64: toRawBase64(screenshotDataUrl),
       model: DEFAULT_MODEL,
       page_text: await extractPageText(),
     }),
@@ -317,7 +338,7 @@ async function confirmImport() {
     throw new Error("Add at least one valid holding row first.");
   }
 
-  const res = await fetch(`${API_BASE}/users/${encodeURIComponent(authUser.user_id)}/imports/screenshot/confirm`, {
+  const res = await fetch(`${getApiBase()}/users/${encodeURIComponent(authUser.user_id)}/imports/screenshot/confirm`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -344,6 +365,13 @@ async function confirmImport() {
 }
 
 loginForm.addEventListener("submit", handleLogin);
+
+saveApiBaseBtn.addEventListener("click", async () => {
+  apiBase = normalizeApiBase(apiBaseInput.value) || DEFAULT_API_BASE;
+  apiBaseInput.value = getApiBase();
+  await saveSettings();
+  setAuthStatus(`API endpoint saved: ${getApiBase()}`, "success");
+});
 
 logoutBtn.addEventListener("click", async () => {
   authUser = null;

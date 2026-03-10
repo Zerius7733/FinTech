@@ -68,11 +68,20 @@ def _parse_csv_env(name: str, default: str) -> list[str]:
     return [value.strip() for value in os.getenv(name, default).split(",") if value.strip()]
 
 
+def _build_allowed_origin_regex() -> str:
+    regex_values = [
+        os.getenv("ALLOWED_ORIGIN_REGEX", "").strip(),
+        os.getenv("ALLOWED_EXTENSION_ORIGIN_REGEX", r"chrome-extension://.*").strip(),
+    ]
+    parts = [value for value in regex_values if value]
+    return "|".join(f"(?:{value})" for value in parts) if parts else ""
+
+
 ALLOWED_ORIGINS = _parse_csv_env(
     "ALLOWED_ORIGINS",
     "http://localhost:5173,http://localhost:3000,http://localhost:8080,http://127.0.0.1:5173",
 )
-ALLOWED_ORIGIN_REGEX = os.getenv("ALLOWED_ORIGIN_REGEX", r"https://.*\.up\.railway\.app")
+ALLOWED_ORIGIN_REGEX = _build_allowed_origin_regex()
 
 app.add_middleware(
     CORSMiddleware,

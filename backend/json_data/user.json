@@ -76,10 +76,10 @@
         },
         {
           "symbol": "ETH-USD",
-          "qty": 4.0,
-          "avg_price": 1785.0,
-          "current_price": 2060.1436,
-          "market_value": 8240.57,
+          "qty": 6.0,
+          "avg_price": 1882.716667,
+          "current_price": 2059.86,
+          "market_value": 12359.16,
           "name": "Ethereum"
         },
         {
@@ -92,11 +92,27 @@
         },
         {
           "symbol": "BNB-USD",
-          "qty": 6.0,
-          "avg_price": 512.0,
-          "current_price": 646.9768,
-          "market_value": 3881.86,
+          "qty": 8.0,
+          "avg_price": 546.0225,
+          "current_price": 647.51,
+          "market_value": 5180.08,
           "name": "BNB"
+        },
+        {
+          "symbol": "DOGE-USD",
+          "qty": 23456.0,
+          "avg_price": 0.09314,
+          "current_price": 0.09673,
+          "name": "Dogecoin",
+          "market_value": 2268.9
+        },
+        {
+          "symbol": "BCH-USD",
+          "qty": 3.0,
+          "avg_price": 457.81,
+          "current_price": 449.64,
+          "name": "Bitcoin Cash",
+          "market_value": 1348.92
         }
       ],
       "commodities": [
@@ -126,9 +142,9 @@
         "value": 500000.0
       }
     ],
-    "portfolio_value": 246268.4,
-    "total_balance": 898268.9,
-    "net_worth": 897258.9,
+    "portfolio_value": 255303.03,
+    "total_balance": 407303.53,
+    "net_worth": 407293.53,
     "income": 9800.0,
     "expenses": 1000.0,
     "income_streams": [
