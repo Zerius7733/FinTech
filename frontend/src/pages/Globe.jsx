@@ -784,6 +784,8 @@ const ZONE_ROTATION_TARGETS = {
 
 const GLOBE_PREFS_KEY = 'ws_globe_prefs'
 const GLOBE_PREFS_EVENT = 'ws:globe-prefs'
+const GLOBE_PROFILE_CACHE_KEY = 'ws_globe_profile'
+const GLOBE_COMMODITY_CACHE_KEY = 'ws_globe_commodities'
 
 function readGlobePrefs() {
   try {
@@ -797,6 +799,26 @@ function readGlobePrefs() {
   } catch {
     return { rotationSpeed: 40, nodeScale: 50, labels: true, pulses: true }
   }
+}
+
+function readSessionJson(key, fallback) {
+  try {
+    const raw = sessionStorage.getItem(key)
+    return raw ? JSON.parse(raw) : fallback
+  } catch {
+    return fallback
+  }
+}
+
+function writeSessionJson(key, value) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(value))
+  } catch {}
+}
+
+function readCachedGlobeProfile(userId) {
+  const cached = readSessionJson(GLOBE_PROFILE_CACHE_KEY, null)
+  return cached?.userId === userId ? (cached.data || null) : null
 }
 
 function rotationSpeedToIdle(speedPct) {
@@ -1015,7 +1037,7 @@ export default function Globe() {
   const [selectedZone, setSelectedZone] = useState(null)
   const [legendHoverZone, setLegendHoverZone] = useState(null)
   const [dashboardLayout, setDashboardLayout] = useState(null)
-  const [commodityDisplayMap, setCommodityDisplayMap] = useState({})
+  const [commodityDisplayMap, setCommodityDisplayMap] = useState(() => readSessionJson(GLOBE_COMMODITY_CACHE_KEY, {}))
   const focusMode = dashShow
   const blurredUiStyle = focusMode
     ? { filter: 'blur(8px)', opacity: 0.35, transition: 'filter 0.28s ease, opacity 0.28s ease' }
@@ -1043,12 +1065,21 @@ export default function Globe() {
   }, [])
 
   // Wellness score + portfolio nodes for logged-in hero
-  const [userProfile, setUserProfile] = useState(null)
+  const [userProfile, setUserProfile] = useState(() => readCachedGlobeProfile(sessionStorage.getItem('user_id') || ''))
   useEffect(() => {
-    if (!user?.user_id) return
+    if (!user?.user_id) {
+      setUserProfile(null)
+      return
+    }
+    const cachedProfile = readCachedGlobeProfile(user.user_id)
+    if (cachedProfile) setUserProfile(cachedProfile)
     fetch(`${API}/users/${user.user_id}`)
       .then(r => r.ok ? r.json() : null)
-      .then(d => d && setUserProfile(d.user))
+      .then(d => {
+        if (!d?.user) return
+        setUserProfile(d.user)
+        writeSessionJson(GLOBE_PROFILE_CACHE_KEY, { userId: user.user_id, data: d.user })
+      })
       .catch(() => {})
   }, [user?.user_id])
 
@@ -1064,9 +1095,10 @@ export default function Globe() {
           })
         }
         setCommodityDisplayMap(next)
+        writeSessionJson(GLOBE_COMMODITY_CACHE_KEY, next)
       })
       .catch(() => {
-        setCommodityDisplayMap({})
+        setCommodityDisplayMap(readSessionJson(GLOBE_COMMODITY_CACHE_KEY, {}))
       })
   }, [])
 
