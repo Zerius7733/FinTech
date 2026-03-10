@@ -1,6 +1,7 @@
 import asyncio,os
 import csv
 import json
+import random
 import time
 import uuid
 import io
@@ -1654,8 +1655,15 @@ def reload_user_synced_balance(user_id: str) -> Dict[str, Any]:
         if target is None:
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found in users.csv")
 
+        current_balance = _read_synced_account_balance_from_csv_row(target)
         current_count = _safe_int(target.get(SYNCED_BALANCE_RELOAD_COUNT_FIELD), 0)
+        if current_count == 0:
+            delta = 1000.0
+        else:
+            delta = float(random.randint(-50, 50))
+        new_balance = max(0.0, round(current_balance + delta, 2))
         next_count = current_count + 1
+        target[SYNCED_ACCOUNT_BALANCE_FIELD] = f"{new_balance:.2f}"
         target[SYNCED_BALANCE_RELOAD_COUNT_FIELD] = str(next_count)
         _write_users_csv(rows, fieldnames)
 
@@ -1669,6 +1677,7 @@ def reload_user_synced_balance(user_id: str) -> Dict[str, Any]:
             "user_id": user_id,
             "synced_account_balance": users[user_id].get("cash_balance", 0.0),
             "reload_count": next_count,
+            "delta": delta,
             "user": users[user_id],
         }
     except HTTPException:
