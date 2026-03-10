@@ -139,8 +139,8 @@ function HoldingRow({ holding, index, onChange, onDelete }) {
 
 const es = {
   row: { display:'flex', alignItems:'stretch', borderBottom:'1px solid rgba(255,255,255,0.05)', transition:'background 0.15s' },
-  cell: { background:'transparent', border:'1px solid rgba(255,255,255,0.08)', borderRadius:6, padding:'6px 8px', color:'var(--text)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', outline:'none', width:'100%' },
-  deleteBtn: { background:'rgba(248,113,113,0.1)', border:'1px solid rgba(248,113,113,0.25)', borderRadius:6, color:'var(--red)', cursor:'pointer', fontFamily:'var(--font-mono)', fontSize:'0.8rem', padding:'4px 8px' },
+  cell: { background:'var(--surface2)', border:'1px solid var(--border-act)', borderRadius:8, padding:'6px 8px', color:'var(--text)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', outline:'none', width:'100%' },
+  deleteBtn: { background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.24)', borderRadius:8, color:'var(--red)', cursor:'pointer', fontFamily:'var(--font-mono)', fontSize:'0.8rem', padding:'4px 8px' },
 }
 
 function PortfolioImportStep({ onBack, onComplete }) {
@@ -306,11 +306,11 @@ function PortfolioImportStep({ onBack, onComplete }) {
 
       <button onClick={addHolding} style={{ ...imp.addRowBtn, padding:'6px 12px', fontSize:'0.7rem', marginBottom:12 }}>+ Add row</button>
 
-      <div style={{ display:'flex', justifyContent:'space-between', gap:12 }}>
-        <button style={cs.btnBack} onClick={() => setPhase('upload')}>Back</button>
-        <div style={{ display:'flex', gap:8 }}>
-          <button style={{ ...cs.btnBack, color:'var(--text-faint)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => onComplete([])}>Skip</button>
-          <button style={{ ...S.submit, background:'linear-gradient(135deg,var(--green),#059669)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={confirm}>
+        <div style={{ display:'flex', justifyContent:'space-between', gap:12 }}>
+          <button style={cs.btnBack} onClick={() => setPhase('upload')}>Back</button>
+          <div style={{ display:'flex', gap:8 }}>
+            <button style={{ ...cs.btnBack, color:'var(--text-faint)', fontSize:'0.78rem', padding:'8px 16px' }} onClick={() => onComplete([])}>Skip</button>
+          <button style={cs.btnNext} onClick={confirm}>
             Confirm *
           </button>
         </div>
@@ -786,25 +786,27 @@ const S = {
   },
   horizonActive: { borderColor: 'var(--teal)', color: 'var(--teal)', background: 'rgba(45,212,191,0.07)' },
   btnBack: {
-    background: 'transparent',
-    border: '1px solid var(--border)',
-    color: 'var(--text-dim)',
+    background: 'var(--surface2)',
+    border: '1px solid var(--border-act)',
+    color: 'var(--text)',
     padding: '10px 22px',
     borderRadius: 10,
     fontSize: '0.95rem',
     fontWeight: 600,
     cursor: 'pointer',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
   },
   submit: {
     padding: '12px 29px',
-    background: 'var(--gold)',
-    border: 'none',
+    background: 'var(--btn-primary-bg)',
+    border: '1px solid color-mix(in srgb, var(--btn-primary-bg) 72%, white 10%)',
     borderRadius: 10,
-    color: '#ffffff',
+    color: 'var(--btn-primary-text)',
     fontWeight: 700,
     fontSize: '0.96rem',
     cursor: 'pointer',
-    transition: 'opacity 0.2s',
+    boxShadow: '0 10px 24px rgba(15,23,42,0.18), inset 0 1px 0 rgba(255,255,255,0.12)',
+    transition: 'opacity 0.2s, filter 0.2s',
   },
   pill: {
     background: 'var(--surface)',
@@ -849,6 +851,30 @@ const cs = {
   eyebrow: { fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 12 },
   heading: { fontFamily: 'var(--font-display)', fontWeight: 800, lineHeight: 1.1, marginBottom: 10 },
   subtext: { color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: 24 },
+  btnBack: {
+    background: 'var(--surface2)',
+    border: '1px solid var(--border-act)',
+    color: 'var(--text)',
+    padding: '10px 22px',
+    borderRadius: 10,
+    fontFamily: 'var(--font-display)',
+    fontSize: '0.87rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+  },
+  btnNext: {
+    background: 'var(--btn-primary-bg)',
+    border: '1px solid color-mix(in srgb, var(--btn-primary-bg) 72%, white 10%)',
+    color: 'var(--btn-primary-text)',
+    padding: '10px 18px',
+    borderRadius: 10,
+    fontFamily: 'var(--font-display)',
+    fontSize: '0.78rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 10px 24px rgba(15,23,42,0.18), inset 0 1px 0 rgba(255,255,255,0.12)',
+  },
   formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 },
   formLabel: { fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 5 },
   formInput: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', color: 'var(--text)', fontSize: '0.96rem', outline: 'none', width: '100%' },
@@ -879,7 +905,7 @@ const imp = {
   uploadIcon: { width: 48, height: 48, borderRadius: 12, background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' },
   errorBox: { background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: '0.73rem', color: 'var(--red)', marginBottom: 12 },
   spinner: { width: 36, height: 36, border: '3px solid rgba(255,255,255,0.08)', borderTopColor: 'var(--teal)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
-  addRowBtn: { background: 'transparent', border: '1.5px dashed rgba(255,255,255,0.12)', borderRadius: 8, padding: '8px 12px', color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', cursor: 'pointer', width: '100%' },
+  addRowBtn: { background: 'var(--surface2)', border: '1.5px dashed var(--border-act)', borderRadius: 10, padding: '8px 12px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', cursor: 'pointer', width: '100%', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)' },
 }
 
 
