@@ -1,14 +1,14 @@
-{
+﻿{
   "u001": {
     "name": "Alice Tan",
     "age": 40,
     "cash_balance": 152000.5,
-    "liability": 10.0,
+    "liability": 999.0,
     "liability_items": [
       {
         "id": "liability-seed",
         "label": "Existing Liabilities",
-        "amount": 10.0,
+        "amount": 999.0,
         "is_mortgage": false
       },
       {
@@ -145,14 +145,14 @@
     ],
     "portfolio_value": 255303.03,
     "total_balance": 907303.53,
-    "net_worth": 906293.53,
-    "income": 9800.0,
+    "net_worth": 905304.53,
+    "income": 19800.0,
     "expenses": 1000.0,
     "income_streams": [
       {
         "id": "income-seed",
         "label": "Primary Income",
-        "monthly_amount": 9800.0
+        "monthly_amount": 19800.0
       }
     ],
     "mortgage": 145000.0,
@@ -162,29 +162,29 @@
       "liquidity_score": 100.0,
       "diversification_hhi": 0.1856,
       "diversification_score": 87.51,
-      "debt_income_ratio": 1.2331,
-      "debt_income_score": 85.09,
+      "debt_income_ratio": 0.6145,
+      "debt_income_score": 91.23,
       "housing_score": 86.03,
       "risk_alignment_score": 96.39,
-      "behavioral_resilience_score": 91.32,
-      "financial_resilience_score": 91.32,
-      "financial_stress_index": 3.82,
+      "behavioral_resilience_score": 92.85,
+      "financial_resilience_score": 92.85,
+      "financial_stress_index": 4.0,
       "confidence": "High",
       "derived_metrics": {
-        "derived_income": 9800.0,
+        "derived_income": 19800.0,
         "derived_income_source": "income_streams",
         "derived_expenses": 1000.0,
         "derived_expenses_source": "expenses_field",
         "derived_estate": 500000.0,
         "derived_cash_like_manual_assets": 0.0,
         "derived_mortgage": 145000.0,
-        "derived_non_mortgage_liability": 10.0,
-        "derived_total_liability": 145010.0,
+        "derived_non_mortgage_liability": 999.0,
+        "derived_total_liability": 145999.0,
         "derived_total_cash_buffer": 152000.5,
         "liquidity_months": 152.0,
-        "debt_to_annual_income": 1.2331,
-        "non_mortgage_debt_to_annual_income": 0.0001,
-        "mortgage_to_annual_income": 1.233,
+        "debt_to_annual_income": 0.6145,
+        "non_mortgage_debt_to_annual_income": 0.0042,
+        "mortgage_to_annual_income": 0.6103,
         "housing_cushion": 3.4483,
         "stock_total": 175657.38,
         "crypto_total": 32452.05,
@@ -202,7 +202,7 @@
       },
       "resilience_breakdown": {
         "liquidity_score": 100.0,
-        "debt_score": 85.09,
+        "debt_score": 91.23,
         "housing_score": 86.03,
         "diversification_score": 87.51,
         "risk_alignment_score": 96.39
@@ -213,15 +213,15 @@
       ]
     },
     "risk_profile": 31.0,
-    "behavioral_resilience_score": 91.32,
-    "financial_resilience_score": 91.32,
-    "financial_wellness_score": 91.32,
-    "financial_stress_index": 3.82,
+    "behavioral_resilience_score": 92.85,
+    "financial_resilience_score": 92.85,
+    "financial_wellness_score": 92.85,
+    "financial_stress_index": 4.0,
     "confidence": "High",
     "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 100.0,
-      "debt_score": 85.09,
+      "debt_score": 91.23,
       "housing_score": 86.03,
       "diversification_score": 87.51,
       "risk_alignment_score": 96.39

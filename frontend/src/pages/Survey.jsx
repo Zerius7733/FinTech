@@ -177,8 +177,8 @@ function HoldingRow({ holding, index, onChange, onDelete }) {
 
 const es = {
   row:       { display:'flex', alignItems:'stretch', borderBottom:'1px solid rgba(255,255,255,0.05)', transition:'background 0.15s' },
-  cell:      { background:'transparent', border:'1px solid rgba(255,255,255,0.08)', borderRadius:6, padding:'6px 8px', color:'var(--text)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', outline:'none', width:'100%' },
-  deleteBtn: { background:'rgba(248,113,113,0.1)', border:'1px solid rgba(248,113,113,0.25)', borderRadius:6, color:'var(--red)', cursor:'pointer', fontFamily:'var(--font-mono)', fontSize:'0.8rem', padding:'4px 8px' },
+  cell:      { background:'var(--surface2)', border:'1px solid var(--border-act)', borderRadius:8, padding:'6px 8px', color:'var(--text)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', outline:'none', width:'100%' },
+  deleteBtn: { background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.24)', borderRadius:8, color:'var(--red)', cursor:'pointer', fontFamily:'var(--font-mono)', fontSize:'0.8rem', padding:'4px 8px' },
 }
 
 // ─── STEP 5 COMPONENT ─────────────────────────────────────────────────────────
@@ -409,7 +409,7 @@ function PortfolioImportStep({ onBack, onComplete }) {
         <button style={cs.btnBack} onClick={() => setPhase('upload')}>← Re-upload</button>
         <div style={{ display:'flex', gap:12 }}>
           <button style={{ ...cs.btnBack, color:'var(--text-faint)' }} onClick={() => onComplete([])}>Skip import</button>
-          <button style={{ ...cs.btnNext, background:'linear-gradient(135deg,var(--green),#059669)', boxShadow:'0 4px 20px rgba(52,211,153,0.3)' }} onClick={confirm}>
+          <button style={cs.btnNext} onClick={confirm}>
             Confirm & Launch ✦
           </button>
         </div>
@@ -505,7 +505,7 @@ export default function Survey() {
                   password: finalPassword,
                 }),
               })
-              if (!regRes.ok && regRes.status !== 409) {
+              if (!regRes.ok) {
                 const regErr = await regRes.json().catch(() => ({}))
                 throw new Error(regErr?.detail || `register failed (${regRes.status})`)
               }
@@ -803,8 +803,8 @@ const cs = {
   horizonRow:{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:24 },
   horizonBtn:{ background:'var(--surface)', border:'1.5px solid var(--border)', borderRadius:10, padding:'14px 8px', textAlign:'center', cursor:'pointer', transition:'all 0.2s', fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' },
   horizonActive: { borderColor:'var(--teal)', color:'var(--teal)', background:'rgba(45,212,191,0.07)' },
-  btnBack:  { background:'transparent', border:'1px solid var(--border)', color:'var(--text-dim)', padding:'11px 22px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.87rem', fontWeight:600, cursor:'pointer' },
-  btnNext:  { background:'var(--gold)', border:'none', color:'var(--btn-text-on-gold)', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.88rem', fontWeight:700, boxShadow:'0 10px 24px rgba(17,24,39,0.16)', cursor:'pointer' },
+  btnBack:  { background:'var(--surface2)', border:'1px solid var(--border-act)', color:'var(--text)', padding:'11px 22px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.87rem', fontWeight:600, cursor:'pointer', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.04)' },
+  btnNext:  { background:'var(--btn-primary-bg)', border:'1px solid color-mix(in srgb, var(--btn-primary-bg) 72%, white 10%)', color:'var(--btn-primary-text)', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.88rem', fontWeight:700, boxShadow:'0 10px 24px rgba(17,24,39,0.16), inset 0 1px 0 rgba(255,255,255,0.12)', cursor:'pointer' },
   completeRing: { width:110, height:110, borderRadius:'50%', background:'linear-gradient(135deg,rgba(52,211,153,0.15),rgba(45,212,191,0.1))', border:'2px solid rgba(52,211,153,0.4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.8rem', margin:'0 auto 28px', boxShadow:'0 0 40px rgba(52,211,153,0.2)', animation:'pulseScale 2s ease-in-out infinite' },
   pill:     { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:24, padding:'7px 16px', fontFamily:'var(--font-mono)', fontSize:'0.73rem', color:'var(--text-dim)' },
   btnLaunch:{ background:'var(--gold)', border:'none', color:'var(--btn-text-on-gold)', padding:'15px 44px', borderRadius:12, fontFamily:'var(--font-display)', fontSize:'0.98rem', fontWeight:700, boxShadow:'0 12px 28px rgba(17,24,39,0.18)', cursor:'pointer' },
@@ -816,6 +816,5 @@ const imp = {
   tipBox:    { background:'rgba(201,168,76,0.06)', border:'1px solid rgba(201,168,76,0.2)', borderRadius:14, padding:'14px 18px', display:'flex', gap:14, alignItems:'flex-start', marginBottom:16 },
   errorBox:  { background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.3)', borderRadius:10, padding:'12px 16px', fontFamily:'var(--font-mono)', fontSize:'0.76rem', color:'var(--red)', marginBottom:16 },
   spinner:   { width:44, height:44, border:'3px solid rgba(255,255,255,0.08)', borderTopColor:'var(--teal)', borderRadius:'50%', animation:'spin 0.8s linear infinite' },
-  addRowBtn: { background:'transparent', border:'1.5px dashed rgba(255,255,255,0.12)', borderRadius:10, padding:'10px 20px', color:'var(--text-faint)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', cursor:'pointer', width:'100%', marginBottom:16 },
+  addRowBtn: { background:'var(--surface2)', border:'1.5px dashed var(--border-act)', borderRadius:10, padding:'10px 20px', color:'var(--text-dim)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', cursor:'pointer', width:'100%', marginBottom:16, boxShadow:'inset 0 1px 0 rgba(255,255,255,0.04)' },
 }
-

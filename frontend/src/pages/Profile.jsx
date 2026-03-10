@@ -726,8 +726,8 @@ function BenchmarkMiniCard({ title, data, accent, icon }) {
       <div style={{ display:'flex', justifyContent:'space-between', gap:12, alignItems:'flex-start', marginBottom:10 }}>
         <div>
           <div style={s.benchmarkMiniLabel}>{title}</div>
-          <div style={{ fontFamily:'var(--font-display)', fontSize:'1.18rem', fontWeight:800, lineHeight:1.08 }}>
-            {percentile}<span style={{ fontSize:'0.72rem', color:'var(--text-faint)', marginLeft:4 }}>th percentile</span>
+          <div style={{ fontFamily:'var(--font-display)', fontSize:'1.18rem', fontWeight:800, lineHeight:1.08, color:'var(--text)' }}>
+            {percentile}<span style={{ fontSize:'0.72rem', color:'rgba(226,232,240,0.68)', marginLeft:4 }}>th percentile</span>
           </div>
         </div>
         <div style={{ ...s.benchmarkMiniIcon, color:accent }}>{icon}</div>
@@ -735,7 +735,7 @@ function BenchmarkMiniCard({ title, data, accent, icon }) {
       <div style={s.benchmarkMiniTrack}>
         <div style={{ ...s.benchmarkMiniFill, width:`${percentile}%`, background:accent }} />
       </div>
-      <div style={{ marginTop:10, fontSize:'0.78rem', color:'var(--text-dim)', lineHeight:1.6 }}>
+      <div style={{ marginTop:10, fontSize:'0.78rem', color:'rgba(226,232,240,0.82)', lineHeight:1.6 }}>
         {data?.headline}
       </div>
     </div>
@@ -3926,16 +3926,17 @@ const s = {
     marginBottom:18,
   },
   retirementStatCard: {
-    background:'rgba(255,255,255,0.52)',
-    border:'1px solid var(--border)',
+    background:'linear-gradient(180deg, rgba(15,23,42,0.78), rgba(15,23,42,0.66))',
+    border:'1px solid rgba(148,163,184,0.18)',
     borderRadius:14,
     padding:'14px 15px',
     minWidth:0,
+    boxShadow:'inset 0 1px 0 rgba(255,255,255,0.04)',
   },
   retirementStatLabel: {
     fontFamily:'var(--font-mono)',
     fontSize:'0.62rem',
-    color:'var(--text-faint)',
+    color:'rgba(226,232,240,0.68)',
     textTransform:'uppercase',
     letterSpacing:'0.1em',
     marginBottom:8,
@@ -3951,7 +3952,7 @@ const s = {
   },
   retirementStatHint: {
     fontSize:'0.76rem',
-    color:'var(--text-faint)',
+    color:'rgba(226,232,240,0.72)',
     lineHeight:1.55,
   },
   retirementControls: {
@@ -3968,15 +3969,15 @@ const s = {
   retirementInputLabel: {
     fontFamily:'var(--font-mono)',
     fontSize:'0.62rem',
-    color:'var(--text-faint)',
+    color:'rgba(226,232,240,0.68)',
     textTransform:'uppercase',
     letterSpacing:'0.08em',
   },
   retirementInput: {
     width:'100%',
     borderRadius:12,
-    border:'1px solid var(--border)',
-    background:'rgba(255,255,255,0.74)',
+    border:'1px solid rgba(148,163,184,0.2)',
+    background:'rgba(15,23,42,0.72)',
     color:'var(--text)',
     padding:'10px 12px',
     fontFamily:'var(--font-body)',
@@ -3986,9 +3987,9 @@ const s = {
   retirementSecondaryBtn: {
     appearance:'none',
     WebkitAppearance:'none',
-    border:'1px solid var(--border)',
-    background:'rgba(255,255,255,0.62)',
-    color:'var(--text-dim)',
+    border:'1px solid rgba(148,163,184,0.22)',
+    background:'rgba(15,23,42,0.72)',
+    color:'var(--text)',
     borderRadius:999,
     padding:'8px 12px',
     fontFamily:'var(--font-body)',
@@ -4059,16 +4060,17 @@ const s = {
     padding:'9px 13px',
   },
   benchmarkMiniCard: {
-    border:'1px solid rgba(15,23,42,0.08)',
+    border:'1px solid rgba(148,163,184,0.18)',
     borderRadius:14,
-    background:'rgba(255,255,255,0.68)',
+    background:'linear-gradient(180deg, rgba(15,23,42,0.78), rgba(15,23,42,0.66))',
+    boxShadow:'inset 0 1px 0 rgba(255,255,255,0.04)',
     padding:'14px 14px 12px',
     minWidth:0,
   },
   benchmarkMiniLabel: {
     fontFamily:'var(--font-mono)',
     fontSize:'0.62rem',
-    color:'var(--text-faint)',
+    color:'rgba(226,232,240,0.68)',
     textTransform:'uppercase',
     letterSpacing:'0.1em',
     marginBottom:6,
@@ -4077,8 +4079,8 @@ const s = {
     width:34,
     height:34,
     borderRadius:10,
-    background:'rgba(255,255,255,0.84)',
-    border:'1px solid rgba(15,23,42,0.08)',
+    background:'rgba(255,255,255,0.1)',
+    border:'1px solid rgba(148,163,184,0.18)',
     display:'flex',
     alignItems:'center',
     justifyContent:'center',
@@ -4090,9 +4092,9 @@ const s = {
   benchmarkMiniTrack: {
     height:10,
     borderRadius:999,
-    background:'rgba(148,163,184,0.14)',
+    background:'rgba(148,163,184,0.18)',
     overflow:'hidden',
-    border:'1px solid rgba(15,23,42,0.05)',
+    border:'1px solid rgba(148,163,184,0.12)',
   },
   benchmarkMiniFill: {
     height:'100%',
