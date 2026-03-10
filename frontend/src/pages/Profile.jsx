@@ -1371,8 +1371,8 @@ function FinancialManagerModal({
 
   const tabMap = {
     assets: {
-      title: 'Manual Assets',
-      description: 'Add non-market assets like real estate, business ownership, or private holdings.',
+      title: 'Assets',
+      description: 'Add manual assets like real estate, business ownership, private holdings, or your own bank-labelled entries. Synced account balance is read only and stays separate.',
       items: profile?.manual_assets ?? [],
     },
     liabilities: {
@@ -1431,7 +1431,7 @@ function FinancialManagerModal({
         ...(Number(profile?.cash_balance || 0) > 0
           ? [{
               id: 'cash-balance-row',
-              label: 'Cash',
+              label: 'Synced Account Balance',
               category: 'banks',
               value: Number(profile?.cash_balance || 0),
               source: 'cash',
@@ -1610,7 +1610,7 @@ function FinancialManagerModal({
                         ? (item.source === 'portfolio'
                           ? `${startCase(item.category)} holding`
                           : item.source === 'cash'
-                            ? 'Cash balance from linked banks'
+                            ? 'Read only · synced from linked banks'
                           : startCase(item.category))
                         : activeTab === 'income'
                           ? 'Monthly income stream'
@@ -1772,6 +1772,7 @@ export default function Profile() {
   const [financialModalOpen, setFinancialModalOpen] = useState(false)
   const [financialTab, setFinancialTab] = useState('assets')
   const [financialBusy, setFinancialBusy] = useState(false)
+  const [syncedBalanceReloading, setSyncedBalanceReloading] = useState(false)
   const [retirementInputs, setRetirementInputs] = useState({
     retirement_age: 65,
     monthly_expenses: 0,
@@ -1911,13 +1912,12 @@ export default function Profile() {
   const portfolioValue = stocksValue + commoditiesValue + cryptosValue
   const manualAssetGroups = manualAssets.reduce((groups, item) => {
     const key = item.category || 'other'
-    if (key === 'banks') return groups
     if (!groups[key]) {
       groups[key] = {
         key,
-        icon: key === 'real_estate' ? '🏠' : key === 'business' ? '🏢' : key === 'private_asset' ? '🧾' : '🗂️',
-        name: startCase(key),
-        color: key === 'real_estate' ? 'var(--gold)' : key === 'business' ? 'var(--purple)' : 'var(--teal)',
+        icon: key === 'real_estate' ? '🏠' : key === 'business' ? '🏢' : key === 'private_asset' ? '🧾' : key === 'banks' ? '🏛️' : '🗂️',
+        name: key === 'banks' ? 'Bank Entries' : startCase(key),
+        color: key === 'real_estate' ? 'var(--gold)' : key === 'business' ? 'var(--purple)' : key === 'banks' ? '#38bdf8' : 'var(--teal)',
         total: 0,
       }
     }
@@ -1971,7 +1971,7 @@ export default function Profile() {
     compositionBase > 0 && stocksValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / compositionBase * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
     compositionBase > 0 && commoditiesValue > 0 && { icon:'🪙', name:'Commodities', pct:Math.round(commoditiesValue / compositionBase * 100), val:fmt$(commoditiesValue), color:'#d4a63a' },
     compositionBase > 0 && cryptosValue > 0 && { icon:'₿',  name:'Digital Assets', pct:Math.round(cryptosValue / compositionBase * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
-    compositionBase > 0 && cashBalance > 0 && { icon:'🏦', name:'Cash / Banks', pct:Math.round(cashBalance / compositionBase * 100), val:fmt$(cashBalance), color:'#7dd3fc' },
+    compositionBase > 0 && cashBalance > 0 && { icon:'🏦', name:'Synced Account Balance', pct:Math.round(cashBalance / compositionBase * 100), val:fmt$(cashBalance), color:'#7dd3fc' },
     ...manualAssetRows.map(item => ({
       icon: item.icon,
       name: item.name,
@@ -2271,6 +2271,27 @@ export default function Profile() {
       setFinancialBusy(false)
     }
   }, [authUser?.user_id])
+  const reloadSyncedBalance = useCallback(async () => {
+    if (!authUser?.user_id || syncedBalanceReloading) return
+    setSyncedBalanceReloading(true)
+    setError('')
+    try {
+      const res = await fetch(`${API}/users/${authUser.user_id}/financials/synced-balance/reload`, {
+        method: 'POST',
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      if (data.user) setProfile(data.user)
+      refreshPage()
+    } catch (err) {
+      setError(err.message || 'Could not reload synced account balance.')
+    } finally {
+      setSyncedBalanceReloading(false)
+    }
+  }, [authUser?.user_id, syncedBalanceReloading])
 
   useEffect(() => {
     if (!authUser?.user_id) {
@@ -2558,7 +2579,7 @@ export default function Profile() {
             {[
               [loading ? '...' : fmt$(totalAUM),                               'Total AUM',       'var(--gold)'],
               [loading ? '...' : fmt$(profile?.portfolio_value ?? portfolioValue),'Portfolio Value','var(--green)'],
-              [loading ? '...' : fmt$(profile?.cash_balance),                   'Cash Balance',   'var(--teal)'],
+              [loading ? '...' : fmt$(profile?.cash_balance),                   'Synced Account Balance',   'var(--teal)'],
             ].map(([v,l,c]) => (
               <div key={l} style={{ textAlign:'right' }}>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.15rem', color:c }}>{v}</div>
@@ -2735,6 +2756,9 @@ export default function Profile() {
             <div style={s.secLabel}>
               Portfolio Composition
               <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'flex-end' }}>
+                <button type="button" onClick={reloadSyncedBalance} style={s.compBtnReload} disabled={syncedBalanceReloading}>
+                  {syncedBalanceReloading ? 'Syncing...' : 'Sync'}
+                </button>
                 <button type="button" onClick={() => openFinancialModal('assets')} style={s.compBtnAsset}>Edit Assets</button>
                 <button type="button" onClick={() => openFinancialModal('liabilities')} style={s.compBtnLiability}>Edit Liabilities</button>
                 <button type="button" onClick={() => openFinancialModal('income')} style={s.compBtnIncome}>Edit Income</button>
@@ -3984,6 +4008,17 @@ const s = {
     background:'linear-gradient(135deg,var(--teal),#0e9f84)',
     border:'1px solid var(--border-act)',
     color:'#081019',
+    padding:'8px 12px',
+    borderRadius:999,
+    fontFamily:'var(--font-display)',
+    fontSize:'0.74rem',
+    fontWeight:800,
+    cursor:'pointer',
+  },
+  compBtnReload: {
+    background:'rgba(125,211,252,0.18)',
+    border:'1px solid rgba(56,189,248,0.42)',
+    color:'var(--text)',
     padding:'8px 12px',
     borderRadius:999,
     fontFamily:'var(--font-display)',

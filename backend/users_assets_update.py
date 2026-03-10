@@ -1,7 +1,6 @@
 import csv
 import json
-import csv
-from typing import Any, Dict 
+from typing import Any, Dict
 from backend.services.wealth_wellness.engine import calculate_user_wellness
 
 def _to_float(value: Any) -> float:
@@ -40,6 +39,40 @@ def _refresh_position_market_values(user: Dict[str, Any]) -> None:
         position["market_value"] = round(quantity * price, 2)
 
 
+def _read_synced_account_balance(row: Dict[str, Any]) -> float:
+    synced_value = row.get("synced_account_balance")
+    if synced_value not in (None, ""):
+        return round(_to_float(synced_value), 2)
+
+    dbs = _to_float(row.get("dbs"))
+    uob = _to_float(row.get("uob"))
+    ocbc = _to_float(row.get("ocbc"))
+    other_banks = _to_float(
+        row.get("other_banks")
+        if row.get("other_banks") not in (None, "")
+        else row.get("other_bank")
+    )
+    return round(dbs + uob + ocbc + other_banks, 2)
+
+
+def _sum_manual_assets(user: Dict[str, Any]) -> tuple[float, float]:
+    manual_assets = user.get("manual_assets", [])
+    if not isinstance(manual_assets, list):
+        return 0.0, 0.0
+
+    real_estate_total = 0.0
+    other_manual_total = 0.0
+    for item in manual_assets:
+        if not isinstance(item, dict):
+            continue
+        value = round(_to_float(item.get("value")), 2)
+        if str(item.get("category", "")).strip().lower() == "real_estate":
+            real_estate_total += value
+        else:
+            other_manual_total += value
+    return round(real_estate_total, 2), round(other_manual_total, 2)
+
+
 def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, Any]:
     updated = json.loads(json.dumps(users))
     with open(csv_path, "r", encoding="utf-8-sig", newline="") as f:
@@ -51,26 +84,15 @@ def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, An
             if not user_id or user_id not in updated:
                 continue
             user = updated[user_id]
-            dbs = _to_float(row.get("dbs"))
-            uob = _to_float(row.get("uob"))
-            ocbc = _to_float(row.get("ocbc"))
-            other_banks = _to_float(
-                row.get("other_banks")
-                if row.get("other_banks") not in (None, "")
-                else row.get("other_bank")
-            )
             user["name"] = row.get("name", user.get("name"))
-            user["cash_balance"] = round(dbs + uob + ocbc + other_banks, 2)
-            user["liability"] = round(_to_float(row.get("liability")), 2)
-            user["income"] = round(_to_float(row.get("income")), 2)
-            user["estate"] = round(_to_float(row.get("estate")), 2)
-            # Support both legacy "expense" and newer "expenses" CSV columns.
-            expense_value = row.get("expenses") if row.get("expenses") not in (None, "") else row.get("expense")
-            user["expenses"] = round(_to_float(expense_value), 2)
+            user["cash_balance"] = _read_synced_account_balance(row)
             _refresh_position_market_values(user)
             portfolio_total = sum(float(p.get("market_value", 0)) for p in _portfolio_positions(user))
+            real_estate_total, other_manual_total = _sum_manual_assets(user)
+            if real_estate_total > 0:
+                user["estate"] = real_estate_total
             user["portfolio_value"] = round(portfolio_total, 2)
-            user["total_balance"] = round(user["cash_balance"] + portfolio_total + user["estate"], 2)
+            user["total_balance"] = round(user["cash_balance"] + portfolio_total + user["estate"] + other_manual_total, 2)
             user["net_worth"] = round(user["total_balance"] - user["liability"] - user["expenses"], 2)
 
             wellness = calculate_user_wellness(user)

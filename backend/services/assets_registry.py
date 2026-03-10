@@ -12,6 +12,8 @@ USER_CSV_FIELDS = [
     "uob",
     "ocbc",
     "other_banks",
+    "synced_account_balance",
+    "synced_balance_reload_count",
     "liability",
     "income",
     "estate",
@@ -61,6 +63,8 @@ def add_default_assets_row(csv_path: Path, user_id: str, name: str) -> None:
             "uob": "0",
             "ocbc": "0",
             "other_banks": "0",
+            "synced_account_balance": "0",
+            "synced_balance_reload_count": "0",
             "liability": "0",
             "income": "0",
             "estate": "0",
@@ -73,7 +77,7 @@ def add_default_assets_row(csv_path: Path, user_id: str, name: str) -> None:
     else:
         if not (existing.get("name") or "").strip():
             existing["name"] = name
-        for key in ("dbs", "uob", "ocbc", "other_banks", "liability", "income", "estate", "expense"):
+        for key in ("dbs", "uob", "ocbc", "other_banks", "synced_account_balance", "synced_balance_reload_count", "liability", "income", "estate", "expense"):
             if (existing.get(key) or "").strip() == "":
                 existing[key] = "0"
         for key in ("username", "password", "email", "age", "age_group", "country"):

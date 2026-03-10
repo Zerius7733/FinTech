@@ -4,6 +4,7 @@ import json
 import time
 import uuid
 import io
+import random
 from dotenv import load_dotenv
 from collections import defaultdict, deque
 from pathlib import Path
@@ -43,6 +44,8 @@ INSIGHTS_RATE_LIMIT_MAX_REQUESTS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_MAX
 _INSIGHTS_RATE_LIMIT_BUCKETS: dict[str, deque[float]] = defaultdict(deque)
 YOUTUBE_HELP_VIDEO_URL = "https://youtu.be/1yTlB7DJeT8"
 YOUTUBE_HELP_EMBED_URL = "https://www.youtube.com/embed/1yTlB7DJeT8"
+SYNCED_ACCOUNT_BALANCE_FIELD = "synced_account_balance"
+SYNCED_BALANCE_RELOAD_COUNT_FIELD = "synced_balance_reload_count"
 
 app = FastAPI(
     title="FinTech Wellness API",
@@ -211,6 +214,13 @@ def _safe_float(value: Any) -> float | None:
     if number != number:
         return None
     return number
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
 
 
 def _compute_ath_change_percentage(current_price: Any, ath: Any) -> float | None:
@@ -637,6 +647,49 @@ def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
     return user
 
 
+def _ensure_users_csv_fieldnames(fieldnames: list[str]) -> list[str]:
+    required = [
+        "user_id",
+        "username",
+        "password",
+        "email",
+        "name",
+        "dbs",
+        "uob",
+        "ocbc",
+        "other_banks",
+        SYNCED_ACCOUNT_BALANCE_FIELD,
+        SYNCED_BALANCE_RELOAD_COUNT_FIELD,
+        "liability",
+        "income",
+        "estate",
+        "expense",
+        "age",
+        "age_group",
+        "country",
+    ]
+    for key in required:
+        if key not in fieldnames:
+            fieldnames.append(key)
+    return fieldnames
+
+
+def _read_synced_account_balance_from_csv_row(row: Dict[str, Any]) -> float:
+    synced_value = row.get(SYNCED_ACCOUNT_BALANCE_FIELD)
+    if synced_value not in (None, ""):
+        return round(_safe_float(synced_value) or 0.0, 2)
+
+    legacy_total = 0.0
+    for key in ("dbs", "uob", "ocbc"):
+        legacy_total += _safe_float(row.get(key, 0.0)) or 0.0
+    legacy_total += _safe_float(
+        row.get("other_banks")
+        if row.get("other_banks") not in (None, "")
+        else row.get("other_bank", 0.0)
+    ) or 0.0
+    return round(legacy_total, 2)
+
+
 def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
     csv_path = ASSETS_CSV_PATH
     default_headers = [
@@ -649,6 +702,8 @@ def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
         "uob",
         "ocbc",
         "other_banks",
+        SYNCED_ACCOUNT_BALANCE_FIELD,
+        SYNCED_BALANCE_RELOAD_COUNT_FIELD,
         "liability",
         "income",
         "estate",
@@ -667,19 +722,7 @@ def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
         rows = []
         fieldnames = default_headers[:]
 
-    if "other_banks" not in fieldnames and "other_bank" not in fieldnames:
-        fieldnames.append("other_banks")
-
-    for required in ("user_id", "name", "liability", "income", "estate", "username", "password", "email"):
-        if required not in fieldnames:
-            fieldnames.append(required)
-
-    other_bank_col = "other_banks" if "other_banks" in fieldnames else "other_bank"
-    banks_total = round(sum(
-        float(item.get("value", 0.0) or 0.0)
-        for item in (user.get("manual_assets") or [])
-        if str(item.get("category", "")).strip().lower() == "banks"
-    ), 2)
+    fieldnames = _ensure_users_csv_fieldnames(fieldnames)
 
     target_index = None
     for idx, row in enumerate(rows):
@@ -700,16 +743,16 @@ def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
         row.setdefault("dbs", "0")
         row.setdefault("uob", "0")
         row.setdefault("ocbc", "0")
+        row.setdefault(SYNCED_ACCOUNT_BALANCE_FIELD, "0")
+        row.setdefault(SYNCED_BALANCE_RELOAD_COUNT_FIELD, "0")
         row.setdefault("expense", str(user.get("expenses", 0.0) or 0.0))
         rows.append(row)
         target_index = len(rows) - 1
 
     target = rows[target_index]
     target["name"] = str(user.get("name", target.get("name", "")) or "")
-    target["liability"] = f"{round(float(user.get('liability', 0.0) or 0.0), 2):.2f}"
-    target["income"] = f"{round(float(user.get('income', 0.0) or 0.0), 2):.2f}"
-    target["estate"] = f"{round(float(user.get('estate', 0.0) or 0.0), 2):.2f}"
-    target[other_bank_col] = f"{banks_total:.2f}"
+    target[SYNCED_ACCOUNT_BALANCE_FIELD] = f"{round(float(user.get('cash_balance', 0.0) or 0.0), 2):.2f}"
+    target[SYNCED_BALANCE_RELOAD_COUNT_FIELD] = str(_safe_int(target.get(SYNCED_BALANCE_RELOAD_COUNT_FIELD), 0))
 
     with open(csv_path, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -730,12 +773,12 @@ def _update_user_csv_profile(user_id: str, updates: Dict[str, Any]) -> None:
         rows = []
         fieldnames = [
             "user_id", "username", "password", "email", "name",
-            "dbs", "uob", "ocbc", "other_banks", "liability", "income", "estate", "expense",
+            "dbs", "uob", "ocbc", "other_banks", SYNCED_ACCOUNT_BALANCE_FIELD, SYNCED_BALANCE_RELOAD_COUNT_FIELD,
+            "liability", "income", "estate", "expense",
             "age", "age_group", "country",
         ]
 
-    if "user_id" not in fieldnames:
-        fieldnames.insert(0, "user_id")
+    fieldnames = _ensure_users_csv_fieldnames(fieldnames)
 
     for key in updates.keys():
         if key not in fieldnames:
@@ -778,10 +821,11 @@ def _load_users_csv() -> tuple[list[Dict[str, str]], list[str]]:
     else:
         rows = []
         fieldnames = []
-    return rows, fieldnames
+    return rows, _ensure_users_csv_fieldnames(fieldnames)
 
 
 def _write_users_csv(rows: list[Dict[str, str]], fieldnames: list[str]) -> None:
+    fieldnames = _ensure_users_csv_fieldnames(fieldnames)
     if not fieldnames:
         return
     with open(ASSETS_CSV_PATH, "w", encoding="utf-8", newline="") as f:
@@ -789,6 +833,28 @@ def _write_users_csv(rows: list[Dict[str, str]], fieldnames: list[str]) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow({key: row.get(key, "") for key in fieldnames})
+
+
+def _upsert_synced_balance_csv_row(user_id: str, user: Dict[str, Any], balance: float, reload_count: int) -> None:
+    rows, fieldnames = _load_users_csv()
+    target = next((row for row in rows if (row.get("user_id") or "").strip() == user_id), None)
+    if target is None:
+        target = {key: "" for key in fieldnames}
+        target["user_id"] = user_id
+        rows.append(target)
+
+    target["name"] = str(user.get("name", target.get("name", "")) or "")
+    target.setdefault("dbs", "0")
+    target.setdefault("uob", "0")
+    target.setdefault("ocbc", "0")
+    target.setdefault("other_banks", "0")
+    target.setdefault("liability", "0")
+    target.setdefault("income", "0")
+    target.setdefault("estate", "0")
+    target.setdefault("expense", str(user.get("expenses", 0.0) or 0.0))
+    target[SYNCED_ACCOUNT_BALANCE_FIELD] = f"{round(balance, 2):.2f}"
+    target[SYNCED_BALANCE_RELOAD_COUNT_FIELD] = str(max(0, int(reload_count)))
+    _write_users_csv(rows, fieldnames)
 
 
 class UserRiskUpdateRequest(BaseModel):
@@ -1344,7 +1410,7 @@ def delete_user_account(user_id: str) -> Dict[str, Any]:
         users.pop(user_id, None)
         _write_users_data(users)
 
-        rows, fieldnames = _load_users_csv()
+        rows, _fieldnames = _load_users_csv()
         if fieldnames:
             rows = [row for row in rows if (row.get("user_id") or "").strip() != user_id]
             _write_users_csv(rows, fieldnames)
@@ -1487,7 +1553,6 @@ def add_user_manual_asset(user_id: str, payload: ManualAssetCreateRequest) -> Di
         user["manual_assets"].append(item)
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
-        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
     except HTTPException:
         raise
@@ -1495,6 +1560,67 @@ def add_user_manual_asset(user_id: str, payload: ManualAssetCreateRequest) -> Di
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"asset create failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/financials/synced-balance/reload",
+    tags=["Users"],
+    summary="Reload the synced account balance for a user",
+)
+def reload_user_synced_balance(user_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        rows, fieldnames = _load_users_csv()
+        target = next((row for row in rows if (row.get("user_id") or "").strip() == user_id), None)
+        current_count = _safe_int((target or {}).get(SYNCED_BALANCE_RELOAD_COUNT_FIELD), 0)
+        current_balance = (
+            _read_synced_account_balance_from_csv_row(target)
+            if target is not None
+            else round(float(user.get("cash_balance", 0.0) or 0.0), 2)
+        )
+
+        if current_count <= 0:
+            delta = None
+            new_balance = 1000.0
+            mortgage_items = [
+                item for item in (user.get("liability_items") or [])
+                if isinstance(item, dict) and bool(item.get("is_mortgage"))
+            ]
+            if not mortgage_items and float(user.get("mortgage", 0.0) or 0.0) <= 0:
+                user["mortgage"] = 100000.0
+        else:
+            delta = random.randint(-50, 50)
+            new_balance = max(0.0, round(current_balance + delta, 2))
+
+        next_count = current_count + 1
+        _upsert_synced_balance_csv_row(
+            user_id=user_id,
+            user=user,
+            balance=new_balance,
+            reload_count=next_count,
+        )
+
+        user["cash_balance"] = new_balance
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        _sync_user_to_assets_csv(user_id, users[user_id])
+
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "synced_account_balance": new_balance,
+            "reload_count": next_count,
+            "delta": delta,
+            "user": users[user_id],
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"synced balance reload failed: {exc}") from exc
 
 
 @app.post(
@@ -1580,7 +1706,6 @@ def add_user_portfolio_holding(user_id: str, payload: PortfolioHoldingCreateRequ
         user["portfolio"] = portfolio
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
-        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "asset_class": bucket, "item": item, "user": users[user_id]}
     except HTTPException:
         raise
@@ -1663,7 +1788,6 @@ def remove_user_manual_asset(user_id: str, item_id: str) -> Dict[str, Any]:
             raise HTTPException(status_code=404, detail=f"asset item '{item_id}' not found")
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
-        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "user": users[user_id]}
     except HTTPException:
         raise
@@ -1692,7 +1816,6 @@ def add_user_liability_item(user_id: str, payload: LiabilityItemCreateRequest) -
         user["liability_items"].append(item)
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
-        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
     except HTTPException:
         raise
@@ -1718,7 +1841,6 @@ def remove_user_liability_item(user_id: str, item_id: str) -> Dict[str, Any]:
             raise HTTPException(status_code=404, detail=f"liability item '{item_id}' not found")
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
-        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "user": users[user_id]}
     except HTTPException:
         raise
@@ -1746,7 +1868,6 @@ def add_user_income_stream(user_id: str, payload: IncomeStreamCreateRequest) -> 
         user["income_streams"].append(item)
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
-        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
     except HTTPException:
         raise
@@ -1772,7 +1893,6 @@ def remove_user_income_stream(user_id: str, item_id: str) -> Dict[str, Any]:
             raise HTTPException(status_code=404, detail=f"income stream '{item_id}' not found")
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
-        _sync_user_to_assets_csv(user_id, users[user_id])
         return {"status": "ok", "user_id": user_id, "user": users[user_id]}
     except HTTPException:
         raise
