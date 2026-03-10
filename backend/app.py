@@ -1469,9 +1469,9 @@ def delete_user_portfolio_data(user_id: str) -> Dict[str, Any]:
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
         user["portfolio"] = {"stocks": [], "cryptos": [], "commodities": []}
+        user["manual_assets"] = []
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
-        _sync_user_to_assets_csv(user_id, users[user_id])
 
         history_path = USER_PORTFOLIO_DIR / f"{user_id}.json"
         if history_path.exists():
@@ -1498,7 +1498,7 @@ def delete_user_account(user_id: str) -> Dict[str, Any]:
         users.pop(user_id, None)
         _write_users_data(users)
 
-        rows, _fieldnames = _load_users_csv()
+        rows, fieldnames = _load_users_csv()
         if fieldnames:
             rows = [row for row in rows if (row.get("user_id") or "").strip() != user_id]
             _write_users_csv(rows, fieldnames)
