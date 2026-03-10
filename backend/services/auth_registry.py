@@ -139,8 +139,9 @@ def register_login_user(
 
     if requested_user_id:
         if any((row.get("user_id") or "").strip().lower() == requested_user_id.lower() for row in rows):
-            raise RegisterConflictError(f"user_id '{requested_user_id}' already exists")
-        final_user_id = requested_user_id
+            final_user_id = _next_user_id(rows)
+        else:
+            final_user_id = requested_user_id
     else:
         final_user_id = _next_user_id(rows)
 

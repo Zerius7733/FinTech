@@ -505,7 +505,7 @@ export default function Survey() {
                   password: finalPassword,
                 }),
               })
-              if (!regRes.ok && regRes.status !== 409) {
+              if (!regRes.ok) {
                 const regErr = await regRes.json().catch(() => ({}))
                 throw new Error(regErr?.detail || `register failed (${regRes.status})`)
               }
@@ -818,4 +818,3 @@ const imp = {
   spinner:   { width:44, height:44, border:'3px solid rgba(255,255,255,0.08)', borderTopColor:'var(--teal)', borderRadius:'50%', animation:'spin 0.8s linear infinite' },
   addRowBtn: { background:'var(--surface2)', border:'1.5px dashed var(--border-act)', borderRadius:10, padding:'10px 20px', color:'var(--text-dim)', fontFamily:'var(--font-mono)', fontSize:'0.76rem', cursor:'pointer', width:'100%', marginBottom:16, boxShadow:'inset 0 1px 0 rgba(255,255,255,0.04)' },
 }
-

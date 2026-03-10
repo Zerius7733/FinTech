@@ -434,7 +434,7 @@ export default function SurveyModal({ open, onClose }) {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ username: email, password: finalPassword }),
                 })
-                if (!regRes.ok && regRes.status !== 409) {
+                if (!regRes.ok) {
                   const regErr = await regRes.json().catch(() => ({}))
                   throw new Error(regErr?.detail || `register failed (${regRes.status})`)
                 }
@@ -908,4 +908,3 @@ const imp = {
   spinner: { width: 36, height: 36, border: '3px solid rgba(255,255,255,0.08)', borderTopColor: 'var(--teal)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   addRowBtn: { background: 'var(--surface2)', border: '1.5px dashed var(--border-act)', borderRadius: 10, padding: '8px 12px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', cursor: 'pointer', width: '100%', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)' },
 }
-
