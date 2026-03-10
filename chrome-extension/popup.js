@@ -259,7 +259,7 @@ async function handleLogin(event) {
   const password = (passwordInput.value || "").trim();
 
   if (!username || !password) {
-    setAuthStatus("Enter both email/username and password.", "error");
+    setAuthStatus("Enter both username and password.", "error");
     return;
   }
 

@@ -330,6 +330,7 @@ export default function SurveyModal({ open, onClose }) {
   const [importedHoldings, setImportedHoldings] = useState([])
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -350,6 +351,7 @@ export default function SurveyModal({ open, onClose }) {
     setImportedHoldings([])
     setFirstName('')
     setLastName('')
+    setUsername('')
     setEmail('')
     setPassword('')
     setShowPassword(false)
@@ -368,7 +370,7 @@ export default function SurveyModal({ open, onClose }) {
     const last = String(lastName || '').trim()
     if (first && last) return `${first[0].toUpperCase()}.${last[0].toUpperCase()}.`
 
-    const fallbackSource = String(first || email || user?.username || '').replace(/[^a-zA-Z0-9]/g, '')
+    const fallbackSource = String(first || username || email || user?.username || '').replace(/[^a-zA-Z0-9]/g, '')
     if (fallbackSource.length >= 2) return `${fallbackSource[0].toUpperCase()}.${fallbackSource[1].toUpperCase()}.`
     if (fallbackSource.length === 1) return `${fallbackSource[0].toUpperCase()}.`
     return '?'
@@ -380,8 +382,8 @@ export default function SurveyModal({ open, onClose }) {
   const goBack = () => setStep(s => s-1)
   const toggleSet = (set, setter, val) => setter(prev => { const n=new Set(prev); n.has(val)?n.delete(val):n.add(val); return n })
   const goNextFromProfile = () => {
-    if (!firstName.trim() || !email.trim() || !password.trim()) {
-      setSubmitErr('First name, email, and password are required.')
+    if (!firstName.trim() || !username.trim() || !email.trim() || !password.trim()) {
+      setSubmitErr('First name, username, email, and password are required.')
       return
     }
     const parsedAge = Number(age)
@@ -424,7 +426,7 @@ export default function SurveyModal({ open, onClose }) {
             try {
               let activeUser = user
               if (!activeUser?.user_id) {
-                if (!firstName.trim() || !email.trim() || !password.trim()) {
+                if (!firstName.trim() || !username.trim() || !email.trim() || !password.trim()) {
                   setSubmitErr('Missing profile data. Please go back to step 1.')
                   return
                 }
@@ -432,7 +434,7 @@ export default function SurveyModal({ open, onClose }) {
                 const regRes = await fetch(`${API}/auth/register`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ username: email, password: finalPassword }),
+                  body: JSON.stringify({ username: username.trim(), password: finalPassword }),
                 })
                 if (!regRes.ok) {
                   const regErr = await regRes.json().catch(() => ({}))
@@ -441,14 +443,14 @@ export default function SurveyModal({ open, onClose }) {
                 const loginRes = await fetch(`${API}/auth/login`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ username: email, password: finalPassword }),
+                  body: JSON.stringify({ username: username.trim(), password: finalPassword }),
                 })
                 if (!loginRes.ok) {
                   const loginErr = await loginRes.json().catch(() => ({}))
                   throw new Error(loginErr?.detail || `login failed (${loginRes.status})`)
                 }
                 const loginData = await loginRes.json()
-                const authUser = { user_id: loginData?.user_id || loginData?.data?.user_id, username: email }
+                const authUser = { user_id: loginData?.user_id || loginData?.data?.user_id, username: username.trim() }
                 login(authUser)
                 activeUser = authUser
               }
@@ -460,6 +462,7 @@ export default function SurveyModal({ open, onClose }) {
                   user_id: activeUser.user_id,
                   first_name: firstName,
                   last_name: lastName,
+                  username: username.trim(),
                   email,
                   country,
                   age: Number(age),
@@ -537,9 +540,13 @@ export default function SurveyModal({ open, onClose }) {
                 <label style={cs.formLabel}>Last Name</label>
                 <input style={cs.formInput} placeholder="Chen" value={lastName} onChange={e => setLastName(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               </div>
-              <div style={{ gridColumn:'1/-1' }}>
-                <label style={cs.formLabel}>Email / Username</label>
-                <input style={cs.formInput} placeholder="alex@example.com or alex123" value={email} onChange={e => setEmail(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
+              <div>
+                <label style={cs.formLabel}>Username</label>
+                <input style={cs.formInput} placeholder="alex123" value={username} onChange={e => setUsername(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
+              </div>
+              <div>
+                <label style={cs.formLabel}>Email</label>
+                <input style={cs.formInput} placeholder="alex@example.com" value={email} onChange={e => setEmail(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               </div>
               <div style={{ gridColumn:'1/-1' }}>
                 <label style={cs.formLabel}>Password</label>

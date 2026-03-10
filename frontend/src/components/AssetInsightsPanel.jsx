@@ -302,11 +302,11 @@ function NarrativeContext({ text }) {
 }
 const S = {
   card: {
-    background: 'var(--surface2)',
-    border: '1px solid var(--border)',
+    background: 'linear-gradient(180deg, var(--surface), var(--surface2))',
+    border: '1px solid var(--border-act)',
     borderRadius: 18,
     padding: 20,
-    boxShadow: '0 14px 28px rgba(0,0,0,0.2)',
+    boxShadow: '0 18px 36px rgba(0,0,0,0.18)',
   },
   label: {
     fontFamily: 'var(--font-mono)',
@@ -344,7 +344,7 @@ const S = {
     marginTop: 6,
   },
   metric: {
-    border: '1px solid var(--border)',
+    border: '1px solid var(--border-act)',
     borderRadius: 14,
     background: 'var(--surface)',
     padding: '14px 14px 12px',
@@ -367,14 +367,14 @@ const S = {
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 12,
-    border: '1px solid var(--border)',
+    border: '1px solid var(--border-act)',
     borderRadius: 14,
     background: 'var(--surface)',
     padding: '12px 14px',
   },
   linkCard: {
     display: 'block',
-    border: '1px solid var(--border)',
+    border: '1px solid var(--border-act)',
     borderRadius: 14,
     background: 'var(--surface)',
     padding: '12px 14px',
@@ -391,16 +391,16 @@ const S = {
     lineHeight: 1.6,
   },
   triggerBtn: {
-    background: 'var(--gold)',
-    border: 'none',
-    color: 'var(--btn-text-on-gold)',
+    background: 'var(--btn-primary-bg)',
+    border: '1px solid color-mix(in srgb, var(--btn-primary-bg) 72%, white 10%)',
+    color: 'var(--btn-primary-text)',
     padding: '10px 16px',
     borderRadius: 10,
     fontFamily: 'var(--font-display)',
     fontSize: '0.82rem',
     fontWeight: 700,
     cursor: 'pointer',
-    boxShadow: '0 10px 24px rgba(17,24,39,0.16)',
+    boxShadow: '0 10px 24px rgba(17,24,39,0.16), inset 0 1px 0 rgba(255,255,255,0.12)',
   },
   lockedPill: {
     border: '1px solid rgba(148,163,184,0.18)',
@@ -414,9 +414,9 @@ const S = {
     textTransform: 'uppercase',
   },
   ghostBtn: {
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    color: 'var(--text-dim)',
+    background: 'var(--surface2)',
+    border: '1px solid var(--border-act)',
+    color: 'var(--text)',
     padding: '8px 12px',
     borderRadius: 10,
     fontFamily: 'var(--font-mono)',
@@ -445,7 +445,7 @@ const S = {
     letterSpacing: '0.03em',
   },
   prefaceBox: {
-    border: '1px solid var(--border)',
+    border: '1px solid var(--border-act)',
     background: 'var(--surface)',
     borderRadius: 12,
     padding: '10px 12px',

@@ -999,6 +999,7 @@ class SurveyProfileUpdateRequest(BaseModel):
     user_id: str
     first_name: str | None = None
     last_name: str | None = None
+    username: str | None = None
     email: str | None = None
     country: str | None = None
     age: int | None = Field(default=None, ge=18, le=100)
@@ -1300,6 +1301,7 @@ def update_survey_profile(payload: SurveyProfileUpdateRequest) -> Dict[str, Any]
         full_name = " ".join(part for part in (first, last) if part).strip()
 
         updates = {
+            "username": (payload.username or "").strip(),
             "email": (payload.email or "").strip(),
             "country": (payload.country or "").strip(),
         }
@@ -1322,6 +1324,7 @@ def update_survey_profile(payload: SurveyProfileUpdateRequest) -> Dict[str, Any]
                 user["age"] = int(payload.age or 0)
             if updates.get("age_group"):
                 user["age_group"] = updates["age_group"]
+            user["username"] = updates.get("username", user.get("username", ""))
             user["email"] = updates.get("email", user.get("email", ""))
             user["country"] = updates.get("country", user.get("country", ""))
             users[user_id] = user

@@ -312,7 +312,17 @@ export default function SettingsModal({ onClose }) {
     }
   }
 
+  const extensionCloneCommand = 'git clone https://github.com/Zerius7733/FinTech.git'
   const extensionPath = 'FinTech/chrome-extension'
+
+  const handleCopyExtensionCloneCommand = async () => {
+    try {
+      await navigator.clipboard.writeText(extensionCloneCommand)
+      setExtensionStatus('Clone command copied. Run it first, then load the chrome-extension folder in Chrome.')
+    } catch {
+      setExtensionStatus(`Clone command: ${extensionCloneCommand}`)
+    }
+  }
 
   const handleCopyExtensionPath = async () => {
     try {
@@ -559,10 +569,11 @@ export default function SettingsModal({ onClose }) {
                   <div style={s.extensionGuideTitle}>Manual install guide</div>
                   <div style={s.extensionSteps}>
                     {[
+                      'Clone the FinTech repo to your machine.',
                       'Open chrome://extensions in Chrome.',
                       'Turn on Developer mode in the top-right corner.',
                       'Click Load unpacked.',
-                      'Select the Unova extension folder.',
+                      'Select the cloned FinTech/chrome-extension folder.',
                       'Pin the extension and sign in before using imports.',
                     ].map((step, index) => (
                       <div key={step} style={s.extensionStep}>
@@ -570,6 +581,10 @@ export default function SettingsModal({ onClose }) {
                         <div>{step}</div>
                       </div>
                     ))}
+                  </div>
+                  <div style={s.extensionPathRow}>
+                    <div style={s.extensionPathBox}>{extensionCloneCommand}</div>
+                    <button style={s.btnGhost} onClick={handleCopyExtensionCloneCommand}>Copy command</button>
                   </div>
                   <div style={s.extensionPathRow}>
                     <div style={s.extensionPathBox}>{extensionPath}</div>
