@@ -1,12 +1,11 @@
-user_id,created_at,username,password,email,name,dbs,uob,ocbc,other_banks,liability,income,estate,expense,age,age_group,country,synced_account_balance,synced_balance_reload_count
-u001,2026-02-07T14:06:27Z,Alice,password,alice@gmail.com,Alice Tan,152000.50,0,0,0.00,999.00,19800.00,500000.00,1000.00,32,30-44,Singapore,,
-u002,2026-02-07T14:06:27Z,Brandon,password,brandon@example.com,Brandon Lim,0,2300.00,0,0.00,6400.75,4000.00,0.00,1500.00,24,18-29,,,
-u003,2026-02-07T14:06:27Z,Cheryl,password,cheryl@example.com,Cheryl Ng,7800.20,1200.00,0,0,9000.20,3000.00,0,2000.00,25,18-29,,,
-u004,2026-02-07T14:06:27Z,Daniel,password,daniel@example.com,Daniel Koh,1500.00,0,2650.40,3200.00,7350.40,4500.00,0,2500.00,26,18-29,,,
-u005,2026-02-07T14:06:27Z,Ethan,password,ethan@example.com,Ethan Lee,10400.00,0,0,2200.25,12600.25,4600.00,0,3000.00,36,30-44,,,
-u006,2026-02-07T14:06:27Z,Farah,password,farah@example.com,Farah Aziz,0,4890.10,0,3600.00,8490.10,4750.00,0,3500.00,37,30-44,,,
-u007,2026-02-07T14:06:27Z,Grace,password,grace@example.com,Grace Wong,0,2250.75,1100.00,0,3350.75,4800.00,0,2000.00,53,45-59,,,
-u008,2026-02-07T14:06:27Z,Hafiz,password,hafiz@example.com,Hafiz Rahman,0,6400.00,0,2750.50,9150.50,5200.00,0,2000.00,39,30-44,,,
-u009,2026-02-07T14:06:27Z,Isabella,password,isabella@example.com,Isabella Goh,0,1200.00,980.25,760.00,2940.25,3500.00,0,1200.00,23,18-29,Singapore,,
-u010,2026-02-07T14:06:27Z,Jason,password,jason@example.com,Jason Teo,0,0,3500.00,4200.00,7700.00,4900.00,0,1800.00,24,18-29,,,
-u011,2026-02-07T14:06:27Z,zerius,password,zerius,zerius zerius,0,0,0,0,0,0,0,0,33,30-44,Singapore,,
+user_id,created_at,username,password,email,name,dbs,uob,ocbc,other_banks,liability,income,estate,expense,age,age_group,country
+u001,2026-02-07T14:06:27Z,Alice,password,alice@gmail.com,Alice Tan,152000.50,0,0,0.00,999.00,19800.00,500000.00,1000.00,32,30-44,Singapore
+u002,2026-02-07T14:06:27Z,Brandon,password,brandon@example.com,Brandon Lim,0,2300.00,0,0.00,6400.75,4000.00,0.00,1500.00,24,18-29,
+u003,2026-02-07T14:06:27Z,Cheryl,password,cheryl@example.com,Cheryl Ng,7800.20,1200.00,0,0,9000.20,3000.00,0,2000.00,25,18-29,
+u004,2026-02-07T14:06:27Z,Daniel,password,daniel@example.com,Daniel Koh,1500.00,0,2650.40,3200.00,7350.40,4500.00,0,2500.00,26,18-29,
+u005,2026-02-07T14:06:27Z,Ethan,password,ethan@example.com,Ethan Lee,10400.00,0,0,2200.25,12600.25,4600.00,0,3000.00,36,30-44,
+u006,2026-02-07T14:06:27Z,Farah,password,farah@example.com,Farah Aziz,0,4890.10,0,3600.00,8490.10,4750.00,0,3500.00,37,30-44,
+u007,2026-02-07T14:06:27Z,Grace,password,grace@example.com,Grace Wong,0,2250.75,1100.00,0,3350.75,4800.00,0,2000.00,53,45-59,
+u008,2026-02-07T14:06:27Z,Hafiz,password,hafiz@example.com,Hafiz Rahman,0,6400.00,0,2750.50,9150.50,5200.00,0,2000.00,39,30-44,
+u009,2026-02-07T14:06:27Z,Isabella,password,isabella@example.com,Isabella Goh,0,1200.00,980.25,760.00,2940.25,3500.00,0,1200.00,23,18-29,Singapore
+u010,2026-02-07T14:06:27Z,Jason,password,jason@example.com,Jason Teo,0,0,3500.00,4200.00,7700.00,4900.00,0,1800.00,24,18-29,

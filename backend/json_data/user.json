@@ -1,4 +1,4 @@
-{
+﻿{
   "u001": {
     "name": "Alice Tan",
     "age": 40,
@@ -1511,106 +1511,6 @@
       "Realign portfolio risk with stated tolerance so market swings are easier to absorb."
     ],
     "email": "zerius@example.com",
-    "country": "Singapore"
-  },
-  "u011": {
-    "name": "zerius zerius",
-    "age": 33,
-    "cash_balance": 0.0,
-    "liability": 0,
-    "liability_items": [],
-    "portfolio": {
-      "stocks": [],
-      "cryptos": [],
-      "commodities": []
-    },
-    "manual_assets": [],
-    "portfolio_value": 0,
-    "total_balance": 0.0,
-    "net_worth": 0.0,
-    "income": 0,
-    "expenses": 0.0,
-    "income_streams": [],
-    "mortgage": 0,
-    "estate": 0.0,
-    "wellness_metrics": {
-      "liquidity_months": 0.0,
-      "liquidity_score": 0.0,
-      "diversification_hhi": 0.0,
-      "diversification_score": 50.0,
-      "debt_income_ratio": 0.0,
-      "debt_income_score": 50.0,
-      "housing_score": null,
-      "risk_alignment_score": 60.0,
-      "behavioral_resilience_score": 33.53,
-      "financial_resilience_score": 33.53,
-      "financial_stress_index": 57.47,
-      "confidence": "Low",
-      "derived_metrics": {
-        "derived_income": 0.0,
-        "derived_income_source": "income_field",
-        "derived_expenses": 0.0,
-        "derived_expenses_source": "missing",
-        "derived_estate": 0.0,
-        "derived_cash_like_manual_assets": 0.0,
-        "derived_mortgage": 0.0,
-        "derived_non_mortgage_liability": 0.0,
-        "derived_total_liability": 0.0,
-        "derived_total_cash_buffer": 0.0,
-        "liquidity_months": 0.0,
-        "debt_to_annual_income": 0.0,
-        "non_mortgage_debt_to_annual_income": 0.0,
-        "mortgage_to_annual_income": 0.0,
-        "housing_cushion": 0.0,
-        "stock_total": 0.0,
-        "crypto_total": 0.0,
-        "commodity_total": 0.0,
-        "computed_portfolio_value": 0.0,
-        "portfolio_value": 0.0,
-        "portfolio_value_source": "none",
-        "crypto_exposure_ratio": 0.0,
-        "diversification_hhi": 0.0,
-        "asset_class_hhi": 0.0,
-        "position_hhi": 0.0,
-        "position_count": 0,
-        "expenses_estimated": false,
-        "expenses_missing": true
-      },
-      "resilience_breakdown": {
-        "liquidity_score": 0.0,
-        "debt_score": 50.0,
-        "housing_score": null,
-        "diversification_score": 50.0,
-        "risk_alignment_score": 60.0
-      },
-      "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
-      "action_insights": [
-        "Build emergency savings toward 3 to 6 months of expenses.",
-        "Lower unsecured liabilities to improve shock absorption and monthly flexibility.",
-        "Reduce concentration in a single volatile asset class and broaden diversification."
-      ]
-    },
-    "risk_profile": 50.0,
-    "behavioral_resilience_score": 33.53,
-    "financial_resilience_score": 33.53,
-    "financial_wellness_score": 33.53,
-    "financial_stress_index": 57.47,
-    "confidence": "Low",
-    "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
-    "resilience_breakdown": {
-      "liquidity_score": 0.0,
-      "debt_score": 50.0,
-      "housing_score": null,
-      "diversification_score": 50.0,
-      "risk_alignment_score": 60.0
-    },
-    "action_insights": [
-      "Build emergency savings toward 3 to 6 months of expenses.",
-      "Lower unsecured liabilities to improve shock absorption and monthly flexibility.",
-      "Reduce concentration in a single volatile asset class and broaden diversification."
-    ],
-    "age_group": "30-44",
-    "email": "zerius",
     "country": "Singapore"
   }
 }
