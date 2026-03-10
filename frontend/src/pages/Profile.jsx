@@ -1205,13 +1205,26 @@ function HoldingInsightModal({ holding, onClose, userId }) {
   )
 }
 
-function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, year, ownerName, themeId = 'default' }) {
+function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, year, ownerName }) {
+  const [direction, setDirection] = useState('next')
+
+  const goTo = (newIndex) => {
+    setDirection(newIndex >= index ? 'next' : 'prev')
+    setIndex(newIndex)
+  }
+
   useEffect(() => {
     if (!open) return
     const onKey = event => {
       if (event.key === 'Escape') onClose()
-      if (event.key === 'ArrowRight') setIndex(current => Math.min(current + 1, slides.length - 1))
-      if (event.key === 'ArrowLeft') setIndex(current => Math.max(current - 1, 0))
+      if (event.key === 'ArrowRight') {
+        setDirection('next')
+        setIndex(current => Math.min(current + 1, slides.length - 1))
+      }
+      if (event.key === 'ArrowLeft') {
+        setDirection('prev')
+        setIndex(current => Math.max(current - 1, 0))
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -1220,70 +1233,43 @@ function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, 
   if (!open || !slides.length) return null
   const slide = slides[index]
   const isSummary = slide.key === 'summary'
-  const isSilentNight = themeId === 'silent-night'
-  const panelStyle = isSilentNight
-    ? {
-        ...yw.panel,
-        background: 'linear-gradient(180deg, rgba(15,18,25,0.98), rgba(11,14,20,0.98))',
-        border: '1px solid rgba(190,183,164,0.2)',
-        boxShadow: '0 36px 90px rgba(0,0,0,0.58)',
-      }
-    : yw.panel
-  const closeBtnStyle = isSilentNight
-    ? { ...yw.closeBtn, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(190,183,164,0.18)', color:'var(--text-dim)' }
-    : yw.closeBtn
-  const slideStyle = isSilentNight
-    ? {
-        ...yw.slide,
-        border: '1px solid rgba(190,183,164,0.2)',
-        background: 'linear-gradient(135deg, rgba(110,95,170,0.14), rgba(30,38,55,0.72) 45%, rgba(20,70,80,0.14))',
-      }
-    : yw.slide
-  const slideIconStyle = isSilentNight
-    ? { ...yw.slideIcon, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(190,183,164,0.22)', boxShadow:'0 16px 30px rgba(0,0,0,0.28)' }
-    : yw.slideIcon
-  const statCardStyle = isSilentNight
-    ? { ...yw.statCard, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(190,183,164,0.2)' }
-    : yw.statCard
-  const navBtnStyle = isSilentNight
-    ? { ...yw.navBtn, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(190,183,164,0.2)', color:'var(--text-dim)' }
-    : yw.navBtn
-  const downloadBtnStyle = isSilentNight
-    ? { ...yw.downloadBtn, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(190,183,164,0.2)' }
-    : yw.downloadBtn
+
+  const SLIDE_PALETTES = {
+    'income':       { gradient: 'linear-gradient(160deg,#7c3aed 0%,#db2777 100%)' },
+    'returns':      { gradient: 'linear-gradient(160deg,#059669 0%,#0369a1 100%)' },
+    'new-stocks':   { gradient: 'linear-gradient(160deg,#d97706 0%,#b91c1c 100%)' },
+    'longest-held': { gradient: 'linear-gradient(160deg,#1d4ed8 0%,#7c3aed 100%)' },
+    'accumulation': { gradient: 'linear-gradient(160deg,#0e7490 0%,#0f766e 100%)' },
+    'summary':      { gradient: 'linear-gradient(160deg,#0f172a 0%,#1e1b4b 100%)' },
+  }
+  const palette = SLIDE_PALETTES[slide.key] ?? { gradient: 'linear-gradient(160deg,#1e293b,#334155)' }
 
   return (
     <div onClick={e => e.target === e.currentTarget && onClose()} style={yw.backdrop}>
-      <div style={panelStyle}>
-        <div style={yw.topBar} />
-        <div style={yw.header}>
-          <div>
-            <div style={yw.eyebrow}>Financial Year Wrapped</div>
-            <div style={yw.titleRow}>
-              <h2 style={yw.title}>{ownerName} · {year}</h2>
-              <span style={yw.countPill}>{index + 1} / {slides.length}</span>
-            </div>
-          </div>
-          <button onClick={onClose} style={closeBtnStyle}>×</button>
-        </div>
+      <div className="wrapped-modal-panel" style={{ ...yw.panel, background: palette.gradient }}>
 
-        <div style={yw.dots}>
-          {slides.map((item, dotIndex) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => setIndex(dotIndex)}
-              style={{ ...yw.dot, ...(dotIndex === index ? yw.dotActive : {}) }}
-            />
+        {/* Story-style progress bars */}
+        <div style={yw.progressTrack}>
+          {slides.map((_, i) => (
+            <div key={i} style={{ ...yw.progressBar, ...(i <= index ? yw.progressBarFilled : {}) }} />
           ))}
         </div>
 
+        {/* Top bar: label + close */}
+        <div style={yw.topControls}>
+          <span style={yw.eyebrowBadge}>{ownerName} · {year}</span>
+          <button onClick={onClose} style={yw.closeBtn}>×</button>
+        </div>
+
+        {/* Slide content — clicking advances to next */}
         <button
+          key={index}
           type="button"
-          onClick={() => !isSummary && setIndex(current => Math.min(current + 1, slides.length - 1))}
-          style={{ ...slideStyle, cursor: isSummary ? 'default' : 'pointer' }}
+          className={`wrapped-anim-${direction}`}
+          onClick={() => !isSummary && goTo(Math.min(index + 1, slides.length - 1))}
+          style={{ ...yw.content, cursor: isSummary ? 'default' : 'pointer', textAlign: 'left', border: 'none', background: 'transparent', fontFamily: 'inherit', width: '100%' }}
         >
-          <div style={slideIconStyle}>{slide.icon}</div>
+          <span style={yw.slideIcon}>{slide.icon}</span>
           <div style={yw.slideEyebrow}>{slide.eyebrow}</div>
           <div style={yw.slideTitle}>{slide.title}</div>
           <div style={yw.slideBody}>{slide.body}</div>
@@ -1292,9 +1278,9 @@ function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, 
           {slide.stats?.length ? (
             <div style={yw.statsGrid}>
               {slide.stats.map(stat => (
-                <div key={stat.label} style={statCardStyle}>
+                <div key={stat.label} style={yw.statCard}>
+                  <div style={yw.statValue}>{stat.value}</div>
                   <div style={yw.statLabel}>{stat.label}</div>
-                  <div style={{ ...yw.statValue, color: stat.color || 'var(--text)' }}>{stat.value}</div>
                 </div>
               ))}
             </div>
@@ -1311,31 +1297,34 @@ function YearWrappedModal({ open, slides, index, setIndex, onClose, onDownload, 
             </div>
           ) : null}
 
-          {!isSummary ? <div style={yw.tapHint}>Click anywhere on this card to keep going</div> : null}
+          {!isSummary ? <div style={yw.tapHint}>Tap to continue</div> : null}
         </button>
 
+        {/* Footer navigation */}
         <div style={yw.footer}>
           <button
             type="button"
-            onClick={() => setIndex(current => Math.max(current - 1, 0))}
+            onClick={() => goTo(Math.max(index - 1, 0))}
             disabled={index === 0}
-            style={{ ...navBtnStyle, opacity: index === 0 ? 0.4 : 1, cursor: index === 0 ? 'not-allowed' : 'pointer' }}
+            style={{ ...yw.navBtn, opacity: index === 0 ? 0.35 : 1, cursor: index === 0 ? 'not-allowed' : 'pointer' }}
           >
-            ← Previous
+            ← Back
           </button>
 
-          <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+          <span style={yw.countPill}>{index + 1} / {slides.length}</span>
+
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {isSummary && (
-              <button type="button" onClick={e => { e.stopPropagation(); onDownload() }} style={downloadBtnStyle}>
-                Download Wrapped
+              <button type="button" onClick={e => { e.stopPropagation(); onDownload() }} style={yw.downloadBtn}>
+                Download
               </button>
             )}
             <button
               type="button"
-              onClick={() => isSummary ? onClose() : setIndex(current => Math.min(current + 1, slides.length - 1))}
+              onClick={() => isSummary ? onClose() : goTo(Math.min(index + 1, slides.length - 1))}
               style={yw.nextBtn}
             >
-              {isSummary ? 'Close' : 'Next Fact →'}
+              {isSummary ? 'Done ✓' : 'Next →'}
             </button>
           </div>
         </div>
@@ -1751,6 +1740,8 @@ export default function Profile() {
   const [portfolioHistory, setPortfolioHistory] = useState([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState('')
+  const [loadingOverlayVisible, setLoadingOverlayVisible] = useState(true)
+  const [loadingOverlayFading, setLoadingOverlayFading] = useState(false)
   const [selectedHolding, setSelectedHolding] = useState(null)
 
   // â”€â”€ Section 1: Risk profile update state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2363,6 +2354,34 @@ export default function Profile() {
     fetchBenchmarks()
   }, [benchmarkOpen, authUser?.user_id, profile?.age, profile?.income, profile?.net_worth, fetchBenchmarks])
 
+  useEffect(() => {
+    let timerId
+    if (loading) {
+      setLoadingOverlayVisible(true)
+      setLoadingOverlayFading(false)
+    } else if (loadingOverlayVisible) {
+      setLoadingOverlayFading(true)
+      timerId = window.setTimeout(() => {
+        setLoadingOverlayVisible(false)
+        setLoadingOverlayFading(false)
+      }, 260)
+    }
+    return () => {
+      if (timerId) window.clearTimeout(timerId)
+    }
+  }, [loading, loadingOverlayVisible])
+
+  const shouldShowLoadingOverlay = loadingOverlayVisible && Boolean(authUser)
+
+  useEffect(() => {
+    if (!shouldShowLoadingOverlay) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [shouldShowLoadingOverlay])
+
   // Is current selection different from what's saved?
   const riskChanged = selectedRisk && selectedRisk !== String(normalizeRiskScore(profile?.risk_profile) ?? '')
   const retirementSummary = retirementStatus(retirementPlan)
@@ -2534,7 +2553,69 @@ export default function Profile() {
         @keyframes profilePulse   { 0%,100% { opacity:0.4 } 50% { opacity:1 } }
         @keyframes spinSlow       { to { transform: rotate(360deg) } }
         @keyframes sectionIn      { from { opacity:0; transform:translateY(28px); filter:blur(3px) } to { opacity:1; transform:translateY(0); filter:blur(0) } }
+
+        @keyframes banterPulse {
+          0%, 100% { transform: scale(0.72); opacity: 0.45; }
+          50% { transform: scale(1); opacity: 1; }
+        }
+        .portfolio-loading-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 160;
+          background: color-mix(in srgb, var(--bg) 64%, transparent);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 1;
+          pointer-events: auto;
+          transition: opacity 0.26s ease;
+        }
+        .portfolio-loading-overlay.is-fading {
+          opacity: 0;
+          pointer-events: none;
+        }
+        .banter-loader {
+          width: 66px;
+          height: 66px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 6px;
+        }
+        .banter-loader__box {
+          width: 18px;
+          height: 18px;
+          border-radius: 5px;
+          background: var(--teal);
+          animation: banterPulse 1.1s ease-in-out infinite;
+        }
+        .banter-loader__box:nth-child(1) { animation-delay: 0s; }
+        .banter-loader__box:nth-child(2) { animation-delay: 0.08s; }
+        .banter-loader__box:nth-child(3) { animation-delay: 0.16s; }
+        .banter-loader__box:nth-child(4) { animation-delay: 0.24s; }
+        .banter-loader__box:nth-child(5) { animation-delay: 0.32s; }
+        .banter-loader__box:nth-child(6) { animation-delay: 0.4s; }
+        .banter-loader__box:nth-child(7) { animation-delay: 0.48s; }
+        .banter-loader__box:nth-child(8) { animation-delay: 0.56s; }
+        .banter-loader__box:nth-child(9) { animation-delay: 0.64s; }
       `}</style>
+
+      {shouldShowLoadingOverlay && (
+        <div className={`portfolio-loading-overlay${loadingOverlayFading ? ' is-fading' : ''}`} role="status" aria-live="polite" aria-label="Loading portfolio data">
+          <div className="banter-loader" aria-hidden="true">
+            <div className="banter-loader__box"></div>
+            <div className="banter-loader__box"></div>
+            <div className="banter-loader__box"></div>
+            <div className="banter-loader__box"></div>
+            <div className="banter-loader__box"></div>
+            <div className="banter-loader__box"></div>
+            <div className="banter-loader__box"></div>
+            <div className="banter-loader__box"></div>
+            <div className="banter-loader__box"></div>
+          </div>
+        </div>
+      )}
 
       <main style={{ paddingTop:110, paddingBottom:60, paddingLeft:48, paddingRight:48, maxWidth:1400, margin:'0 auto' }}>
 
@@ -4334,180 +4415,164 @@ const yw = {
     position:'fixed',
     inset:0,
     zIndex:320,
-    background:'rgba(15,23,42,0.28)',
-    backdropFilter:'blur(16px)',
-    WebkitBackdropFilter:'blur(16px)',
+    background:'rgba(0,0,0,0.65)',
+    backdropFilter:'blur(20px)',
+    WebkitBackdropFilter:'blur(20px)',
     display:'flex',
     alignItems:'center',
     justifyContent:'center',
-    padding:'24px',
+    padding:'20px',
   },
   panel: {
-    width:'min(920px, 100%)',
-    background:'linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,248,252,0.98))',
-    border:'1px solid rgba(15,23,42,0.08)',
-    borderRadius:28,
-    boxShadow:'0 36px 90px rgba(15,23,42,0.2)',
+    width:'min(520px, 100%)',
+    height:'min(820px, 90vh)',
+    borderRadius:32,
     overflow:'hidden',
-  },
-  topBar: { height:3, background:'linear-gradient(90deg, #6d8df7, #8b5cf6, #2ab8a3)' },
-  header: {
+    position:'relative',
     display:'flex',
-    alignItems:'flex-start',
-    justifyContent:'space-between',
-    gap:16,
-    padding:'26px 28px 14px',
+    flexDirection:'column',
+    boxShadow:'0 40px 100px rgba(0,0,0,0.55)',
   },
-  eyebrow: {
-    fontFamily:'var(--font-mono)',
-    fontSize:'0.68rem',
-    color:'var(--teal)',
-    textTransform:'uppercase',
-    letterSpacing:'0.16em',
-    marginBottom:8,
+  progressTrack: {
+    display:'flex',
+    gap:5,
+    padding:'20px 22px 0',
+    flexShrink:0,
   },
-  titleRow: {
+  progressBar: {
+    height:3,
+    flex:1,
+    borderRadius:3,
+    background:'rgba(255,255,255,0.22)',
+  },
+  progressBarFilled: {
+    background:'rgba(255,255,255,0.88)',
+  },
+  topControls: {
     display:'flex',
     alignItems:'center',
-    gap:12,
-    flexWrap:'wrap',
+    justifyContent:'space-between',
+    padding:'12px 22px 0',
+    flexShrink:0,
   },
-  title: {
-    margin:0,
-    fontFamily:'var(--font-display)',
-    fontSize:'1.7rem',
-    lineHeight:1.1,
+  eyebrowBadge: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.65rem',
+    color:'rgba(255,255,255,0.75)',
+    textTransform:'uppercase',
+    letterSpacing:'0.16em',
+    background:'rgba(0,0,0,0.22)',
+    border:'1px solid rgba(255,255,255,0.2)',
+    borderRadius:999,
+    padding:'4px 12px',
   },
   countPill: {
     fontFamily:'var(--font-mono)',
-    fontSize:'0.68rem',
-    color:'var(--purple)',
-    background:'rgba(139,92,246,0.08)',
-    border:'1px solid rgba(139,92,246,0.16)',
+    fontSize:'0.65rem',
+    color:'rgba(255,255,255,0.7)',
+    background:'rgba(0,0,0,0.22)',
+    border:'1px solid rgba(255,255,255,0.18)',
     borderRadius:999,
-    padding:'5px 10px',
+    padding:'4px 12px',
   },
   closeBtn: {
-    width:42,
-    height:42,
-    borderRadius:12,
-    border:'1px solid var(--border)',
-    background:'rgba(255,255,255,0.92)',
-    color:'var(--text-faint)',
-    cursor:'pointer',
-    flexShrink:0,
-  },
-  dots: {
-    display:'flex',
-    gap:8,
-    padding:'0 28px 16px',
-  },
-  dot: {
-    width:10,
-    height:10,
+    width:36,
+    height:36,
     borderRadius:'50%',
-    border:'none',
-    background:'rgba(148,163,184,0.28)',
+    border:'1px solid rgba(255,255,255,0.28)',
+    background:'rgba(0,0,0,0.22)',
+    color:'rgba(255,255,255,0.9)',
     cursor:'pointer',
-  },
-  dotActive: {
-    width:30,
-    borderRadius:999,
-    background:'linear-gradient(90deg, #8b5cf6, #2ab8a3)',
-  },
-  slide: {
-    margin:'0 28px',
-    width:'calc(100% - 56px)',
-    border:'1px solid rgba(139,92,246,0.14)',
-    borderRadius:24,
-    background:'linear-gradient(135deg, rgba(109,141,247,0.05), rgba(139,92,246,0.05) 50%, rgba(42,184,163,0.05))',
-    padding:'34px 30px 28px',
-    textAlign:'left',
-  },
-  slideIcon: {
-    width:76,
-    height:76,
-    borderRadius:22,
+    fontSize:'1.15rem',
     display:'flex',
     alignItems:'center',
     justifyContent:'center',
-    fontSize:'2.1rem',
-    marginBottom:20,
-    background:'rgba(255,255,255,0.72)',
-    border:'1px solid rgba(139,92,246,0.14)',
-    boxShadow:'0 16px 30px rgba(15,23,42,0.06)',
+    lineHeight:1,
+    flexShrink:0,
+  },
+  content: {
+    flex:1,
+    display:'flex',
+    flexDirection:'column',
+    justifyContent:'center',
+    padding:'28px 28px 16px',
+    overflowY:'auto',
+    minHeight:0,
+  },
+  slideIcon: {
+    fontSize:'3.4rem',
+    marginBottom:22,
+    display:'block',
+    lineHeight:1,
   },
   slideEyebrow: {
     fontFamily:'var(--font-mono)',
-    fontSize:'0.72rem',
-    color:'var(--teal)',
+    fontSize:'0.68rem',
+    color:'rgba(255,255,255,0.62)',
     textTransform:'uppercase',
-    letterSpacing:'0.14em',
+    letterSpacing:'0.18em',
     marginBottom:10,
   },
   slideTitle: {
     fontFamily:'var(--font-display)',
-    fontSize:'2.15rem',
+    fontSize:'clamp(1.75rem,5vw,2.6rem)',
     fontWeight:800,
-    lineHeight:1.04,
-    marginBottom:14,
-    maxWidth:680,
+    lineHeight:1.08,
+    color:'#fff',
+    margin:'0 0 14px',
   },
   slideBody: {
-    fontSize:'1.02rem',
-    lineHeight:1.85,
-    color:'var(--text-dim)',
-    maxWidth:720,
+    fontSize:'0.94rem',
+    lineHeight:1.76,
+    color:'rgba(255,255,255,0.76)',
+    margin:0,
   },
   slideSupport: {
-    marginTop:12,
-    fontSize:'0.86rem',
-    lineHeight:1.72,
-    color:'var(--text-faint)',
-    maxWidth:680,
+    fontSize:'0.82rem',
+    lineHeight:1.7,
+    color:'rgba(255,255,255,0.46)',
+    marginTop:8,
   },
   statsGrid: {
-    display:'grid',
-    gridTemplateColumns:'repeat(auto-fit, minmax(170px, 1fr))',
-    gap:12,
-    marginTop:22,
+    display:'flex',
+    gap:20,
+    marginTop:28,
+    flexWrap:'wrap',
   },
   statCard: {
-    border:'1px solid rgba(15,23,42,0.08)',
-    borderRadius:16,
-    padding:'15px 15px 13px',
-    background:'rgba(255,255,255,0.74)',
-  },
-  statLabel: {
-    fontFamily:'var(--font-mono)',
-    fontSize:'0.62rem',
-    color:'var(--text-faint)',
-    textTransform:'uppercase',
-    letterSpacing:'0.08em',
-    marginBottom:8,
+    flex:'1 1 80px',
   },
   statValue: {
     fontFamily:'var(--font-display)',
-    fontWeight:700,
-    fontSize:'1.05rem',
+    fontWeight:800,
+    fontSize:'clamp(1.4rem,4vw,2.1rem)',
+    color:'#fff',
+    lineHeight:1.1,
+  },
+  statLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.6rem',
+    color:'rgba(255,255,255,0.52)',
+    textTransform:'uppercase',
+    letterSpacing:'0.1em',
+    marginTop:5,
   },
   tapHint: {
     marginTop:22,
     fontFamily:'var(--font-mono)',
-    fontSize:'0.68rem',
-    color:'var(--text-faint)',
+    fontSize:'0.62rem',
+    color:'rgba(255,255,255,0.36)',
     textTransform:'uppercase',
     letterSpacing:'0.1em',
   },
   summaryList: {
     display:'flex',
     flexDirection:'column',
-    gap:12,
-    marginTop:20,
-    maxWidth:760,
-    color:'var(--text-dim)',
-    fontSize:'0.92rem',
-    lineHeight:1.72,
+    gap:9,
+    marginTop:18,
+    color:'rgba(255,255,255,0.74)',
+    fontSize:'0.88rem',
+    lineHeight:1.7,
   },
   summaryRow: {
     display:'flex',
@@ -4515,49 +4580,53 @@ const yw = {
     alignItems:'flex-start',
   },
   summaryDot: {
-    width:8,
-    height:8,
+    width:6,
+    height:6,
     borderRadius:'50%',
-    marginTop:7,
-    background:'var(--teal)',
+    marginTop:8,
+    background:'rgba(255,255,255,0.55)',
     flexShrink:0,
   },
   footer: {
     display:'flex',
     alignItems:'center',
     justifyContent:'space-between',
-    gap:16,
-    padding:'18px 28px 28px',
+    gap:10,
+    padding:'14px 22px 26px',
+    flexShrink:0,
     flexWrap:'wrap',
   },
   navBtn: {
-    background:'var(--surface2)',
-    border:'1px solid var(--border)',
-    color:'var(--text-dim)',
-    padding:'10px 16px',
+    background:'rgba(0,0,0,0.26)',
+    border:'1px solid rgba(255,255,255,0.22)',
+    color:'rgba(255,255,255,0.82)',
+    padding:'9px 16px',
     borderRadius:12,
     fontFamily:'var(--font-display)',
     fontWeight:700,
+    fontSize:'0.86rem',
+    cursor:'pointer',
   },
   nextBtn: {
-    background:'linear-gradient(135deg,var(--teal),#0e9f84)',
-    border:'none',
-    color:'#081019',
-    padding:'10px 18px',
+    background:'rgba(255,255,255,0.2)',
+    border:'1px solid rgba(255,255,255,0.32)',
+    color:'#fff',
+    padding:'9px 20px',
     borderRadius:12,
     fontFamily:'var(--font-display)',
     fontWeight:800,
+    fontSize:'0.86rem',
     cursor:'pointer',
-    boxShadow:'0 10px 24px rgba(42,184,163,0.2)',
   },
   downloadBtn: {
-    background:'var(--surface2)',
-    border:'1px solid rgba(29,39,56,0.14)',
-    color:'var(--gold)',
-    padding:'10px 16px',
+    background:'rgba(0,0,0,0.26)',
+    border:'1px solid rgba(255,255,255,0.22)',
+    color:'rgba(255,255,255,0.82)',
+    padding:'9px 16px',
     borderRadius:12,
     fontFamily:'var(--font-display)',
     fontWeight:700,
+    fontSize:'0.86rem',
     cursor:'pointer',
   },
 }

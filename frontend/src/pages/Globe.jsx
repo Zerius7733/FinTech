@@ -1757,34 +1757,121 @@ export default function Globe() {
       {/* FEATURES SECTION  (guests only)                   */}
       {/* ══════════════════════════════════════════════════ */}
       {!user && (
-      <section style={{ position:'relative', zIndex:3, padding:'100px 48px', maxWidth:1200, margin:'0 auto', ...blurredUiStyle }}>
-        <div style={{ textAlign:'center', marginBottom:64 }}>
-          <div style={S.sectionEyebrow}>Platform Features</div>
-          <h2 style={S.sectionTitle}>Everything in <em style={{ fontStyle:'normal', color:'var(--gold)' }}>one orbit</em></h2>
-          <p style={S.sectionDesc}>From fragmented ecosystems to a unified command centre. Unova turns financial complexity into clear, actionable intelligence.</p>
-        </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20 }}>
-          {FEATURES.map(f => (
-            <div
-              key={f.title}
-              style={S.featureCard}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-5px)'
-                e.currentTarget.style.borderColor = 'rgba(201,168,76,0.22)'
-                e.currentTarget.querySelector('[data-accent]').style.transform = 'scaleX(1)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.borderColor = 'var(--border)'
-                e.currentTarget.querySelector('[data-accent]').style.transform = 'scaleX(0)'
-              }}
+      <section style={{ position:'relative', zIndex:3, padding:'80px 5%', maxWidth:1360, margin:'0 auto', ...blurredUiStyle }}>
+
+        {/* ── Split header ── */}
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:40, marginBottom:40, flexWrap:'wrap' }}>
+          <div>
+            <div style={{ ...S.sectionEyebrow, textAlign:'left' }}>Platform Features</div>
+            <h2 style={{ ...S.sectionTitle, textAlign:'left', margin:0 }}>
+              Everything in <em style={{ fontStyle:'normal', color:'var(--gold)' }}>one orbit</em>
+            </h2>
+          </div>
+          <div style={{ maxWidth:380 }}>
+            <p style={{ color:'var(--text-dim)', lineHeight:1.7, fontSize:'0.9rem', margin:'0 0 20px' }}>
+              From fragmented ecosystems to a unified command centre. Unova turns financial complexity into clear, actionable intelligence.
+            </p>
+            <button
+              onClick={() => setSurveyModalOpen(true)}
+              style={{ background:'var(--gold)', border:'none', color:'#fff', padding:'11px 28px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.88rem', fontWeight:700, cursor:'pointer' }}
             >
-              <div data-accent="1" style={{ position:'absolute', top:0, left:0, right:0, height:2, background:f.accent, transform:'scaleX(0)', transformOrigin:'left', transition:'transform 0.3s', borderRadius:'16px 16px 0 0' }} />
-              <div style={{ width:44, height:44, borderRadius:12, background:f.iconBg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.3rem', marginBottom:18 }}>{f.icon}</div>
-              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1rem', marginBottom:10 }}>{f.title}</div>
-              <div style={{ fontSize:'0.85rem', color:'var(--text-dim)', lineHeight:1.65 }}>{f.desc}</div>
+              ↗ Get started
+            </button>
+          </div>
+        </div>
+
+        {/* ── Bento grid: 3 cols × 3 rows ── */}
+        {/*   col1  col2  col3             */}
+        {/* r1: globe | wellness wellness  */}
+        {/* r2: globe | ai      | wallet   */}
+        {/* r3: peer  | peer    | risk     */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gridAutoRows:'minmax(200px,auto)', gap:14 }}>
+
+          {/* Globe — col 1, rows 1-2 */}
+          <div
+            style={{ gridColumn:'1', gridRow:'1 / 3', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'32px 28px', position:'relative', overflow:'hidden', transition:'transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease', display:'flex', flexDirection:'column', justifyContent:'flex-end' }}
+            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.borderColor='rgba(45,212,191,0.3)'; e.currentTarget.style.boxShadow='0 8px 40px rgba(45,212,191,0.18)'; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='none'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow=''; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='grayscale(1)'; }}
+          >
+            <div style={{ position:'absolute', top:-60, right:-60, width:260, height:260, borderRadius:'50%', background:'radial-gradient(circle, rgba(45,212,191,0.1) 0%, transparent 68%)', pointerEvents:'none' }} />
+            <div style={{ position:'absolute', top:'6%', right:'4%', fontSize:'8rem', opacity:0.055, lineHeight:1, pointerEvents:'none', userSelect:'none', filter:'grayscale(1)' }}>🌍</div>
+            <div style={{ position:'relative', zIndex:2 }}>
+              <div data-icon="1" style={{ width:52, height:52, borderRadius:14, background:'rgba(45,212,191,0.12)', border:'1px solid rgba(45,212,191,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.6rem', marginBottom:20, filter:'grayscale(1)' }}>🌍</div>
+              <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.15rem', marginBottom:10, lineHeight:1.25 }}>Globe Portfolio View</div>
+              <div style={{ fontSize:'0.84rem', color:'var(--text-dim)', lineHeight:1.7 }}>Place assets on an interactive 3D globe. Drill into any region to explore holdings, performance, and regional exposure at a glance.</div>
             </div>
-          ))}
+          </div>
+
+          {/* Wellness — cols 2-3, row 1 */}
+          <div
+            style={{ gridColumn:'2 / 4', gridRow:'1', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'30px 28px', position:'relative', overflow:'hidden', transition:'transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease', display:'flex', flexDirection:'column', justifyContent:'flex-end' }}
+            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.28)'; e.currentTarget.style.boxShadow='0 8px 40px rgba(201,168,76,0.18)'; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='none'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow=''; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='grayscale(1)'; }}
+          >
+            <div style={{ position:'absolute', top:-30, right:'15%', width:220, height:220, borderRadius:'50%', background:'radial-gradient(circle, rgba(201,168,76,0.09) 0%, transparent 70%)', pointerEvents:'none' }} />
+            <div style={{ position:'absolute', top:'8%', right:'6%', fontFamily:'var(--font-display)', fontSize:'5.5rem', fontWeight:800, opacity:0.045, lineHeight:1, pointerEvents:'none', userSelect:'none' }}>100</div>
+            <div style={{ position:'relative', zIndex:2 }}>
+              <div data-icon="1" style={{ width:52, height:52, borderRadius:14, background:'rgba(201,168,76,0.12)', border:'1px solid rgba(201,168,76,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.6rem', marginBottom:16, filter:'grayscale(1)' }}>⚡</div>
+              <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.15rem', marginBottom:10, lineHeight:1.25 }}>Real-time Wellness Score</div>
+              <div style={{ fontSize:'0.84rem', color:'var(--text-dim)', lineHeight:1.7, maxWidth:540 }}>Live metrics across diversification, liquidity, and behavioural resilience — your financial health in a single score, always up to date.</div>
+            </div>
+          </div>
+
+          {/* AI Advisor — col 2, row 2 */}
+          <div
+            style={{ gridColumn:'2', gridRow:'2', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'26px 24px', position:'relative', overflow:'hidden', transition:'transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease' }}
+            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.borderColor='rgba(167,139,250,0.3)'; e.currentTarget.style.boxShadow='0 8px 40px rgba(167,139,250,0.18)'; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='none'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow=''; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='grayscale(1)'; }}
+          >
+            <div style={{ position:'absolute', bottom:-24, right:-24, width:140, height:140, borderRadius:'50%', background:'radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 70%)', pointerEvents:'none' }} />
+            <div data-icon="1" style={{ width:46, height:46, borderRadius:12, background:'rgba(167,139,250,0.12)', border:'1px solid rgba(167,139,250,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem', marginBottom:16, filter:'grayscale(1)' }}>🧠</div>
+            <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1rem', marginBottom:8 }}>AI Scenario Advisor</div>
+            <div style={{ fontSize:'0.82rem', color:'var(--text-dim)', lineHeight:1.65 }}>Personalised recommendations calibrated to your risk profile. Simulate macro scenarios and understand their wealth impact.</div>
+          </div>
+
+          {/* Unified Wallet — col 3, row 2 */}
+          <div
+            style={{ gridColumn:'3', gridRow:'2', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'26px 24px', position:'relative', overflow:'hidden', transition:'transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease' }}
+            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.borderColor='rgba(96,165,250,0.3)'; e.currentTarget.style.boxShadow='0 8px 40px rgba(96,165,250,0.18)'; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='none'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow=''; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='grayscale(1)'; }}
+          >
+            <div style={{ position:'absolute', bottom:-24, right:-24, width:140, height:140, borderRadius:'50%', background:'radial-gradient(circle, rgba(96,165,250,0.1) 0%, transparent 70%)', pointerEvents:'none' }} />
+            <div data-icon="1" style={{ width:46, height:46, borderRadius:12, background:'rgba(96,165,250,0.12)', border:'1px solid rgba(96,165,250,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem', marginBottom:16, filter:'grayscale(1)' }}>🔗</div>
+            <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1rem', marginBottom:8 }}>Unified Wealth Wallet</div>
+            <div style={{ fontSize:'0.82rem', color:'var(--text-dim)', lineHeight:1.65 }}>Connect traditional accounts, brokerage APIs, and digital wallets. One secure hub for every asset class you own.</div>
+          </div>
+
+          {/* Peer Benchmarking — cols 1-2, row 3 */}
+          <div
+            style={{ gridColumn:'1 / 3', gridRow:'3', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'28px 28px', position:'relative', overflow:'hidden', transition:'transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease', display:'flex', flexDirection:'column', justifyContent:'flex-end', minHeight:180 }}
+            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.borderColor='rgba(52,211,153,0.28)'; e.currentTarget.style.boxShadow='0 8px 40px rgba(52,211,153,0.18)'; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='none'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow=''; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='grayscale(1)'; }}
+          >
+            {/* Decorative bar chart */}
+            <div style={{ position:'absolute', bottom:0, right:0, display:'flex', alignItems:'flex-end', gap:5, padding:'0 28px', pointerEvents:'none' }}>
+              {[38,55,42,72,50,88,64,95,70].map((h, i) => (
+                <div key={i} style={{ width:16, height:`${h}%`, background:`rgba(52,211,153,${0.04 + i*0.015})`, borderRadius:'4px 4px 0 0' }} />
+              ))}
+            </div>
+            <div style={{ position:'relative', zIndex:2 }}>
+              <div data-icon="1" style={{ width:48, height:48, borderRadius:13, background:'rgba(52,211,153,0.1)', border:'1px solid rgba(52,211,153,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.5rem', marginBottom:16, filter:'grayscale(1)' }}>👥</div>
+              <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.05rem', marginBottom:8 }}>Peer Age Benchmarking</div>
+              <div style={{ fontSize:'0.83rem', color:'var(--text-dim)', lineHeight:1.65, maxWidth:460 }}>See how your portfolio stacks up against your demographic cohort. Understand where you lead — and where to close the gap.</div>
+            </div>
+          </div>
+
+          {/* Risk Goals — col 3, row 3 */}
+          <div
+            style={{ gridColumn:'3', gridRow:'3', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'26px 24px', position:'relative', overflow:'hidden', transition:'transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease' }}
+            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.borderColor='rgba(248,113,113,0.3)'; e.currentTarget.style.boxShadow='0 8px 40px rgba(248,113,113,0.18)'; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='none'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow=''; const ic=e.currentTarget.querySelector('[data-icon]'); if(ic) ic.style.filter='grayscale(1)'; }}
+          >
+            <div style={{ position:'absolute', top:-24, right:-24, width:140, height:140, borderRadius:'50%', background:'radial-gradient(circle, rgba(248,113,113,0.1) 0%, transparent 70%)', pointerEvents:'none' }} />
+            <div data-icon="1" style={{ width:46, height:46, borderRadius:12, background:'rgba(248,113,113,0.12)', border:'1px solid rgba(248,113,113,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem', marginBottom:16, filter:'grayscale(1)' }}>🎯</div>
+            <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1rem', marginBottom:8 }}>Risk-Calibrated Goals</div>
+            <div style={{ fontSize:'0.82rem', color:'var(--text-dim)', lineHeight:1.65 }}>Set your tolerance once; receive a dynamically rebalanced roadmap that adapts as markets and life circumstances change.</div>
+          </div>
+
         </div>
       </section>
       )} {/* /!user features */}
