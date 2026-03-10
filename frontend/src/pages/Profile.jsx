@@ -1590,25 +1590,39 @@ function FinancialManagerModal({
                 : activeTab === 'liabilities'
                   ? fmt$(item.amount)
                   : `${fmt$(item.monthly_amount)} / mo`
+              const itemTitle = activeTab === 'assets' && item.id === 'estate-seed'
+                ? 'Synced Property'
+                : activeTab === 'liabilities' && item.id === 'mortgage-seed'
+                  ? 'Synced Mortgage'
+                  : activeTab === 'liabilities' && item.id === 'liability-seed'
+                    ? 'Synced Liabilities'
+                    : activeTab === 'income' && item.id === 'income-seed'
+                      ? 'Synced Income'
+                    : item.label
+              const isSyncedItem = item.source === 'cash' || ['estate-seed', 'liability-seed', 'mortgage-seed', 'income-seed'].includes(item.id)
               return (
                 <div key={item.id} style={fm.listItem}>
                   <div>
-                    <div style={fm.itemTitle}>{item.label}</div>
+                    <div style={fm.itemTitle}>{itemTitle}</div>
                     <div style={fm.itemMeta}>
                       {activeTab === 'assets'
                         ? (item.source === 'portfolio'
                           ? `${startCase(item.category)} holding`
                           : item.source === 'cash'
                             ? 'Read only · synced from linked banks'
+                          : item.id === 'estate-seed'
+                            ? 'Synced Property'
                           : startCase(item.category))
                         : activeTab === 'income'
-                          ? 'Monthly income stream'
-                          : (item.is_mortgage ? 'Mortgage' : 'Non-mortgage liability')}
+                          ? (item.id === 'income-seed' ? 'Synced Income' : 'Monthly income stream')
+                          : (item.is_mortgage
+                            ? (item.id === 'mortgage-seed' ? 'Synced Mortgage' : 'Mortgage')
+                            : (item.id === 'liability-seed' ? 'Synced Liabilities' : 'Non-mortgage liability'))}
                     </div>
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                     <div style={fm.itemValue}>{value}</div>
-                    {!(activeTab === 'assets' && item.source === 'cash') && (
+                    {!isSyncedItem && (
                       <button
                         type="button"
                         onClick={() => onRemove(activeTab, item.id, item)}
