@@ -73,6 +73,23 @@ def _sum_manual_assets(user: Dict[str, Any]) -> tuple[float, float]:
     return round(real_estate_total, 2), round(other_manual_total, 2)
 
 
+def _upsert_seeded_item(items: list[Dict[str, Any]], seed_id: str, payload: Dict[str, Any] | None) -> list[Dict[str, Any]]:
+    normalized_items = [item for item in items if isinstance(item, dict)]
+    existing_index = next((idx for idx, item in enumerate(normalized_items) if item.get("id") == seed_id), None)
+
+    if payload is None:
+        if existing_index is not None:
+            normalized_items.pop(existing_index)
+        return normalized_items
+
+    next_item = dict(payload)
+    if existing_index is None:
+        normalized_items.append(next_item)
+    else:
+        normalized_items[existing_index] = {**normalized_items[existing_index], **next_item}
+    return normalized_items
+
+
 def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, Any]:
     updated = json.loads(json.dumps(users))
     with open(csv_path, "r", encoding="utf-8-sig", newline="") as f:
@@ -86,11 +103,57 @@ def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, An
             user = updated[user_id]
             user["name"] = row.get("name", user.get("name"))
             user["cash_balance"] = _read_synced_account_balance(row)
+            synced_estate = round(_to_float(row.get("estate")), 2)
+            synced_liability = round(_to_float(row.get("liability")), 2)
+            synced_income = round(_to_float(row.get("income")), 2)
+
+            manual_assets = list(user.get("manual_assets", [])) if isinstance(user.get("manual_assets"), list) else []
+            liability_items = list(user.get("liability_items", [])) if isinstance(user.get("liability_items"), list) else []
+            income_streams = list(user.get("income_streams", [])) if isinstance(user.get("income_streams"), list) else []
+
+            manual_assets = _upsert_seeded_item(
+                manual_assets,
+                "estate-seed",
+                {
+                    "id": "estate-seed",
+                    "label": "Property",
+                    "category": "real_estate",
+                    "value": synced_estate,
+                } if synced_estate > 0 else None,
+            )
+            liability_items = _upsert_seeded_item(
+                liability_items,
+                "liability-seed",
+                {
+                    "id": "liability-seed",
+                    "label": "Existing Liabilities",
+                    "amount": synced_liability,
+                    "is_mortgage": False,
+                } if synced_liability > 0 else None,
+            )
+            income_streams = _upsert_seeded_item(
+                income_streams,
+                "income-seed",
+                {
+                    "id": "income-seed",
+                    "label": "Primary Income",
+                    "monthly_amount": synced_income,
+                } if synced_income > 0 else None,
+            )
+
+            user["manual_assets"] = manual_assets
+            user["liability_items"] = liability_items
+            user["income_streams"] = income_streams
             _refresh_position_market_values(user)
             portfolio_total = sum(float(p.get("market_value", 0)) for p in _portfolio_positions(user))
             real_estate_total, other_manual_total = _sum_manual_assets(user)
-            if real_estate_total > 0:
-                user["estate"] = real_estate_total
+            liability_total = round(sum(float(item.get("amount", 0.0) or 0.0) for item in liability_items if not bool(item.get("is_mortgage"))), 2)
+            mortgage_total = round(sum(float(item.get("amount", 0.0) or 0.0) for item in liability_items if bool(item.get("is_mortgage"))), 2)
+            income_total = round(sum(float(item.get("monthly_amount", 0.0) or 0.0) for item in income_streams), 2)
+            user["estate"] = real_estate_total
+            user["liability"] = liability_total
+            user["mortgage"] = mortgage_total
+            user["income"] = income_total
             user["portfolio_value"] = round(portfolio_total, 2)
             user["total_balance"] = round(user["cash_balance"] + portfolio_total + user["estate"] + other_manual_total, 2)
             user["net_worth"] = round(user["total_balance"] - user["liability"] - user["expenses"], 2)

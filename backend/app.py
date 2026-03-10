@@ -1,14 +1,14 @@
 import asyncio,os
 import csv
 import json
+import random
 import time
 import uuid
 import io
-import random
 from dotenv import load_dotenv
 from collections import defaultdict, deque
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -697,6 +697,82 @@ def _read_synced_account_balance_from_csv_row(row: Dict[str, Any]) -> float:
         else row.get("other_bank", 0.0)
     ) or 0.0
     return round(legacy_total, 2)
+
+
+def _read_csv_money_field(row: Dict[str, Any], field: str, fallback: float = 0.0) -> float:
+    raw_value = row.get(field)
+    if raw_value in (None, ""):
+        return round(float(fallback or 0.0), 2)
+    return round(_safe_float(raw_value) or 0.0, 2)
+
+
+def _upsert_seeded_financial_item(items: list[Dict[str, Any]], seed_id: str, payload: Optional[Dict[str, Any]]) -> list[Dict[str, Any]]:
+    normalized_items = [item for item in items if isinstance(item, dict)]
+    existing_index = next((idx for idx, item in enumerate(normalized_items) if item.get("id") == seed_id), None)
+
+    if payload is None:
+        if existing_index is not None:
+            normalized_items.pop(existing_index)
+        return normalized_items
+
+    next_item = dict(payload)
+    if existing_index is None:
+        normalized_items.append(next_item)
+    else:
+        normalized_items[existing_index] = {**normalized_items[existing_index], **next_item}
+    return normalized_items
+
+
+def _apply_synced_csv_profile_to_user(user: Dict[str, Any], row: Dict[str, Any]) -> Dict[str, Any]:
+    user = _ensure_financial_collections(user)
+
+    synced_cash_balance = _read_synced_account_balance_from_csv_row(row)
+    synced_estate = _read_csv_money_field(row, "estate")
+    synced_liability = _read_csv_money_field(row, "liability")
+    synced_income = _read_csv_money_field(row, "income")
+
+    manual_assets = list(user.get("manual_assets", []))
+    liability_items = list(user.get("liability_items", []))
+    income_streams = list(user.get("income_streams", []))
+
+    manual_assets = _upsert_seeded_financial_item(
+        manual_assets,
+        "estate-seed",
+        {
+            "id": "estate-seed",
+            "label": "Property",
+            "category": "real_estate",
+            "value": synced_estate,
+        } if synced_estate > 0 else None,
+    )
+    liability_items = _upsert_seeded_financial_item(
+        liability_items,
+        "liability-seed",
+        {
+            "id": "liability-seed",
+            "label": "Existing Liabilities",
+            "amount": synced_liability,
+            "is_mortgage": False,
+        } if synced_liability > 0 else None,
+    )
+    income_streams = _upsert_seeded_financial_item(
+        income_streams,
+        "income-seed",
+        {
+            "id": "income-seed",
+            "label": "Primary Income",
+            "monthly_amount": synced_income,
+        } if synced_income > 0 else None,
+    )
+
+    user["cash_balance"] = synced_cash_balance
+    user["estate"] = synced_estate
+    user["liability"] = synced_liability
+    user["income"] = synced_income
+    user["manual_assets"] = manual_assets
+    user["liability_items"] = liability_items
+    user["income_streams"] = income_streams
+    return user
 
 
 def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
@@ -1585,35 +1661,22 @@ def reload_user_synced_balance(user_id: str) -> Dict[str, Any]:
 
         rows, fieldnames = _load_users_csv()
         target = next((row for row in rows if (row.get("user_id") or "").strip() == user_id), None)
-        current_count = _safe_int((target or {}).get(SYNCED_BALANCE_RELOAD_COUNT_FIELD), 0)
-        current_balance = (
-            _read_synced_account_balance_from_csv_row(target)
-            if target is not None
-            else round(float(user.get("cash_balance", 0.0) or 0.0), 2)
-        )
+        if target is None:
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found in users.csv")
 
-        if current_count <= 0:
-            delta = None
-            new_balance = 1000.0
-            mortgage_items = [
-                item for item in (user.get("liability_items") or [])
-                if isinstance(item, dict) and bool(item.get("is_mortgage"))
-            ]
-            if not mortgage_items and float(user.get("mortgage", 0.0) or 0.0) <= 0:
-                user["mortgage"] = 100000.0
+        current_balance = _read_synced_account_balance_from_csv_row(target)
+        current_count = _safe_int(target.get(SYNCED_BALANCE_RELOAD_COUNT_FIELD), 0)
+        if current_count == 0:
+            delta = 1000.0
         else:
-            delta = random.randint(-50, 50)
-            new_balance = max(0.0, round(current_balance + delta, 2))
-
+            delta = float(random.randint(-50, 50))
+        new_balance = max(0.0, round(current_balance + delta, 2))
         next_count = current_count + 1
-        _upsert_synced_balance_csv_row(
-            user_id=user_id,
-            user=user,
-            balance=new_balance,
-            reload_count=next_count,
-        )
+        target[SYNCED_ACCOUNT_BALANCE_FIELD] = f"{new_balance:.2f}"
+        target[SYNCED_BALANCE_RELOAD_COUNT_FIELD] = str(next_count)
+        _write_users_csv(rows, fieldnames)
 
-        user["cash_balance"] = new_balance
+        user = _apply_synced_csv_profile_to_user(user, target)
         users[user_id] = _recalculate_user_financials(user)
         _write_users_data(users)
         _sync_user_to_assets_csv(user_id, users[user_id])
@@ -1621,7 +1684,7 @@ def reload_user_synced_balance(user_id: str) -> Dict[str, Any]:
         return {
             "status": "ok",
             "user_id": user_id,
-            "synced_account_balance": new_balance,
+            "synced_account_balance": users[user_id].get("cash_balance", 0.0),
             "reload_count": next_count,
             "delta": delta,
             "user": users[user_id],
