@@ -115,12 +115,12 @@ export default function Login() {
         {/* Form */}
         <form onSubmit={handleSubmit} style={S.form}>
           <label style={S.label}>
-            Username
+            Email / Username
             <input
               style={S.input}
               type="text"
               autoComplete="username"
-              placeholder="e.g. Alice"
+              placeholder="e.g. alice@example.com or Alice"
               value={username}
               onChange={e => setUsername(e.target.value)}
               required

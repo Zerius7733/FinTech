@@ -537,8 +537,8 @@ export default function SurveyModal({ open, onClose }) {
                 <input style={cs.formInput} placeholder="Chen" value={lastName} onChange={e => setLastName(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               </div>
               <div style={{ gridColumn:'1/-1' }}>
-                <label style={cs.formLabel}>Email</label>
-                <input style={cs.formInput} placeholder="alex@example.com" value={email} onChange={e => setEmail(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
+                <label style={cs.formLabel}>Email / Username</label>
+                <input style={cs.formInput} placeholder="alex@example.com or alex123" value={email} onChange={e => setEmail(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               </div>
               <div style={{ gridColumn:'1/-1' }}>
                 <label style={cs.formLabel}>Password</label>
@@ -881,5 +881,4 @@ const imp = {
   spinner: { width: 36, height: 36, border: '3px solid rgba(255,255,255,0.08)', borderTopColor: 'var(--teal)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   addRowBtn: { background: 'transparent', border: '1.5px dashed rgba(255,255,255,0.12)', borderRadius: 8, padding: '8px 12px', color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', cursor: 'pointer', width: '100%' },
 }
-
 
