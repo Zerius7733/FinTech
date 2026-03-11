@@ -2,10 +2,10 @@ import csv
 import json
 from typing import Any
 
-import backend.constants as const
+import backend.settings.constants as const
 import backend.services.api_deps as api
-from backend.portfolio_helpers import recalculate_user_financials
 from backend.services import user_sync_service
+from backend.services.portfolio_helpers import recalculate_user_financials
 
 
 def read_users_data() -> dict[str, Any]:

@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 
 import backend.api_models as models
-import backend.constants as const
+import backend.settings.constants as const
 import backend.services.api_deps as api
 
 

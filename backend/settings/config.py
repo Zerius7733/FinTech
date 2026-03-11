@@ -1,12 +1,10 @@
 import os
 import time
-from collections import defaultdict, deque
-from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import HTTPException
 
-import backend.constants as const
+import backend.settings.constants as const
 
 load_dotenv()
 

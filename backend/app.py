@@ -2,8 +2,12 @@ import asyncio
 from typing import Any, Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend import config, constants, market_helpers, portfolio_helpers, runtime
+from backend import runtime
+import backend.settings.config as config
+import backend.settings.constants as constants
 import backend.services.api_deps as services
+import backend.services.market_helpers as market_helpers
+import backend.services.portfolio_helpers as portfolio_helpers
 import backend.services.user_sync_service as user_sync_service
 import backend.stores.user_csv_store as user_csv_store
 import backend.stores.user_json_store as user_json_store

@@ -4,7 +4,7 @@ from typing import Any
 
 import yfinance as yf
 
-import backend.constants as const
+import backend.settings.constants as const
 import backend.services.api_deps as api
 
 
