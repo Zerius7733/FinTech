@@ -439,14 +439,15 @@ export default function Survey() {
   const [horizon,        setHorizon]        = useState('3–5')
   const [riskLevel,      setRiskLevel]      = useState(50)
   const [submitErr, setSubmitErr] = useState('')
+  const [isValidatingProfileStep, setIsValidatingProfileStep] = useState(false)
 
   const goNext = () => step < 5 ? setStep(s => s+1) : null
   const goBack = () => setStep(s => s-1)
   const progress = done ? 100 : (step/5)*100
   const toggleSet = (set, setter, val) => setter(prev => { const n=new Set(prev); n.has(val)?n.delete(val):n.add(val); return n })
-  const goNextFromProfile = () => {
-    if (!username.trim() || !password.trim()) {
-      setSubmitErr('Username and password are required.')
+  const goNextFromProfile = async () => {
+    if (!firstName.trim() || !username.trim() || !email.trim() || !password.trim()) {
+      setSubmitErr('First name, username, email, and password are required.')
       return
     }
     const parsedAge = Number(age)
@@ -454,8 +455,31 @@ export default function Survey() {
       setSubmitErr('Please enter a valid age between 18 and 100.')
       return
     }
-    setSubmitErr('')
-    goNext()
+    setIsValidatingProfileStep(true)
+    try {
+      const res = await fetch(`${API}/auth/register/precheck`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username.trim(),
+          email: email.trim(),
+          password: password.trim(),
+          user_id: user?.user_id || undefined,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail || `validation failed (${res.status})`)
+      }
+      const data = await res.json().catch(() => ({}))
+      if (data?.email) setEmail(data.email)
+      setSubmitErr('')
+      goNext()
+    } catch (err) {
+      setSubmitErr(err?.message || 'Unable to validate your details right now.')
+    } finally {
+      setIsValidatingProfileStep(false)
+    }
   }
 
   const handleImportComplete = (holdings) => { setImportedHoldings(holdings); setDone(true) }
@@ -503,6 +527,7 @@ export default function Survey() {
                 body: JSON.stringify({
                   username: finalUsername,
                   password: finalPassword,
+                  email: email.trim(),
                 }),
               })
               if (!regRes.ok) {
@@ -545,6 +570,7 @@ export default function Survey() {
                 user_id: activeUser.user_id,
                 first_name: firstName,
                 last_name: lastName,
+                username: finalUsername,
                 email,
                 country,
                 age: finalAge,
@@ -679,7 +705,7 @@ export default function Survey() {
               value={age}
               onChange={e => setAge(e.target.value)}
             />
-            <Footer onNext={goNextFromProfile} showBack={false} />
+            <Footer onNext={goNextFromProfile} showBack={false} nextLabel={isValidatingProfileStep ? 'Checking...' : 'Continue →'} disableNext={isValidatingProfileStep} />
           </div>
         )}
 
@@ -756,11 +782,11 @@ export default function Survey() {
   )
 }
 
-function Footer({ onNext, onBack, showBack=true }) {
+function Footer({ onNext, onBack, showBack=true, nextLabel='Continue →', disableNext=false }) {
   return (
     <div style={{ display:'flex', justifyContent:showBack?'space-between':'flex-end', marginTop:36, paddingTop:24, borderTop:'1px solid var(--border)' }}>
       {showBack && <button style={cs.btnBack} onClick={onBack}>← Back</button>}
-      <button style={cs.btnNext} onClick={onNext}>Continue →</button>
+      <button style={{ ...cs.btnNext, opacity: disableNext ? 0.7 : 1 }} onClick={onNext} disabled={disableNext}>{nextLabel}</button>
     </div>
   )
 }

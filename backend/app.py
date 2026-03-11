@@ -989,6 +989,14 @@ class IncomeStreamCreateRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: str
     password: str
+    email: str | None = None
+
+
+class RegisterPrecheckRequest(BaseModel):
+    username: str
+    password: str
+    email: str
+    user_id: str | None = None
 
 class LoginRequest(BaseModel):
     username: str
@@ -1094,6 +1102,7 @@ class ScreenshotConfirmRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: str
     password: str
+    email: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -1268,6 +1277,7 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
             login_csv_path=LOGIN_CSV_PATH,
             username=payload.username,
             password=payload.password,
+            email=payload.email,
             user_id=_next_available_user_id(),
         )
         api.add_default_user_profile(
@@ -1289,6 +1299,31 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
 
 
+@app.post("/auth/register/precheck", tags=["Users"], summary="Validate signup fields before registration")
+def register_precheck(payload: RegisterPrecheckRequest) -> Dict[str, Any]:
+    try:
+        validated = api.validate_registration_fields(
+            login_csv_path=LOGIN_CSV_PATH,
+            username=payload.username,
+            password=payload.password,
+            email=payload.email,
+            exclude_user_id=payload.user_id,
+            require_email=True,
+        )
+        return {
+            "status": "ok",
+            "username": validated["username"],
+            "email": validated["email"],
+            "password_rules_passed": True,
+        }
+    except api.RegisterValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except api.RegisterConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"register precheck failed: {exc}") from exc
+
+
 @app.post("/users/survey/profile", tags=["Users"], summary="Persist survey profile fields into users.csv")
 def update_survey_profile(payload: SurveyProfileUpdateRequest) -> Dict[str, Any]:
     try:
@@ -1299,10 +1334,24 @@ def update_survey_profile(payload: SurveyProfileUpdateRequest) -> Dict[str, Any]
         first = (payload.first_name or "").strip()
         last = (payload.last_name or "").strip()
         full_name = " ".join(part for part in (first, last) if part).strip()
+        normalized_username = (payload.username or "").strip()
+        normalized_email = (payload.email or "").strip()
+
+        if normalized_username:
+            api.validate_registration_fields(
+                login_csv_path=LOGIN_CSV_PATH,
+                username=normalized_username,
+                password="TempPass1!",
+                email=normalized_email or None,
+                exclude_user_id=user_id,
+                require_email=bool(normalized_email),
+            )
+        elif normalized_email:
+            normalized_email = api.normalize_email_address(normalized_email, require_email=True)
 
         updates = {
-            "username": (payload.username or "").strip(),
-            "email": (payload.email or "").strip(),
+            "username": normalized_username,
+            "email": normalized_email,
             "country": (payload.country or "").strip(),
         }
         if payload.age is not None:
@@ -1358,7 +1407,9 @@ def update_profile_details(payload: UserProfileDetailsUpdateRequest) -> Dict[str
             updates["name"] = full_name
         password = (payload.password or "").strip()
         if password:
-            updates["password"] = password
+            updates["password"] = api.validate_password_strength(password)
+        if updates["email"]:
+            updates["email"] = api.normalize_email_address(updates["email"], require_email=True)
 
         _update_user_csv_profile(user_id=user_id, updates=updates)
 

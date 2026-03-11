@@ -14,7 +14,10 @@ from backend.services.auth_registry import RegisterConflictError
 from backend.services.auth_registry import RegisterValidationError
 from backend.services.auth_registry import authenticate_login_user
 from backend.services.auth_registry import ensure_login_csv_schema
+from backend.services.auth_registry import normalize_email_address
 from backend.services.auth_registry import register_login_user
+from backend.services.auth_registry import validate_password_strength
+from backend.services.auth_registry import validate_registration_fields
 from backend.services.portfolio_selector import get_positions_by_asset_class
 from backend.services.portfolio_impact import build_portfolio_impact
 from backend.services.recommendation import generate_gpt_recommendations
@@ -54,6 +57,8 @@ __all__ = [
     "add_default_user_profile",
     "authenticate_login_user",
     "ensure_login_csv_schema",
+    "normalize_email_address",
+    "validate_password_strength",
     "calculate_user_wellness",
     "fetch_coingecko_coin_listings",
     "fetch_commodity_price",
@@ -72,6 +77,8 @@ __all__ = [
     "get_precomputed_stock_rankings",
     "refresh_commodity_market_data",
     "register_login_user",
+    "validate_password_strength",
+    "validate_registration_fields",
     "resolve_asset",
     "refresh_stock_market_data",
     "update_assets_file",

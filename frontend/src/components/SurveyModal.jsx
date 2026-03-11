@@ -342,6 +342,7 @@ export default function SurveyModal({ open, onClose }) {
   const [horizon, setHorizon] = useState('3-5')
   const [riskLevel, setRiskLevel] = useState(50)
   const [submitErr, setSubmitErr] = useState('')
+  const [isValidatingProfileStep, setIsValidatingProfileStep] = useState(false)
   const headingAccentColor = activeTheme?.id === 'silent-night' ? '#e9dfcf' : 'var(--gold)'
 
   useEffect(() => {
@@ -363,6 +364,7 @@ export default function SurveyModal({ open, onClose }) {
     setHorizon('3-5')
     setRiskLevel(50)
     setSubmitErr('')
+    setIsValidatingProfileStep(false)
   }, [open])
 
   const completionInitials = (() => {
@@ -381,7 +383,7 @@ export default function SurveyModal({ open, onClose }) {
   const goNext = () => step < 5 ? setStep(s => s+1) : null
   const goBack = () => setStep(s => s-1)
   const toggleSet = (set, setter, val) => setter(prev => { const n=new Set(prev); n.has(val)?n.delete(val):n.add(val); return n })
-  const goNextFromProfile = () => {
+  const goNextFromProfile = async () => {
     if (!firstName.trim() || !username.trim() || !email.trim() || !password.trim()) {
       setSubmitErr('First name, username, email, and password are required.')
       return
@@ -395,8 +397,33 @@ export default function SurveyModal({ open, onClose }) {
     else if (parsedAge <= 44) setAgeGroup('30-44')
     else if (parsedAge <= 59) setAgeGroup('45-59')
     else setAgeGroup('60+')
-    setSubmitErr('')
-    goNext()
+    setIsValidatingProfileStep(true)
+    try {
+      const res = await fetch(`${API}/auth/register/precheck`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username.trim(),
+          email: email.trim(),
+          password: password.trim(),
+          user_id: user?.user_id || undefined,
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail || `validation failed (${res.status})`)
+      }
+
+      const data = await res.json().catch(() => ({}))
+      if (data?.email) setEmail(data.email)
+      setSubmitErr('')
+      goNext()
+    } catch (err) {
+      setSubmitErr(err?.message || 'Unable to validate your details right now.')
+    } finally {
+      setIsValidatingProfileStep(false)
+    }
   }
 
   const handleImportComplete = (holdings) => { setImportedHoldings(holdings); setDone(true) }
@@ -434,7 +461,7 @@ export default function SurveyModal({ open, onClose }) {
                 const regRes = await fetch(`${API}/auth/register`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ username: username.trim(), password: finalPassword }),
+                  body: JSON.stringify({ username: username.trim(), password: finalPassword, email: email.trim() }),
                 })
                 if (!regRes.ok) {
                   const regErr = await regRes.json().catch(() => ({}))
@@ -597,7 +624,9 @@ export default function SurveyModal({ open, onClose }) {
             {submitErr && <div style={{ color:'var(--red)', fontSize:'0.73rem', marginBottom:12 }}>{submitErr}</div>}
             <div style={{ display:'flex', justifyContent:'flex-end', gap:10 }}>
               <button style={S.btnBack} onClick={onClose}>Cancel</button>
-              <button style={S.submit} onClick={goNextFromProfile}>Continue</button>
+              <button style={{ ...S.submit, opacity: isValidatingProfileStep ? 0.7 : 1 }} onClick={goNextFromProfile} disabled={isValidatingProfileStep}>
+                {isValidatingProfileStep ? 'Checking...' : 'Continue'}
+              </button>
             </div>
           </div>
         )}
