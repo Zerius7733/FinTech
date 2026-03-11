@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 import yfinance as yf
 
-from backend.stock_price_updater import _extract_last_price
+from backend.market_scripts.stock_price_updater import _extract_last_price
 
 
 COMMODITY_ALIAS_TO_SYMBOL = {

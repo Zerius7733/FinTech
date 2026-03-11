@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 
 import requests
-from backend.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
+from backend.market_scripts.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
 
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"

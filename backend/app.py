@@ -2,8 +2,11 @@ import asyncio
 from typing import Any, Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend import config, constants, user_store, market_helpers, portfolio_helpers,runtime
+from backend import config, constants, market_helpers, portfolio_helpers, runtime
 import backend.services.api_deps as services
+import backend.services.user_sync_service as user_sync_service
+import backend.stores.user_csv_store as user_csv_store
+import backend.stores.user_json_store as user_json_store
 from backend.routes import auth, health, imports, market, portfolio, recommendations, retirement, updates, users
 
 app = FastAPI(
@@ -74,7 +77,7 @@ app.include_router(
         login_csv_path=constants.LOGIN_CSV_PATH,
         user_json_path=constants.USER_JSON_PATH,
         assets_csv_path=constants.ASSETS_CSV_PATH,
-        next_available_user_id=user_store.next_available_user_id,
+        next_available_user_id=user_json_store.next_available_user_id,
     )
 )
 
@@ -87,7 +90,7 @@ app.include_router(
 )
 app.include_router(
     recommendations.build_router(
-        read_users_data=user_store.read_users_data,
+        read_users_data=user_json_store.read_users_data,
     )
 )
 app.include_router(
@@ -98,11 +101,11 @@ app.include_router(
 app.include_router(
     users.build_router(
         login_csv_path=constants.LOGIN_CSV_PATH,
-        read_users_data=user_store.read_users_data,
-        write_users_data=user_store.write_users_data,
-        update_user_csv_profile=user_store.update_user_csv_profile,
-        read_user_csv_profile=user_store.read_user_csv_profile,
-        age_to_group=user_store.age_to_group,
+        read_users_data=user_json_store.read_users_data,
+        write_users_data=user_json_store.write_users_data,
+        update_user_csv_profile=user_csv_store.update_user_csv_profile,
+        read_user_csv_profile=user_csv_store.read_user_csv_profile,
+        age_to_group=user_json_store.age_to_group,
         normalize_risk_profile=portfolio_helpers.normalize_risk_profile,
         ensure_financial_collections=portfolio_helpers.ensure_financial_collections,
         enrich_portfolio_with_ath=portfolio_helpers.enrich_portfolio_with_ath,
@@ -111,24 +114,24 @@ app.include_router(
 
 app.include_router(
     retirement.build_router(
-        read_users_data=user_store.read_users_data,
-        read_user_csv_profile=user_store.read_user_csv_profile,
+        read_users_data=user_json_store.read_users_data,
+        read_user_csv_profile=user_csv_store.read_user_csv_profile,
     )
 )
 
 
 app.include_router(
     portfolio.build_router(
-        read_users_data=user_store.read_users_data,
-        write_users_data=user_store.write_users_data,
+        read_users_data=user_json_store.read_users_data,
+        write_users_data=user_json_store.write_users_data,
         ensure_financial_collections=portfolio_helpers.ensure_financial_collections,
         recalculate_user_financials=portfolio_helpers.recalculate_user_financials,
         normalize_manual_asset_category=portfolio_helpers.normalize_manual_asset_category,
-        load_users_csv=user_store.load_users_csv,
-        write_users_csv=user_store.write_users_csv,
-        read_synced_account_balance_from_csv_row=user_store.read_synced_account_balance_from_csv_row,
-        apply_synced_csv_profile_to_user=user_store.apply_synced_csv_profile_to_user,
-        sync_user_to_assets_csv=user_store.sync_user_to_assets_csv,
+        load_users_csv=user_csv_store.load_users_csv,
+        write_users_csv=user_csv_store.write_users_csv,
+        read_synced_account_balance_from_csv_row=user_csv_store.read_synced_account_balance_from_csv_row,
+        apply_synced_csv_profile_to_user=user_sync_service.apply_synced_csv_profile_to_user,
+        sync_user_to_assets_csv=user_csv_store.sync_user_to_assets_csv,
         fetch_market_quote=market_helpers.get_market_quote,
         read_user_portfolio_history=portfolio_helpers.read_user_portfolio_history,
         enrich_portfolio_with_ath=portfolio_helpers.enrich_portfolio_with_ath,
@@ -140,9 +143,9 @@ app.include_router(
 
 app.include_router(
     imports.build_router(
-        read_users_data=user_store.read_users_data,
-        write_users_data=user_store.write_users_data,
+        read_users_data=user_json_store.read_users_data,
+        write_users_data=user_json_store.write_users_data,
         recalculate_user_financials=portfolio_helpers.recalculate_user_financials,
-        sync_user_to_assets_csv=user_store.sync_user_to_assets_csv,
+        sync_user_to_assets_csv=user_csv_store.sync_user_to_assets_csv,
     )
 )

@@ -10,7 +10,7 @@ from uuid import uuid4
 
 import requests
 
-from backend.commodity_price_retriever import normalize_commodity_symbol
+from backend.market_scripts.commodity_price_retriever import normalize_commodity_symbol
 
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
