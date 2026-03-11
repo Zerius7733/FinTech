@@ -1,0 +1,43 @@
+import os
+from collections import defaultdict, deque
+from pathlib import Path
+
+
+# Static paths and app constants.
+BASE_DIR = Path(__file__).resolve().parent
+USER_JSON_PATH = BASE_DIR / "json_data" / "user.json"
+USER_PORTFOLIO_DIR = BASE_DIR / "json_data" / "user_portfolio"
+CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
+LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
+ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
+STOCK_LISTINGS_CACHE_PATH = BASE_DIR / "json_data" / "stock_listings_cache.json"
+COINGECKO_MARKETS_CACHE_PATH = BASE_DIR / "json_data" / "coingecko_markets_cache.json"
+COMMODITY_MARKET_RANKINGS_PATH = BASE_DIR / "json_data" / "commodity_market_rankings.json"
+
+COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
+COMMODITY_ETF_TO_UNDERLYING = {
+    "GLD": "GC=F",
+    "IAU": "GC=F",
+    "SLV": "SI=F",
+    "SIVR": "SI=F",
+    "PPLT": "PL=F",
+    "PALL": "PA=F",
+}
+
+STOCK_MARKET_REFRESH_INTERVAL_SECONDS = 30 * 60
+CRYPTO_MARKET_REFRESH_TARGETS = (
+    (1, 100),
+    (2, 100),
+)
+
+YOUTUBE_HELP_VIDEO_URL = "https://youtu.be/1yTlB7DJeT8"
+YOUTUBE_HELP_EMBED_URL = "https://www.youtube.com/embed/1yTlB7DJeT8"
+
+SYNCED_ACCOUNT_BALANCE_FIELD = "synced_account_balance"
+SYNCED_BALANCE_RELOAD_COUNT_FIELD = "synced_balance_reload_count"
+
+# Env-derived settings and runtime-backed configuration.
+INSIGHTS_RATE_LIMIT_ENABLED = os.getenv("INSIGHTS_RATE_LIMIT_ENABLED", "1").strip().lower() in {"1", "true", "yes", "on"}
+INSIGHTS_RATE_LIMIT_WINDOW_SECONDS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_WINDOW_SECONDS", "3600")))
+INSIGHTS_RATE_LIMIT_MAX_REQUESTS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_MAX_REQUESTS", "10")))
+INSIGHTS_RATE_LIMIT_BUCKETS: dict[str, deque[float]] = defaultdict(deque)
