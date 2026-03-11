@@ -2,36 +2,22 @@ import csv
 import io
 import random
 import uuid
-from collections.abc import Callable
-from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 
 import backend.api_models as models
-import backend.settings.constants as const
-import backend.services.api_deps as api
 
 
 def build_router(
     *,
-    read_users_data: Callable[[], dict[str, Any]],
-    write_users_data: Callable[[dict[str, Any]], None],
-    ensure_financial_collections: Callable[[dict[str, Any]], dict[str, Any]],
-    recalculate_user_financials: Callable[[dict[str, Any]], dict[str, Any]],
-    normalize_manual_asset_category: Callable[[str], str],
-    load_users_csv: Callable[[], tuple[list[dict[str, str]], list[str]]],
-    write_users_csv: Callable[[list[dict[str, str]], list[str]], None],
-    read_synced_account_balance_from_csv_row: Callable[[dict[str, Any]], float],
-    apply_synced_csv_profile_to_user: Callable[[dict[str, Any], dict[str, Any]], dict[str, Any]],
-    sync_user_to_assets_csv: Callable[[str, dict[str, Any]], None],
-    fetch_market_quote: Callable[..., dict[str, Any]],
-    read_user_portfolio_history: Callable[[str], dict[str, Any]],
-    enrich_portfolio_with_ath: Callable[[dict[str, Any]], dict[str, Any]],
-    user_portfolio_dir: Path,
-    synced_account_balance_field: str,
-    synced_balance_reload_count_field: str,
+    user_store: Any,
+    csv_store: Any,
+    portfolio: Any,
+    users: Any,
+    market: Any,
+    constants: Any,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -42,7 +28,7 @@ def build_router(
     )
     def export_user_portfolio_csv(user_id: str) -> Response:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
@@ -98,17 +84,17 @@ def build_router(
     )
     def delete_user_portfolio_data(user_id: str) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
             user["portfolio"] = {"stocks": [], "cryptos": [], "commodities": []}
             user["manual_assets"] = []
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
 
-            history_path = user_portfolio_dir / f"{user_id}.json"
+            history_path = constants.USER_PORTFOLIO_DIR / f"{user_id}.json"
             if history_path.exists():
                 history_path.unlink()
 
@@ -125,19 +111,19 @@ def build_router(
     )
     def delete_user_account(user_id: str) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            if not isinstance(users.get(user_id), dict):
+            users_data = user_store.read_users_data()
+            if not isinstance(users_data.get(user_id), dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            users.pop(user_id, None)
-            write_users_data(users)
+            users_data.pop(user_id, None)
+            user_store.write_users_data(users_data)
 
-            rows, fieldnames = load_users_csv()
+            rows, fieldnames = csv_store.load_users_csv()
             if fieldnames:
                 rows = [row for row in rows if (row.get("user_id") or "").strip() != user_id]
-                write_users_csv(rows, fieldnames)
+                csv_store.write_users_csv(rows, fieldnames)
 
-            history_path = user_portfolio_dir / f"{user_id}.json"
+            history_path = constants.USER_PORTFOLIO_DIR / f"{user_id}.json"
             if history_path.exists():
                 history_path.unlink()
 
@@ -154,12 +140,12 @@ def build_router(
     )
     def add_user_manual_asset(user_id: str, payload: models.ManualAssetCreateRequest) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = ensure_financial_collections(user)
-            normalized_category = normalize_manual_asset_category(payload.category)
+            user = portfolio.ensure_financial_collections(user)
+            normalized_category = portfolio.normalize_manual_asset_category(payload.category)
             raw_label = payload.label.strip()
             raw_symbol = (payload.symbol or "").strip()
             if normalized_category in {"stock", "crypto", "commodity"}:
@@ -180,9 +166,9 @@ def build_router(
             if symbol:
                 item["symbol"] = symbol
             user["manual_assets"].append(item)
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
-            return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "item": item, "user": users_data[user_id]}
         except HTTPException:
             raise
         except ValueError as exc:
@@ -197,40 +183,40 @@ def build_router(
     )
     def reload_user_synced_balance(user_id: str) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            rows, fieldnames = load_users_csv()
+            rows, fieldnames = csv_store.load_users_csv()
             target = next((row for row in rows if (row.get("user_id") or "").strip() == user_id), None)
             if target is None:
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found in users.csv")
 
-            current_balance = read_synced_account_balance_from_csv_row(target)
-            current_count = int(target.get(synced_balance_reload_count_field) or 0)
+            current_balance = csv_store.read_synced_account_balance_from_csv_row(target)
+            current_count = int(target.get(constants.SYNCED_BALANCE_RELOAD_COUNT_FIELD) or 0)
             if current_count == 0:
                 delta = 1000.0
             else:
                 delta = float(random.randint(-50, 50))
             new_balance = max(0.0, round(current_balance + delta, 2))
             next_count = current_count + 1
-            target[synced_account_balance_field] = f"{new_balance:.2f}"
-            target[synced_balance_reload_count_field] = str(next_count)
-            write_users_csv(rows, fieldnames)
+            target[constants.SYNCED_ACCOUNT_BALANCE_FIELD] = f"{new_balance:.2f}"
+            target[constants.SYNCED_BALANCE_RELOAD_COUNT_FIELD] = str(next_count)
+            csv_store.write_users_csv(rows, fieldnames)
 
-            user = apply_synced_csv_profile_to_user(user, target)
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
-            sync_user_to_assets_csv(user_id, users[user_id])
+            user = users.apply_synced_csv_profile_to_user(user, target)
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            csv_store.sync_user_to_assets_csv(user_id, users_data[user_id])
 
             return {
                 "status": "ok",
                 "user_id": user_id,
-                "synced_account_balance": users[user_id].get("cash_balance", 0.0),
+                "synced_account_balance": users_data[user_id].get("cash_balance", 0.0),
                 "reload_count": next_count,
                 "delta": delta,
-                "user": users[user_id],
+                "user": users_data[user_id],
             }
         except HTTPException:
             raise
@@ -244,12 +230,12 @@ def build_router(
     )
     def update_user_synced_balance(user_id: str, payload: models.SyncedBalanceUpdateRequest) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            rows, fieldnames = load_users_csv()
+            rows, fieldnames = csv_store.load_users_csv()
             target = next((row for row in rows if (row.get("user_id") or "").strip() == user_id), None)
             if target is None:
                 target = {key: "" for key in fieldnames}
@@ -257,25 +243,25 @@ def build_router(
                 rows.append(target)
 
             next_balance = round(float(payload.balance), 2)
-            current_count = int(target.get(synced_balance_reload_count_field) or 0)
+            current_count = int(target.get(constants.SYNCED_BALANCE_RELOAD_COUNT_FIELD) or 0)
             target.setdefault("dbs", "0")
             target.setdefault("uob", "0")
             target.setdefault("ocbc", "0")
             target.setdefault("other_banks", "0")
-            target[synced_account_balance_field] = f"{next_balance:.2f}"
-            target[synced_balance_reload_count_field] = str(max(1, current_count))
-            write_users_csv(rows, fieldnames)
+            target[constants.SYNCED_ACCOUNT_BALANCE_FIELD] = f"{next_balance:.2f}"
+            target[constants.SYNCED_BALANCE_RELOAD_COUNT_FIELD] = str(max(1, current_count))
+            csv_store.write_users_csv(rows, fieldnames)
 
-            user = apply_synced_csv_profile_to_user(user, target)
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
+            user = users.apply_synced_csv_profile_to_user(user, target)
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
 
             return {
                 "status": "ok",
                 "user_id": user_id,
-                "synced_account_balance": users[user_id].get("cash_balance", 0.0),
+                "synced_account_balance": users_data[user_id].get("cash_balance", 0.0),
                 "reload_count": max(1, current_count),
-                "user": users[user_id],
+                "user": users_data[user_id],
             }
         except HTTPException:
             raise
@@ -289,8 +275,8 @@ def build_router(
     )
     def add_user_portfolio_holding(user_id: str, payload: models.PortfolioHoldingCreateRequest) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
@@ -315,7 +301,7 @@ def build_router(
             else:
                 raise HTTPException(status_code=400, detail="asset_class must be stock, crypto, or commodity")
 
-            quote = fetch_market_quote(query=f"{query_type}, {symbol}")
+            quote = market.get_market_quote(query=f"{query_type}, {symbol}")
             fetched_symbol = str(quote.get("symbol") or symbol).upper()
             price = round(float(quote.get("price") or 0.0), 6)
             if price <= 0:
@@ -363,9 +349,9 @@ def build_router(
 
             portfolio[bucket] = entries
             user["portfolio"] = portfolio
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
-            return {"status": "ok", "user_id": user_id, "asset_class": bucket, "item": item, "user": users[user_id]}
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "asset_class": bucket, "item": item, "user": users_data[user_id]}
         except HTTPException:
             raise
         except Exception as exc:
@@ -378,8 +364,8 @@ def build_router(
     )
     def remove_user_portfolio_holding(user_id: str, asset_class: str, symbol: str) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
@@ -419,9 +405,9 @@ def build_router(
             entries.pop(remove_index)
             portfolio[bucket] = entries
             user["portfolio"] = portfolio
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
-            return {"status": "ok", "user_id": user_id, "asset_class": bucket, "symbol": symbol, "user": users[user_id]}
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "asset_class": bucket, "symbol": symbol, "user": users_data[user_id]}
         except HTTPException:
             raise
         except Exception as exc:
@@ -434,18 +420,18 @@ def build_router(
     )
     def remove_user_manual_asset(user_id: str, item_id: str) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = ensure_financial_collections(user)
+            user = portfolio.ensure_financial_collections(user)
             before = len(user["manual_assets"])
             user["manual_assets"] = [item for item in user["manual_assets"] if item.get("id") != item_id]
             if len(user["manual_assets"]) == before:
                 raise HTTPException(status_code=404, detail=f"asset item '{item_id}' not found")
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
-            return {"status": "ok", "user_id": user_id, "user": users[user_id]}
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "user": users_data[user_id]}
         except HTTPException:
             raise
         except Exception as exc:
@@ -458,11 +444,11 @@ def build_router(
     )
     def add_user_liability_item(user_id: str, payload: models.LiabilityItemCreateRequest) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = ensure_financial_collections(user)
+            user = portfolio.ensure_financial_collections(user)
             item = {
                 "id": str(uuid.uuid4()),
                 "label": payload.label.strip(),
@@ -470,9 +456,9 @@ def build_router(
                 "is_mortgage": bool(payload.is_mortgage),
             }
             user["liability_items"].append(item)
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
-            return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "item": item, "user": users_data[user_id]}
         except HTTPException:
             raise
         except Exception as exc:
@@ -485,18 +471,18 @@ def build_router(
     )
     def remove_user_liability_item(user_id: str, item_id: str) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = ensure_financial_collections(user)
+            user = portfolio.ensure_financial_collections(user)
             before = len(user["liability_items"])
             user["liability_items"] = [item for item in user["liability_items"] if item.get("id") != item_id]
             if len(user["liability_items"]) == before:
                 raise HTTPException(status_code=404, detail=f"liability item '{item_id}' not found")
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
-            return {"status": "ok", "user_id": user_id, "user": users[user_id]}
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "user": users_data[user_id]}
         except HTTPException:
             raise
         except Exception as exc:
@@ -509,20 +495,20 @@ def build_router(
     )
     def add_user_income_stream(user_id: str, payload: models.IncomeStreamCreateRequest) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = ensure_financial_collections(user)
+            user = portfolio.ensure_financial_collections(user)
             item = {
                 "id": str(uuid.uuid4()),
                 "label": payload.label.strip(),
                 "monthly_amount": round(float(payload.monthly_amount), 2),
             }
             user["income_streams"].append(item)
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
-            return {"status": "ok", "user_id": user_id, "item": item, "user": users[user_id]}
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "item": item, "user": users_data[user_id]}
         except HTTPException:
             raise
         except Exception as exc:
@@ -535,18 +521,18 @@ def build_router(
     )
     def remove_user_income_stream(user_id: str, item_id: str) -> dict[str, Any]:
         try:
-            users = read_users_data()
-            user = users.get(user_id)
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = ensure_financial_collections(user)
+            user = portfolio.ensure_financial_collections(user)
             before = len(user["income_streams"])
             user["income_streams"] = [item for item in user["income_streams"] if item.get("id") != item_id]
             if len(user["income_streams"]) == before:
                 raise HTTPException(status_code=404, detail=f"income stream '{item_id}' not found")
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
-            return {"status": "ok", "user_id": user_id, "user": users[user_id]}
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "user": users_data[user_id]}
         except HTTPException:
             raise
         except Exception as exc:
@@ -559,11 +545,11 @@ def build_router(
     )
     def get_portfolio_by_user_id(user_id: str) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = enrich_portfolio_with_ath(ensure_financial_collections(user))
+            user = portfolio.enrich_portfolio_with_ath(portfolio.ensure_financial_collections(user))
             return {"status": "ok", "user_id": user_id, "portfolio": user.get("portfolio", [])}
         except HTTPException:
             raise
@@ -577,12 +563,12 @@ def build_router(
     )
     def get_portfolio_history_by_user_id(user_id: str) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            history = read_user_portfolio_history(user_id)
+            history = portfolio.read_user_portfolio_history(user_id)
             daily_points = history.get("daily_values", [])
             if not isinstance(daily_points, list):
                 raise HTTPException(status_code=500, detail="invalid portfolio history format")
@@ -605,16 +591,16 @@ def build_router(
     )
     def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            bucket, positions = api.get_positions_by_asset_class(
+            bucket, positions = portfolio.get_positions_by_asset_class(
                 user=user,
                 asset_class=asset_class,
-                commodity_alias_symbols=api.COMMODITY_ALIAS_TO_SYMBOL.values(),
-                common_commodity_etfs=const.COMMON_COMMODITY_ETFS,
+                commodity_alias_symbols=market.COMMODITY_ALIAS_TO_SYMBOL.values(),
+                common_commodity_etfs=constants.COMMON_COMMODITY_ETFS,
             )
 
             return {

@@ -10,12 +10,12 @@ from uuid import uuid4
 
 import requests
 
-from backend.market_scripts.commodity_price_retriever import normalize_commodity_symbol
+from backend.services.market.providers.commodity_price_retriever import normalize_commodity_symbol
 
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
 DEFAULT_VISION_MODEL = "gpt-4.1-mini"
-BACKEND_DIR = Path(__file__).resolve().parents[1]
+BACKEND_DIR = Path(__file__).resolve().parents[2]
 PROJECT_DIR = BACKEND_DIR.parent
 WORKSPACE_DIR = PROJECT_DIR.parent
 IMPORTS_PATH = BACKEND_DIR / "data" / "json" / "screenshot_imports.json"

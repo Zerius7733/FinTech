@@ -1,8 +1,8 @@
 from typing import Any
 
-from backend.market_scripts.commodity_price_retriever import fetch_commodity_price
-from backend.market_scripts.crypto_price_retriever import fetch_crypto_price
-from backend.market_scripts.stock_price_updater import fetch_latest_prices
+from backend.services.market.providers.commodity_price_retriever import fetch_commodity_price
+from backend.services.market.providers.crypto_price_retriever import fetch_crypto_price
+from backend.services.market.providers.stock_price_updater import fetch_latest_prices
 
 
 def parse_market_query(query: str) -> dict[str, str]:

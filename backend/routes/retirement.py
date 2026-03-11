@@ -1,16 +1,15 @@
-from collections.abc import Callable
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
 import backend.api_models as models
-import backend.services.api_deps as api
 
 
 def build_router(
     *,
-    read_users_data: Callable[[], dict[str, Any]],
-    read_user_csv_profile: Callable[[str], dict[str, Any]],
+    user_store: Any,
+    csv_store: Any,
+    retirement: Any,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -21,7 +20,7 @@ def build_router(
     )
     def build_user_retirement_plan(user_id: str, payload: models.RetirementPlanRequest) -> dict[str, Any]:
         try:
-            users = read_users_data()
+            users = user_store.read_users_data()
             user = users.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
@@ -29,7 +28,7 @@ def build_router(
             raw_age = plan_user.get("age")
             needs_csv_age = raw_age in (None, "", 0, "0")
             if needs_csv_age:
-                csv_profile = read_user_csv_profile(user_id)
+                csv_profile = csv_store.read_user_csv_profile(user_id)
                 csv_age = (csv_profile.get("age") or "").strip()
                 if csv_age:
                     try:
@@ -37,7 +36,7 @@ def build_router(
                     except Exception:
                         pass
 
-            plan = api.build_retirement_plan(
+            plan = retirement.build_retirement_plan(
                 user=plan_user,
                 retirement_age=payload.retirement_age,
                 monthly_expenses=payload.monthly_expenses,

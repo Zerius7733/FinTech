@@ -41,6 +41,18 @@ YOUTUBE_HELP_EMBED_URL = "https://www.youtube.com/embed/1yTlB7DJeT8"
 SYNCED_ACCOUNT_BALANCE_FIELD = "synced_account_balance"
 SYNCED_BALANCE_RELOAD_COUNT_FIELD = "synced_balance_reload_count"
 
+OPENAPI_TAGS = [
+    {"name": "Health", "description": "API health and readiness endpoints."},
+    {"name": "Users", "description": "User retrieval endpoints."},
+    {"name": "Recommendations", "description": "Personalized recommendation endpoints."},
+    {"name": "Compatibility", "description": "User profile compatibility endpoints."},
+    {"name": "Imports", "description": "Screenshot import and portfolio merge endpoints."},
+    {"name": "Updates", "description": "Endpoints that run data update jobs."},
+    {"name": "Market", "description": "Live market quote retrieval endpoints."},
+    {"name": "Portfolio", "description": "User portfolio information endpoints."},
+    {"name": "Retirement", "description": "Retirement planning and target allocation endpoints."},
+]
+
 # Env-derived settings and runtime-backed configuration.
 INSIGHTS_RATE_LIMIT_ENABLED = os.getenv("INSIGHTS_RATE_LIMIT_ENABLED", "1").strip().lower() in {"1", "true", "yes", "on"}
 INSIGHTS_RATE_LIMIT_WINDOW_SECONDS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_WINDOW_SECONDS", "3600")))

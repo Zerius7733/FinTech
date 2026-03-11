@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 import yfinance as yf
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parents[2]
 SNAPSHOT_PATH = BASE_DIR / "data" / "json" / "commodity_market_snapshot.json"
 RANKINGS_PATH = BASE_DIR / "data" / "json" / "commodity_market_rankings.json"
 DEFAULT_MAX_AGE_SECONDS = 6 * 60 * 60

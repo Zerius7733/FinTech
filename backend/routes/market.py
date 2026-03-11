@@ -1,16 +1,16 @@
-from collections.abc import Callable
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
 
 import backend.api_models as models
-import backend.services.api_deps as api
 
 
 def build_router(
     *,
-    enforce_insights_rate_limit: Callable[[str], None],
-    fetch_market_quote: Callable[[str], dict[str, Any]],
+    config: Any,
+    market: Any,
+    insights: Any,
+    coingecko: Any,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -23,7 +23,7 @@ def build_router(
     async def resolve_asset_category(
         q: str = Query(..., description="Symbol or alias to resolve, e.g. AAPL, BTC, XAU"),
     ) -> models.AssetResolveResponse:
-        result = await api.resolve_asset(q)
+        result = await market.resolve_asset(q)
         return models.AssetResolveResponse(**result)
 
     @router.get(
@@ -41,10 +41,10 @@ def build_router(
     ) -> models.InsightsResponse:
         try:
             rate_subject = f"user:{user_id}" if user_id else f"ip:{getattr(request.client, 'host', 'unknown')}"
-            enforce_insights_rate_limit(rate_subject)
-            result = await api.build_insights(asset_type=type, symbol=symbol, months=months)
+            config.enforce_insights_rate_limit(rate_subject)
+            result = await insights.build_insights(asset_type=type, symbol=symbol, months=months)
             return models.InsightsResponse(**result)
-        except api.InsightError as exc:
+        except insights.InsightError as exc:
             detail = str(exc)
             if detail == "price data not found":
                 detail = (
@@ -66,10 +66,10 @@ def build_router(
         per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
     ) -> list[models.StockListingResponse]:
         try:
-            cached = api.load_cached_coingecko_coin_listings(page=page, per_page=per_page)
+            cached = coingecko.load_cached_coingecko_coin_listings(page=page, per_page=per_page)
             if cached is not None:
                 return [models.StockListingResponse(**row) for row in cached]
-            rows = api.fetch_coingecko_coin_listings(page=page, per_page=per_page)
+            rows = coingecko.fetch_coingecko_coin_listings(page=page, per_page=per_page)
             return [models.StockListingResponse(**row) for row in rows]
         except Exception as exc:
             raise HTTPException(status_code=502, detail=f"coingecko fetch failed: {exc}") from exc
@@ -85,7 +85,7 @@ def build_router(
         per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
     ) -> list[models.StockListingResponse]:
         try:
-            rows = api.get_precomputed_stock_rankings(
+            rows = market.get_precomputed_stock_rankings(
                 page=page,
                 per_page=per_page,
             )
@@ -107,7 +107,7 @@ def build_router(
         per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
     ) -> list[models.CoinListingResponse]:
         try:
-            rows = api.get_precomputed_commodity_rankings(
+            rows = market.get_precomputed_commodity_rankings(
                 page=page,
                 per_page=per_page,
             )
@@ -130,7 +130,7 @@ def build_router(
         ),
     ) -> dict[str, Any]:
         try:
-            return fetch_market_quote(query)
+            return market.get_market_quote(query)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception as exc:

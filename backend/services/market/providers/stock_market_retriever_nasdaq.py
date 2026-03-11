@@ -9,7 +9,7 @@ import yfinance as yf
 
 
 NASDAQ_SCREENER_URL = "https://api.nasdaq.com/api/screener/stocks"
-STOCK_CACHE_PATH = Path(__file__).resolve().parent.parent / "data" / "json" / "stock_listings_cache.json"
+STOCK_CACHE_PATH = Path(__file__).resolve().parents[3] / "data" / "json" / "stock_listings_cache.json"
 NASDAQ_HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "Origin": "https://www.nasdaq.com",

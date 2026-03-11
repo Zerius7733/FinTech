@@ -1,14 +1,11 @@
-from collections.abc import Callable
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
-import backend.services.api_deps as api
-
-
 def build_router(
     *,
-    read_users_data: Callable[[], dict[str, Any]],
+    user_store: Any,
+    recommendation: Any,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -23,12 +20,12 @@ def build_router(
         limit: int = Query(3, ge=1, le=10, description="Maximum number of recommendation items"),
     ) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            result = api.generate_user_recommendations(user, limit=limit)
+            result = recommendation.generate_user_recommendations(user, limit=limit)
             return {"status": "ok", "user_id": user_id, **result}
         except HTTPException:
             raise
@@ -46,13 +43,13 @@ def build_router(
         model: str = Query("gpt-4.1-mini", description="OpenAI model name"),
     ) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            rule_based = api.generate_user_recommendations(user, limit=limit)
-            gpt_output = api.generate_gpt_recommendations(
+            rule_based = recommendation.generate_user_recommendations(user, limit=limit)
+            gpt_output = recommendation.generate_gpt_recommendations(
                 user_id=user_id,
                 user=user,
                 rule_based=rule_based,

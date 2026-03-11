@@ -1,8 +1,9 @@
 import asyncio
 from typing import Any
 
+from fastapi import FastAPI
+
 import backend.settings.constants as const
-import backend.market_scripts.coingecko_market_retriever as coingecko_market_retriever
 import backend.services.market as market_services
 
 
@@ -43,7 +44,7 @@ async def run_crypto_market_refresh() -> None:
         refreshed: list[dict[str, Any]] = []
         for page, per_page in const.CRYPTO_MARKET_REFRESH_TARGETS:
             rows = await asyncio.to_thread(
-                coingecko_market_retriever.refresh_coingecko_coin_listings,
+                market_services.refresh_coingecko_coin_listings,
                 page,
                 per_page,
             )
@@ -59,3 +60,18 @@ async def market_refresh_loop() -> None:
         await run_stock_market_refresh()
         await run_commodity_market_refresh()
         await run_crypto_market_refresh()
+
+
+async def start(app: FastAPI) -> None:
+    app.state.stock_market_refresh_task = asyncio.create_task(market_refresh_loop())
+
+
+async def stop(app: FastAPI) -> None:
+    task = getattr(app.state, "stock_market_refresh_task", None)
+    if task is None:
+        return
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass

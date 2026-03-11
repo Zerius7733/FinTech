@@ -1,72 +1,18 @@
-import asyncio
 from typing import Any, Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routes import auth, health, imports, market, portfolio, recommendations, retirement, updates, users
-from backend.stores import user_json_store, user_csv_store
-from backend.settings import constants, config
-import backend.services.market as market_services
-import backend.services.auth_registry as auth_registry
-import backend.services.portfolio.helpers as portfolio_helpers
-import backend.services.runtime as runtime
-import backend.services.user_sync_service as user_sync_service
-import backend.services.user_profile_registry as user_profile_registry
+from backend import routes , services , settings , stores
 
+services.users.rewrite_user_profiles_with_order(settings.constants.USER_JSON_PATH)
+services.auth.bootstrap_login_csv_from_assets_csv(settings.constants.LOGIN_CSV_PATH, settings.constants.ASSETS_CSV_PATH)
+services.auth.ensure_login_csv_schema(settings.constants.LOGIN_CSV_PATH)
 
-app = FastAPI(
-    title="FinTech Wellness API",
-    version="1.0.0",
-    openapi_tags=[
-        {"name": "Health", "description": "API health and readiness endpoints."},
-        {"name": "Users", "description": "User retrieval endpoints."},
-        {"name": "Recommendations", "description": "Personalized recommendation endpoints."},
-        {"name": "Compatibility", "description": "User profile compatibility endpoints."},
-        {"name": "Imports", "description": "Screenshot import and portfolio merge endpoints."},
-        {"name": "Updates", "description": "Endpoints that run data update jobs."},
-        {"name": "Market", "description": "Live market quote retrieval endpoints."},
-        {"name": "Portfolio", "description": "User portfolio information endpoints."},
-        {"name": "Retirement", "description": "Retirement planning and target allocation endpoints."},
-    ],
-)
+ALLOWED_ORIGINS = settings.config.parse_csv_env("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:8080,http://127.0.0.1:5173")
+ALLOWED_ORIGIN_REGEX = settings.config.build_allowed_origin_regex()
 
-ALLOWED_ORIGINS = config.parse_csv_env(
-    "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,http://localhost:8080,http://127.0.0.1:5173",
-)
-ALLOWED_ORIGIN_REGEX = config.build_allowed_origin_regex()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(health.build_router(youtube_url=constants.YOUTUBE_HELP_VIDEO_URL, embed_url=constants.YOUTUBE_HELP_EMBED_URL))
-
-user_profile_registry.rewrite_user_profiles_with_order(constants.USER_JSON_PATH)
-auth_registry.bootstrap_login_csv_from_assets_csv(constants.LOGIN_CSV_PATH, constants.ASSETS_CSV_PATH)
-auth_registry.ensure_login_csv_schema(constants.LOGIN_CSV_PATH)
-
-
-@app.on_event("startup")
-async def startup_stock_market_refresh() -> None:
-    app.state.stock_market_refresh_task = asyncio.create_task(runtime.market_refresh_loop())
-
-
-@app.on_event("shutdown")
-async def shutdown_stock_market_refresh() -> None:
-    task = getattr(app.state, "stock_market_refresh_task", None)
-    if task is None:
-        return
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        pass
-
+app = FastAPI( title="FinTech Wellness API", version="1.0.0", openapi_tags=settings.constants.OPENAPI_TAGS, description="API for FinTech Wellness app, providing market data, portfolio management, insights.")
+app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_origin_regex=ALLOWED_ORIGIN_REGEX, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.include_router(routes.health.build_router(youtube_url=settings.constants.YOUTUBE_HELP_VIDEO_URL, embed_url=settings.constants.YOUTUBE_HELP_EMBED_URL))
 
 def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
     user_count = len([k for k in result.keys() if not k.startswith("_")])
@@ -75,81 +21,79 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
         "user_count": user_count,
     }
 
+@app.on_event("startup")
+async def startup_stock_market_refresh() -> None:
+    await services.runtime.start(app)
+
+@app.on_event("shutdown")
+async def shutdown_stock_market_refresh() -> None:
+    await services.runtime.stop(app)
 
 app.include_router(
-    auth.build_router(
-        login_csv_path=constants.LOGIN_CSV_PATH,
-        user_json_path=constants.USER_JSON_PATH,
-        assets_csv_path=constants.ASSETS_CSV_PATH,
-        next_available_user_id=user_json_store.next_available_user_id,
+    routes.auth.build_router(
+        user_store=stores.user_json_store,
+        auth=services.auth,
+        users=services.users,
+        constants=settings.constants,
     )
 )
 
-
 app.include_router(
-    market.build_router(
-        enforce_insights_rate_limit=config.enforce_insights_rate_limit,
-        fetch_market_quote=market_services.get_market_quote,
+    routes.market.build_router(
+        config=settings.config,
+        market=services.market,
+        insights=services.insights,
+        coingecko=services.market,
     )
 )
 app.include_router(
-    recommendations.build_router(
-        read_users_data=user_json_store.read_users_data,
+    routes.recommendations.build_router(
+        user_store=stores.user_json_store,
+        recommendation=services.recommendation,
     )
 )
 app.include_router(
-    updates.build_router(
+    routes.updates.build_router(
         safe_summary=_safe_summary,
     )
 )
 app.include_router(
-    users.build_router(
-        login_csv_path=constants.LOGIN_CSV_PATH,
-        read_users_data=user_json_store.read_users_data,
-        write_users_data=user_json_store.write_users_data,
-        update_user_csv_profile=user_csv_store.update_user_csv_profile,
-        read_user_csv_profile=user_csv_store.read_user_csv_profile,
-        age_to_group=user_json_store.age_to_group,
-        normalize_risk_profile=portfolio_helpers.normalize_risk_profile,
-        ensure_financial_collections=portfolio_helpers.ensure_financial_collections,
-        enrich_portfolio_with_ath=portfolio_helpers.enrich_portfolio_with_ath,
+    routes.users.build_router(
+        user_store=stores.user_json_store,
+        csv_store=stores.user_csv_store,
+        auth=services.auth,
+        portfolio=services.portfolio,
+        market=services.market,
+        compatibility=services.compatibility,
+        wellness=services.wealth_wellness,
+        constants=settings.constants,
     )
 )
 
 app.include_router(
-    retirement.build_router(
-        read_users_data=user_json_store.read_users_data,
-        read_user_csv_profile=user_csv_store.read_user_csv_profile,
-    )
-)
-
-
-app.include_router(
-    portfolio.build_router(
-        read_users_data=user_json_store.read_users_data,
-        write_users_data=user_json_store.write_users_data,
-        ensure_financial_collections=portfolio_helpers.ensure_financial_collections,
-        recalculate_user_financials=portfolio_helpers.recalculate_user_financials,
-        normalize_manual_asset_category=portfolio_helpers.normalize_manual_asset_category,
-        load_users_csv=user_csv_store.load_users_csv,
-        write_users_csv=user_csv_store.write_users_csv,
-        read_synced_account_balance_from_csv_row=user_csv_store.read_synced_account_balance_from_csv_row,
-        apply_synced_csv_profile_to_user=user_sync_service.apply_synced_csv_profile_to_user,
-        sync_user_to_assets_csv=user_csv_store.sync_user_to_assets_csv,
-        fetch_market_quote=market_services.get_market_quote,
-        read_user_portfolio_history=portfolio_helpers.read_user_portfolio_history,
-        enrich_portfolio_with_ath=portfolio_helpers.enrich_portfolio_with_ath,
-        user_portfolio_dir=constants.USER_PORTFOLIO_DIR,
-        synced_account_balance_field=constants.SYNCED_ACCOUNT_BALANCE_FIELD,
-        synced_balance_reload_count_field=constants.SYNCED_BALANCE_RELOAD_COUNT_FIELD,
+    routes.retirement.build_router(
+        user_store=stores.user_json_store,
+        csv_store=stores.user_csv_store,
+        retirement=services.retirement,
     )
 )
 
 app.include_router(
-    imports.build_router(
-        read_users_data=user_json_store.read_users_data,
-        write_users_data=user_json_store.write_users_data,
-        recalculate_user_financials=portfolio_helpers.recalculate_user_financials,
-        sync_user_to_assets_csv=user_csv_store.sync_user_to_assets_csv,
+    routes.portfolio.build_router(
+        user_store=stores.user_json_store,
+        csv_store=stores.user_csv_store,
+        portfolio=services.portfolio,
+        users=services.users,
+        market=services.market,
+        constants=settings.constants,
+    )
+)
+
+app.include_router(
+    routes.imports.build_router(
+        user_store=stores.user_json_store,
+        csv_store=stores.user_csv_store,
+        portfolio=services.portfolio,
+        imports=services.imports,
     )
 )

@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from backend.services.screenshot_importer import DEFAULT_VISION_MODEL
+from backend.services.imports import DEFAULT_VISION_MODEL
 from pydantic import AliasChoices, BaseModel, Field
 
 

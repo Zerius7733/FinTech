@@ -1,24 +1,20 @@
-from collections.abc import Callable
-from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
 import backend.api_models as models
-import backend.services.api_deps as api
 
 
 def build_router(
     *,
-    login_csv_path: Path,
-    read_users_data: Callable[[], dict[str, Any]],
-    write_users_data: Callable[[dict[str, Any]], None],
-    update_user_csv_profile: Callable[[str, dict[str, Any]], None],
-    read_user_csv_profile: Callable[[str], dict[str, Any]],
-    age_to_group: Callable[[int], str],
-    normalize_risk_profile: Callable[[Any], float],
-    ensure_financial_collections: Callable[[dict[str, Any]], dict[str, Any]],
-    enrich_portfolio_with_ath: Callable[[dict[str, Any]], dict[str, Any]],
+    user_store: Any,
+    csv_store: Any,
+    auth: Any,
+    portfolio: Any,
+    market: Any,
+    compatibility: Any,
+    wellness: Any,
+    constants: Any,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -36,8 +32,8 @@ def build_router(
             normalized_email = (payload.email or "").strip()
 
             if normalized_username:
-                api.validate_registration_fields(
-                    login_csv_path=login_csv_path,
+                auth.validate_registration_fields(
+                    login_csv_path=constants.LOGIN_CSV_PATH,
                     username=normalized_username,
                     password="TempPass1!",
                     email=normalized_email or None,
@@ -45,7 +41,7 @@ def build_router(
                     require_email=bool(normalized_email),
                 )
             elif normalized_email:
-                normalized_email = api.normalize_email_address(normalized_email, require_email=True)
+                normalized_email = auth.normalize_email_address(normalized_email, require_email=True)
 
             updates = {
                 "username": normalized_username,
@@ -54,15 +50,15 @@ def build_router(
             }
             if payload.age is not None:
                 updates["age"] = str(payload.age)
-                updates["age_group"] = age_to_group(int(payload.age))
+                updates["age_group"] = user_store.age_to_group(int(payload.age))
             else:
                 updates["age_group"] = (payload.age_group or "").strip()
             if full_name:
                 updates["name"] = full_name
 
-            update_user_csv_profile(user_id=user_id, updates=updates)
+            csv_store.update_user_csv_profile(user_id=user_id, updates=updates)
 
-            users = read_users_data()
+            users = user_store.read_users_data()
             user = users.get(user_id)
             if isinstance(user, dict):
                 if full_name:
@@ -75,7 +71,7 @@ def build_router(
                 user["email"] = updates.get("email", user.get("email", ""))
                 user["country"] = updates.get("country", user.get("country", ""))
                 users[user_id] = user
-                write_users_data(users)
+                user_store.write_users_data(users)
 
             return {"status": "ok", "user_id": user_id, "updates": updates}
         except HTTPException:
@@ -104,13 +100,13 @@ def build_router(
                 updates["name"] = full_name
             password = (payload.password or "").strip()
             if password:
-                updates["password"] = api.validate_password_strength(password)
+                updates["password"] = auth.validate_password_strength(password)
             if updates["email"]:
-                updates["email"] = api.normalize_email_address(updates["email"], require_email=True)
+                updates["email"] = auth.normalize_email_address(updates["email"], require_email=True)
 
-            update_user_csv_profile(user_id=user_id, updates=updates)
+            csv_store.update_user_csv_profile(user_id=user_id, updates=updates)
 
-            users = read_users_data()
+            users = user_store.read_users_data()
             user = users.get(user_id)
             if isinstance(user, dict):
                 if full_name:
@@ -118,7 +114,7 @@ def build_router(
                 user["email"] = updates.get("email", user.get("email", ""))
                 user["country"] = updates.get("country", user.get("country", ""))
                 users[user_id] = user
-                write_users_data(users)
+                user_store.write_users_data(users)
 
             safe_updates = dict(updates)
             if "password" in safe_updates:
@@ -136,7 +132,7 @@ def build_router(
             user_id = (user_id or "").strip()
             if not user_id:
                 raise HTTPException(status_code=400, detail="user_id is required")
-            row = read_user_csv_profile(user_id)
+            row = csv_store.read_user_csv_profile(user_id)
             if not row:
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found in users.csv")
             return {"status": "ok", "user_id": user_id, "profile": row}
@@ -148,7 +144,7 @@ def build_router(
     @router.get("/users", tags=["Users"], summary="Get all users")
     def get_users() -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             users = {k: v for k, v in data.items() if not k.startswith("_")}
             return {"status": "ok", "count": len(users), "users": users}
         except Exception as exc:
@@ -157,12 +153,12 @@ def build_router(
     @router.get("/users/{user_id}", tags=["Users"], summary="Get user by ID")
     def get_user_by_id(user_id: str) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = ensure_financial_collections(user)
-            user = enrich_portfolio_with_ath(user)
+            user = portfolio.ensure_financial_collections(user)
+            user = portfolio.enrich_portfolio_with_ath(user)
             return {"status": "ok", "user_id": user_id, "user": user}
         except HTTPException:
             raise
@@ -172,7 +168,7 @@ def build_router(
     @router.get("/users/{user_id}/benchmarks", tags=["Users"], summary="Get Singapore peer benchmarking for a user")
     def get_user_peer_benchmarks(user_id: str) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if user is None:
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
@@ -180,14 +176,14 @@ def build_router(
             raw_age = benchmark_user.get("age")
             needs_csv_age = raw_age in (None, "", 0, "0")
             if needs_csv_age:
-                csv_profile = read_user_csv_profile(user_id)
+                csv_profile = csv_store.read_user_csv_profile(user_id)
                 csv_age = (csv_profile.get("age") or "").strip()
                 if csv_age:
                     try:
                         benchmark_user["age"] = int(float(csv_age))
                     except Exception:
                         pass
-            result = api.build_peer_benchmarks(benchmark_user)
+            result = portfolio.build_peer_benchmarks(benchmark_user)
             return {"status": "ok", "user_id": user_id, **result}
         except HTTPException:
             raise
@@ -199,11 +195,11 @@ def build_router(
     @router.get("/users/{user_id}/financials", tags=["Users"], summary="Get editable financial items by user ID")
     def get_user_financial_items(user_id: str) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = ensure_financial_collections(user)
+            user = portfolio.ensure_financial_collections(user)
             return {
                 "status": "ok",
                 "user_id": user_id,
@@ -228,14 +224,14 @@ def build_router(
     @router.post("/users/age", tags=["Users"], summary="Update user age")
     def update_user_age(payload: models.UserAgeUpdateRequest) -> dict[str, Any]:
         try:
-            users = read_users_data()
+            users = user_store.read_users_data()
             user = users.get(payload.user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{payload.user_id}' not found")
 
             user["age"] = int(payload.age)
             users[payload.user_id] = user
-            write_users_data(users)
+            user_store.write_users_data(users)
             return {
                 "status": "ok",
                 "user_id": payload.user_id,
@@ -250,7 +246,7 @@ def build_router(
     @router.get("/users/{user_id}/wellness", tags=["Users"], summary="Get wellness section by user ID")
     def get_user_wellness_by_id(user_id: str) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
@@ -277,12 +273,12 @@ def build_router(
         horizon_years: int = Query(5, ge=1, le=10, description="Scenario horizon in years"),
     ) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            result = api.build_portfolio_impact(user, horizon_years=horizon_years)
+            result = portfolio.build_portfolio_impact(user, horizon_years=horizon_years)
             return {"status": "ok", "user_id": user_id, **result}
         except HTTPException:
             raise
@@ -303,23 +299,23 @@ def build_router(
         model: str = Query("gpt-4.1-mini", description="OpenAI model for synthesis"),
     ) -> dict[str, Any]:
         try:
-            data = read_users_data()
+            data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
             symbol_query = (symbol or "").strip().upper()
             resolve_query = symbol_query[:-4] if symbol_query.endswith("-USD") else symbol_query
-            resolved = await api.resolve_asset(resolve_query)
+            resolved = await market.resolve_asset(resolve_query)
             resolved_category = str(resolved.get("category", "unknown")).lower()
 
-            result = api.evaluate_compatibility(
+            result = compatibility.evaluate_compatibility(
                 user=user,
                 target_type=target_type,
                 symbol=symbol,
                 resolved_category=resolved_category,
             )
-            llm = api.synthesize_compatibility_with_llm(
+            llm = compatibility.synthesize_compatibility_with_llm(
                 user_id=user_id,
                 user=user,
                 compatibility=result,
@@ -352,13 +348,13 @@ def build_router(
     )
     def update_user_risk_and_recalibrate(payload: models.UserRiskUpdateRequest) -> dict[str, Any]:
         try:
-            users = read_users_data()
+            users = user_store.read_users_data()
             user = users.get(payload.user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{payload.user_id}' not found")
 
-            user["risk_profile"] = normalize_risk_profile(payload.risk_profile)
-            wellness_result = api.calculate_user_wellness(user)
+            user["risk_profile"] = portfolio.normalize_risk_profile(payload.risk_profile)
+            wellness_result = wellness.calculate_user_wellness(user)
             user["wellness_metrics"] = wellness_result["wellness_metrics"]
             user["behavioral_resilience_score"] = wellness_result["behavioral_resilience_score"]
             user["financial_resilience_score"] = wellness_result["financial_resilience_score"]
@@ -369,7 +365,7 @@ def build_router(
             user["resilience_breakdown"] = wellness_result["resilience_breakdown"]
             user["action_insights"] = wellness_result["action_insights"]
             users[payload.user_id] = user
-            write_users_data(users)
+            user_store.write_users_data(users)
 
             return {
                 "status": "ok",

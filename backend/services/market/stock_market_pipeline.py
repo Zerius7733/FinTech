@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 import yfinance as yf
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_UNIVERSE_PATH = BASE_DIR / "data" / "knowledge_base" / "stocks_symbols" / "large_cap_us.txt"
 SNAPSHOT_PATH = BASE_DIR / "data" / "json" / "stock_market_snapshot.json"
 RANKINGS_PATH = BASE_DIR / "data" / "json" / "stock_market_rankings.json"

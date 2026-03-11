@@ -4,12 +4,12 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 
 import requests
-from backend.market_scripts.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
+from backend.services.market.providers.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
 
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
 DEFAULT_LLM_MODEL = "gpt-4.1-mini"
-BACKEND_DIR = Path(__file__).resolve().parents[1]
+BACKEND_DIR = Path(__file__).resolve().parents[2]
 PROJECT_DIR = BACKEND_DIR.parent
 WORKSPACE_DIR = PROJECT_DIR.parent
 COMMON_CRYPTO_SYMBOLS = {

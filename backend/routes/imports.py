@@ -1,18 +1,16 @@
-from collections.abc import Callable
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
 
 import backend.api_models as models
-import backend.services.api_deps as api
 
 
 def build_router(
     *,
-    read_users_data: Callable[[], dict[str, Any]],
-    write_users_data: Callable[[dict[str, Any]], None],
-    recalculate_user_financials: Callable[[dict[str, Any]], dict[str, Any]],
-    sync_user_to_assets_csv: Callable[[str, dict[str, Any]], None],
+    user_store: Any,
+    csv_store: Any,
+    portfolio: Any,
+    imports: Any,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -23,16 +21,16 @@ def build_router(
     )
     def parse_screenshot_import(user_id: str, payload: models.ScreenshotParseRequest) -> dict[str, Any]:
         try:
-            users = read_users_data()
+            users = user_store.read_users_data()
             if not isinstance(users.get(user_id), dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            parsed = api.parse_screenshot_with_llm(
+            parsed = imports.parse_screenshot_with_llm(
                 payload.image_base64,
                 model=payload.model,
                 page_text=payload.page_text,
             )
-            pending = api.create_pending_import(user_id=user_id, parsed=parsed)
+            pending = imports.create_pending_import(user_id=user_id, parsed=parsed)
             return {
                 "status": "ok",
                 "user_id": user_id,
@@ -56,7 +54,7 @@ def build_router(
     )
     def parse_screenshot_import_guest(payload: models.ScreenshotParseRequest) -> dict[str, Any]:
         try:
-            parsed = api.parse_screenshot_with_llm(
+            parsed = imports.parse_screenshot_with_llm(
                 payload.image_base64,
                 model=payload.model,
                 page_text=payload.page_text,
@@ -90,7 +88,7 @@ def build_router(
             if not isinstance(holdings, list):
                 raise HTTPException(status_code=400, detail="holdings must be an array")
 
-            users = read_users_data()
+            users = user_store.read_users_data()
             if not isinstance(users.get(user_id), dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
@@ -100,13 +98,13 @@ def build_router(
                     status_code=400,
                     detail="holdings array is empty; please provide at least one valid row",
                 )
-            result = api.confirm_import(
+            result = imports.confirm_import(
                 import_id=import_id.strip(),
                 user_id=user_id,
                 users_data=users,
                 override_holdings=override_holdings,
             )
-            write_users_data(users)
+            user_store.write_users_data(users)
             diagnostics = {
                 "received_holdings_count": len(override_holdings) if override_holdings is not None else None,
                 "received_holdings_preview": (override_holdings or [])[:3],
@@ -142,15 +140,15 @@ def build_router(
     )
     def merge_screenshot_holdings_direct(user_id: str, payload: models.ScreenshotMergeRequest) -> dict[str, Any]:
         try:
-            users = read_users_data()
+            users = user_store.read_users_data()
             user = users.get(user_id)
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            result = api.merge_holdings_into_user(user, payload.holdings)
-            users[user_id] = recalculate_user_financials(user)
-            write_users_data(users)
-            sync_user_to_assets_csv(user_id, users[user_id])
+            result = imports.merge_holdings_into_user(user, payload.holdings)
+            users[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users)
+            csv_store.sync_user_to_assets_csv(user_id, users[user_id])
             return {"status": "ok", "user_id": user_id, **result, "user": users[user_id]}
         except HTTPException:
             raise
