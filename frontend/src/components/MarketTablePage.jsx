@@ -88,6 +88,30 @@ function scoreTone(score) {
   return { label: 'Cautious fit', color: 'var(--red)', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.22)' }
 }
 
+function InlineSpinner({ size = 12, color = 'currentColor' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      <circle cx="8" cy="8" r="6" fill="none" stroke="rgba(148,163,184,0.22)" strokeWidth="2" />
+      <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round">
+        <animateTransform
+          attributeName="transform"
+          type="rotate"
+          from="0 8 8"
+          to="360 8 8"
+          dur="0.8s"
+          repeatCount="indefinite"
+        />
+      </path>
+    </svg>
+  )
+}
+
 function getAssetClassBase(endpoint, riskProfile) {
   const risk = normalizeRiskBucket(riskProfile)
   const matrix = {
@@ -368,13 +392,14 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
           <div style={MD.card}>
             <div style={MD.cardLabel}>Why It Fits</div>
             {hasUserContext && whyItFitsLoading ? (
-              <div style={{ ...MD.metricLabel, marginBottom: 8, color: 'var(--text-faint)' }}>
+              <div style={MD.whyItFitsLoadingLabel}>
+                <InlineSpinner size={13} color="var(--text-faint)" />
                 Updating from AI...
               </div>
             ) : null}
             {hasUserContext ? (
               <div style={MD.reasonList}>
-                {(llmWhyItFits.length ? llmWhyItFits : analysis.reasons).map(reason => (
+                {(whyItFitsLoading ? [] : (llmWhyItFits.length ? llmWhyItFits : analysis.reasons)).map(reason => (
                   <div key={reason} style={MD.reasonRow}>
                     <span style={MD.reasonDot} />
                     <span>{reason}</span>
@@ -1335,6 +1360,17 @@ const MD = {
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
     marginBottom: 6,
+  },
+  whyItFitsLoadingLabel: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.62rem',
+    color: 'var(--text-faint)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
   },
   metricValue: {
     fontFamily: 'var(--font-display)',

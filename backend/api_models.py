@@ -48,6 +48,10 @@ class IncomeStreamCreateRequest(BaseModel):
     monthly_amount: float = Field(..., ge=0)
 
 
+class SyncedBalanceUpdateRequest(BaseModel):
+    balance: float = Field(..., ge=0)
+
+
 class RegisterRequest(BaseModel):
     username: str
     password: str

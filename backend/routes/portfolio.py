@@ -238,6 +238,51 @@ def build_router(
             raise HTTPException(status_code=500, detail=f"synced balance reload failed: {exc}") from exc
 
     @router.post(
+        "/users/{user_id}/financials/synced-balance",
+        tags=["Users"],
+        summary="Set the synced account balance for a user and persist it back to users.csv",
+    )
+    def update_user_synced_balance(user_id: str, payload: models.SyncedBalanceUpdateRequest) -> dict[str, Any]:
+        try:
+            users = read_users_data()
+            user = users.get(user_id)
+            if not isinstance(user, dict):
+                raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+            rows, fieldnames = load_users_csv()
+            target = next((row for row in rows if (row.get("user_id") or "").strip() == user_id), None)
+            if target is None:
+                target = {key: "" for key in fieldnames}
+                target["user_id"] = user_id
+                rows.append(target)
+
+            next_balance = round(float(payload.balance), 2)
+            current_count = int(target.get(synced_balance_reload_count_field) or 0)
+            target.setdefault("dbs", "0")
+            target.setdefault("uob", "0")
+            target.setdefault("ocbc", "0")
+            target.setdefault("other_banks", "0")
+            target[synced_account_balance_field] = f"{next_balance:.2f}"
+            target[synced_balance_reload_count_field] = str(max(1, current_count))
+            write_users_csv(rows, fieldnames)
+
+            user = apply_synced_csv_profile_to_user(user, target)
+            users[user_id] = recalculate_user_financials(user)
+            write_users_data(users)
+
+            return {
+                "status": "ok",
+                "user_id": user_id,
+                "synced_account_balance": users[user_id].get("cash_balance", 0.0),
+                "reload_count": max(1, current_count),
+                "user": users[user_id],
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"synced balance update failed: {exc}") from exc
+
+    @router.post(
         "/users/{user_id}/financials/portfolio",
         tags=["Users"],
         summary="Add a holding into user portfolio and fetch latest market price",

@@ -7,6 +7,7 @@ import backend.services.api_deps as services
 import backend.constants as const
 import backend.market_helpers as market_helpers
 import backend.portfolio_helpers as portfolio_helpers
+import backend.runtime as runtime
 import backend.user_store as user_store
 from backend.routes import auth, health, imports, market, portfolio, recommendations, retirement, updates, users
 
@@ -47,66 +48,9 @@ services.rewrite_user_profiles_with_order(const.USER_JSON_PATH)
 services.ensure_login_csv_schema(const.LOGIN_CSV_PATH)
 
 
-async def _run_stock_market_refresh() -> None:
-    try:
-        result = await asyncio.to_thread(services.refresh_stock_market_data)
-        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
-        print(
-            "[api] stock market refresh complete:",
-            {
-                "source": meta.get("source"),
-                "ranked_count": meta.get("ranked_count"),
-                "failed_count": meta.get("failed_count"),
-            },
-        )
-    except Exception as exc:
-        print(f"[api] stock market refresh failed: {exc}")
-
-
-async def _run_commodity_market_refresh() -> None:
-    try:
-        result = await asyncio.to_thread(services.refresh_commodity_market_data)
-        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
-        print(
-            "[api] commodity market refresh complete:",
-            {
-                "source": meta.get("source"),
-                "ranked_count": meta.get("ranked_count"),
-                "failed_count": meta.get("failed_count"),
-            },
-        )
-    except Exception as exc:
-        print(f"[api] commodity market refresh failed: {exc}")
-
-
-async def _run_crypto_market_refresh() -> None:
-    try:
-        refreshed: list[dict[str, Any]] = []
-        for page, per_page in const.CRYPTO_MARKET_REFRESH_TARGETS:
-            rows = await asyncio.to_thread(
-                services.refresh_coingecko_coin_listings,
-                page,
-                per_page,
-            )
-            refreshed.append({"page": page, "per_page": per_page, "count": len(rows)})
-        print("[api] crypto market refresh complete:", refreshed)
-    except Exception as exc:
-        print(f"[api] crypto market refresh failed: {exc}")
-
-
-async def _market_refresh_loop() -> None:
-    #await _run_stock_market_refresh()
-    #await _run_commodity_market_refresh()
-    while True:
-        await asyncio.sleep(const.STOCK_MARKET_REFRESH_INTERVAL_SECONDS)
-        await _run_stock_market_refresh()
-        await _run_commodity_market_refresh()
-        await _run_crypto_market_refresh()
-
-
 @app.on_event("startup")
 async def startup_stock_market_refresh() -> None:
-    app.state.stock_market_refresh_task = asyncio.create_task(_market_refresh_loop())
+    app.state.stock_market_refresh_task = asyncio.create_task(runtime.market_refresh_loop())
 
 
 @app.on_event("shutdown")

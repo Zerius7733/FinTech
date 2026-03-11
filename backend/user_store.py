@@ -4,13 +4,49 @@ from typing import Any
 
 import backend.constants as const
 import backend.services.api_deps as api
-from backend.portfolio_helpers import ensure_financial_collections
+from backend.portfolio_helpers import ensure_financial_collections, recalculate_user_financials
+
+
+def _has_synced_profile_values(row: dict[str, Any]) -> bool:
+    if not isinstance(row, dict):
+        return False
+    synced_balance = read_synced_account_balance_from_csv_row(row)
+    if synced_balance > 0:
+        return True
+    for field in ("estate", "liability", "income"):
+        if _read_csv_money_field(row, field) > 0:
+            return True
+    return False
+
+
+def _load_users_csv_lookup() -> dict[str, dict[str, str]]:
+    if not const.ASSETS_CSV_PATH.exists():
+        return {}
+    with open(const.ASSETS_CSV_PATH, "r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        rows = [dict(row) for row in reader]
+    lookup: dict[str, dict[str, str]] = {}
+    for row in rows:
+        user_id = (row.get("user_id") or "").strip()
+        if user_id:
+            lookup[user_id] = row
+    return lookup
 
 
 def read_users_data() -> dict[str, Any]:
     with open(const.USER_JSON_PATH, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
-    return api.normalize_users_data(data)
+    normalized = api.normalize_users_data(data)
+    csv_lookup = _load_users_csv_lookup()
+    for user_id, user in list(normalized.items()):
+        if user_id.startswith("_") or not isinstance(user, dict):
+            continue
+        row = csv_lookup.get(user_id)
+        if not row or not _has_synced_profile_values(row):
+            continue
+        synced_user = apply_synced_csv_profile_to_user(dict(user), row)
+        normalized[user_id] = recalculate_user_financials(synced_user)
+    return normalized
 
 
 def write_users_data(data: dict[str, Any]) -> None:

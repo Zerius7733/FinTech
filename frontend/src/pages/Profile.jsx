@@ -1375,7 +1375,7 @@ function FinancialManagerModal({
   const tabMap = {
     assets: {
       title: 'Assets',
-      description: 'Add manual assets like real estate, business ownership, private holdings, or your own bank-labelled entries. Synced account balance is read only and stays separate.',
+      description: 'Add manual assets like real estate, business ownership, and private holdings. Choosing Banks updates the synced account balance and writes it back to the linked sync CSV.',
       items: profile?.manual_assets ?? [],
     },
     liabilities: {
@@ -1623,7 +1623,7 @@ function FinancialManagerModal({
                         ? (item.source === 'portfolio'
                           ? `${startCase(item.category)} holding`
                           : item.source === 'cash'
-                            ? 'Read only · synced from linked banks'
+                            ? 'Synced from linked banks · editable via Banks form'
                           : item.id === 'estate-seed'
                             ? 'Synced Property'
                           : startCase(item.category))
@@ -2254,11 +2254,16 @@ export default function Profile() {
     setError('')
     try {
       const isPortfolioAssetCreate = tab === 'assets' && ['stock', 'crypto', 'commodity'].includes(String(payload?.category || '').toLowerCase())
+      const isSyncedBalanceUpdate = tab === 'assets' && String(payload?.category || '').toLowerCase() === 'banks'
       const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
-      const url = isPortfolioAssetCreate
+      const url = isSyncedBalanceUpdate
+        ? `${API}/users/${authUser.user_id}/financials/synced-balance`
+        : isPortfolioAssetCreate
         ? `${API}/users/${authUser.user_id}/financials/portfolio`
         : `${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}`
-      const body = isPortfolioAssetCreate
+      const body = isSyncedBalanceUpdate
+        ? JSON.stringify({ balance: Number(payload?.value || 0) })
+        : isPortfolioAssetCreate
         ? JSON.stringify({
             symbol: payload?.symbol || payload?.label,
             asset_class: payload?.category,

@@ -475,20 +475,57 @@ def _build_portfolio_context(user: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _fallback_why_it_fits_bullets(compatibility: Dict[str, Any]) -> list[str]:
+    target = compatibility.get("target", {}) if isinstance(compatibility, dict) else {}
     factors = compatibility.get("factors", {}) if isinstance(compatibility, dict) else {}
+    guardrails = compatibility.get("guardrails", {}) if isinstance(compatibility, dict) else {}
+    target_type = str(target.get("type", "asset") or "asset")
+    symbol = str(target.get("symbol", "this asset") or "this asset")
+    score = float(compatibility.get("compatibility_score", 0.0) or 0.0)
+    rating = str(compatibility.get("rating", "Watch") or "Watch")
+    suggested_cap_pct = float(compatibility.get("suggested_allocation_cap_pct", 0.0) or 0.0)
+    already_in_portfolio = bool(compatibility.get("already_in_portfolio"))
     risk_fit = float(factors.get("risk_fit", 0.0) or 0.0)
     liquidity_fit = float(factors.get("liquidity_fit", 0.0) or 0.0)
     concentration_impact = float(factors.get("concentration_impact", 0.0) or 0.0)
+    stress_guardrail = float(factors.get("stress_guardrail", 0.0) or 0.0)
+    blocked_by_stress = bool(guardrails.get("blocked_by_stress"))
     warnings = compatibility.get("warnings", []) if isinstance(compatibility, dict) else []
 
-    bullets = [
-        f"Risk-fit matrix: {risk_fit:.1f}/100 based on your risk profile versus the target asset risk.",
-        f"Liquidity matrix: {liquidity_fit:.1f}/100 based on your cash buffer against expected volatility.",
-        f"Concentration matrix: {concentration_impact:.1f}/100 based on diversification impact if you add/scale this position.",
-    ]
+    label = f"{target_type[:-1]} {symbol}" if target_type.endswith("s") else f"{target_type} {symbol}"
+
+    if risk_fit >= 75:
+        risk_line = f"{label} is a strong risk-profile match at {risk_fit:.1f}/100, which supports the current {rating.lower()} rating."
+    elif risk_fit >= 50:
+        risk_line = f"{label} is a workable risk fit at {risk_fit:.1f}/100, but the asset risk is slightly above your comfort zone."
+    else:
+        risk_line = f"{label} scores {risk_fit:.1f}/100 on risk fit, so the asset risk currently runs ahead of your profile."
+
+    if liquidity_fit >= 70:
+        liquidity_line = f"Liquidity fit is {liquidity_fit:.1f}/100, so your current cash buffer looks adequate for this asset's expected volatility."
+    elif liquidity_fit >= 45:
+        liquidity_line = f"Liquidity fit is {liquidity_fit:.1f}/100, which means this position is only reasonable if you keep sizing disciplined."
+    else:
+        liquidity_line = f"Liquidity fit is {liquidity_fit:.1f}/100, so adding {symbol} could pressure your buffer if volatility picks up."
+
+    if already_in_portfolio:
+        concentration_line = (
+            f"You already hold {symbol}; concentration impact is {concentration_impact:.1f}/100, "
+            f"so any add should stay controlled and within roughly {suggested_cap_pct:.1f}% of portfolio size."
+        )
+    else:
+        concentration_line = (
+            f"Concentration impact is {concentration_impact:.1f}/100, suggesting {symbol} can fit better as a capped allocation "
+            f"around {suggested_cap_pct:.1f}% rather than an oversized position."
+        )
+
+    bullets = [risk_line, liquidity_line, concentration_line]
+    if blocked_by_stress or stress_guardrail < 50:
+        bullets.append(
+            f"Stress guardrail is {stress_guardrail:.1f}/100, so this should stay a watchlist idea until your financial stress improves."
+        )
     if isinstance(warnings, list):
         warning = next((str(item).strip() for item in warnings if str(item).strip()), "")
-        if warning:
+        if warning and len(bullets) < 4:
             bullets.append(warning)
     return bullets[:4]
 
