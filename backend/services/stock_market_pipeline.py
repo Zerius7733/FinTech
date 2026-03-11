@@ -7,9 +7,9 @@ import yfinance as yf
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_UNIVERSE_PATH = BASE_DIR / "knowledge_base" / "stocks_symbols" / "large_cap_us.txt"
-SNAPSHOT_PATH = BASE_DIR / "json_data" / "stock_market_snapshot.json"
-RANKINGS_PATH = BASE_DIR / "json_data" / "stock_market_rankings.json"
+DEFAULT_UNIVERSE_PATH = BASE_DIR / "data" / "knowledge_base" / "stocks_symbols" / "large_cap_us.txt"
+SNAPSHOT_PATH = BASE_DIR / "data" / "json" / "stock_market_snapshot.json"
+RANKINGS_PATH = BASE_DIR / "data" / "json" / "stock_market_rankings.json"
 MAX_PROVIDER_ATTEMPTS = 3
 DEFAULT_MAX_AGE_SECONDS = 6 * 60 * 60
 

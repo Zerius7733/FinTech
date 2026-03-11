@@ -8,7 +8,7 @@ def calculate_user_wellness(user: Dict[str, Any]) -> Dict[str, Any]:
     return calculate_behavioral_resilience(user)
 
 
-def update_wellness_file(json_path: str = "json_data/user.json") -> Dict[str, Any]:
+def update_wellness_file(json_path: str = "data/json/user.json") -> Dict[str, Any]:
     print(f"[wellness] calculating metrics from {json_path}")
     with open(json_path, "r", encoding="utf-8") as f:
         users = json.load(f)

@@ -110,7 +110,7 @@ def update_stock_prices(users: Dict[str, Any], prices: Dict[str, float]) -> Dict
     return updated
 
 
-def update_stock_prices_file(path: str = "json_data/user.json", yf_module: Any = yf) -> Dict[str, Any]:
+def update_stock_prices_file(path: str = "data/json/user.json", yf_module: Any = yf) -> Dict[str, Any]:
     print(f"[prices] updating prices in {path}")
     with open(path, "r", encoding="utf-8") as f:
         users = json.load(f)
@@ -131,7 +131,7 @@ def update_stock_prices_file(path: str = "json_data/user.json", yf_module: Any =
 
 
 def update_stock_listings_cache_prices_file(
-    path: str = "json_data/stock_listings_cache.json",
+    path: str = "data/json/stock_listings_cache.json",
     yf_module: Any = yf,
 ) -> Dict[str, Any]:
     print(f"[prices] updating stock listing cache prices in {path}")
@@ -163,5 +163,5 @@ def update_stock_listings_cache_prices_file(
 if __name__ == "__main__":
     result = update_stock_prices_file()
     update_stock_listings_cache_prices_file()
-    result = update_assets_file(json_path="json_data/user.json", csv_path="csv_data/users.csv")
+    result = update_assets_file(json_path="data/json/user.json", csv_path="data/csv/users.csv")
     print("stock and asset updates complete")

@@ -195,7 +195,7 @@ def _now_utc_iso() -> str:
 
 def _insight_disk_cache_path(asset_type: str, symbol: str) -> Path:
     folder = INSIGHTS_DISK_DIR_MAP.get(asset_type, f"{asset_type}_insights")
-    base = Path(__file__).resolve().parents[1] / "json_data" / folder
+    base = Path(__file__).resolve().parents[1] / "data" / "json" / folder
     return base / f"{symbol.lower()}.json"
 
 
@@ -421,7 +421,7 @@ async def _fetch_crypto_history(
 ) -> PriceSeries:
     def _fetch_crypto_history_yfinance() -> PriceSeries:
         # Ensure yfinance's timezone cache is writable in this project.
-        tz_cache_dir = Path(__file__).resolve().parents[1] / "json_data" / ".yfinance_tz_cache"
+        tz_cache_dir = Path(__file__).resolve().parents[1] / "data" / "json" / ".yfinance_tz_cache"
         tz_cache_dir.mkdir(parents=True, exist_ok=True)
         try:
             yf.set_tz_cache_location(str(tz_cache_dir))
@@ -954,7 +954,7 @@ async def _openai_web_search_news(client: httpx.AsyncClient, query: str) -> List
     )
     if os.getenv("NEWS_DEBUG", "").strip() == "1":
         try:
-            debug_path = Path(__file__).resolve().parents[1] / "json_data" / "openai_news_debug.json"
+            debug_path = Path(__file__).resolve().parents[1] / "data" / "json" / "openai_news_debug.json"
             debug_path.parent.mkdir(parents=True, exist_ok=True)
             debug_path.write_text(
                 json.dumps(resp_json, indent=2)[:300000],

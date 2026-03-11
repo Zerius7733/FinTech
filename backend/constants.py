@@ -5,14 +5,19 @@ from pathlib import Path
 
 # Static paths and app constants.
 BASE_DIR = Path(__file__).resolve().parent
-USER_JSON_PATH = BASE_DIR / "json_data" / "user.json"
-USER_PORTFOLIO_DIR = BASE_DIR / "json_data" / "user_portfolio"
-CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
-LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "login_users.csv"
-ASSETS_CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
-STOCK_LISTINGS_CACHE_PATH = BASE_DIR / "json_data" / "stock_listings_cache.json"
-COINGECKO_MARKETS_CACHE_PATH = BASE_DIR / "json_data" / "coingecko_markets_cache.json"
-COMMODITY_MARKET_RANKINGS_PATH = BASE_DIR / "json_data" / "commodity_market_rankings.json"
+DATA_DIR = BASE_DIR / "data"
+JSON_DATA_DIR = DATA_DIR / "json"
+CSV_DATA_DIR = DATA_DIR / "csv"
+KNOWLEDGE_BASE_DIR = DATA_DIR / "knowledge_base"
+
+USER_JSON_PATH = JSON_DATA_DIR / "user.json"
+USER_PORTFOLIO_DIR = JSON_DATA_DIR / "user_portfolio"
+CSV_PATH = CSV_DATA_DIR / "users.csv"
+LOGIN_CSV_PATH = CSV_DATA_DIR / "login_users.csv"
+ASSETS_CSV_PATH = CSV_DATA_DIR / "users.csv"
+STOCK_LISTINGS_CACHE_PATH = JSON_DATA_DIR / "stock_listings_cache.json"
+COINGECKO_MARKETS_CACHE_PATH = JSON_DATA_DIR / "coingecko_markets_cache.json"
+COMMODITY_MARKET_RANKINGS_PATH = JSON_DATA_DIR / "commodity_market_rankings.json"
 
 COMMON_COMMODITY_ETFS = {"GLD", "SLV", "IAU", "SIVR", "PPLT", "PALL"}
 COMMODITY_ETF_TO_UNDERLYING = {

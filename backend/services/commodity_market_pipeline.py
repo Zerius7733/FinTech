@@ -7,8 +7,8 @@ import yfinance as yf
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SNAPSHOT_PATH = BASE_DIR / "json_data" / "commodity_market_snapshot.json"
-RANKINGS_PATH = BASE_DIR / "json_data" / "commodity_market_rankings.json"
+SNAPSHOT_PATH = BASE_DIR / "data" / "json" / "commodity_market_snapshot.json"
+RANKINGS_PATH = BASE_DIR / "data" / "json" / "commodity_market_rankings.json"
 DEFAULT_MAX_AGE_SECONDS = 6 * 60 * 60
 MAX_PROVIDER_ATTEMPTS = 3
 

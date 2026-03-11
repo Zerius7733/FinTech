@@ -18,7 +18,7 @@ DEFAULT_VISION_MODEL = "gpt-4.1-mini"
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 PROJECT_DIR = BACKEND_DIR.parent
 WORKSPACE_DIR = PROJECT_DIR.parent
-IMPORTS_PATH = BACKEND_DIR / "json_data" / "screenshot_imports.json"
+IMPORTS_PATH = BACKEND_DIR / "data" / "json" / "screenshot_imports.json"
 PENDING_TTL_HOURS = 24
 CONFIRMED_TTL_HOURS = 168  # 7 days
 

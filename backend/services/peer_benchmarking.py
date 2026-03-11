@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 
-BENCHMARK_DIR = Path(__file__).resolve().parent.parent / "json_data" / "benchmarks"
+BENCHMARK_DIR = Path(__file__).resolve().parent.parent / "data" / "json" / "benchmarks"
 INCOME_BENCHMARK_PATH = BENCHMARK_DIR / "sg_income_by_age.json"
 NET_WORTH_BENCHMARK_PATH = BENCHMARK_DIR / "sg_net_worth_by_age.json"
 

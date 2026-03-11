@@ -10,7 +10,7 @@ from urllib3.util.retry import Retry
 
 
 COINGECKO_MARKETS_URL = "https://api.coingecko.com/api/v3/coins/markets"
-_CACHE_PATH = Path(__file__).resolve().parent / "json_data" / "coingecko_markets_cache.json"
+_CACHE_PATH = Path(__file__).resolve().parent / "data" / "json" / "coingecko_markets_cache.json"
 _DEFAULT_PREFERRED_CACHE_SECONDS = 5 * 60
 _DEFAULT_MAX_STALE_SECONDS = 24 * 60 * 60
 _DEFAULT_HEADERS = {

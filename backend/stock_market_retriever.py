@@ -20,9 +20,9 @@ DEFAULT_STOCK_SYMBOLS = [
     "V",
 ]
 DEFAULT_SYMBOLS_TXT_PATH = (
-    Path(__file__).resolve().parent / "knowledge_base" / "stocks_symbols" / "nasdaqlisted.txt"
+    Path(__file__).resolve().parent / "data" / "knowledge_base" / "stocks_symbols" / "nasdaqlisted.txt"
 )
-STOCK_CACHE_PATH = Path(__file__).resolve().parent / "json_data" / "stock_listings_cache.json"
+STOCK_CACHE_PATH = Path(__file__).resolve().parent / "data" / "json" / "stock_listings_cache.json"
 MAX_PROVIDER_ATTEMPTS = 3
 YFINANCE_FETCH_MULTIPLIER = 4
 

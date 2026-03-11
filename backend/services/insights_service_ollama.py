@@ -191,7 +191,7 @@ def _now_utc_iso() -> str:
 
 def _insight_disk_cache_path(asset_type: str, symbol: str) -> Path:
     folder = INSIGHTS_DISK_DIR_MAP.get(asset_type, f"{asset_type}_insights")
-    base = Path(__file__).resolve().parents[1] / "json_data" / folder
+    base = Path(__file__).resolve().parents[1] / "data" / "json" / folder
     return base / f"{symbol.lower()}.json"
 
 
