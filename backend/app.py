@@ -15,6 +15,9 @@ from fastapi.responses import Response
 from pydantic import AliasChoices, BaseModel, Field
 import yfinance as yf
 import backend.services.api_deps as api
+from backend.api_models import AssetResolveResponse, CoinListingResponse, InsightsResponse, StockListingResponse
+from backend.routes.health import build_router as build_health_router
+from backend.routes.market import build_router as build_market_router
 
 load_dotenv()
 
@@ -38,6 +41,10 @@ COMMODITY_ETF_TO_UNDERLYING = {
     "PALL": "PA=F",
 }
 STOCK_MARKET_REFRESH_INTERVAL_SECONDS = 30 * 60
+CRYPTO_MARKET_REFRESH_TARGETS = (
+    (1, 100),
+    (2, 100),
+)
 INSIGHTS_RATE_LIMIT_ENABLED = os.getenv("INSIGHTS_RATE_LIMIT_ENABLED", "1").strip().lower() in {"1", "true", "yes", "on"}
 INSIGHTS_RATE_LIMIT_WINDOW_SECONDS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_WINDOW_SECONDS", "3600")))
 INSIGHTS_RATE_LIMIT_MAX_REQUESTS = max(1, int(os.getenv("INSIGHTS_RATE_LIMIT_MAX_REQUESTS", "10")))
@@ -92,6 +99,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(build_health_router(youtube_url=YOUTUBE_HELP_VIDEO_URL, embed_url=YOUTUBE_HELP_EMBED_URL))
+
 api.rewrite_user_profiles_with_order(USER_JSON_PATH)
 api.ensure_login_csv_schema(LOGIN_CSV_PATH)
 
@@ -128,6 +137,21 @@ async def _run_commodity_market_refresh() -> None:
         print(f"[api] commodity market refresh failed: {exc}")
 
 
+async def _run_crypto_market_refresh() -> None:
+    try:
+        refreshed: list[dict[str, Any]] = []
+        for page, per_page in CRYPTO_MARKET_REFRESH_TARGETS:
+            rows = await asyncio.to_thread(
+                api.refresh_coingecko_coin_listings,
+                page,
+                per_page,
+            )
+            refreshed.append({"page": page, "per_page": per_page, "count": len(rows)})
+        print("[api] crypto market refresh complete:", refreshed)
+    except Exception as exc:
+        print(f"[api] crypto market refresh failed: {exc}")
+
+
 async def _market_refresh_loop() -> None:
     #await _run_stock_market_refresh()
     #await _run_commodity_market_refresh()
@@ -135,6 +159,7 @@ async def _market_refresh_loop() -> None:
         await asyncio.sleep(STOCK_MARKET_REFRESH_INTERVAL_SECONDS)
         await _run_stock_market_refresh()
         await _run_commodity_market_refresh()
+        await _run_crypto_market_refresh()
 
 
 @app.on_event("startup")
@@ -523,6 +548,9 @@ def _enforce_insights_rate_limit(subject: str) -> None:
             ),
         )
     bucket.append(now)
+
+
+app.include_router(build_market_router(enforce_insights_rate_limit=_enforce_insights_rate_limit))
 
 
 def _sum_portfolio_positions(user: Dict[str, Any]) -> float:
@@ -1029,32 +1057,6 @@ class ScreenshotMergeRequest(BaseModel):
     holdings: list[Dict[str, Any]]
 
 
-class CoinListingResponse(BaseModel):
-    id: str
-    name: str
-    symbol: str
-    image: str | None = None
-    market_cap_rank: float | int | None = None
-    current_price: float | int | None = None
-    market_cap: float | int | None = None
-    total_volume: float | int | None = None
-    price_change_percentage_24h: float | int | None = None
-    price_change_percentage_7d: float | int | None = None
-    circulating_supply: float | int | None = None
-    ath: float | int | None = None
-    ath_change_percentage: float | int | None = None
-
-class StockListingResponse(BaseModel):
-    id: str
-    name: str
-    symbol: str
-    current_price: float | int | None = None
-    market_cap: float | int | None = None
-    total_volume: float | int | None = None
-    price_change_percentage_24h: float | int | None = None
-    ath: float | int | None = None
-
-
 class ScreenshotParseRequest(BaseModel):
     image_base64: str
     model: str = api.DEFAULT_VISION_MODEL
@@ -1098,55 +1100,6 @@ class ScreenshotConfirmRequest(BaseModel):
     import_id: str
     holdings: list[ScreenshotHolding]
 
-
-class RegisterRequest(BaseModel):
-    username: str
-    password: str
-    email: str | None = None
-
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
-class AssetResolveResponse(BaseModel):
-    query: str
-    symbol: str
-    name: str
-    category: str
-    source: str
-
-
-class InsightsResponse(BaseModel):
-    type: str
-    symbol: str
-    name: str
-    period: Dict[str, Any]
-    metrics: Dict[str, Any]
-    notable_moves: list[Dict[str, Any]]
-    drivers: list[Dict[str, Any]]
-    narrative: str
-    tldr: list[str]
-    conclusion: str
-    disclaimer: str
-    citations: list[Dict[str, Any]]
-    warnings: list[str]
-
-
-
-@app.get("/health", tags=["Health"], summary="API health check")
-def health() -> Dict[str, str]:
-    return {"status": "ok"}
-
-
-@app.get("/app/content/video", tags=["Health"], summary="Get app help video URL")
-def get_app_help_video() -> Dict[str, str]:
-    return {
-        "status": "ok",
-        "youtube_url": YOUTUBE_HELP_VIDEO_URL,
-        "embed_url": YOUTUBE_HELP_EMBED_URL,
-    }
 
 
 @app.post("/auth/login", tags=["Users"], summary="Authenticate a user")
@@ -1164,110 +1117,6 @@ def login(payload: LoginRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
-
-
-@app.get(
-    "/api/assets/resolve",
-    tags=["Market"],
-    summary="Resolve a symbol to stock, crypto, commodity, or unknown",
-    response_model=AssetResolveResponse,
-)
-async def resolve_asset_category(
-    q: str = Query(..., description="Symbol or alias to resolve, e.g. AAPL, BTC, XAU"),
-) -> AssetResolveResponse:
-    result = await api.resolve_asset(q)
-    return AssetResolveResponse(**result)
-
-
-@app.get(
-    "/api/insights",
-    tags=["Market"],
-    summary="Get historical analytics + grounded narrative for a symbol",
-    response_model=InsightsResponse,
-)
-async def get_asset_insights(
-    request: Request,
-    type: str = Query(..., description="One of: stock, crypto, commodity"),
-    symbol: str = Query(..., description="Ticker/symbol to analyze"),
-    months: int = Query(3, ge=1, le=24, description="Historical window in months"),
-    user_id: str | None = Query(None, description="Optional user id for rate limiting"),
-) -> InsightsResponse:
-    try:
-        rate_subject = f"user:{user_id}" if user_id else f"ip:{getattr(request.client, 'host', 'unknown')}"
-        _enforce_insights_rate_limit(rate_subject)
-        result = await api.build_insights(asset_type=type, symbol=symbol, months=months)
-        return InsightsResponse(**result)
-    except api.InsightError as exc:
-        detail = str(exc)
-        if detail == "price data not found":
-            detail = (
-                f"price data not found for type='{type}', symbol='{symbol}', months={months}. "
-                "Check the type/symbol pair, e.g. stock:AAPL, crypto:BTC, commodity:GOLD."
-            )
-        raise HTTPException(status_code=exc.status_code, detail=detail) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"insights failed: {exc}") from exc
-
-@app.get(
-    "/api/market/cryptos",
-    tags=["Market"],
-    summary="Get CoinGecko crypto listings in normalized format",
-    response_model=list[StockListingResponse],
-)
-def get_crypto_listings(
-    page: int = Query(1, ge=1, description="CoinGecko page number"),
-    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
-) -> list[StockListingResponse]:
-    try:
-        rows = api.fetch_coingecko_coin_listings(page=page, per_page=per_page)
-        return [StockListingResponse(**row) for row in rows]
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"coingecko fetch failed: {exc}") from exc
-
-@app.get(
-    "/api/market/stocks",
-    tags=["Market"],
-    summary="Get stock listings in normalized format",
-    response_model=list[StockListingResponse],
-)
-def get_stock_listings(
-    page: int = Query(1, ge=1, description="Stock page number"),
-    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
-) -> list[StockListingResponse]:
-    try:
-        rows = api.get_precomputed_stock_rankings(
-            page=page,
-            per_page=per_page,
-        )
-        return [StockListingResponse(**row) for row in rows]
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        print(f"[api] stock fetch failed: {exc}")
-        raise HTTPException(status_code=502, detail=f"stock fetch failed: {exc}") from exc
-
-
-@app.get(
-    "/api/market/commodities",
-    tags=["Market"],
-    summary="Get commodity listings in normalized format",
-    response_model=list[CoinListingResponse],
-)
-def get_commodity_listings(
-    page: int = Query(1, ge=1, description="Commodity page number"),
-    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
-) -> list[CoinListingResponse]:
-    try:
-        rows = api.get_precomputed_commodity_rankings(
-            page=page,
-            per_page=per_page,
-        )
-        return [CoinListingResponse(**row) for row in rows]
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        print(f"[api] commodity fetch failed: {exc}")
-        raise HTTPException(status_code=502, detail=f"commodity fetch failed: {exc}") from exc
 
 
 @app.post("/auth/register", tags=["Users"], summary="Register login user into users.csv")

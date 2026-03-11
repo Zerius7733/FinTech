@@ -53,7 +53,33 @@ def _cache_key(page: int, per_page: int) -> str:
     return f"{page}:{per_page}"
 
 
-def _load_cached(page: int, per_page: int, max_stale_seconds: int) -> List[Dict[str, Any]] | None:
+def _describe_upstream_error(exc: Exception) -> str:
+    parts = [f"{type(exc).__name__}: {exc}"]
+    response = getattr(exc, "response", None)
+    request = getattr(exc, "request", None)
+
+    if response is not None:
+        try:
+            parts.append(f"status={response.status_code}")
+        except Exception:
+            pass
+        try:
+            body = str(response.text or "").strip()
+            if body:
+                parts.append(f"body={body[:500]}")
+        except Exception:
+            pass
+
+    if request is not None:
+        try:
+            parts.append(f"url={request.url}")
+        except Exception:
+            pass
+
+    return " | ".join(parts)
+
+
+def _load_cached(page: int, per_page: int, max_stale_seconds: int | None) -> List[Dict[str, Any]] | None:
     try:
         if not _CACHE_PATH.exists():
             return None
@@ -71,7 +97,7 @@ def _load_cached(page: int, per_page: int, max_stale_seconds: int) -> List[Dict[
         rows = entry.get("rows")
         if not isinstance(rows, list):
             return None
-        if time.time() - fetched_at > max_stale_seconds:
+        if max_stale_seconds is not None and time.time() - fetched_at > max_stale_seconds:
             return None
         return rows
     except Exception:
@@ -99,23 +125,30 @@ def _save_cache(page: int, per_page: int, rows: List[Dict[str, Any]]) -> None:
         return
 
 
-def fetch_coingecko_coin_listings(
+def load_cached_coingecko_coin_listings(
     page: int = 1,
     per_page: int = 50,
+    *,
+    max_stale_seconds: int | None = None,
+) -> List[Dict[str, Any]] | None:
+    normalized_page = max(1, int(page))
+    normalized_per_page = max(1, min(250, int(per_page)))
+    stale_limit = None if max_stale_seconds is None else max(0, int(max_stale_seconds))
+    return _load_cached(
+        page=normalized_page,
+        per_page=normalized_per_page,
+        max_stale_seconds=stale_limit,
+    )
+
+
+def _fetch_coingecko_coin_listings_live(
+    *,
+    page: int,
+    per_page: int,
     requests_module: Any = requests,
-    preferred_cache_seconds: int = _DEFAULT_PREFERRED_CACHE_SECONDS,
-    max_stale_seconds: int = _DEFAULT_MAX_STALE_SECONDS,
 ) -> List[Dict[str, Any]]:
     normalized_page = max(1, int(page))
     normalized_per_page = max(1, min(250, int(per_page)))
-
-    cached = _load_cached(
-        page=normalized_page,
-        per_page=normalized_per_page,
-        max_stale_seconds=max(0, int(preferred_cache_seconds)),
-    )
-    if cached is not None:
-        return cached
 
     params = {
         "vs_currency": "usd",
@@ -145,6 +178,15 @@ def fetch_coingecko_coin_listings(
                         break
                     except requests.RequestException as exc:
                         last_error = exc
+                        print(
+                            "[coingecko] upstream request failed:",
+                            {
+                                "attempt": attempt,
+                                "page": normalized_page,
+                                "per_page": normalized_per_page,
+                                "error": _describe_upstream_error(exc),
+                            },
+                        )
                         if attempt == 3:
                             raise
                         time.sleep(0.35 * attempt)
@@ -158,16 +200,15 @@ def fetch_coingecko_coin_listings(
             )
             response.raise_for_status()
     except Exception as exc:
-        cached = _load_cached(
-            page=normalized_page,
-            per_page=normalized_per_page,
-            max_stale_seconds=max(0, int(max_stale_seconds)),
+        print(
+            "[coingecko] fetch failed:",
+            {
+                "page": normalized_page,
+                "per_page": normalized_per_page,
+                "error": _describe_upstream_error(exc) if isinstance(exc, Exception) else str(exc),
+            },
         )
-        if cached is not None:
-            return cached
-        raise RuntimeError(
-            "CoinGecko request failed and no recent cached market list is available"
-        ) from exc
+        raise RuntimeError("CoinGecko live request failed") from exc
 
     if response is None:
         if last_error is not None:
@@ -204,3 +245,53 @@ def fetch_coingecko_coin_listings(
 
     _save_cache(page=normalized_page, per_page=normalized_per_page, rows=normalized)
     return normalized
+
+
+def refresh_coingecko_coin_listings(
+    page: int = 1,
+    per_page: int = 50,
+    requests_module: Any = requests,
+) -> List[Dict[str, Any]]:
+    return _fetch_coingecko_coin_listings_live(
+        page=page,
+        per_page=per_page,
+        requests_module=requests_module,
+    )
+
+
+def fetch_coingecko_coin_listings(
+    page: int = 1,
+    per_page: int = 50,
+    requests_module: Any = requests,
+    preferred_cache_seconds: int = _DEFAULT_PREFERRED_CACHE_SECONDS,
+    max_stale_seconds: int = _DEFAULT_MAX_STALE_SECONDS,
+) -> List[Dict[str, Any]]:
+    normalized_page = max(1, int(page))
+    normalized_per_page = max(1, min(250, int(per_page)))
+
+    # If we have any allowed cached page, serve it immediately.
+    cached = _load_cached(
+        page=normalized_page,
+        per_page=normalized_per_page,
+        max_stale_seconds=max(0, int(max_stale_seconds)),
+    )
+    if cached is not None:
+        return cached
+
+    try:
+        return _fetch_coingecko_coin_listings_live(
+            page=normalized_page,
+            per_page=normalized_per_page,
+            requests_module=requests_module,
+        )
+    except Exception as exc:
+        cached = _load_cached(
+            page=normalized_page,
+            per_page=normalized_per_page,
+            max_stale_seconds=max(0, int(max_stale_seconds)),
+        )
+        if cached is not None:
+            return cached
+        raise RuntimeError(
+            "CoinGecko request failed and no recent cached market list is available"
+        ) from exc

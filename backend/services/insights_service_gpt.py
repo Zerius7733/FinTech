@@ -650,6 +650,62 @@ def _build_tldr_and_conclusion(
     return [bullet_1, bullet_2, bullet_3], conclusion
 
 
+def _fallback_news_queries(asset_type: str, symbol: str, months: int) -> List[str]:
+    base = symbol
+    if asset_type == "crypto":
+        base = f"{symbol} crypto"
+    elif asset_type == "commodity":
+        base = f"{symbol} commodity"
+    else:
+        base = f"{symbol} stock ETF company"
+
+    return [
+        f"{base} market news last {months} months",
+        f"{base} latest developments last {months} months",
+        f"{base} why is it moving recently",
+    ]
+
+
+def _build_no_price_fallback_response(
+    asset_type: str,
+    symbol: str,
+    months: int,
+    *,
+    narrative: str,
+    drivers: List[Dict[str, Any]],
+    citations: List[Dict[str, Any]],
+    tldr: List[str],
+    conclusion: str,
+) -> Dict[str, Any]:
+    start, end = _period_window(months)
+    return {
+        "type": asset_type,
+        "symbol": symbol,
+        "name": symbol,
+        "period": {
+            "months": months,
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+        },
+        "metrics": {
+            "history_available": False,
+            "data_source": "openai_web_fallback",
+        },
+        "notable_moves": [],
+        "drivers": drivers,
+        "narrative": narrative,
+        "tldr": tldr,
+        "conclusion": conclusion,
+        "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+        "citations": citations,
+        "warnings": [
+            "Historical price data was unavailable for this symbol.",
+            "Narrative was generated from OpenAI web context instead of verified price history.",
+            "Informational only. No investment recommendation.",
+        ],
+    }
+
+
 # ----------------------------
 # OpenAI Web Search (drivers)
 # ----------------------------
@@ -1292,6 +1348,184 @@ async def _generate_narrative_with_llm(
         if not drivers:
             return _metrics_only_fallback(), []
         return _deterministic_narrative_fallback()
+
+
+async def build_insights_gpt_web_fallback(
+    asset_type: str,
+    symbol: str,
+    months: int,
+    *,
+    failure_reason: str = "price data not found",
+) -> Dict[str, Any]:
+    _load_env_once()
+    atype = _normalize_type(asset_type)
+    sym = _normalize_symbol(symbol)
+
+    if months <= 0 or months > 24:
+        raise InsightError("months must be between 1 and 24", status_code=400)
+
+    start, end = _period_window(months)
+    drivers: List[Dict[str, Any]] = []
+    citations: List[Dict[str, Any]] = []
+
+    async with httpx.AsyncClient() as client:
+        urls_seen = set()
+        for query in _fallback_news_queries(atype, sym, months):
+            try:
+                results = await _openai_web_search_news(client, query)
+            except Exception:
+                results = []
+            for row in results:
+                url = str(row.get("url", "")).strip()
+                if not url or url in urls_seen:
+                    continue
+                urls_seen.add(url)
+                published = str(row.get("published_at", "")).strip()
+                drivers.append(
+                    {
+                        "date": published[:10] if published else end.isoformat(),
+                        "headline": str(row.get("headline", "")).strip(),
+                        "source": str(row.get("source", "")).strip(),
+                        "url": url,
+                    }
+                )
+                if len(drivers) >= 10:
+                    break
+            if len(drivers) >= 10:
+                break
+
+        openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
+        if not openai_api_key:
+            narrative = (
+                f"Verified historical price data for {sym} was unavailable for the requested {months}-month window, "
+                "so this fallback could not build a metrics-based market narrative. "
+                "Recent web context should be reviewed directly before drawing conclusions."
+            )
+            tldr = [
+                "Historical market-price series could not be retrieved.",
+                f"Fallback context window: last {months} month(s).",
+                f"OpenAI fallback unavailable because OPENAI_API_KEY is not set.",
+            ]
+            conclusion = (
+                f"No verified price-history insight could be produced for {sym}. "
+                "Use a supported exchange-qualified ticker or restore market data access."
+            )
+            return _build_no_price_fallback_response(
+                atype,
+                sym,
+                months,
+                narrative=narrative,
+                drivers=drivers,
+                citations=citations,
+                tldr=tldr,
+                conclusion=conclusion,
+            )
+
+        system_prompt = (
+            "You are a financial market context summarizer. "
+            "Historical price data is unavailable for this asset. "
+            "Use ONLY the supplied web results and failure reason. "
+            "Do not provide investment advice or fabricate prices, returns, volatility, or performance metrics. "
+            "Write neutral descriptive language only."
+        )
+        user_payload = {
+            "asset_type": atype,
+            "symbol": sym,
+            "window_months": months,
+            "failure_reason": failure_reason,
+            "drivers": drivers,
+            "task": (
+                "Return STRICT JSON only with keys: narrative (string), tldr (array of exactly 3 short bullets), "
+                "conclusion (string), selected_driver_urls (array of urls you used). "
+                "Narrative should explain that verified price history is unavailable, summarize the main recent themes "
+                "from the supplied web results, and clearly separate confirmed facts from uncertainty."
+            ),
+        }
+
+        narrative = ""
+        tldr: List[str] = []
+        conclusion = ""
+        try:
+            resp_json = await _request_json(
+                client,
+                "POST",
+                OPENAI_CHAT_URL,
+                json_payload={
+                    "model": _openai_narrative_model(),
+                    "response_format": {"type": "json_object"},
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": json.dumps(user_payload)},
+                    ],
+                    "temperature": 0.1,
+                },
+                headers={
+                    "Authorization": f"Bearer {openai_api_key}",
+                    "Content-Type": "application/json",
+                },
+                timeout=25.0,
+                max_retries=1,
+            )
+            parsed = _extract_json_object(_chat_completion_extract_text(resp_json))
+            narrative = str(parsed.get("narrative", "")).strip()
+            raw_tldr = parsed.get("tldr", [])
+            if isinstance(raw_tldr, list):
+                tldr = [str(item).strip() for item in raw_tldr if str(item).strip()][:3]
+            conclusion = str(parsed.get("conclusion", "")).strip()
+            selected_urls = parsed.get("selected_driver_urls", [])
+            if not isinstance(selected_urls, list):
+                selected_urls = []
+            citation_id = 1
+            seen_urls = set()
+            for url in selected_urls:
+                clean = str(url).strip()
+                if not clean or clean in seen_urls:
+                    continue
+                seen_urls.add(clean)
+                citations.append({"id": citation_id, "url": clean})
+                citation_id += 1
+            ok, _reasons = validate_text(narrative)
+            if not ok:
+                narrative = ""
+        except Exception:
+            narrative = ""
+
+    if not narrative:
+        narrative = (
+            f"Verified historical price data for {sym} was unavailable for the requested {months}-month window. "
+            "This fallback uses recent web context instead of a metrics-based market history. "
+            + (
+                "Recent coverage points to the following themes: "
+                + "; ".join(
+                    f"{row.get('date', '')}: {row.get('headline', '')}" for row in drivers[:3] if row.get("headline")
+                )
+                + "."
+                if drivers
+                else "No reliable recent web context was retrieved for the symbol."
+            )
+        )
+    if len(tldr) < 3:
+        tldr = [
+            "Historical market-price series could not be retrieved.",
+            f"Fallback context uses recent web results for {sym}.",
+            "Treat this as descriptive context, not a metrics-based market analysis.",
+        ]
+    if not conclusion:
+        conclusion = (
+            f"A reduced insight was returned for {sym} because verified price history was unavailable. "
+            "The result should be read as contextual news summary rather than technical market analysis."
+        )
+
+    return _build_no_price_fallback_response(
+        atype,
+        sym,
+        months,
+        narrative=narrative,
+        drivers=drivers,
+        citations=citations,
+        tldr=tldr,
+        conclusion=conclusion,
+    )
 
 
 # ----------------------------

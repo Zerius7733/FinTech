@@ -1,0 +1,219 @@
+{
+  "type": "crypto",
+  "symbol": "BCH",
+  "updated_at": "2026-03-11T12:24:14.544366+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "crypto",
+      "symbol": "BCH",
+      "name": "BCH",
+      "period": {
+        "months": 3,
+        "start": "2025-12-11",
+        "end": "2026-03-11"
+      },
+      "metrics": {
+        "start_price": 575.144,
+        "end_price": 448.5097,
+        "return_pct": -22.0178,
+        "volatility_annualized": 0.634956,
+        "max_drawdown_pct": -32.5079,
+        "avg_daily_volume": 444756612.8352,
+        "volume_change_pct": -7.4557
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-06",
+          "move_pct": 15.3342,
+          "close": 523.778,
+          "volume": 1084927799.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-13",
+          "move_pct": 12.2572,
+          "close": 564.2401,
+          "volume": 559876279.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-05",
+          "move_pct": -14.6121,
+          "close": 454.1395,
+          "volume": 953217462.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-23",
+          "move_pct": -13.2288,
+          "close": 494.8557,
+          "volume": 577208132.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-15",
+          "move_pct": -0.9571,
+          "close": 592.2101,
+          "volume": 1108745529.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": 15.3342,
+          "close": 523.778,
+          "volume": 1084927799.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-06",
+          "headline": "BCH Price Prediction: Targets $580-630 by Mid-February 2026",
+          "source": "",
+          "url": "https://blockchain.news/news/20260204-bch-price-prediction-targets-580-630-by-mid-february-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Bitcoin Cash (BCH) Shows Resilience in February 2026 Amid Market Downturn",
+          "source": "",
+          "url": "https://www.ainvest.com/news/bitcoin-cash-bch-shows-resilience-february-2026-market-downturn-2602/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Bitcoin Cash Drops 16% in a Week with No Clear Catalyst",
+          "source": "",
+          "url": "https://www.ainvest.com/news/bitcoin-cash-drops-16-week-clear-catalyst-2602/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "BCH Price Prediction: Bitcoin Cash Targets $615-630 by Mid-February 2026",
+          "source": "",
+          "url": "https://blockchain.news/news/20260203-price-prediction-bch-bitcoin-cash-targets-615-630-by?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "BCH Price Prediction: Targets $580-630 by Mid-February 2026 | MEXC News",
+          "source": "",
+          "url": "https://www.mexc.com/news/631338?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "BCH Price Prediction: Bitcoin Cash Targets $580-$630 by Mid-February 2026",
+          "source": "",
+          "url": "https://blockchain.news/news/20260205-price-prediction-bch-bitcoin-cash-targets-580-630-by?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Bitcoin Cash Price Could Rally 14% As Traders Exit Crowded Risk Trades - The Coin Republic",
+          "source": "",
+          "url": "https://www.thecoinrepublic.com/2026/02/05/bitcoin-cash-price-could-rally-14-as-traders-exit-crowded-risk-trades/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Bitcoin Cash Sets Multiple Records in February Amid Extreme Market Fear - TodayOnChain",
+          "source": "",
+          "url": "https://www.todayonchain.com/news/article/01KHRG26VH7KAR3FHHK2MH4VKQ/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "USA v. 14.8 BTC & 14.8 BCH: Forfeiture Complaint (\u2018Narcotics Proceeds/Etienne Brinkman\u2019) - OffshoreAlert",
+          "source": "",
+          "url": "https://www.offshorealert.com/usa-v-14-8-btc-14-8-bch-forfeiture-complaint-narcotics-proceeds-etienne-brinkman/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "HASH Asset Management's Lawsuit vs. ICHI Crypto Founders and Associates: New Forensic Report Shows Collusion and Insider Trading in a Fraud, 'Pump-and-Dump' Scheme",
+          "source": "",
+          "url": "https://www.prnewswire.com/news-releases/hash-asset-managements-lawsuit-vs-ichi-crypto-founders-and-associates-new-forensic-report-shows-collusion-and-insider-trading-in-a-fraud-pump-and-dump-scheme-302661395.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
+          "headline": "Genesis sues Roger Ver for $20M over unsettled crypto options trades By Cointelegraph",
+          "source": "",
+          "url": "https://www.investing.com/news/cryptocurrency-news/genesis-sues-roger-ver-for-20m-over-unsettled-crypto-options-trades-2988058?utm_source=openai"
+        },
+        {
+          "date": "2026-02-13",
+          "headline": "Bitcoin Cash (BCH) Daily Market Analysis 13 February 2026 | CoinStats AI",
+          "source": "",
+          "url": "https://coinstats.app/ai/a/latest-news-for-bitcoin-cash?utm_source=openai"
+        },
+        {
+          "date": "2026-02-13",
+          "headline": "BCH Price Prediction: Targets $720-$750 by February 2026",
+          "source": "",
+          "url": "https://blockchain.news/news/20260127-bch-price-prediction-targets-720-750-by-february-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-13",
+          "headline": "BCH Price Prediction: Targets $615-630 by March 2026 Despite Current Weakness",
+          "source": "",
+          "url": "https://blockchain.news/news/20260223-price-prediction-bch-targets-615-630-by-march-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-13",
+          "headline": "Bitcoin Cash Stumbles 0.25% After Weeks of Gains",
+          "source": "",
+          "url": "https://www.ainvest.com/news/bitcoin-cash-stumbles-0-25-weeks-gains-2602/?utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 575.144 to an ending price of 448.5097, the asset experienced a negative return of -22.0178%. The annualized volatility was relatively high at 0.634956, accompanied by a maximum drawdown of -32.5079%, indicating significant price fluctuations and downside risk during the period. The largest upward move occurred on 2026-02-06, with a 15.3342% increase closing at 523.778 on a notably high volume day of 1,084,927,799 shares, coinciding with multiple bullish price predictions targeting $580-$630 by mid-February 2026 and reports of resilience amid market downturns [1][2][3][4][5][6][7][8]. Conversely, the largest downward move was on 2026-02-05, with a -14.6121% drop closing at 454.1395 on a volume of 953,217,462 shares, which may have contributed to the subsequent volatility but lacks a direct linked news event. Another significant down day was on 2026-02-23 with a -13.2288% move. A high volume day on 2026-01-15 with 1,108,745,529 shares traded saw a modest price decline of -0.9571%, suggesting active trading without major price shifts. Overall, the volume decreased by -7.4557% compared to average daily volume of 444,756,612.8 shares, reflecting somewhat reduced market participation. The price action and volume patterns coincided with a mix of optimistic price forecasts and legal/regulatory news impacting the broader crypto market, including lawsuits and forfeiture complaints reported around early February 2026 [9][10][11].",
+      "tldr": [
+        "Period return: -22.02% with annualized volatility 0.635.",
+        "Largest up day: 2026-02-06 (15.33%), largest down day: 2026-02-05 (-14.61%).",
+        "Highest volume spike was on 2026-01-15 with volume 1,108,745,529."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-22.02%) with peak drawdown of -32.51%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://blockchain.news/news/20260204-bch-price-prediction-targets-580-630-by-mid-february-2026?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.ainvest.com/news/bitcoin-cash-bch-shows-resilience-february-2026-market-downturn-2602/?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.ainvest.com/news/bitcoin-cash-drops-16-week-clear-catalyst-2602/?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://blockchain.news/news/20260203-price-prediction-bch-bitcoin-cash-targets-615-630-by?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://www.mexc.com/news/631338?utm_source=openai"
+        },
+        {
+          "id": 6,
+          "url": "https://blockchain.news/news/20260205-price-prediction-bch-bitcoin-cash-targets-580-630-by?utm_source=openai"
+        },
+        {
+          "id": 7,
+          "url": "https://www.thecoinrepublic.com/2026/02/05/bitcoin-cash-price-could-rally-14-as-traders-exit-crowded-risk-trades/?utm_source=openai"
+        },
+        {
+          "id": 8,
+          "url": "https://www.todayonchain.com/news/article/01KHRG26VH7KAR3FHHK2MH4VKQ/?utm_source=openai"
+        },
+        {
+          "id": 9,
+          "url": "https://www.offshorealert.com/usa-v-14-8-btc-14-8-bch-forfeiture-complaint-narcotics-proceeds-etienne-brinkman/?utm_source=openai"
+        },
+        {
+          "id": 10,
+          "url": "https://www.prnewswire.com/news-releases/hash-asset-managements-lawsuit-vs-ichi-crypto-founders-and-associates-new-forensic-report-shows-collusion-and-insider-trading-in-a-fraud-pump-and-dump-scheme-302661395.html?utm_source=openai"
+        },
+        {
+          "id": 11,
+          "url": "https://www.investing.com/news/cryptocurrency-news/genesis-sues-roger-ver-for-20m-over-unsettled-crypto-options-trades-2988058?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

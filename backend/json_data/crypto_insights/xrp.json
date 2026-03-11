@@ -1,0 +1,195 @@
+{
+  "type": "crypto",
+  "symbol": "XRP",
+  "updated_at": "2026-03-11T12:56:27.246923+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "crypto",
+      "symbol": "XRP",
+      "name": "XRP",
+      "period": {
+        "months": 3,
+        "start": "2025-12-11",
+        "end": "2026-03-11"
+      },
+      "metrics": {
+        "start_price": 2.036,
+        "end_price": 1.3822,
+        "return_pct": -32.1116,
+        "volatility_annualized": 0.688577,
+        "max_drawdown_pct": -48.4064,
+        "avg_daily_volume": 3234374819.4132,
+        "volume_change_pct": 18.3363
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-07",
+          "move_pct": 20.8015,
+          "close": 1.4691,
+          "volume": 11254054037.410126,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-01-06",
+          "move_pct": 12.7672,
+          "close": 2.3571,
+          "volume": 6981059724.119276,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": -19.8374,
+          "close": 1.2161,
+          "volume": 12032460868.66745,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-08",
+          "move_pct": -6.133,
+          "close": 2.1647,
+          "volume": 3933188250.085719,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-02-06",
+          "move_pct": -19.8374,
+          "close": 1.2161,
+          "volume": 12032460868.66745,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-02-07",
+          "move_pct": 20.8015,
+          "close": 1.4691,
+          "volume": 11254054037.410126,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-07",
+          "headline": "Why Is XRP Up 24.1% on Friday? | Nasdaq",
+          "source": "",
+          "url": "https://www.nasdaq.com/articles/why-xrp-241-friday?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "XRP Price: Eight Corporations Commit $2 Billion to Reserves in February 2026 - CoinCentral",
+          "source": "",
+          "url": "https://coincentral.com/xrp-price-eight-corporations-commit-2-billion-to-reserves-in-february-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "XRP Gains 2.6% As a Wave of Ripple Partnerships Are Announced - 24/7 Wall St.",
+          "source": "",
+          "url": "https://247wallst.com/investing/2026/02/16/xrp-gains-2-6-as-a-wave-of-ripple-partnerships-are-announced/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "XRP Price Outlook: Will XRP Break Its February Curse in 2026? - 24/7 Wall St.",
+          "source": "",
+          "url": "https://247wallst.com/investing/2026/02/17/xrp-price-outlook-will-xrp-break-its-february-curse-in-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Q4 2025\nEARNINGS PRESENTATION\nFebruary 19, 2026",
+          "source": "",
+          "url": "https://d5bp8bijhhba2.cloudfront.net/pdf/60d89b1cadb0f36262d98de5287c550c4b24cd1edd8f4302d114ba0267be6e7d.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "Standard Chartered Cuts XRP Price Target By 65%: From $8 to $2.80 - 24/7 Wall St.",
+          "source": "",
+          "url": "https://247wallst.com/investing/2026/02/20/standard-chartered-cuts-xrp-price-target-by-65-from-8-to-2-80/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "XRP Price Forecast \u2014 $1.39 XRP-USD, $2.45 Base Case, $8 Standard, $315 Tokenization Target",
+          "source": "",
+          "url": "https://www.tradingnews.com/news/xrp-price-forecast-2-45-xrp-usd-base-why-1-57-usd-is-the-only-level-that-matters?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "How Will XRP Price Perform in February 2026? Insights from ChatGPT, Claude, and Grok",
+          "source": "",
+          "url": "https://coinedition.com/how-will-xrp-price-perform-in-february-2026-insights-from-chatgpt-claude-and-grok/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "ChatGPT, Claude Agree on BTC, ETH, XRP February Prediction",
+          "source": "",
+          "url": "https://www.ccn.com/analysis/crypto/btc-xrp-eth-crash-chatgpt-claude-feb-2026-price-prediction/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "XRP Stability Tested Near $1.60 As SEC Legal Saga Reaches Final Conclusion - National Today",
+          "source": "",
+          "url": "https://nationaltoday.com/us/fl/tampa/news/2026/02/02/xrp-stability-tested-near-1-60-as-sec-legal-saga-reaches-final-conclusion?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "XRP soars 12% as SEC and Ripple formally end legal dispute",
+          "source": "",
+          "url": "https://crypto.news/xrp-soars-ripple-sec-end-legal-dispute-2025/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "XRP vs SEC: A Definitive Landmark Case Analysis (February 2026)",
+          "source": "",
+          "url": "https://www.bydfi.com/en/cointalk/legal-crypto-xrp-sec-case?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "XRP Faces Volatility Despite Legal Win - National Today",
+          "source": "",
+          "url": "https://nationaltoday.com/us/fl/tampa/news/2026/01/30/xrp-faces-volatility-despite-legal-win/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "United States cryptocurrency reserve proposal",
+          "source": "",
+          "url": "https://en.wikipedia.org/wiki/United_States_cryptocurrency_reserve_proposal?utm_source=openai"
+        },
+        {
+          "date": "2026-02-07",
+          "headline": "RIPPLE SEC LAWSUIT UPDATE",
+          "source": "",
+          "url": "https://www.youtube.com/watch?v=9dEVA9XpEZE&utm_source=openai"
+        }
+      ],
+      "narrative": "From a starting price of 2.036, the asset experienced a significant decline to an end price of 1.3822, resulting in a total return of -32.1116%. The annualized volatility was relatively high at 0.688577, and the maximum drawdown reached -48.4064%, indicating substantial price fluctuations and downside risk during the period. The largest upward price movement occurred on 2026-02-07, with a 20.8015% increase closing at 1.4691, accompanied by a notably high volume of 11,254,054,037 shares traded, which was also tagged as a high volume day. This surge coincided with multiple news events including reports on XRP's 24.1% gain on that Friday and announcements of Ripple partnerships and corporate commitments to reserves, suggesting these developments may have contributed to the price jump [1][2][3]. Conversely, the largest downward move was on 2026-02-06, with a 19.8374% drop closing at 1.2161 and an even higher volume of 12,032,460,868 shares, also marked as a high volume day. This sharp decline occurred just prior to the positive news wave, and while specific drivers for this drop are less clear, it may relate to ongoing volatility around the SEC legal saga and market reactions [4][11]. Overall, average daily volume increased by 18.3363%, reflecting heightened trading activity during this volatile period.",
+      "tldr": [
+        "Period return: -32.11% with annualized volatility 0.689.",
+        "Largest up day: 2026-02-07 (20.80%), largest down day: 2026-02-06 (-19.84%).",
+        "Highest volume spike was on 2026-02-06 with volume 12,032,460,868."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-32.11%) with peak drawdown of -48.41%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.nasdaq.com/articles/why-xrp-241-friday?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://coincentral.com/xrp-price-eight-corporations-commit-2-billion-to-reserves-in-february-2026/?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://247wallst.com/investing/2026/02/16/xrp-gains-2-6-as-a-wave-of-ripple-partnerships-are-announced/?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://nationaltoday.com/us/fl/tampa/news/2026/02/02/xrp-stability-tested-near-1-60-as-sec-legal-saga-reaches-final-conclusion?utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://crypto.news/xrp-soars-ripple-sec-end-legal-dispute-2025/?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}

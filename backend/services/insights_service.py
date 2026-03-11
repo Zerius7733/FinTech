@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict
 
 from backend.services.insights_service_gpt import InsightError as GPTInsightError
+from backend.services.insights_service_gpt import build_insights_gpt_web_fallback
 from backend.services.insights_service_gpt import build_insights_gpt
 from backend.services.insights_service_ollama import InsightError as OllamaInsightError
 from backend.services.insights_service_ollama import build_insights_ollama
@@ -54,6 +55,14 @@ def selected_insights_provider() -> str:
     return _provider_from_env()
 
 
+def _should_use_openai_web_fallback(exc: Exception) -> bool:
+    detail = str(exc).strip().lower()
+    return getattr(exc, "status_code", 0) == 404 and detail in {
+        "price data not found",
+        "close price not available",
+    }
+
+
 async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str, Any]:
     provider = _provider_from_env()
     try:
@@ -61,6 +70,26 @@ async def build_insights(asset_type: str, symbol: str, months: int) -> Dict[str,
             return await build_insights_ollama(asset_type=asset_type, symbol=symbol, months=months)
         return await build_insights_gpt(asset_type=asset_type, symbol=symbol, months=months)
     except OllamaInsightError as exc:
+        if _should_use_openai_web_fallback(exc):
+            try:
+                return await build_insights_gpt_web_fallback(
+                    asset_type=asset_type,
+                    symbol=symbol,
+                    months=months,
+                    failure_reason=str(exc),
+                )
+            except GPTInsightError:
+                pass
         raise InsightError(str(exc), status_code=exc.status_code) from exc
     except GPTInsightError as exc:
+        if _should_use_openai_web_fallback(exc):
+            try:
+                return await build_insights_gpt_web_fallback(
+                    asset_type=asset_type,
+                    symbol=symbol,
+                    months=months,
+                    failure_reason=str(exc),
+                )
+            except GPTInsightError:
+                pass
         raise InsightError(str(exc), status_code=exc.status_code) from exc
