@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
@@ -9,7 +10,7 @@ import backend.services.api_deps as api
 
 def build_router(
     *,
-    login_csv_path: str,
+    login_csv_path: Path,
     read_users_data: Callable[[], dict[str, Any]],
     write_users_data: Callable[[dict[str, Any]], None],
     update_user_csv_profile: Callable[[str, dict[str, Any]], None],

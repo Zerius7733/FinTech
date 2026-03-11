@@ -15,6 +15,7 @@ from backend.services.auth_registry import LoginValidationError
 from backend.services.auth_registry import RegisterConflictError
 from backend.services.auth_registry import RegisterValidationError
 from backend.services.auth_registry import authenticate_login_user
+from backend.services.auth_registry import bootstrap_login_csv_from_assets_csv
 from backend.services.auth_registry import ensure_login_csv_schema
 from backend.services.auth_registry import normalize_email_address
 from backend.services.auth_registry import register_login_user
@@ -58,6 +59,7 @@ __all__ = [
     "add_default_assets_row",
     "add_default_user_profile",
     "authenticate_login_user",
+    "bootstrap_login_csv_from_assets_csv",
     "ensure_login_csv_schema",
     "normalize_email_address",
     "validate_password_strength",

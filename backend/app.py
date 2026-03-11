@@ -2,13 +2,8 @@ import asyncio
 from typing import Any, Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import backend.config as config
+from backend import config, constants, user_store, market_helpers, portfolio_helpers,runtime
 import backend.services.api_deps as services
-import backend.constants as const
-import backend.market_helpers as market_helpers
-import backend.portfolio_helpers as portfolio_helpers
-import backend.runtime as runtime
-import backend.user_store as user_store
 from backend.routes import auth, health, imports, market, portfolio, recommendations, retirement, updates, users
 
 app = FastAPI(
@@ -42,10 +37,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(health.build_router(youtube_url=const.YOUTUBE_HELP_VIDEO_URL, embed_url=const.YOUTUBE_HELP_EMBED_URL))
+app.include_router(health.build_router(youtube_url=constants.YOUTUBE_HELP_VIDEO_URL, embed_url=constants.YOUTUBE_HELP_EMBED_URL))
 
-services.rewrite_user_profiles_with_order(const.USER_JSON_PATH)
-services.ensure_login_csv_schema(const.LOGIN_CSV_PATH)
+services.rewrite_user_profiles_with_order(constants.USER_JSON_PATH)
+services.bootstrap_login_csv_from_assets_csv(constants.LOGIN_CSV_PATH, constants.ASSETS_CSV_PATH)
+services.ensure_login_csv_schema(constants.LOGIN_CSV_PATH)
 
 
 @app.on_event("startup")
@@ -75,9 +71,9 @@ def _safe_summary(result: Dict[str, Any]) -> Dict[str, Any]:
 
 app.include_router(
     auth.build_router(
-        login_csv_path=const.LOGIN_CSV_PATH,
-        user_json_path=const.USER_JSON_PATH,
-        assets_csv_path=const.ASSETS_CSV_PATH,
+        login_csv_path=constants.LOGIN_CSV_PATH,
+        user_json_path=constants.USER_JSON_PATH,
+        assets_csv_path=constants.ASSETS_CSV_PATH,
         next_available_user_id=user_store.next_available_user_id,
     )
 )
@@ -101,7 +97,7 @@ app.include_router(
 )
 app.include_router(
     users.build_router(
-        login_csv_path=str(const.LOGIN_CSV_PATH),
+        login_csv_path=constants.LOGIN_CSV_PATH,
         read_users_data=user_store.read_users_data,
         write_users_data=user_store.write_users_data,
         update_user_csv_profile=user_store.update_user_csv_profile,
@@ -136,9 +132,9 @@ app.include_router(
         fetch_market_quote=market_helpers.get_market_quote,
         read_user_portfolio_history=portfolio_helpers.read_user_portfolio_history,
         enrich_portfolio_with_ath=portfolio_helpers.enrich_portfolio_with_ath,
-        user_portfolio_dir=const.USER_PORTFOLIO_DIR,
-        synced_account_balance_field=const.SYNCED_ACCOUNT_BALANCE_FIELD,
-        synced_balance_reload_count_field=const.SYNCED_BALANCE_RELOAD_COUNT_FIELD,
+        user_portfolio_dir=constants.USER_PORTFOLIO_DIR,
+        synced_account_balance_field=constants.SYNCED_ACCOUNT_BALANCE_FIELD,
+        synced_balance_reload_count_field=constants.SYNCED_BALANCE_RELOAD_COUNT_FIELD,
     )
 )
 

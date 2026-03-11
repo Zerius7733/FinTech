@@ -1369,7 +1369,7 @@
   "u010": {
     "name": "Jason Teo",
     "age": null,
-    "cash_balance": 7700.0,
+    "cash_balance": 8700.0,
     "liability": 17700.0,
     "liability_items": [
       {
@@ -1408,23 +1408,10 @@
       ],
       "commodities": []
     },
-    "manual_assets": [
-      {
-        "id": "48539507-9147-4517-9e3e-e2dfe1c67b84",
-        "label": "dbs",
-        "category": "banks",
-        "value": 10000.0
-      },
-      {
-        "id": "64e0d725-a86e-411b-add8-c8f20e7bd5d6",
-        "label": "house",
-        "category": "real_estate",
-        "value": 100000.0
-      }
-    ],
+    "manual_assets": [],
     "portfolio_value": 1391466.35,
-    "total_balance": 1509166.35,
-    "net_worth": 1489666.35,
+    "total_balance": 1400166.35,
+    "net_worth": 1380666.35,
     "income": 4900.0,
     "expenses": 1800.0,
     "income_streams": [
@@ -1435,32 +1422,32 @@
       }
     ],
     "mortgage": 0,
-    "estate": 100000.0,
+    "estate": 0.0,
     "wellness_metrics": {
-      "liquidity_months": 9.83,
-      "liquidity_score": 100.0,
+      "liquidity_months": 4.83,
+      "liquidity_score": 94.38,
       "diversification_hhi": 0.9993,
       "diversification_score": 0.67,
       "debt_income_ratio": 0.301,
       "debt_income_score": 78.3,
-      "housing_score": 95.0,
+      "housing_score": null,
       "risk_alignment_score": 0.0,
-      "behavioral_resilience_score": 63.96,
-      "financial_resilience_score": 63.96,
-      "financial_stress_index": 40.86,
+      "behavioral_resilience_score": 56.5,
+      "financial_resilience_score": 56.5,
+      "financial_stress_index": 47.85,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 4900.0,
         "derived_income_source": "income_streams",
         "derived_expenses": 1800.0,
         "derived_expenses_source": "expenses_field",
-        "derived_estate": 100000.0,
-        "derived_cash_like_manual_assets": 10000.0,
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
         "derived_mortgage": 0.0,
         "derived_non_mortgage_liability": 17700.0,
         "derived_total_liability": 17700.0,
-        "derived_total_cash_buffer": 17700.0,
-        "liquidity_months": 9.83,
+        "derived_total_cash_buffer": 8700.0,
+        "liquidity_months": 4.83,
         "debt_to_annual_income": 0.301,
         "non_mortgage_debt_to_annual_income": 0.301,
         "mortgage_to_annual_income": 0.0,
@@ -1480,29 +1467,29 @@
         "expenses_missing": false
       },
       "resilience_breakdown": {
-        "liquidity_score": 100.0,
+        "liquidity_score": 94.38,
         "debt_score": 78.3,
-        "housing_score": 95.0,
+        "housing_score": null,
         "diversification_score": 0.67,
         "risk_alignment_score": 0.0
       },
-      "resilience_summary": "Moderately resilient: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
+      "resilience_summary": "Vulnerable: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
       "action_insights": [
         "Reduce concentration in a single volatile asset class and broaden diversification.",
         "Realign portfolio risk with stated tolerance so market swings are easier to absorb."
       ]
     },
     "risk_profile": 15.0,
-    "behavioral_resilience_score": 63.96,
-    "financial_resilience_score": 63.96,
-    "financial_wellness_score": 63.96,
-    "financial_stress_index": 40.86,
+    "behavioral_resilience_score": 56.5,
+    "financial_resilience_score": 56.5,
+    "financial_wellness_score": 56.5,
+    "financial_stress_index": 47.85,
     "confidence": "High",
-    "resilience_summary": "Moderately resilient: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
+    "resilience_summary": "Vulnerable: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
     "resilience_breakdown": {
-      "liquidity_score": 100.0,
+      "liquidity_score": 94.38,
       "debt_score": 78.3,
-      "housing_score": 95.0,
+      "housing_score": null,
       "diversification_score": 0.67,
       "risk_alignment_score": 0.0
     },
@@ -1516,7 +1503,7 @@
   "u011": {
     "name": "Zerius Heng",
     "age": 23,
-    "cash_balance": 0.0,
+    "cash_balance": 1000.0,
     "liability": 0,
     "liability_items": [],
     "portfolio": {
@@ -1551,8 +1538,8 @@
     },
     "manual_assets": [],
     "portfolio_value": 13104.03,
-    "total_balance": 13104.03,
-    "net_worth": 13104.03,
+    "total_balance": 14104.03,
+    "net_worth": 14104.03,
     "income": 0,
     "expenses": 0.0,
     "income_streams": [],
@@ -1581,7 +1568,7 @@
         "derived_mortgage": 0.0,
         "derived_non_mortgage_liability": 0.0,
         "derived_total_liability": 0.0,
-        "derived_total_cash_buffer": 0.0,
+        "derived_total_cash_buffer": 1000.0,
         "liquidity_months": 0.0,
         "debt_to_annual_income": 0.0,
         "non_mortgage_debt_to_annual_income": 0.0,
@@ -1637,6 +1624,107 @@
     "age_group": "18-29",
     "username": "Zerius",
     "email": "zerius@example.com",
+    "country": "Singapore"
+  },
+  "u012": {
+    "name": "ah heng",
+    "age": 24,
+    "cash_balance": 1048.0,
+    "liability": 0,
+    "liability_items": [],
+    "portfolio": {
+      "stocks": [],
+      "cryptos": [],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 0,
+    "total_balance": 1048.0,
+    "net_worth": 1048.0,
+    "income": 0,
+    "expenses": 0.0,
+    "income_streams": [],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 0.0,
+      "liquidity_score": 0.0,
+      "diversification_hhi": 0.0,
+      "diversification_score": 50.0,
+      "debt_income_ratio": 0.0,
+      "debt_income_score": 50.0,
+      "housing_score": null,
+      "risk_alignment_score": 60.0,
+      "behavioral_resilience_score": 33.53,
+      "financial_resilience_score": 33.53,
+      "financial_stress_index": 57.47,
+      "confidence": "Medium",
+      "derived_metrics": {
+        "derived_income": 0.0,
+        "derived_income_source": "income_field",
+        "derived_expenses": 0.0,
+        "derived_expenses_source": "missing",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 0.0,
+        "derived_total_liability": 0.0,
+        "derived_total_cash_buffer": 1048.0,
+        "liquidity_months": 0.0,
+        "debt_to_annual_income": 0.0,
+        "non_mortgage_debt_to_annual_income": 0.0,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 0.0,
+        "crypto_total": 0.0,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 0.0,
+        "portfolio_value": 0.0,
+        "portfolio_value_source": "none",
+        "crypto_exposure_ratio": 0.0,
+        "diversification_hhi": 0.0,
+        "asset_class_hhi": 0.0,
+        "position_hhi": 0.0,
+        "position_count": 0,
+        "expenses_estimated": false,
+        "expenses_missing": true
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 0.0,
+        "debt_score": 50.0,
+        "housing_score": null,
+        "diversification_score": 50.0,
+        "risk_alignment_score": 60.0
+      },
+      "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
+      "action_insights": [
+        "Build emergency savings toward 3 to 6 months of expenses.",
+        "Lower unsecured liabilities to improve shock absorption and monthly flexibility.",
+        "Reduce concentration in a single volatile asset class and broaden diversification."
+      ]
+    },
+    "risk_profile": 68.0,
+    "behavioral_resilience_score": 33.53,
+    "financial_resilience_score": 33.53,
+    "financial_wellness_score": 33.53,
+    "financial_stress_index": 57.47,
+    "confidence": "Medium",
+    "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 0.0,
+      "debt_score": 50.0,
+      "housing_score": null,
+      "diversification_score": 50.0,
+      "risk_alignment_score": 60.0
+    },
+    "action_insights": [
+      "Build emergency savings toward 3 to 6 months of expenses.",
+      "Lower unsecured liabilities to improve shock absorption and monthly flexibility.",
+      "Reduce concentration in a single volatile asset class and broaden diversification."
+    ],
+    "age_group": "18-29",
+    "username": "Zerius_heng",
+    "email": "heng@exmaple.com",
     "country": "Singapore"
   }
 }

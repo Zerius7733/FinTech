@@ -115,6 +115,52 @@ def ensure_login_csv_schema(login_csv_path: Path) -> None:
         writer.writerows(rewritten_rows)
 
 
+def bootstrap_login_csv_from_assets_csv(login_csv_path: Path, assets_csv_path: Path) -> None:
+    if login_csv_path.exists():
+        return
+    if not assets_csv_path.exists():
+        _ensure_login_csv_exists(login_csv_path)
+        return
+
+    with open(assets_csv_path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        asset_rows = [dict(row) for row in reader]
+
+    migrated_rows: list[Dict[str, str]] = []
+    for row in asset_rows:
+        user_id = (row.get("user_id") or "").strip()
+        username = (row.get("username") or "").strip()
+        password = (row.get("password") or "").strip()
+        if not user_id or not username:
+            continue
+        migrated_rows.append(
+            {
+                "user_id": user_id,
+                "created_at": _normalize_created_at(row.get("created_at")),
+                "username": username,
+                "password": password,
+                "email": (row.get("email") or "").strip() or f"{username.lower()}@example.com",
+                "name": (row.get("name") or "").strip() or username,
+                "dbs": "0",
+                "uob": "0",
+                "ocbc": "0",
+                "other_banks": "0",
+                "liability": "0",
+                "income": "0",
+                "estate": "0",
+                "expense": "0",
+                "age": (row.get("age") or "").strip(),
+                "age_group": (row.get("age_group") or "").strip(),
+                "country": (row.get("country") or "").strip(),
+            }
+        )
+
+    with open(login_csv_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=USER_CSV_FIELDS)
+        writer.writeheader()
+        writer.writerows(migrated_rows)
+
+
 def _next_user_id(rows: list[Dict[str, str]]) -> str:
     max_id = 0
     for row in rows:

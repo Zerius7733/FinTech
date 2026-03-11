@@ -1,0 +1,13 @@
+user_id,created_at,username,password,email,name,dbs,uob,ocbc,other_banks,liability,income,estate,expense,age,age_group,country
+u001,2026-02-08T07:09:52Z,Alice,password,alice@gmail.com,Alice Tan,0,0,0,0,0,0,0,0,32,30-44,Singapore
+u002,2026-02-08T07:09:52Z,Brandon,password,brandon@example.com,Brandon Lim,0,0,0,0,0,0,0,0,24,18-29,
+u003,2026-02-08T07:09:52Z,Cheryl,password,cheryl@example.com,Cheryl Ng,0,0,0,0,0,0,0,0,25,18-29,
+u004,2026-02-08T07:09:52Z,Daniel,password,daniel@example.com,Daniel Koh,0,0,0,0,0,0,0,0,26,18-29,
+u005,2026-02-08T07:09:52Z,Ethan,password,ethan@example.com,Ethan Lee,0,0,0,0,0,0,0,0,36,30-44,
+u006,2026-02-08T07:09:52Z,Farah,password,farah@example.com,Farah Aziz,0,0,0,0,0,0,0,0,37,30-44,
+u007,2026-02-08T07:09:52Z,Grace,password,grace@example.com,Grace Wong,0,0,0,0,0,0,0,0,53,45-59,
+u008,2026-02-08T07:09:52Z,Hafiz,password,hafiz@example.com,Hafiz Rahman,0,0,0,0,0,0,0,0,39,30-44,
+u009,2026-02-08T07:09:52Z,Isabella,password,isabella@example.com,Isabella Goh,0,0,0,0,0,0,0,0,23,18-29,Singapore
+u010,2026-02-08T07:09:52Z,Jason,password,jason@example.com,Jason Teo,0,0,0,0,0,0,0,0,24,18-29,
+u011,2026-02-08T07:09:52Z,Zerius,password,zerius@example.com,Zerius Heng,0,0,0,0,0,0,0,0,23,18-29,Singapore
+u012,2026-03-11T15:50:35Z,Zerius_heng,Gpconnect3456!,heng@exmaple.com,Zerius_heng,0,0,0,0,0,0,0,0,,,
