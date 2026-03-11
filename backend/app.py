@@ -30,6 +30,12 @@ async def shutdown_stock_market_refresh() -> None:
     await services.runtime.stop(app)
 
 app.include_router(
+    routes.updates.build_router(
+        safe_summary=_safe_summary,
+    )
+)
+
+app.include_router(
     routes.auth.build_router(
         user_store=stores.user_json_store,
         auth=services.auth,
@@ -50,11 +56,6 @@ app.include_router(
     routes.recommendations.build_router(
         user_store=stores.user_json_store,
         recommendation=services.recommendation,
-    )
-)
-app.include_router(
-    routes.updates.build_router(
-        safe_summary=_safe_summary,
     )
 )
 app.include_router(
