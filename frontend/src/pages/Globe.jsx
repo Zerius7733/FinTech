@@ -1007,6 +1007,7 @@ export default function Globe() {
   const { user } = useAuth()
   const { setLoginModalOpen, setSurveyModalOpen } = useLoginModal()
   const { activeTheme } = useTheme()
+  const initialCachedProfile = readCachedGlobeProfile(sessionStorage.getItem('user_id') || '')
   const canvasRef   = useRef(null)
   const globeRef    = useRef(null)   // THREE globe mesh
   const globeWrapRef = useRef(null)
@@ -1065,14 +1066,17 @@ export default function Globe() {
   }, [])
 
   // Wellness score + portfolio nodes for logged-in hero
-  const [userProfile, setUserProfile] = useState(() => readCachedGlobeProfile(sessionStorage.getItem('user_id') || ''))
+  const [userProfile, setUserProfile] = useState(initialCachedProfile)
+  const [isProfileLoading, setIsProfileLoading] = useState(() => Boolean(sessionStorage.getItem('user_id')) && !initialCachedProfile)
   useEffect(() => {
     if (!user?.user_id) {
       setUserProfile(null)
+      setIsProfileLoading(false)
       return
     }
     const cachedProfile = readCachedGlobeProfile(user.user_id)
     if (cachedProfile) setUserProfile(cachedProfile)
+    setIsProfileLoading(!cachedProfile)
     fetch(`${API}/users/${user.user_id}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
@@ -1081,6 +1085,7 @@ export default function Globe() {
         writeSessionJson(GLOBE_PROFILE_CACHE_KEY, { userId: user.user_id, data: d.user })
       })
       .catch(() => {})
+      .finally(() => setIsProfileLoading(false))
   }, [user?.user_id])
 
   useEffect(() => {
@@ -1105,10 +1110,10 @@ export default function Globe() {
   // Rebuild globe nodes whenever profile loads / changes
   useEffect(() => {
     globeNodesRef.current = user
-      ? (userProfile ? buildGlobeNodes(userProfile, commodityDisplayMap) : [])
+      ? (userProfile ? buildGlobeNodes(userProfile, commodityDisplayMap) : (isProfileLoading ? MOCK_NODES : []))
       : MOCK_NODES
     buildParticlesRef.current?.()   // regenerate cluster particles for new node set
-  }, [user, userProfile, commodityDisplayMap])
+  }, [user, userProfile, commodityDisplayMap, isProfileLoading])
 
   // Count of active holdings across all asset classes
   const activePositions = (() => {
@@ -1116,6 +1121,7 @@ export default function Globe() {
     const { stocks = [], cryptos = [], commodities = [] } = userProfile.portfolio
     return [...stocks, ...cryptos, ...commodities].filter(h => (h.qty ?? 0) > 0).length
   })()
+  const showGlobeLoadingState = Boolean(user) && isProfileLoading && !userProfile
 
   // Animated counters — driven entirely by real profile data
   useEffect(() => {
@@ -1595,6 +1601,11 @@ export default function Globe() {
                   {userProfile?.name?.split(' ')[0] ?? user.username}
                 </em>
               </h1>
+              {showGlobeLoadingState && (
+                <div style={S.heroLoadingCopy}>
+                  Syncing your portfolio globe and placing your nodes...
+                </div>
+              )}
 
             </>
           ) : (
@@ -1640,6 +1651,15 @@ export default function Globe() {
           style={{ ...S.globeWrap, filter: flyingIn ? 'brightness(1.4)' : 'brightness(1)', transition:'filter 0.3s' }}
         >
           <canvas ref={canvasRef} style={{ width:'100%', height:'100%', borderRadius:'50%', cursor:'grab', display:'block' }} />
+          {showGlobeLoadingState && (
+            <div style={S.globeLoadingOverlay}>
+              <div style={S.globeLoadingCard}>
+                <span style={S.globeLoadingSpinner} />
+                <div style={S.globeLoadingTitle}>Preparing your portfolio globe</div>
+                <div style={S.globeLoadingSub}>Rendering live positions and regional nodes...</div>
+              </div>
+            </div>
+          )}
 
           {/* ── Layer 3 — Glassmorphic hover card ── */}
           <GlassCard
@@ -1928,6 +1948,7 @@ export default function Globe() {
         @keyframes starTwinkle { 0%,100%{opacity:var(--so,0.1)} 50%{opacity:calc(var(--so,0.1)*3)} }
         @keyframes globePulse { 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.7} 50%{transform:translate(-50%,-50%) scale(1.08);opacity:1} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spinOrbit { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
       `}</style>
     </div>
   )
@@ -1987,6 +2008,14 @@ const S = {
     fontSize:'1rem', lineHeight:1.7, color:'var(--text-dim)', fontWeight:300,
     maxWidth:520, margin:'0 0 32px',
   },
+  heroLoadingCopy: {
+    marginTop: 12,
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.76rem',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: 'var(--text-faint)',
+  },
   btnCta: {
     background:'var(--gold)',
     border:'none', color:'#ffffff', padding:'14px 36px', borderRadius:10,
@@ -2001,6 +2030,54 @@ const S = {
   globeWrap: {
     position:'relative', zIndex:2, width:580, height:580,
     animation:'fadeUp 1.2s ease 0.2s both',
+  },
+  globeLoadingOverlay: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'radial-gradient(circle, rgba(8,10,18,0.12) 0%, rgba(8,10,18,0.46) 58%, rgba(8,10,18,0.7) 100%)',
+    pointerEvents: 'none',
+    zIndex: 8,
+  },
+  globeLoadingCard: {
+    minWidth: 220,
+    padding: '18px 20px',
+    borderRadius: 18,
+    background: 'rgba(10,12,20,0.74)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    boxShadow: '0 20px 50px rgba(0,0,0,0.28)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+    textAlign: 'center',
+  },
+  globeLoadingSpinner: {
+    width: 36,
+    height: 36,
+    borderRadius: '50%',
+    border: '2px solid rgba(255,255,255,0.14)',
+    borderTopColor: 'var(--teal)',
+    borderRightColor: 'var(--gold)',
+    animation: 'spinOrbit 1s linear infinite',
+    boxShadow: '0 0 24px rgba(45,212,191,0.18)',
+  },
+  globeLoadingTitle: {
+    fontFamily: 'var(--font-display)',
+    fontWeight: 700,
+    fontSize: '0.96rem',
+    color: 'var(--text)',
+  },
+  globeLoadingSub: {
+    fontSize: '0.72rem',
+    lineHeight: 1.55,
+    color: 'var(--text-dim)',
+    maxWidth: 220,
   },
   legend: {
     display:'flex', gap:16, flexWrap:'wrap', justifyContent:'center',
