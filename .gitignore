@@ -1,15 +1,32 @@
 /.env
-venv
-__pycache__/
-node_modules
-.env
+/.env.production
+/venv/
+/__pycache__/
+**/__pycache__/
+*.py[cod]
+
+/node_modules/
 frontend/node_modules/
-frontend/package-lock.json
+frontend/.vite/
+frontend/dist/
+
 frontend/.env
 frontend/.env.local
 frontend/.env.production
-.env.production
+
+# Frontend lockfile should live with the frontend app, not the repo root.
+/package-lock.json
+
+# Local debug/output files.
+/api_txt_file.txt
+/openai_websearch_debug.json
+backend/json_data/openai_news_debug.json
+
+# Generated backend caches and snapshots.
+backend/json_data/.yfinance_tz_cache/
+backend/json_data/coingecko_markets_cache.json
 backend/json_data/commodity_market_rankings.json
 backend/json_data/commodity_market_snapshot.json
+backend/json_data/stock_listings_cache.json
 backend/json_data/stock_market_rankings.json
 backend/json_data/stock_market_snapshot.json
