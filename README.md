@@ -6,6 +6,11 @@ The platform combines three parts: a React frontend for portfolio and market exp
 
 This solves the problem statement by turning fragmented financial data into a single actionable experience. Instead of making users manually interpret balances, risk, and market information across different tools, the platform consolidates inputs, computes meaningful wellness metrics, and surfaces clear next steps that support better financial decision-making.
 
+## Hosted Links  
+
+- Frontend: https://frontend-production-6554.up.railway.app/
+- Backend API docs: https://fintech-production-d308.up.railway.app/docs#/
+
 ## Technologies Used
 
 ### Frontend
