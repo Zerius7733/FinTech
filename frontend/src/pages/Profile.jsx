@@ -3192,8 +3192,15 @@ export default function Profile() {
                             type="button"
                             onClick={() => setSelectedScenario(item.key)}
                             style={{
-                              ...s.modeTab,
-                              ...(active ? { ...s.modeTabActive, color:item.color, borderColor:`${item.color}40` } : null),
+                              ...s.scenarioTab,
+                              ...(active
+                                ? {
+                                    ...s.scenarioTabActive,
+                                    color: item.color,
+                                    border: `1px solid ${item.color}40`,
+                                    boxShadow: `0 0 0 1px ${item.color}18 inset`,
+                                  }
+                                : s.scenarioTabInactive),
                             }}
                           >
                             {item.label}
@@ -3726,6 +3733,8 @@ const s = {
     border:'1px solid var(--border)',
   },
   modeTab: {
+    appearance:'none',
+    WebkitAppearance:'none',
     border:'1px solid transparent',
     background:'transparent',
     color:'var(--text-dim)',
@@ -3736,11 +3745,34 @@ const s = {
     letterSpacing:'0.06em',
     cursor:'pointer',
     transition:'all 0.2s',
+    outline:'none',
+    boxShadow:'none',
   },
   modeTabActive: {
     background:'var(--surface)',
     color:'var(--text)',
     boxShadow:'0 6px 16px rgba(15,23,42,0.08)',
+  },
+  scenarioTab: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    padding:'7px 16px',
+    borderRadius:999,
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    letterSpacing:'0.06em',
+    cursor:'pointer',
+    transition:'all 0.2s',
+    outline:'none',
+  },
+  scenarioTabInactive: {
+    background:'transparent',
+    color:'var(--text-dim)',
+    border:'1px solid transparent',
+    boxShadow:'none',
+  },
+  scenarioTabActive: {
+    background:'var(--surface)',
   },
   analysisActionSlot: {
     width:160,
