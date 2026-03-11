@@ -1,5 +1,10 @@
 # FinTech Frontend
 
+## Hosted Frontend
+
+- Live app: https://frontend-production-6554.up.railway.app/profile
+- Production backend API docs: https://fintech-production-d308.up.railway.app/docs#/
+
 A React-based financial wellness dashboard for portfolio management, market tracking, and personalized financial insights with AI-powered recommendations.
 
 > Multi-asset portfolio management • Real-time market data • AI insights • Peer benchmarking
@@ -16,6 +21,7 @@ docker-compose up --build
 ```
 
 Frontend available at: **http://localhost:5173**
+Production frontend: **https://frontend-production-6554.up.railway.app/profile**
 
 See [../DOCKER.md](../DOCKER.md) for detailed Docker setup.
 
@@ -102,6 +108,8 @@ VITE_API_URL=http://localhost:8000
 ```env
 VITE_API_URL=https://fintech-production-d308.up.railway.app
 ```
+
+Production frontend URL: `https://frontend-production-6554.up.railway.app/profile`
 
 The environment variable is read at build time by Vite and embedded in the bundle.
 

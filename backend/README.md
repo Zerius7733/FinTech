@@ -2,6 +2,11 @@
 
 This backend computes user-level financial metrics from `backend/json_data/user.json`.
 
+## Hosted Backend
+
+- API docs: https://fintech-production-d308.up.railway.app/docs#/
+- Production frontend consuming this backend: https://frontend-production-6554.up.railway.app/profile
+
 ## Where It Is Calculated
 
 - Liquidity metric: `backend/services/wealth_wellness/liquidity_metric.py`
