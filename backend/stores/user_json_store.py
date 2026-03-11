@@ -3,15 +3,15 @@ import json
 from typing import Any
 
 import backend.settings.constants as const
-import backend.services.api_deps as api
 from backend.services import user_sync_service
-from backend.services.portfolio_helpers import recalculate_user_financials
+from backend.services.portfolio.helpers import recalculate_user_financials
+from backend.services.user_profile_registry import normalize_users_data
 
 
 def read_users_data() -> dict[str, Any]:
     with open(const.USER_JSON_PATH, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
-    normalized = api.normalize_users_data(data)
+    normalized = normalize_users_data(data)
     return user_sync_service.hydrate_users_from_csv(
         normalized,
         recalculate_user_financials=recalculate_user_financials,
@@ -20,7 +20,7 @@ def read_users_data() -> dict[str, Any]:
 
 def write_users_data(data: dict[str, Any]) -> None:
     with open(const.USER_JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(api.normalize_users_data(data), f, indent=2)
+        json.dump(normalize_users_data(data), f, indent=2)
 
 
 def next_available_user_id() -> str:

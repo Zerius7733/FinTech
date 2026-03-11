@@ -19,8 +19,8 @@ import pandas as pd
 import yfinance as yf
 
 from backend.services.guardrails.no_advice import validate_text
-from backend.services.news_provider import NewsProvider
-from backend.services.news_provider import build_default_news_provider
+from backend.services.insights.news_provider import NewsProvider
+from backend.services.insights.news_provider import build_default_news_provider
 # ----------------------------
 # Config / Maps
 # ----------------------------

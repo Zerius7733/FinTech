@@ -2,7 +2,8 @@ import csv
 import json
 import time
 from typing import Any, Dict, Iterable
-from backend.users_assets_update import update_assets_file
+
+from backend.tools.users_assets_update import update_assets_file
 import yfinance as yf
 
 

@@ -2,12 +2,13 @@ import asyncio
 from typing import Any
 
 import backend.settings.constants as const
-import backend.services.api_deps as services
+import backend.market_scripts.coingecko_market_retriever as coingecko_market_retriever
+import backend.services.market as market_services
 
 
 async def run_stock_market_refresh() -> None:
     try:
-        result = await asyncio.to_thread(services.refresh_stock_market_data)
+        result = await asyncio.to_thread(market_services.refresh_stock_market_data)
         meta = result.get("_meta", {}) if isinstance(result, dict) else {}
         print(
             "[api] stock market refresh complete:",
@@ -23,7 +24,7 @@ async def run_stock_market_refresh() -> None:
 
 async def run_commodity_market_refresh() -> None:
     try:
-        result = await asyncio.to_thread(services.refresh_commodity_market_data)
+        result = await asyncio.to_thread(market_services.refresh_commodity_market_data)
         meta = result.get("_meta", {}) if isinstance(result, dict) else {}
         print(
             "[api] commodity market refresh complete:",
@@ -42,7 +43,7 @@ async def run_crypto_market_refresh() -> None:
         refreshed: list[dict[str, Any]] = []
         for page, per_page in const.CRYPTO_MARKET_REFRESH_TARGETS:
             rows = await asyncio.to_thread(
-                services.refresh_coingecko_coin_listings,
+                coingecko_market_retriever.refresh_coingecko_coin_listings,
                 page,
                 per_page,
             )

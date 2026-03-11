@@ -1,7 +1,7 @@
 from typing import Any
 
 from backend.stores import user_csv_store
-from backend.services.portfolio_helpers import ensure_financial_collections
+from backend.services.portfolio.helpers import ensure_financial_collections
 
 
 def _has_synced_profile_values(row: dict[str, Any]) -> bool:

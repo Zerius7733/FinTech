@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from backend.services.portfolio_selector import iter_portfolio_positions
+from backend.services.portfolio.selector import iter_portfolio_positions
 
 
 ASSET_RETURN_ASSUMPTIONS = {

@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-import backend.services.api_deps as api
+from backend.services.screenshot_importer import DEFAULT_VISION_MODEL
 from pydantic import AliasChoices, BaseModel, Field
 
 
@@ -98,7 +98,7 @@ class ScreenshotMergeRequest(BaseModel):
 
 class ScreenshotParseRequest(BaseModel):
     image_base64: str
-    model: str = api.DEFAULT_VISION_MODEL
+    model: str = DEFAULT_VISION_MODEL
     page_text: str | None = None
 
 

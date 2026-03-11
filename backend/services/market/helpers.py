@@ -1,6 +1,8 @@
 from typing import Any
 
-import backend.services.api_deps as api
+from backend.market_scripts.commodity_price_retriever import fetch_commodity_price
+from backend.market_scripts.crypto_price_retriever import fetch_crypto_price
+from backend.market_scripts.stock_price_updater import fetch_latest_prices
 
 
 def parse_market_query(query: str) -> dict[str, str]:
@@ -19,11 +21,11 @@ def get_market_quote(query: str) -> dict[str, Any]:
     ticker = parsed["ticker"]
 
     if asset_type == "STOCK":
-        price = api.fetch_latest_prices([ticker])[ticker]
+        price = fetch_latest_prices([ticker])[ticker]
         return {"status": "ok", "asset_type": asset_type, "symbol": ticker, "price": price}
 
     if asset_type == "CRYPTO":
-        crypto_quote = api.fetch_crypto_price(ticker)
+        crypto_quote = fetch_crypto_price(ticker)
         return {
             "status": "ok",
             "asset_type": asset_type,
@@ -31,7 +33,7 @@ def get_market_quote(query: str) -> dict[str, Any]:
             "price": crypto_quote["price"],
         }
 
-    commodity_quote = api.fetch_commodity_price(ticker)
+    commodity_quote = fetch_commodity_price(ticker)
     return {
         "status": "ok",
         "asset_type": asset_type,

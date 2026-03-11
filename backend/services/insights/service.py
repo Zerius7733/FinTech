@@ -1,11 +1,11 @@
 import os
 from typing import Any, Dict
 
-from backend.services.insights_service_gpt import InsightError as GPTInsightError
-from backend.services.insights_service_gpt import build_insights_gpt_web_fallback
-from backend.services.insights_service_gpt import build_insights_gpt
-from backend.services.insights_service_ollama import InsightError as OllamaInsightError
-from backend.services.insights_service_ollama import build_insights_ollama
+from backend.services.insights.gpt import InsightError as GPTInsightError
+from backend.services.insights.gpt import build_insights_gpt
+from backend.services.insights.gpt import build_insights_gpt_web_fallback
+from backend.services.insights.ollama import InsightError as OllamaInsightError
+from backend.services.insights.ollama import build_insights_ollama
 
 
 class InsightError(Exception):

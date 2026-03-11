@@ -5,7 +5,7 @@ from typing import Any
 import yfinance as yf
 
 import backend.settings.constants as const
-import backend.services.api_deps as api
+from backend.services.wealth_wellness.engine import calculate_user_wellness
 
 
 def _read_json_file(path: Path) -> dict[str, Any]:
@@ -410,7 +410,7 @@ def recalculate_user_financials(user: dict[str, Any]) -> dict[str, Any]:
     user["total_balance"] = round(cash_balance + portfolio_total + real_estate_value + non_estate_asset_value, 2)
     user["net_worth"] = round(user["total_balance"] - liability_total - expenses, 2)
 
-    wellness_result = api.calculate_user_wellness(user)
+    wellness_result = calculate_user_wellness(user)
     user["wellness_metrics"] = wellness_result["wellness_metrics"]
     user["behavioral_resilience_score"] = wellness_result["behavioral_resilience_score"]
     user["financial_resilience_score"] = wellness_result["financial_resilience_score"]

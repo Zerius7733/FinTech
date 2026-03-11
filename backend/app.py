@@ -2,16 +2,16 @@ import asyncio
 from typing import Any, Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend import runtime
-import backend.settings.config as config
-import backend.settings.constants as constants
-import backend.services.api_deps as services
-import backend.services.market_helpers as market_helpers
-import backend.services.portfolio_helpers as portfolio_helpers
-import backend.services.user_sync_service as user_sync_service
-import backend.stores.user_csv_store as user_csv_store
-import backend.stores.user_json_store as user_json_store
 from backend.routes import auth, health, imports, market, portfolio, recommendations, retirement, updates, users
+from backend.stores import user_json_store, user_csv_store
+from backend.settings import constants, config
+import backend.services.market as market_services
+import backend.services.auth_registry as auth_registry
+import backend.services.portfolio.helpers as portfolio_helpers
+import backend.services.runtime as runtime
+import backend.services.user_sync_service as user_sync_service
+import backend.services.user_profile_registry as user_profile_registry
+
 
 app = FastAPI(
     title="FinTech Wellness API",
@@ -46,9 +46,9 @@ app.add_middleware(
 
 app.include_router(health.build_router(youtube_url=constants.YOUTUBE_HELP_VIDEO_URL, embed_url=constants.YOUTUBE_HELP_EMBED_URL))
 
-services.rewrite_user_profiles_with_order(constants.USER_JSON_PATH)
-services.bootstrap_login_csv_from_assets_csv(constants.LOGIN_CSV_PATH, constants.ASSETS_CSV_PATH)
-services.ensure_login_csv_schema(constants.LOGIN_CSV_PATH)
+user_profile_registry.rewrite_user_profiles_with_order(constants.USER_JSON_PATH)
+auth_registry.bootstrap_login_csv_from_assets_csv(constants.LOGIN_CSV_PATH, constants.ASSETS_CSV_PATH)
+auth_registry.ensure_login_csv_schema(constants.LOGIN_CSV_PATH)
 
 
 @app.on_event("startup")
@@ -89,7 +89,7 @@ app.include_router(
 app.include_router(
     market.build_router(
         enforce_insights_rate_limit=config.enforce_insights_rate_limit,
-        fetch_market_quote=market_helpers.get_market_quote,
+        fetch_market_quote=market_services.get_market_quote,
     )
 )
 app.include_router(
@@ -136,7 +136,7 @@ app.include_router(
         read_synced_account_balance_from_csv_row=user_csv_store.read_synced_account_balance_from_csv_row,
         apply_synced_csv_profile_to_user=user_sync_service.apply_synced_csv_profile_to_user,
         sync_user_to_assets_csv=user_csv_store.sync_user_to_assets_csv,
-        fetch_market_quote=market_helpers.get_market_quote,
+        fetch_market_quote=market_services.get_market_quote,
         read_user_portfolio_history=portfolio_helpers.read_user_portfolio_history,
         enrich_portfolio_with_ath=portfolio_helpers.enrich_portfolio_with_ath,
         user_portfolio_dir=constants.USER_PORTFOLIO_DIR,
