@@ -136,4 +136,33 @@ def build_router(
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"quote retrieval failed: {exc}") from exc
 
+    @router.post(
+        "/api/market/refresh-symbol",
+        tags=["Market"],
+        summary="Refresh one cached market symbol and persist it to JSON cache",
+    )
+    def refresh_market_symbol(
+        type: str = Query(..., description="One of: stock, crypto, commodity"),
+        symbol: str = Query(..., description="Ticker/symbol to refresh"),
+    ) -> dict[str, Any]:
+        normalized_type = str(type or "").strip().lower()
+        normalized_symbol = str(symbol or "").strip()
+        if normalized_type not in {"stock", "crypto", "commodity"}:
+            raise HTTPException(status_code=400, detail="type must be one of: stock, crypto, commodity")
+        if not normalized_symbol:
+            raise HTTPException(status_code=400, detail="symbol cannot be empty")
+
+        try:
+            if normalized_type == "stock":
+                item = market.refresh_stock_market_symbol(normalized_symbol)
+            elif normalized_type == "commodity":
+                item = market.refresh_commodity_market_symbol(normalized_symbol)
+            else:
+                item = market.refresh_cached_coingecko_symbol(normalized_symbol)
+            return {"status": "ok", "type": normalized_type, "symbol": normalized_symbol, "item": item}
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"symbol refresh failed: {exc}") from exc
+
     return router

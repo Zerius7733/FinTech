@@ -28,6 +28,19 @@ async function fetchMarketPage(endpoint, page) {
   return res.json()
 }
 
+async function refreshAssetCache(endpoint, symbol) {
+  const assetType =
+    endpoint === 'stocks' ? 'stock' :
+    endpoint === 'cryptos' ? 'crypto' :
+    'commodity'
+  const res = await fetch(
+    `${API_BASE}/api/market/refresh-symbol?type=${encodeURIComponent(assetType)}&symbol=${encodeURIComponent(symbol)}`,
+    { method: 'POST', headers: { Accept: 'application/json' }, cache: 'no-store' }
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
 function buildFmt(currencyCode) {
   return {
     price: v => {
@@ -169,6 +182,12 @@ function endpointToCompatibilityType(endpoint) {
   return 'commodity'
 }
 
+function endpointToPriceLabel(endpoint) {
+  if (endpoint === 'stocks') return 'stock'
+  if (endpoint === 'cryptos') return 'crypto'
+  return 'commodity'
+}
+
 function parseWhyItFitsBullets(payload) {
   const synthesis = payload?.llm_synthesis
   const bullets = synthesis?.why_it_fits_bullets
@@ -243,7 +262,7 @@ function insightNarrativeText(insight) {
   return ''
 }
 
-function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, isFavourited, onToggleFavourite, fmt }) {
+function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, isFavourited, onToggleFavourite, onQuoteRefresh, fmt }) {
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -254,12 +273,18 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
   const [liveInsightNarrative, setLiveInsightNarrative] = useState(() => insightNarrativeText(cachedInsight))
   const [llmWhyItFits, setLlmWhyItFits] = useState([])
   const [whyItFitsLoading, setWhyItFitsLoading] = useState(false)
+  const [quoteRefreshError, setQuoteRefreshError] = useState('')
+  const [quoteRefreshing, setQuoteRefreshing] = useState(false)
+  const [lastPriceRefreshAt, setLastPriceRefreshAt] = useState(null)
   useEffect(() => {
     setLiveInsightNarrative(insightNarrativeText(cachedInsight))
   }, [endpoint, item?.symbol])
   useEffect(() => {
     setLlmWhyItFits([])
     setWhyItFitsLoading(false)
+    setQuoteRefreshError('')
+    setQuoteRefreshing(false)
+    setLastPriceRefreshAt(null)
   }, [endpoint, item?.symbol, userId])
 
   const displayRank = item?.market_cap_rank ?? item?.__displayRank ?? null
@@ -298,6 +323,21 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
 
     return () => controller.abort()
   }, [hasUserContext, userId, endpoint, item?.symbol])
+
+  const handleRefreshQuote = useCallback(async () => {
+    if (!item?.symbol || quoteRefreshing) return
+    setQuoteRefreshError('')
+    setQuoteRefreshing(true)
+    try {
+      const payload = await refreshAssetCache(endpoint, item.symbol)
+      onQuoteRefresh?.(payload?.item)
+      setLastPriceRefreshAt(new Date())
+    } catch (err) {
+      setQuoteRefreshError(err.message || 'Could not refresh price.')
+    } finally {
+      setQuoteRefreshing(false)
+    }
+  }, [endpoint, item?.symbol, onQuoteRefresh, quoteRefreshing])
 
   if (!item) return null
 
@@ -349,7 +389,24 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
 
         <div style={MD.grid}>
           <div style={{ ...MD.card, gridColumn: '1 / -1' }}>
-            <div style={MD.cardLabel}>Price Trend</div>
+            <div style={MD.cardHeader}>
+              <div style={MD.cardLabel}>Price Trend</div>
+              <button
+                type="button"
+                onClick={handleRefreshQuote}
+                disabled={quoteRefreshing}
+                style={{
+                  ...MD.refreshBtn,
+                  opacity: quoteRefreshing ? 0.72 : 1,
+                  cursor: quoteRefreshing ? 'wait' : 'pointer',
+                }}
+                title={quoteRefreshing ? 'Refreshing live price' : `Refresh ${endpointToPriceLabel(endpoint)} price`}
+                aria-label={quoteRefreshing ? 'Refreshing live price' : `Refresh ${endpointToPriceLabel(endpoint)} price`}
+              >
+                {quoteRefreshing ? <InlineSpinner size={13} color="currentColor" /> : <span aria-hidden="true">↻</span>}
+                {quoteRefreshing ? 'Refreshing...' : 'Refresh price'}
+              </button>
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, marginBottom: 10, flexWrap: 'wrap' }}>
               <div style={MD.heroPrice}>{fmt.price(item.current_price)}</div>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -361,6 +418,13 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
                 </div>
               </div>
             </div>
+            {quoteRefreshError ? (
+              <div style={MD.refreshMetaError}>{quoteRefreshError}</div>
+            ) : lastPriceRefreshAt ? (
+              <div style={MD.refreshMetaText}>
+                Live price refreshed at {lastPriceRefreshAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+              </div>
+            ) : null}
             <DetailSparkline item={item} />
           </div>
 
@@ -753,6 +817,34 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
     }
   }, [endpoint])
 
+  const mergeRefreshedItem = useCallback((item) => {
+    const refreshedSymbol = String(item?.symbol ?? '').trim().toUpperCase()
+    if (!refreshedSymbol) return
+
+    const applyRefresh = current => (
+      String(current?.symbol ?? '').trim().toUpperCase() === refreshedSymbol
+        ? { ...current, ...item }
+        : current
+    )
+
+    setItems(prev => prev.map(applyRefresh))
+    setSelectedItem(prev => (prev ? applyRefresh(prev) : prev))
+    setFavourites(prev => {
+      const next = prev.map(entry => applyRefresh(entry))
+      saveFaves(next)
+      return next
+    })
+
+    const cacheKey = `${endpoint}:${page}`
+    const cached = cacheRef.current[cacheKey]
+    if (cached?.data) {
+      cacheRef.current[cacheKey] = {
+        ...cached,
+        data: cached.data.map(applyRefresh),
+      }
+    }
+  }, [endpoint, page])
+
   useEffect(() => {
     load(page)
     tableRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1061,6 +1153,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
         onClose={() => setSelectedItem(null)}
         isFavourited={!!selectedItem && favourites.some(f => f.__id === (selectedItem.id ?? selectedItem.symbol))}
         onToggleFavourite={() => selectedItem && toggleFavourite(selectedItem, selectedItem.__endpoint || endpoint)}
+        onQuoteRefresh={mergeRefreshedItem}
         fmt={fmt}
       />
 
@@ -1282,11 +1375,54 @@ const MD = {
     letterSpacing: '0.12em',
     marginBottom: 10,
   },
+  cardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+    marginBottom: 10,
+    flexWrap: 'wrap',
+  },
   heroPrice: {
     fontFamily: 'var(--font-display)',
     fontWeight: 800,
     fontSize: '1.9rem',
     lineHeight: 1,
+  },
+  refreshBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 34,
+    padding: '0 12px',
+    borderRadius: 999,
+    border: '1px solid var(--border)',
+    background: 'var(--surface)',
+    color: 'var(--teal)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.68rem',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--teal) 10%, transparent)',
+    transition: 'opacity 0.2s ease, transform 0.2s ease',
+  },
+  refreshMetaText: {
+    marginBottom: 12,
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.64rem',
+    color: 'var(--text-faint)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+  },
+  refreshMetaError: {
+    marginBottom: 12,
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.64rem',
+    color: 'var(--red)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
   },
   changePill: {
     padding: '6px 10px',

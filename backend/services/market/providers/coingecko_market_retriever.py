@@ -125,6 +125,75 @@ def _save_cache(page: int, per_page: int, rows: List[Dict[str, Any]]) -> None:
         return
 
 
+def refresh_cached_coingecko_symbol(symbol: str) -> Dict[str, Any]:
+    normalized_symbol = str(symbol or "").strip().lower()
+    if not normalized_symbol:
+        raise ValueError("crypto symbol cannot be empty")
+
+    payload: Dict[str, Any] = {"entries": {}}
+    if _CACHE_PATH.exists():
+        with open(_CACHE_PATH, "r", encoding="utf-8") as f:
+            existing = json.load(f)
+        if isinstance(existing, dict) and isinstance(existing.get("entries"), dict):
+            payload = existing
+    entries = payload.setdefault("entries", {})
+    if not isinstance(entries, dict) or not entries:
+        raise RuntimeError("no CoinGecko cache entries are available to refresh")
+
+    matched_row: Dict[str, Any] | None = None
+    for cache_key, entry in entries.items():
+        if not isinstance(entry, dict):
+            continue
+        rows = entry.get("rows")
+        if not isinstance(rows, list):
+            continue
+
+        page_text, _, per_page_text = str(cache_key).partition(":")
+        page = int(page_text) if page_text.isdigit() else 1
+        per_page = int(per_page_text) if per_page_text.isdigit() else len(rows) or 100
+        fresh_rows = _fetch_coingecko_coin_listings_live(page=page, per_page=per_page)
+
+        for row in fresh_rows:
+            if not isinstance(row, dict):
+                continue
+            if str(row.get("symbol", "")).strip().lower() != normalized_symbol:
+                continue
+            matched_row = row
+            break
+        if matched_row is not None:
+            break
+
+    if matched_row is None:
+        raise RuntimeError(f"could not refresh crypto symbol '{normalized_symbol}' from CoinGecko")
+
+    updated = False
+    refreshed_at = time.time()
+    for entry in entries.values():
+        if not isinstance(entry, dict):
+            continue
+        rows = entry.get("rows")
+        if not isinstance(rows, list):
+            continue
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                continue
+            if str(row.get("symbol", "")).strip().lower() != normalized_symbol:
+                continue
+            rows[index] = {**row, **matched_row}
+            updated = True
+        if updated:
+            entry["fetched_at"] = refreshed_at
+
+    if not updated:
+        raise RuntimeError(f"crypto symbol '{normalized_symbol}' was not present in the cached pages")
+
+    _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(_CACHE_PATH, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+
+    return matched_row
+
+
 def load_cached_coingecko_coin_listings(
     page: int = 1,
     per_page: int = 50,

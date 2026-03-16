@@ -126,6 +126,9 @@ class YFinanceStockMarketProvider:
 
 
 class StockMarketRepository:
+    def load_snapshot(self) -> Dict[str, Any]:
+        return _read_json(SNAPSHOT_PATH)
+
     def load_rankings(self) -> Dict[str, Any]:
         return _read_json(RANKINGS_PATH)
 
@@ -227,3 +230,55 @@ def refresh_stock_market_data() -> Dict[str, Any]:
 def get_precomputed_stock_rankings(page: int = 1, per_page: int = 50) -> List[Dict[str, Any]]:
     service = StockMarketIngestionService()
     return service.get_precomputed_rankings(page=page, per_page=per_page)
+
+
+def refresh_stock_market_symbol(symbol: str) -> Dict[str, Any]:
+    normalized_symbol = str(symbol or "").strip().upper()
+    if not normalized_symbol:
+        raise ValueError("stock symbol cannot be empty")
+
+    service = StockMarketIngestionService()
+    refreshed_row = service.provider.fetch_symbol(normalized_symbol)
+    if refreshed_row is None:
+        raise RuntimeError(f"could not refresh stock symbol '{normalized_symbol}'")
+
+    snapshot_payload = service.repository.load_snapshot()
+    rankings_payload = service.repository.load_rankings()
+    now = int(time.time())
+
+    snapshot_symbols = snapshot_payload.get("symbols")
+    if not isinstance(snapshot_symbols, dict):
+        snapshot_symbols = {}
+        snapshot_payload["symbols"] = snapshot_symbols
+    existing_snapshot = snapshot_symbols.get(normalized_symbol)
+    if isinstance(existing_snapshot, dict) and existing_snapshot.get("market_cap_rank") is not None:
+        refreshed_row["market_cap_rank"] = existing_snapshot.get("market_cap_rank")
+    snapshot_symbols[normalized_symbol] = {**existing_snapshot, **refreshed_row} if isinstance(existing_snapshot, dict) else refreshed_row
+    snapshot_payload.setdefault("_meta", {})
+    snapshot_payload["_meta"]["symbol_refreshed_at_epoch"] = now
+    snapshot_payload["_meta"]["last_refreshed_symbol"] = normalized_symbol
+    service.repository.save_snapshot(snapshot_payload)
+
+    items = rankings_payload.get("items")
+    if isinstance(items, list):
+        updated = False
+        for index, row in enumerate(items):
+            if not isinstance(row, dict):
+                continue
+            if str(row.get("symbol", "")).strip().upper() != normalized_symbol:
+                continue
+            refreshed_row["market_cap_rank"] = row.get("market_cap_rank")
+            items[index] = {**row, **refreshed_row}
+            updated = True
+            break
+        if not updated:
+            items.append(refreshed_row)
+        rankings_payload.setdefault("_meta", {})
+        rankings_payload["_meta"]["symbol_refreshed_at_epoch"] = now
+        rankings_payload["_meta"]["last_refreshed_symbol"] = normalized_symbol
+        service.repository.save_rankings(rankings_payload)
+        for row in items:
+            if isinstance(row, dict) and str(row.get("symbol", "")).strip().upper() == normalized_symbol:
+                return row
+
+    return refreshed_row

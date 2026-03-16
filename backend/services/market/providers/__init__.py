@@ -1,5 +1,6 @@
 from backend.services.market.providers.coingecko_market_retriever import fetch_coingecko_coin_listings
 from backend.services.market.providers.coingecko_market_retriever import load_cached_coingecko_coin_listings
+from backend.services.market.providers.coingecko_market_retriever import refresh_cached_coingecko_symbol
 from backend.services.market.providers.coingecko_market_retriever import refresh_coingecko_coin_listings
 from backend.services.market.providers.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
 from backend.services.market.providers.commodity_price_retriever import fetch_commodity_price
@@ -25,6 +26,7 @@ __all__ = [
     "load_cached_coingecko_coin_listings",
     "normalize_commodity_symbol",
     "rebuild_stock_listings_cache_from_nasdaq",
+    "refresh_cached_coingecko_symbol",
     "refresh_coingecko_coin_listings",
     "update_stock_listings_cache_prices_file",
     "update_stock_prices_file",

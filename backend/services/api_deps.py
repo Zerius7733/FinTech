@@ -10,9 +10,12 @@ from backend.services.market import fetch_stock_listings_from_nasdaq
 from backend.services.market import fetch_top_stock_listings_from_yfinance
 from backend.services.market import load_cached_coingecko_coin_listings
 from backend.services.market import rebuild_stock_listings_cache_from_nasdaq
+from backend.services.market import refresh_cached_coingecko_symbol
 from backend.services.market import refresh_commodity_market_data
+from backend.services.market import refresh_commodity_market_symbol
 from backend.services.market import refresh_coingecko_coin_listings
 from backend.services.market import refresh_stock_market_data
+from backend.services.market import refresh_stock_market_symbol
 from backend.services.market import resolve_asset
 from backend.services.market import update_stock_listings_cache_prices_file
 from backend.services.market import update_stock_prices_file
@@ -73,6 +76,7 @@ __all__ = [
     "fetch_top_stock_listings_from_yfinance",
     "fetch_stock_listings_from_nasdaq",
     "rebuild_stock_listings_cache_from_nasdaq",
+    "refresh_cached_coingecko_symbol",
     "update_stock_listings_cache_prices_file",
     "generate_gpt_recommendations",
     "generate_user_recommendations",
@@ -81,12 +85,14 @@ __all__ = [
     "get_positions_by_asset_class",
     "get_precomputed_stock_rankings",
     "refresh_commodity_market_data",
+    "refresh_commodity_market_symbol",
     "refresh_coingecko_coin_listings",
     "register_login_user",
     "validate_password_strength",
     "validate_registration_fields",
     "resolve_asset",
     "refresh_stock_market_data",
+    "refresh_stock_market_symbol",
     "update_assets_file",
     "update_stock_prices_file",
     "update_wellness_file",
