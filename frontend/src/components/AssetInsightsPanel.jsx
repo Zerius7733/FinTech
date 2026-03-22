@@ -178,7 +178,7 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
   const insight = state.data
   const metrics = insight.metrics || {}
   const notableMoves = Array.isArray(insight.notable_moves) ? insight.notable_moves.slice(0, compact ? 2 : 4) : []
-  const drivers = Array.isArray(insight.drivers) ? insight.drivers.slice(0, compact ? 2 : 3) : []
+  const drivers = Array.isArray(insight.drivers) ? insight.drivers : []
   const tldr = Array.isArray(insight.tldr) ? insight.tldr.slice(0, compact ? 2 : 3) : []
   const warnings = Array.isArray(insight.warnings) ? insight.warnings : []
 
@@ -251,7 +251,7 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
         <div style={{ marginTop: 18 }}>
           <div style={S.subhead}>Possible Drivers</div>
           <div style={{ display: 'grid', gap: 10 }}>
-            {drivers.map(driver => (
+            {drivers.map((driver, idx) => (
               <a
                 key={`${driver.date}-${driver.url}`}
                 href={driver.url}
@@ -259,8 +259,13 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
                 rel="noreferrer"
                 style={S.linkCard}
               >
-                <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)' }}>{driver.headline || 'Source item'}</div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: 4 }}>{driver.date || ''}</div>
+                <div style={S.driverCardHeader}>
+                  <div style={S.driverNumber}>{idx + 1}</div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)' }}>{driver.headline || 'Source item'}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: 4 }}>{driver.date || ''}</div>
+                  </div>
+                </div>
               </a>
             ))}
           </div>
@@ -379,6 +384,27 @@ const S = {
     background: 'var(--surface)',
     padding: '12px 14px',
     textDecoration: 'none',
+  },
+  driverCardHeader: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  driverNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 999,
+    border: '1px solid var(--border-act)',
+    background: 'var(--surface2)',
+    color: 'var(--teal)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 1,
   },
   warningBox: {
     marginTop: 18,

@@ -7,6 +7,10 @@ import { API_BASE } from '../utils/api.js'
 import { convertCurrency, formatCompactCurrency, formatCurrency, normalizeCurrencyCode } from '../utils/currency.js'
 const PAGE_SIZE = 100
 const CACHE_TTL_MS = 30 * 60_000
+const COMPATIBILITY_CACHE_TTL_MS = 15 * 60_000
+const compatibilityCache = new Map()
+const profileCache = new Map()
+const currencyCache = new Map()
 
 const FAVES_KEY = 'ws_favourites'
 const loadFaves = () => { try { return JSON.parse(localStorage.getItem(FAVES_KEY) || '[]') } catch { return [] } }
@@ -145,6 +149,29 @@ function endpointToCompatibilityType(endpoint) {
   return 'commodity'
 }
 
+function getCompatibilityCacheKey({ userId, endpoint, symbol, riskProfile, wellnessScore, stressIndex }) {
+  if (!userId || !endpoint || !symbol) return ''
+  return [
+    userId,
+    endpoint,
+    String(symbol).trim().toUpperCase(),
+    riskProfile ?? '',
+    wellnessScore ?? '',
+    stressIndex ?? '',
+  ].join(':')
+}
+
+function getCachedCompatibilityBullets(cacheKey) {
+  if (!cacheKey) return []
+  const cached = compatibilityCache.get(cacheKey)
+  if (!cached) return []
+  if (Date.now() - cached.ts > COMPATIBILITY_CACHE_TTL_MS) {
+    compatibilityCache.delete(cacheKey)
+    return []
+  }
+  return Array.isArray(cached.bullets) ? cached.bullets : []
+}
+
 function parseWhyItFitsBullets(payload) {
   const synthesis = payload?.llm_synthesis
   const bullets = synthesis?.why_it_fits_bullets
@@ -219,7 +246,7 @@ function insightNarrativeText(insight) {
   return ''
 }
 
-function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, isFavourited, onToggleFavourite, fmt }) {
+function MarketDetailModal({ item, endpoint, title, profile, profileLoading = false, userId, onClose, isFavourited, onToggleFavourite, fmt }) {
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -228,18 +255,27 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
   const insightAssetType = endpoint === 'stocks' ? 'stock' : endpoint === 'cryptos' ? 'crypto' : 'commodity'
   const cachedInsight = getCachedInsight(insightAssetType, item?.symbol, 3)
   const [liveInsightNarrative, setLiveInsightNarrative] = useState(() => insightNarrativeText(cachedInsight))
-  const [llmWhyItFits, setLlmWhyItFits] = useState([])
+  const compatibilityCacheKey = getCompatibilityCacheKey({
+    userId,
+    endpoint,
+    symbol: item?.symbol,
+    riskProfile: profile?.risk_profile,
+    wellnessScore: profile?.financial_wellness_score,
+    stressIndex: profile?.financial_stress_index,
+  })
+  const [llmWhyItFits, setLlmWhyItFits] = useState(() => getCachedCompatibilityBullets(compatibilityCacheKey))
   const [whyItFitsLoading, setWhyItFitsLoading] = useState(false)
   useEffect(() => {
     setLiveInsightNarrative(insightNarrativeText(cachedInsight))
   }, [endpoint, item?.symbol])
   useEffect(() => {
-    setLlmWhyItFits([])
+    setLlmWhyItFits(getCachedCompatibilityBullets(compatibilityCacheKey))
     setWhyItFitsLoading(false)
-  }, [endpoint, item?.symbol, userId])
+  }, [compatibilityCacheKey])
 
   const displayRank = item?.market_cap_rank ?? item?.__displayRank ?? null
   const hasUserContext = Boolean(userId && profile)
+  const isUserContextLoading = Boolean(userId) && !profile && profileLoading
   const analysis = hasUserContext && item ? getCompatibilityAnalysis(item, endpoint, profile, displayRank) : null
   const positive24 = ((item?.price_change_percentage_24h) ?? 0) >= 0
   const positive7 = ((item?.price_change_percentage_7d) ?? 0) >= 0
@@ -248,16 +284,21 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
 
   useEffect(() => {
     if (!hasUserContext || !item?.symbol) return undefined
+    const cachedBullets = getCachedCompatibilityBullets(compatibilityCacheKey)
+    if (cachedBullets.length) {
+      setLlmWhyItFits(cachedBullets)
+      setWhyItFitsLoading(false)
+      return undefined
+    }
     const targetType = endpointToCompatibilityType(endpoint)
     const controller = new AbortController()
     setWhyItFitsLoading(true)
 
     fetch(
-      `${API_BASE}/users/${encodeURIComponent(userId)}/compatibility?target_type=${encodeURIComponent(targetType)}&symbol=${encodeURIComponent(item.symbol)}&_ts=${Date.now()}`,
+      `${API_BASE}/users/${encodeURIComponent(userId)}/compatibility?target_type=${encodeURIComponent(targetType)}&symbol=${encodeURIComponent(item.symbol)}`,
       {
         method: 'GET',
         headers: { Accept: 'application/json' },
-        cache: 'no-store',
         signal: controller.signal,
       }
     )
@@ -267,13 +308,16 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
       })
       .then(data => {
         const bullets = parseWhyItFitsBullets(data)
-        if (bullets.length) setLlmWhyItFits(bullets)
+        if (bullets.length) {
+          compatibilityCache.set(compatibilityCacheKey, { bullets, ts: Date.now() })
+          setLlmWhyItFits(bullets)
+        }
       })
       .catch(() => {})
       .finally(() => setWhyItFitsLoading(false))
 
     return () => controller.abort()
-  }, [hasUserContext, userId, endpoint, item?.symbol])
+  }, [compatibilityCacheKey, hasUserContext, userId, endpoint, item?.symbol])
 
   if (!item) return null
 
@@ -352,6 +396,16 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
                   Calculated from your risk profile, current wellness, stress level, and this asset&apos;s recent market behavior.
                 </div>
               </>
+            ) : isUserContextLoading ? (
+              <>
+                <div style={{ ...MD.scoreValue, color: 'var(--text-faint)', fontSize: '2.1rem' }}>...</div>
+                <div style={{ ...MD.scorePill, color: 'var(--text-faint)', background: 'rgba(148,163,184,0.08)', borderColor: 'rgba(148,163,184,0.18)' }}>
+                  Loading
+                </div>
+                <div style={MD.scoreBody}>
+                  Refreshing your compatibility score from your saved profile.
+                </div>
+              </>
             ) : (
               <>
                 <div style={{ ...MD.scoreValue, color: 'var(--text-faint)', fontSize: '2.1rem' }}>-</div>
@@ -380,6 +434,10 @@ function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, is
                     <span>{reason}</span>
                   </div>
                 ))}
+              </div>
+            ) : isUserContextLoading ? (
+              <div style={MD.scoreBody}>
+                Restoring how this asset fits your risk profile, wellness, and stress level.
               </div>
             ) : (
               <div style={MD.scoreBody}>
@@ -654,9 +712,10 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
   const [hasMore, setHasMore] = useState(true)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState({ field: 'market_cap_rank', dir: 'asc' })
-  const [profile, setProfile] = useState(null)
+  const [profile, setProfile] = useState(() => profileCache.get(effectiveUserId) ?? null)
+  const [profileLoading, setProfileLoading] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
-  const [displayCurrency, setDisplayCurrency] = useState('USD')
+  const [displayCurrency, setDisplayCurrency] = useState(() => currencyCache.get(effectiveUserId) ?? 'USD')
   const [favourites, setFavourites] = useState(() => loadFaves())
   const [showFavourites, setShowFavourites] = useState(false)
   const [highlightedItemKey, setHighlightedItemKey] = useState(null)
@@ -682,11 +741,23 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
   }, [])
 
   useEffect(() => {
-    if (!effectiveUserId) return
+    if (!effectiveUserId) {
+      setProfile(null)
+      setProfileLoading(false)
+      return
+    }
+    const cachedProfile = profileCache.get(effectiveUserId)
+    if (cachedProfile) setProfile(cachedProfile)
+    setProfileLoading(true)
     fetch(`${API_BASE}/users/${effectiveUserId}`)
       .then(r => (r.ok ? r.json() : null))
-      .then(data => setProfile(data?.user ?? null))
+      .then(data => {
+        const nextProfile = data?.user ?? null
+        setProfile(nextProfile)
+        if (nextProfile) profileCache.set(effectiveUserId, nextProfile)
+      })
       .catch(() => {})
+      .finally(() => setProfileLoading(false))
   }, [effectiveUserId])
 
   useEffect(() => {
@@ -694,9 +765,15 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
       setDisplayCurrency('USD')
       return
     }
+    const cachedCurrency = currencyCache.get(effectiveUserId)
+    if (cachedCurrency) setDisplayCurrency(cachedCurrency)
     fetch(`${API_BASE}/users/profile/details/${effectiveUserId}`)
       .then(r => (r.ok ? r.json() : null))
-      .then(data => setDisplayCurrency(normalizeCurrencyCode(data?.profile?.currency || 'USD')))
+      .then(data => {
+        const nextCurrency = normalizeCurrencyCode(data?.profile?.currency || 'USD')
+        setDisplayCurrency(nextCurrency)
+        currencyCache.set(effectiveUserId, nextCurrency)
+      })
       .catch(() => setDisplayCurrency('USD'))
   }, [effectiveUserId])
 
@@ -1032,6 +1109,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
         endpoint={endpoint}
         title={title}
         profile={profile}
+        profileLoading={profileLoading}
         userId={effectiveUserId}
         onClose={() => setSelectedItem(null)}
         isFavourited={!!selectedItem && favourites.some(f => f.__id === (selectedItem.id ?? selectedItem.symbol))}

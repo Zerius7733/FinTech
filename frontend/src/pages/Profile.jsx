@@ -1793,9 +1793,9 @@ export default function Profile() {
   const [financialBusy, setFinancialBusy] = useState(false)
   const [syncedBalanceReloading, setSyncedBalanceReloading] = useState(false)
   const [retirementInputs, setRetirementInputs] = useState({
-    retirement_age: 65,
-    monthly_expenses: 0,
-    essential_monthly_expenses: 0,
+    retirement_age: '65',
+    monthly_expenses: '0',
+    essential_monthly_expenses: '0',
   })
   const [retirementInitialized, setRetirementInitialized] = useState(false)
   const [retirementPlan, setRetirementPlan] = useState(null)
@@ -1874,9 +1874,9 @@ export default function Profile() {
     const expenseBase = Number(profile.expenses ?? 0) || (currentIncomeValue > 0 ? currentIncomeValue * 0.43 : 3500)
     const essentialBase = Math.min(expenseBase, expenseBase * 0.7)
     setRetirementInputs({
-      retirement_age: clamp((Number(profile.age) || 40) + 25, 55, 70),
-      monthly_expenses: Math.round(expenseBase),
-      essential_monthly_expenses: Math.round(essentialBase),
+      retirement_age: String(clamp((Number(profile.age) || 40) + 25, 55, 70)),
+      monthly_expenses: String(Math.round(expenseBase)),
+      essential_monthly_expenses: String(Math.round(essentialBase)),
     })
     setRetirementInitialized(true)
   }, [profile, retirementInitialized])
@@ -2379,10 +2379,15 @@ export default function Profile() {
     setRetirementLoading(true)
     setRetirementError('')
     try {
+      const payload = {
+        retirement_age: Number(retirementInputs.retirement_age || 0),
+        monthly_expenses: Number(retirementInputs.monthly_expenses || 0),
+        essential_monthly_expenses: Number(retirementInputs.essential_monthly_expenses || 0),
+      }
       const res = await fetch(`${API}/users/${authUser.user_id}/retirement`, {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
-        body:JSON.stringify(retirementInputs),
+        body:JSON.stringify(payload),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -3490,7 +3495,7 @@ export default function Profile() {
                       min="19"
                       max="100"
                       value={retirementInputs.retirement_age}
-                      onChange={e => setRetirementInputs(prev => ({ ...prev, retirement_age:Number(e.target.value || 0) }))}
+                      onChange={e => setRetirementInputs(prev => ({ ...prev, retirement_age:e.target.value }))}
                       style={{ ...s.retirementInput, ...retirementInputStyle }}
                     />
                   </label>
@@ -3501,7 +3506,7 @@ export default function Profile() {
                       min="0"
                       step="100"
                       value={retirementInputs.monthly_expenses}
-                      onChange={e => setRetirementInputs(prev => ({ ...prev, monthly_expenses:Number(e.target.value || 0) }))}
+                      onChange={e => setRetirementInputs(prev => ({ ...prev, monthly_expenses:e.target.value }))}
                       style={{ ...s.retirementInput, ...retirementInputStyle }}
                     />
                   </label>
@@ -3512,7 +3517,7 @@ export default function Profile() {
                       min="0"
                       step="100"
                       value={retirementInputs.essential_monthly_expenses}
-                      onChange={e => setRetirementInputs(prev => ({ ...prev, essential_monthly_expenses:Number(e.target.value || 0) }))}
+                      onChange={e => setRetirementInputs(prev => ({ ...prev, essential_monthly_expenses:e.target.value }))}
                       style={{ ...s.retirementInput, ...retirementInputStyle }}
                     />
                   </label>
