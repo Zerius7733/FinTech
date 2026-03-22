@@ -24,6 +24,7 @@ def _safe_int(value: Any, default: int = 0) -> int:
 def ensure_users_csv_fieldnames(fieldnames: list[str]) -> list[str]:
     required = [
         "user_id",
+        "created_at",
         "username",
         "password",
         "email",
@@ -89,6 +90,7 @@ def sync_user_to_assets_csv(user_id: str, user: dict[str, Any]) -> None:
     csv_path = const.ASSETS_CSV_PATH
     default_headers = [
         "user_id",
+        "created_at",
         "username",
         "password",
         "email",
@@ -166,7 +168,7 @@ def update_user_csv_profile(user_id: str, updates: dict[str, Any]) -> None:
     else:
         rows = []
         fieldnames = [
-            "user_id", "username", "password", "email", "name",
+            "user_id", "created_at", "username", "password", "email", "name",
             "dbs", "uob", "ocbc", "other_banks", const.SYNCED_ACCOUNT_BALANCE_FIELD, const.SYNCED_BALANCE_RELOAD_COUNT_FIELD,
             "liability", "income", "estate", "expense",
             "age", "age_group", "country",

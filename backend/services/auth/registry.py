@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict
 from email_validator import EmailNotValidError, validate_email
 
-USER_CSV_FIELDS = [
+REQUIRED_LOGIN_CSV_FIELDS = [
     "user_id",
     "created_at",
     "username",
@@ -24,6 +24,30 @@ USER_CSV_FIELDS = [
     "age_group",
     "country",
 ]
+
+
+def _ensure_login_csv_fieldnames(fieldnames: list[str]) -> list[str]:
+    normalized = [str(field or "").lstrip("\ufeff") for field in (fieldnames or []) if str(field or "").strip()]
+    for key in REQUIRED_LOGIN_CSV_FIELDS:
+        if key not in normalized:
+            normalized.append(key)
+    return normalized
+
+
+def _load_login_table(login_csv_path: Path) -> tuple[list[Dict[str, str]], list[str]]:
+    if not login_csv_path.exists():
+        return [], _ensure_login_csv_fieldnames([])
+    with open(login_csv_path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        fieldnames = _ensure_login_csv_fieldnames(list(reader.fieldnames or []))
+        rows: list[Dict[str, str]] = []
+        for row in reader:
+            normalized: Dict[str, str] = {}
+            for key, value in (row or {}).items():
+                clean_key = str(key or "").lstrip("\ufeff")
+                normalized[clean_key] = value
+            rows.append(normalized)
+        return rows, fieldnames
 
 
 def _utc_now_iso() -> str:
@@ -71,46 +95,36 @@ PASSWORD_SPECIAL_RE = re.compile(r"[^A-Za-z0-9]")
 
 
 def _load_login_rows(login_csv_path: Path) -> list[Dict[str, str]]:
-    if not login_csv_path.exists():
-        return []
-    with open(login_csv_path, "r", encoding="utf-8", newline="") as f:
-        reader = csv.DictReader(f)
-        rows: list[Dict[str, str]] = []
-        for row in reader:
-            normalized: Dict[str, str] = {}
-            for key, value in (row or {}).items():
-                clean_key = str(key or "").lstrip("\ufeff")
-                normalized[clean_key] = value
-            rows.append(normalized)
-        return rows
+    rows, _ = _load_login_table(login_csv_path)
+    return rows
 
 
 def _ensure_login_csv_exists(login_csv_path: Path) -> None:
     if login_csv_path.exists():
         return
     with open(login_csv_path, "w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=USER_CSV_FIELDS)
+        writer = csv.DictWriter(f, fieldnames=_ensure_login_csv_fieldnames([]))
         writer.writeheader()
 
 
 def ensure_login_csv_schema(login_csv_path: Path) -> None:
     _ensure_login_csv_exists(login_csv_path)
+    rows, fieldnames = _load_login_table(login_csv_path)
     with open(login_csv_path, "r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        current_fields = list(reader.fieldnames or [])
-        rows = [row for row in reader]
+        current_fields = [str(field or "").lstrip("\ufeff") for field in list(reader.fieldnames or [])]
 
-    if current_fields == USER_CSV_FIELDS and all((row.get("created_at") or "").strip() for row in rows):
+    if current_fields == fieldnames and all((row.get("created_at") or "").strip() for row in rows):
         return
 
     rewritten_rows: list[Dict[str, str]] = []
     for row in rows:
-        rewritten = {field: (row.get(field) or "") for field in USER_CSV_FIELDS}
+        rewritten = {field: (row.get(field) or "") for field in fieldnames}
         rewritten["created_at"] = _normalize_created_at(row.get("created_at"))
         rewritten_rows.append(rewritten)
 
     with open(login_csv_path, "w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=USER_CSV_FIELDS)
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rewritten_rows)
 
@@ -124,6 +138,7 @@ def bootstrap_login_csv_from_assets_csv(login_csv_path: Path, assets_csv_path: P
 
     with open(assets_csv_path, "r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
+        asset_fieldnames = _ensure_login_csv_fieldnames(list(reader.fieldnames or []))
         asset_rows = [dict(row) for row in reader]
 
     migrated_rows: list[Dict[str, str]] = []
@@ -133,7 +148,8 @@ def bootstrap_login_csv_from_assets_csv(login_csv_path: Path, assets_csv_path: P
         password = (row.get("password") or "").strip()
         if not user_id or not username:
             continue
-        migrated_rows.append(
+        migrated = {field: (row.get(field) or "") for field in asset_fieldnames}
+        migrated.update(
             {
                 "user_id": user_id,
                 "created_at": _normalize_created_at(row.get("created_at")),
@@ -141,22 +157,25 @@ def bootstrap_login_csv_from_assets_csv(login_csv_path: Path, assets_csv_path: P
                 "password": password,
                 "email": (row.get("email") or "").strip() or f"{username.lower()}@example.com",
                 "name": (row.get("name") or "").strip() or username,
-                "dbs": "0",
-                "uob": "0",
-                "ocbc": "0",
-                "other_banks": "0",
-                "liability": "0",
-                "income": "0",
-                "estate": "0",
-                "expense": "0",
+                "dbs": (row.get("dbs") or "0").strip() or "0",
+                "uob": (row.get("uob") or "0").strip() or "0",
+                "ocbc": (row.get("ocbc") or "0").strip() or "0",
+                "other_banks": (row.get("other_banks") or "0").strip() or "0",
+                "synced_account_balance": (row.get("synced_account_balance") or "0").strip() or "0",
+                "synced_balance_reload_count": (row.get("synced_balance_reload_count") or "0").strip() or "0",
+                "liability": (row.get("liability") or "0").strip() or "0",
+                "income": (row.get("income") or "0").strip() or "0",
+                "estate": (row.get("estate") or "0").strip() or "0",
+                "expense": (row.get("expense") or "0").strip() or "0",
                 "age": (row.get("age") or "").strip(),
                 "age_group": (row.get("age_group") or "").strip(),
                 "country": (row.get("country") or "").strip(),
             }
         )
+        migrated_rows.append(migrated)
 
     with open(login_csv_path, "w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=USER_CSV_FIELDS)
+        writer = csv.DictWriter(f, fieldnames=asset_fieldnames)
         writer.writeheader()
         writer.writerows(migrated_rows)
 
@@ -263,7 +282,7 @@ def register_login_user(
 
     _ensure_login_csv_exists(login_csv_path)
     ensure_login_csv_schema(login_csv_path)
-    rows = _load_login_rows(login_csv_path)
+    rows, fieldnames = _load_login_table(login_csv_path)
 
     if requested_user_id:
         if any((row.get("user_id") or "").strip().lower() == requested_user_id.lower() for row in rows):
@@ -276,8 +295,9 @@ def register_login_user(
     created_at = _utc_now_iso()
 
     with open(login_csv_path, "a", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=USER_CSV_FIELDS)
-        writer.writerow(
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        row = {field: "" for field in fieldnames}
+        row.update(
             {
                 "user_id": final_user_id,
                 "created_at": created_at,
@@ -289,6 +309,8 @@ def register_login_user(
                 "uob": "0",
                 "ocbc": "0",
                 "other_banks": "0",
+                "synced_account_balance": "0",
+                "synced_balance_reload_count": "0",
                 "liability": "0",
                 "income": "0",
                 "estate": "0",
@@ -298,6 +320,7 @@ def register_login_user(
                 "country": "",
             }
         )
+        writer.writerow(row)
 
     return {
         "user_id": final_user_id,

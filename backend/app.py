@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend import routes , services , settings , stores
 
 services.users.rewrite_user_profiles_with_order(settings.constants.USER_JSON_PATH)
-services.auth.bootstrap_login_csv_from_assets_csv(settings.constants.LOGIN_CSV_PATH, settings.constants.ASSETS_CSV_PATH)
+if settings.constants.LOGIN_CSV_PATH != settings.constants.ASSETS_CSV_PATH:
+    services.auth.bootstrap_login_csv_from_assets_csv(settings.constants.LOGIN_CSV_PATH, settings.constants.ASSETS_CSV_PATH)
 services.auth.ensure_login_csv_schema(settings.constants.LOGIN_CSV_PATH)
 
 ALLOWED_ORIGINS = settings.config.parse_csv_env("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:8080,http://127.0.0.1:5173")

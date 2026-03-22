@@ -45,11 +45,12 @@ def build_router(
                 user_id=result["user_id"],
                 name=result["username"],
             )
-            auth.add_default_assets_row(
-                csv_path=constants.ASSETS_CSV_PATH,
-                user_id=result["user_id"],
-                name=result["username"],
-            )
+            if constants.LOGIN_CSV_PATH != constants.ASSETS_CSV_PATH:
+                auth.add_default_assets_row(
+                    csv_path=constants.ASSETS_CSV_PATH,
+                    user_id=result["user_id"],
+                    name=result["username"],
+                )
             return {"status": "ok", **result}
         except auth.RegisterValidationError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
