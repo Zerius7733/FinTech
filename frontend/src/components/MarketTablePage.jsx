@@ -289,7 +289,7 @@ function insightNarrativeText(insight) {
   return ''
 }
 
-function MarketDetailModal({ item, endpoint, title, profile, userId, onClose, isFavourited, onToggleFavourite, onQuoteRefresh, fmt }) {
+function MarketDetailModal({ item, endpoint, title, profile, profileLoading = false, userId, onClose, isFavourited, onToggleFavourite, onQuoteRefresh, fmt }) {
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)

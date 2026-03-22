@@ -1536,15 +1536,22 @@
       ],
       "commodities": []
     },
-    "manual_assets": [],
+    "manual_assets": [
+      {
+        "id": "338380ab-0b6c-4b11-b789-a4d440874fde",
+        "label": "Cash",
+        "category": "real_estate",
+        "value": 20000.0
+      }
+    ],
     "portfolio_value": 13104.03,
-    "total_balance": 14053.03,
-    "net_worth": 14053.03,
+    "total_balance": 34053.03,
+    "net_worth": 34053.03,
     "income": 0,
     "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 20000.0,
     "wellness_metrics": {
       "liquidity_months": 0.0,
       "liquidity_score": 0.0,
@@ -1552,18 +1559,18 @@
       "diversification_score": 49.66,
       "debt_income_ratio": 0.0,
       "debt_income_score": 50.0,
-      "housing_score": null,
+      "housing_score": 95.0,
       "risk_alignment_score": 50.37,
-      "behavioral_resilience_score": 32.32,
-      "financial_resilience_score": 32.32,
-      "financial_stress_index": 59.15,
+      "behavioral_resilience_score": 41.72,
+      "financial_resilience_score": 41.72,
+      "financial_stress_index": 53.24,
       "confidence": "Medium",
       "derived_metrics": {
         "derived_income": 0.0,
         "derived_income_source": "income_field",
         "derived_expenses": 0.0,
         "derived_expenses_source": "missing",
-        "derived_estate": 0.0,
+        "derived_estate": 20000.0,
         "derived_cash_like_manual_assets": 0.0,
         "derived_mortgage": 0.0,
         "derived_non_mortgage_liability": 0.0,
@@ -1591,11 +1598,11 @@
       "resilience_breakdown": {
         "liquidity_score": 0.0,
         "debt_score": 50.0,
-        "housing_score": null,
+        "housing_score": 95.0,
         "diversification_score": 49.66,
         "risk_alignment_score": 50.37
       },
-      "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
+      "resilience_summary": "Vulnerable: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
       "action_insights": [
         "Build emergency savings toward 3 to 6 months of expenses.",
         "Lower unsecured liabilities to improve shock absorption and monthly flexibility.",
@@ -1603,16 +1610,16 @@
       ]
     },
     "risk_profile": 81.0,
-    "behavioral_resilience_score": 32.32,
-    "financial_resilience_score": 32.32,
-    "financial_wellness_score": 32.32,
-    "financial_stress_index": 59.15,
+    "behavioral_resilience_score": 41.72,
+    "financial_resilience_score": 41.72,
+    "financial_wellness_score": 41.72,
+    "financial_stress_index": 53.24,
     "confidence": "Medium",
-    "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
+    "resilience_summary": "Vulnerable: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 0.0,
       "debt_score": 50.0,
-      "housing_score": null,
+      "housing_score": 95.0,
       "diversification_score": 49.66,
       "risk_alignment_score": 50.37
     },
