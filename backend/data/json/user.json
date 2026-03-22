@@ -24,15 +24,15 @@
           "symbol": "AAPL",
           "qty": 25.0,
           "avg_price": 182.4,
-          "market_value": 6520.75,
-          "current_price": 260.83
+          "market_value": 6497.0,
+          "current_price": 259.88
         },
         {
           "symbol": "MSFT",
           "qty": 18.0,
           "avg_price": 320.0,
-          "market_value": 7303.68,
-          "current_price": 405.76
+          "market_value": 7369.38,
+          "current_price": 409.41
         },
         {
           "symbol": "CSPX",
@@ -45,16 +45,16 @@
           "symbol": "ES3.SI",
           "qty": 3500.0,
           "avg_price": 3.05,
-          "market_value": 16975.0,
-          "current_price": 4.85,
+          "market_value": 17045.0,
+          "current_price": 4.87,
           "name": "STI ETF"
         },
         {
           "symbol": "D05.SI",
           "qty": 900.0,
           "avg_price": 31.8,
-          "market_value": 50148.0,
-          "current_price": 55.72,
+          "market_value": 50085.0,
+          "current_price": 55.65,
           "name": "DBS Group"
         },
         {
@@ -71,49 +71,49 @@
           "symbol": "BTC-USD",
           "qty": 0.08,
           "avg_price": 67666.205179,
-          "current_price": 69547.2344,
-          "market_value": 5563.78,
+          "current_price": 70680.4375,
+          "market_value": 5654.44,
           "name": "Bitcoin"
         },
         {
           "symbol": "ETH-USD",
           "qty": 6.0,
           "avg_price": 1882.716667,
-          "current_price": 2027.7444,
-          "market_value": 12166.47,
+          "current_price": 2059.86,
+          "market_value": 12359.16,
           "name": "Ethereum"
         },
         {
           "symbol": "SOL-USD",
           "qty": 65.0,
           "avg_price": 101.0,
-          "current_price": 85.293,
-          "market_value": 5544.05,
+          "current_price": 86.7777,
+          "market_value": 5640.55,
           "name": "Solana"
         },
         {
           "symbol": "BNB-USD",
           "qty": 8.0,
           "avg_price": 546.0225,
-          "current_price": 641.1039,
-          "market_value": 5128.83,
+          "current_price": 647.51,
+          "market_value": 5180.08,
           "name": "BNB"
         },
         {
           "symbol": "DOGE-USD",
           "qty": 23456.0,
           "avg_price": 0.09314,
-          "current_price": 0.0929,
+          "current_price": 0.09673,
           "name": "Dogecoin",
-          "market_value": 2179.06
+          "market_value": 2268.9
         },
         {
           "symbol": "BCH-USD",
           "qty": 3.0,
           "avg_price": 457.81,
-          "current_price": 450.6466,
+          "current_price": 449.64,
           "name": "Bitcoin Cash",
-          "market_value": 1351.94
+          "market_value": 1348.92
         }
       ],
       "commodities": [
@@ -121,16 +121,16 @@
           "symbol": "GLD",
           "qty": 80.0,
           "avg_price": 241.6,
-          "current_price": 477.86,
-          "market_value": 38228.8,
+          "current_price": 472.53,
+          "market_value": 37802.4,
           "name": "SPDR Gold Shares"
         },
         {
           "symbol": "SLV",
           "qty": 120.0,
           "avg_price": 25.4,
-          "current_price": 80.09,
-          "market_value": 9610.8,
+          "current_price": 78.26,
+          "market_value": 9391.2,
           "name": "iShares Silver Trust"
         }
       ]
@@ -143,9 +143,9 @@
         "value": 500000.0
       }
     ],
-    "portfolio_value": 255382.16,
-    "total_balance": 907382.66,
-    "net_worth": 905383.66,
+    "portfolio_value": 255303.03,
+    "total_balance": 907303.53,
+    "net_worth": 905304.53,
     "income": 19800.0,
     "expenses": 1000.0,
     "income_streams": [
@@ -160,15 +160,15 @@
     "wellness_metrics": {
       "liquidity_months": 152.0,
       "liquidity_score": 100.0,
-      "diversification_hhi": 0.1859,
-      "diversification_score": 87.49,
+      "diversification_hhi": 0.1856,
+      "diversification_score": 87.51,
       "debt_income_ratio": 0.6145,
       "debt_income_score": 91.23,
       "housing_score": 86.03,
-      "risk_alignment_score": 96.35,
-      "behavioral_resilience_score": 92.84,
-      "financial_resilience_score": 92.84,
-      "financial_stress_index": 4.01,
+      "risk_alignment_score": 96.39,
+      "behavioral_resilience_score": 92.85,
+      "financial_resilience_score": 92.85,
+      "financial_stress_index": 4.0,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 19800.0,
@@ -186,16 +186,16 @@
         "non_mortgage_debt_to_annual_income": 0.0042,
         "mortgage_to_annual_income": 0.6103,
         "housing_cushion": 3.4483,
-        "stock_total": 175608.43,
-        "crypto_total": 31934.13,
-        "commodity_total": 47839.6,
-        "computed_portfolio_value": 255382.16,
-        "portfolio_value": 255382.16,
+        "stock_total": 175657.38,
+        "crypto_total": 32452.05,
+        "commodity_total": 47193.6,
+        "computed_portfolio_value": 255303.03,
+        "portfolio_value": 255303.03,
         "portfolio_value_source": "portfolio_positions",
-        "crypto_exposure_ratio": 0.125,
-        "diversification_hhi": 0.1859,
-        "asset_class_hhi": 0.5236,
-        "position_hhi": 0.1859,
+        "crypto_exposure_ratio": 0.1271,
+        "diversification_hhi": 0.1856,
+        "asset_class_hhi": 0.5237,
+        "position_hhi": 0.1856,
         "position_count": 14,
         "expenses_estimated": false,
         "expenses_missing": false
@@ -204,8 +204,8 @@
         "liquidity_score": 100.0,
         "debt_score": 91.23,
         "housing_score": 86.03,
-        "diversification_score": 87.49,
-        "risk_alignment_score": 96.35
+        "diversification_score": 87.51,
+        "risk_alignment_score": 96.39
       },
       "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
       "action_insights": [
@@ -213,18 +213,18 @@
       ]
     },
     "risk_profile": 31.0,
-    "behavioral_resilience_score": 92.84,
-    "financial_resilience_score": 92.84,
-    "financial_wellness_score": 92.84,
-    "financial_stress_index": 4.01,
+    "behavioral_resilience_score": 92.85,
+    "financial_resilience_score": 92.85,
+    "financial_wellness_score": 92.85,
+    "financial_stress_index": 4.0,
     "confidence": "High",
     "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 100.0,
       "debt_score": 91.23,
       "housing_score": 86.03,
-      "diversification_score": 87.49,
-      "risk_alignment_score": 96.35
+      "diversification_score": 87.51,
+      "risk_alignment_score": 96.39
     },
     "action_insights": [
       "Maintain current buffers and rebalance periodically to preserve resilience."
@@ -251,15 +251,15 @@
           "symbol": "TSLA",
           "qty": 4,
           "avg_price": 228.5,
-          "market_value": 1596.96,
-          "current_price": 399.24
+          "market_value": 1594.72,
+          "current_price": 398.68
         },
         {
           "symbol": "NVDA",
           "qty": 3,
           "avg_price": 870.0,
-          "market_value": 554.31,
-          "current_price": 184.77
+          "market_value": 547.95,
+          "current_price": 182.65
         }
       ],
       "cryptos": [
@@ -267,15 +267,15 @@
           "symbol": "BTC-USD",
           "qty": 0.03,
           "avg_price": 45000.0,
-          "current_price": 69547.2344,
-          "market_value": 2086.42
+          "current_price": 70680.4375,
+          "market_value": 2120.41
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.18,
           "avg_price": 2500.0,
-          "current_price": 2027.7444,
-          "market_value": 364.99
+          "current_price": 2060.1436,
+          "market_value": 370.83
         }
       ],
       "commodities": [
@@ -283,22 +283,22 @@
           "symbol": "GC=F",
           "qty": 0.35,
           "avg_price": 2200.0,
-          "current_price": 5197.2002,
-          "market_value": 1819.02
+          "current_price": 5199.6001,
+          "market_value": 1819.86
         },
         {
           "symbol": "SI=F",
           "qty": 10.0,
           "avg_price": 24.8,
-          "current_price": 86.795,
-          "market_value": 867.95
+          "current_price": 89.09,
+          "market_value": 890.9
         }
       ]
     },
     "manual_assets": [],
-    "portfolio_value": 7289.65,
-    "total_balance": 9589.65,
-    "net_worth": 1688.9,
+    "portfolio_value": 7344.67,
+    "total_balance": 9644.67,
+    "net_worth": 1743.92,
     "income": 4000.0,
     "expenses": 1500.0,
     "income_streams": [
@@ -313,12 +313,12 @@
     "wellness_metrics": {
       "liquidity_months": 1.53,
       "liquidity_score": 51.35,
-      "diversification_hhi": 0.2146,
-      "diversification_score": 85.47,
+      "diversification_hhi": 0.2147,
+      "diversification_score": 85.46,
       "debt_income_ratio": 0.1333,
       "debt_income_score": 89.3,
       "housing_score": null,
-      "risk_alignment_score": 89.66,
+      "risk_alignment_score": 89.71,
       "behavioral_resilience_score": 75.05,
       "financial_resilience_score": 75.05,
       "financial_stress_index": 31.09,
@@ -339,16 +339,16 @@
         "non_mortgage_debt_to_annual_income": 0.1333,
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
-        "stock_total": 2151.27,
-        "crypto_total": 2451.41,
-        "commodity_total": 2686.97,
-        "computed_portfolio_value": 7289.65,
-        "portfolio_value": 7289.65,
+        "stock_total": 2142.67,
+        "crypto_total": 2491.24,
+        "commodity_total": 2710.76,
+        "computed_portfolio_value": 7344.67,
+        "portfolio_value": 7344.67,
         "portfolio_value_source": "portfolio_positions",
-        "crypto_exposure_ratio": 0.3363,
-        "diversification_hhi": 0.2146,
-        "asset_class_hhi": 0.336,
-        "position_hhi": 0.2146,
+        "crypto_exposure_ratio": 0.3392,
+        "diversification_hhi": 0.2147,
+        "asset_class_hhi": 0.3364,
+        "position_hhi": 0.2147,
         "position_count": 6,
         "expenses_estimated": false,
         "expenses_missing": false
@@ -357,8 +357,8 @@
         "liquidity_score": 51.35,
         "debt_score": 89.3,
         "housing_score": null,
-        "diversification_score": 85.47,
-        "risk_alignment_score": 89.66
+        "diversification_score": 85.46,
+        "risk_alignment_score": 89.71
       },
       "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but only limited visible weaknesses could amplify stress during shocks.",
       "action_insights": [
@@ -376,8 +376,8 @@
       "liquidity_score": 51.35,
       "debt_score": 89.3,
       "housing_score": null,
-      "diversification_score": 85.47,
-      "risk_alignment_score": 89.66
+      "diversification_score": 85.46,
+      "risk_alignment_score": 89.71
     },
     "action_insights": [
       "Build emergency savings toward 3 to 6 months of expenses."
@@ -402,15 +402,15 @@
           "symbol": "META",
           "qty": 4,
           "avg_price": 495.0,
-          "market_value": 2616.28,
-          "current_price": 654.07
+          "market_value": 2589.56,
+          "current_price": 647.39
         },
         {
           "symbol": "GOOGL",
           "qty": 7,
           "avg_price": 152.3,
-          "market_value": 2149.28,
-          "current_price": 307.04
+          "market_value": 2144.52,
+          "current_price": 306.36
         }
       ],
       "cryptos": [
@@ -418,23 +418,23 @@
           "symbol": "BTC-USD",
           "qty": 0.04,
           "avg_price": 45000.0,
-          "current_price": 69547.2344,
-          "market_value": 2781.89
+          "current_price": 70680.4375,
+          "market_value": 2827.22
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.19,
           "avg_price": 2500.0,
-          "current_price": 2027.7444,
-          "market_value": 385.27
+          "current_price": 2060.1436,
+          "market_value": 391.43
         }
       ],
       "commodities": []
     },
     "manual_assets": [],
-    "portfolio_value": 7932.72,
-    "total_balance": 16932.92,
-    "net_worth": 5932.72,
+    "portfolio_value": 7952.73,
+    "total_balance": 16952.93,
+    "net_worth": 5952.73,
     "income": 3000.0,
     "expenses": 2000.0,
     "income_streams": [
@@ -454,10 +454,10 @@
       "debt_income_ratio": 0.25,
       "debt_income_score": 81.38,
       "housing_score": null,
-      "risk_alignment_score": 98.86,
-      "behavioral_resilience_score": 86.65,
-      "financial_resilience_score": 86.65,
-      "financial_stress_index": 20.13,
+      "risk_alignment_score": 98.95,
+      "behavioral_resilience_score": 86.66,
+      "financial_resilience_score": 86.66,
+      "financial_stress_index": 20.12,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 3000.0,
@@ -475,15 +475,15 @@
         "non_mortgage_debt_to_annual_income": 0.25,
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
-        "stock_total": 4765.56,
-        "crypto_total": 3167.16,
+        "stock_total": 4734.08,
+        "crypto_total": 3218.65,
         "commodity_total": 0.0,
-        "computed_portfolio_value": 7932.72,
-        "portfolio_value": 7932.72,
+        "computed_portfolio_value": 7952.73,
+        "portfolio_value": 7952.73,
         "portfolio_value_source": "portfolio_positions",
-        "crypto_exposure_ratio": 0.3993,
+        "crypto_exposure_ratio": 0.4047,
         "diversification_hhi": 0.3075,
-        "asset_class_hhi": 0.5203,
+        "asset_class_hhi": 0.5182,
         "position_hhi": 0.3075,
         "position_count": 4,
         "expenses_estimated": false,
@@ -494,7 +494,7 @@
         "debt_score": 81.38,
         "housing_score": null,
         "diversification_score": 78.75,
-        "risk_alignment_score": 98.86
+        "risk_alignment_score": 98.95
       },
       "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
       "action_insights": [
@@ -502,10 +502,10 @@
       ]
     },
     "risk_profile": 50.0,
-    "behavioral_resilience_score": 86.65,
-    "financial_resilience_score": 86.65,
-    "financial_wellness_score": 86.65,
-    "financial_stress_index": 20.13,
+    "behavioral_resilience_score": 86.66,
+    "financial_resilience_score": 86.66,
+    "financial_wellness_score": 86.66,
+    "financial_stress_index": 20.12,
     "confidence": "High",
     "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
     "resilience_breakdown": {
@@ -513,7 +513,7 @@
       "debt_score": 81.38,
       "housing_score": null,
       "diversification_score": 78.75,
-      "risk_alignment_score": 98.86
+      "risk_alignment_score": 98.95
     },
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification."
@@ -538,15 +538,15 @@
           "symbol": "SPY",
           "qty": 10,
           "avg_price": 520.4,
-          "market_value": 6771.8,
-          "current_price": 677.18
+          "market_value": 6782.7,
+          "current_price": 678.27
         },
         {
           "symbol": "AVGO",
           "qty": 2,
           "avg_price": 1320.0,
-          "market_value": 685.16,
-          "current_price": 342.58
+          "market_value": 691.5,
+          "current_price": 345.75
         }
       ],
       "cryptos": [
@@ -554,23 +554,23 @@
           "symbol": "BTC-USD",
           "qty": 0.05,
           "avg_price": 45000.0,
-          "current_price": 69547.2344,
-          "market_value": 3477.36
+          "current_price": 70680.4375,
+          "market_value": 3534.02
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.2,
           "avg_price": 2500.0,
-          "current_price": 2027.7444,
-          "market_value": 405.55
+          "current_price": 2060.1436,
+          "market_value": 412.03
         }
       ],
       "commodities": []
     },
     "manual_assets": [],
-    "portfolio_value": 11339.87,
-    "total_balance": 18690.27,
-    "net_worth": 8839.87,
+    "portfolio_value": 11420.25,
+    "total_balance": 18770.65,
+    "net_worth": 8920.25,
     "income": 4500.0,
     "expenses": 2500.0,
     "income_streams": [
@@ -585,15 +585,15 @@
     "wellness_metrics": {
       "liquidity_months": 2.94,
       "liquidity_score": 76.94,
-      "diversification_hhi": 0.4556,
-      "diversification_score": 67.35,
+      "diversification_hhi": 0.4535,
+      "diversification_score": 67.52,
       "debt_income_ratio": 0.1361,
       "debt_income_score": 89.09,
       "housing_score": null,
-      "risk_alignment_score": 97.98,
-      "behavioral_resilience_score": 80.73,
-      "financial_resilience_score": 80.73,
-      "financial_stress_index": 23.7,
+      "risk_alignment_score": 98.03,
+      "behavioral_resilience_score": 80.78,
+      "financial_resilience_score": 80.78,
+      "financial_stress_index": 23.67,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 4500.0,
@@ -611,16 +611,16 @@
         "non_mortgage_debt_to_annual_income": 0.1361,
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
-        "stock_total": 7456.96,
-        "crypto_total": 3882.91,
+        "stock_total": 7474.2,
+        "crypto_total": 3946.05,
         "commodity_total": 0.0,
-        "computed_portfolio_value": 11339.87,
-        "portfolio_value": 11339.87,
+        "computed_portfolio_value": 11420.25,
+        "portfolio_value": 11420.25,
         "portfolio_value_source": "portfolio_positions",
-        "crypto_exposure_ratio": 0.3424,
-        "diversification_hhi": 0.4556,
-        "asset_class_hhi": 0.5497,
-        "position_hhi": 0.4556,
+        "crypto_exposure_ratio": 0.3455,
+        "diversification_hhi": 0.4535,
+        "asset_class_hhi": 0.5477,
+        "position_hhi": 0.4535,
         "position_count": 4,
         "expenses_estimated": false,
         "expenses_missing": false
@@ -629,8 +629,8 @@
         "liquidity_score": 76.94,
         "debt_score": 89.09,
         "housing_score": null,
-        "diversification_score": 67.35,
-        "risk_alignment_score": 97.98
+        "diversification_score": 67.52,
+        "risk_alignment_score": 98.03
       },
       "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
       "action_insights": [
@@ -638,18 +638,18 @@
       ]
     },
     "risk_profile": 50.0,
-    "behavioral_resilience_score": 80.73,
-    "financial_resilience_score": 80.73,
-    "financial_wellness_score": 80.73,
-    "financial_stress_index": 23.7,
+    "behavioral_resilience_score": 80.78,
+    "financial_resilience_score": 80.78,
+    "financial_wellness_score": 80.78,
+    "financial_stress_index": 23.67,
     "confidence": "High",
     "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 76.94,
       "debt_score": 89.09,
       "housing_score": null,
-      "diversification_score": 67.35,
-      "risk_alignment_score": 97.98
+      "diversification_score": 67.52,
+      "risk_alignment_score": 98.03
     },
     "action_insights": [
       "Maintain current buffers and rebalance periodically to preserve resilience."
@@ -674,15 +674,15 @@
           "symbol": "NFLX",
           "qty": 3,
           "avg_price": 640.0,
-          "market_value": 290.82,
-          "current_price": 96.94
+          "market_value": 294.96,
+          "current_price": 98.32
         },
         {
           "symbol": "AMD",
           "qty": 10,
           "avg_price": 165.3,
-          "market_value": 2032.3,
-          "current_price": 203.23
+          "market_value": 2026.8,
+          "current_price": 202.68
         }
       ],
       "cryptos": [
@@ -690,23 +690,23 @@
           "symbol": "BTC-USD",
           "qty": 0.06,
           "avg_price": 45000.0,
-          "current_price": 69547.2344,
-          "market_value": 4172.83
+          "current_price": 70680.4375,
+          "market_value": 4240.83
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.21,
           "avg_price": 2500.0,
-          "current_price": 2027.7444,
-          "market_value": 425.83
+          "current_price": 2060.1436,
+          "market_value": 432.63
         }
       ],
       "commodities": []
     },
     "manual_assets": [],
-    "portfolio_value": 6921.78,
-    "total_balance": 19522.03,
-    "net_worth": 3921.78,
+    "portfolio_value": 6995.22,
+    "total_balance": 19595.47,
+    "net_worth": 3995.22,
     "income": 4600.0,
     "expenses": 3000.0,
     "income_streams": [
@@ -721,15 +721,15 @@
     "wellness_metrics": {
       "liquidity_months": 4.2,
       "liquidity_score": 90.01,
-      "diversification_hhi": 0.4552,
-      "diversification_score": 67.38,
+      "diversification_hhi": 0.4571,
+      "diversification_score": 67.23,
       "debt_income_ratio": 0.2283,
       "debt_income_score": 82.76,
       "housing_score": null,
-      "risk_alignment_score": 77.35,
-      "behavioral_resilience_score": 81.06,
-      "financial_resilience_score": 81.06,
-      "financial_stress_index": 25.21,
+      "risk_alignment_score": 76.87,
+      "behavioral_resilience_score": 80.97,
+      "financial_resilience_score": 80.97,
+      "financial_stress_index": 25.31,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 4600.0,
@@ -747,16 +747,16 @@
         "non_mortgage_debt_to_annual_income": 0.2283,
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
-        "stock_total": 2323.12,
-        "crypto_total": 4598.66,
+        "stock_total": 2321.76,
+        "crypto_total": 4673.46,
         "commodity_total": 0.0,
-        "computed_portfolio_value": 6921.78,
-        "portfolio_value": 6921.78,
+        "computed_portfolio_value": 6995.22,
+        "portfolio_value": 6995.22,
         "portfolio_value_source": "portfolio_positions",
-        "crypto_exposure_ratio": 0.6644,
-        "diversification_hhi": 0.4552,
-        "asset_class_hhi": 0.554,
-        "position_hhi": 0.4552,
+        "crypto_exposure_ratio": 0.6681,
+        "diversification_hhi": 0.4571,
+        "asset_class_hhi": 0.5565,
+        "position_hhi": 0.4571,
         "position_count": 4,
         "expenses_estimated": false,
         "expenses_missing": false
@@ -765,8 +765,8 @@
         "liquidity_score": 90.01,
         "debt_score": 82.76,
         "housing_score": null,
-        "diversification_score": 67.38,
-        "risk_alignment_score": 77.35
+        "diversification_score": 67.23,
+        "risk_alignment_score": 76.87
       },
       "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but elevated crypto concentration could amplify stress during shocks.",
       "action_insights": [
@@ -774,18 +774,18 @@
       ]
     },
     "risk_profile": 50.0,
-    "behavioral_resilience_score": 81.06,
-    "financial_resilience_score": 81.06,
-    "financial_wellness_score": 81.06,
-    "financial_stress_index": 25.21,
+    "behavioral_resilience_score": 80.97,
+    "financial_resilience_score": 80.97,
+    "financial_wellness_score": 80.97,
+    "financial_stress_index": 25.31,
     "confidence": "High",
     "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but elevated crypto concentration could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 90.01,
       "debt_score": 82.76,
       "housing_score": null,
-      "diversification_score": 67.38,
-      "risk_alignment_score": 77.35
+      "diversification_score": 67.23,
+      "risk_alignment_score": 76.87
     },
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification."
@@ -810,15 +810,15 @@
           "symbol": "INTC",
           "qty": 20,
           "avg_price": 41.2,
-          "market_value": 935.6,
-          "current_price": 46.78
+          "market_value": 911.6,
+          "current_price": 45.58
         },
         {
           "symbol": "BAC",
           "qty": 25,
           "avg_price": 34.5,
-          "market_value": 1214.0,
-          "current_price": 48.56
+          "market_value": 1197.5,
+          "current_price": 47.9
         }
       ],
       "cryptos": [
@@ -826,23 +826,23 @@
           "symbol": "BTC-USD",
           "qty": 0.07,
           "avg_price": 45000.0,
-          "current_price": 69547.2344,
-          "market_value": 4868.31
+          "current_price": 70680.4375,
+          "market_value": 4947.63
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.22,
           "avg_price": 2500.0,
-          "current_price": 2027.7444,
-          "market_value": 446.1
+          "current_price": 2060.1436,
+          "market_value": 453.23
         }
       ],
       "commodities": []
     },
     "manual_assets": [],
-    "portfolio_value": 7464.01,
-    "total_balance": 15954.11,
-    "net_worth": 3964.01,
+    "portfolio_value": 7509.96,
+    "total_balance": 16000.06,
+    "net_worth": 4009.96,
     "income": 4750.0,
     "expenses": 3500.0,
     "income_streams": [
@@ -857,15 +857,15 @@
     "wellness_metrics": {
       "liquidity_months": 2.43,
       "liquidity_score": 69.36,
-      "diversification_hhi": 0.4712,
-      "diversification_score": 66.09,
+      "diversification_hhi": 0.4778,
+      "diversification_score": 65.55,
       "debt_income_ratio": 0.1489,
       "debt_income_score": 88.16,
       "housing_score": null,
-      "risk_alignment_score": 71.09,
-      "behavioral_resilience_score": 74.32,
-      "financial_resilience_score": 74.32,
-      "financial_stress_index": 31.02,
+      "risk_alignment_score": 70.12,
+      "behavioral_resilience_score": 74.08,
+      "financial_resilience_score": 74.08,
+      "financial_stress_index": 31.25,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 4750.0,
@@ -883,16 +883,16 @@
         "non_mortgage_debt_to_annual_income": 0.1489,
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
-        "stock_total": 2149.6,
-        "crypto_total": 5314.41,
+        "stock_total": 2109.1,
+        "crypto_total": 5400.86,
         "commodity_total": 0.0,
-        "computed_portfolio_value": 7464.01,
-        "portfolio_value": 7464.01,
+        "computed_portfolio_value": 7509.96,
+        "portfolio_value": 7509.96,
         "portfolio_value_source": "portfolio_positions",
-        "crypto_exposure_ratio": 0.712,
-        "diversification_hhi": 0.4712,
-        "asset_class_hhi": 0.5899,
-        "position_hhi": 0.4712,
+        "crypto_exposure_ratio": 0.7192,
+        "diversification_hhi": 0.4778,
+        "asset_class_hhi": 0.5961,
+        "position_hhi": 0.4778,
         "position_count": 4,
         "expenses_estimated": false,
         "expenses_missing": false
@@ -901,8 +901,8 @@
         "liquidity_score": 69.36,
         "debt_score": 88.16,
         "housing_score": null,
-        "diversification_score": 66.09,
-        "risk_alignment_score": 71.09
+        "diversification_score": 65.55,
+        "risk_alignment_score": 70.12
       },
       "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
       "action_insights": [
@@ -910,18 +910,18 @@
       ]
     },
     "risk_profile": 50.0,
-    "behavioral_resilience_score": 74.32,
-    "financial_resilience_score": 74.32,
-    "financial_wellness_score": 74.32,
-    "financial_stress_index": 31.02,
+    "behavioral_resilience_score": 74.08,
+    "financial_resilience_score": 74.08,
+    "financial_wellness_score": 74.08,
+    "financial_stress_index": 31.25,
     "confidence": "High",
     "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 69.36,
       "debt_score": 88.16,
       "housing_score": null,
-      "diversification_score": 66.09,
-      "risk_alignment_score": 71.09
+      "diversification_score": 65.55,
+      "risk_alignment_score": 70.12
     },
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification."
@@ -946,15 +946,15 @@
           "symbol": "JPM",
           "qty": 9,
           "avg_price": 191.0,
-          "market_value": 2598.57,
-          "current_price": 288.73
+          "market_value": 2609.28,
+          "current_price": 289.92
         },
         {
           "symbol": "V",
           "qty": 4,
           "avg_price": 275.4,
-          "market_value": 1257.72,
-          "current_price": 314.43
+          "market_value": 1263.88,
+          "current_price": 315.97
         }
       ],
       "cryptos": [
@@ -962,23 +962,23 @@
           "symbol": "BTC-USD",
           "qty": 0.08,
           "avg_price": 45000.0,
-          "current_price": 69547.2344,
-          "market_value": 5563.78
+          "current_price": 70680.4375,
+          "market_value": 5654.44
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.23,
           "avg_price": 2500.0,
-          "current_price": 2027.7444,
-          "market_value": 466.38
+          "current_price": 2060.1436,
+          "market_value": 473.83
         }
       ],
       "commodities": []
     },
     "manual_assets": [],
-    "portfolio_value": 9886.45,
-    "total_balance": 13237.2,
-    "net_worth": 7886.45,
+    "portfolio_value": 10001.43,
+    "total_balance": 13352.18,
+    "net_worth": 8001.43,
     "income": 4800.0,
     "expenses": 2000.0,
     "income_streams": [
@@ -993,15 +993,15 @@
     "wellness_metrics": {
       "liquidity_months": 1.68,
       "liquidity_score": 54.84,
-      "diversification_hhi": 0.4042,
-      "diversification_score": 71.42,
+      "diversification_hhi": 0.4059,
+      "diversification_score": 71.29,
       "debt_income_ratio": 0.0582,
       "debt_income_score": 95.09,
       "housing_score": null,
-      "risk_alignment_score": 84.11,
-      "behavioral_resilience_score": 74.02,
-      "financial_resilience_score": 74.02,
-      "financial_stress_index": 29.96,
+      "risk_alignment_score": 83.78,
+      "behavioral_resilience_score": 73.95,
+      "financial_resilience_score": 73.95,
+      "financial_stress_index": 30.03,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 4800.0,
@@ -1019,16 +1019,16 @@
         "non_mortgage_debt_to_annual_income": 0.0582,
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
-        "stock_total": 3856.29,
-        "crypto_total": 6030.16,
+        "stock_total": 3873.16,
+        "crypto_total": 6128.27,
         "commodity_total": 0.0,
-        "computed_portfolio_value": 9886.45,
-        "portfolio_value": 9886.45,
+        "computed_portfolio_value": 10001.43,
+        "portfolio_value": 10001.43,
         "portfolio_value_source": "portfolio_positions",
-        "crypto_exposure_ratio": 0.6099,
-        "diversification_hhi": 0.4042,
-        "asset_class_hhi": 0.5242,
-        "position_hhi": 0.4042,
+        "crypto_exposure_ratio": 0.6127,
+        "diversification_hhi": 0.4059,
+        "asset_class_hhi": 0.5254,
+        "position_hhi": 0.4059,
         "position_count": 4,
         "expenses_estimated": false,
         "expenses_missing": false
@@ -1037,8 +1037,8 @@
         "liquidity_score": 54.84,
         "debt_score": 95.09,
         "housing_score": null,
-        "diversification_score": 71.42,
-        "risk_alignment_score": 84.11
+        "diversification_score": 71.29,
+        "risk_alignment_score": 83.78
       },
       "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
       "action_insights": [
@@ -1047,18 +1047,18 @@
       ]
     },
     "risk_profile": 50.0,
-    "behavioral_resilience_score": 74.02,
-    "financial_resilience_score": 74.02,
-    "financial_wellness_score": 74.02,
-    "financial_stress_index": 29.96,
+    "behavioral_resilience_score": 73.95,
+    "financial_resilience_score": 73.95,
+    "financial_wellness_score": 73.95,
+    "financial_stress_index": 30.03,
     "confidence": "High",
     "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 54.84,
       "debt_score": 95.09,
       "housing_score": null,
-      "diversification_score": 71.42,
-      "risk_alignment_score": 84.11
+      "diversification_score": 71.29,
+      "risk_alignment_score": 83.78
     },
     "action_insights": [
       "Build emergency savings toward 3 to 6 months of expenses.",
@@ -1084,15 +1084,15 @@
           "symbol": "KO",
           "qty": 14,
           "avg_price": 61.2,
-          "market_value": 1090.32,
-          "current_price": 77.88
+          "market_value": 1089.2,
+          "current_price": 77.8
         },
         {
           "symbol": "PEP",
           "qty": 6,
           "avg_price": 171.3,
-          "market_value": 964.68,
-          "current_price": 160.78
+          "market_value": 969.18,
+          "current_price": 161.53
         }
       ],
       "cryptos": [
@@ -1100,23 +1100,23 @@
           "symbol": "BTC-USD",
           "qty": 0.09,
           "avg_price": 45000.0,
-          "current_price": 69547.2344,
-          "market_value": 6259.25
+          "current_price": 70680.4375,
+          "market_value": 6361.24
         },
         {
           "symbol": "ETH-USD",
           "qty": 0.24,
           "avg_price": 2500.0,
-          "current_price": 2027.7444,
-          "market_value": 486.66
+          "current_price": 2060.1436,
+          "market_value": 494.43
         }
       ],
       "commodities": []
     },
     "manual_assets": [],
-    "portfolio_value": 8800.91,
-    "total_balance": 17951.41,
-    "net_worth": 6800.91,
+    "portfolio_value": 8914.05,
+    "total_balance": 18064.55,
+    "net_worth": 6914.05,
     "income": 5200.0,
     "expenses": 2000.0,
     "income_streams": [
@@ -1131,15 +1131,15 @@
     "wellness_metrics": {
       "liquidity_months": 4.58,
       "liquidity_score": 92.78,
-      "diversification_hhi": 0.5362,
-      "diversification_score": 45.52,
+      "diversification_hhi": 0.5391,
+      "diversification_score": 45.33,
       "debt_income_ratio": 0.1466,
       "debt_income_score": 88.33,
       "housing_score": null,
-      "risk_alignment_score": 63.55,
-      "behavioral_resilience_score": 76.91,
-      "financial_resilience_score": 76.91,
-      "financial_stress_index": 26.96,
+      "risk_alignment_score": 63.18,
+      "behavioral_resilience_score": 76.82,
+      "financial_resilience_score": 76.82,
+      "financial_stress_index": 27.05,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 5200.0,
@@ -1157,16 +1157,16 @@
         "non_mortgage_debt_to_annual_income": 0.1466,
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
-        "stock_total": 2055.0,
-        "crypto_total": 6745.91,
+        "stock_total": 2058.38,
+        "crypto_total": 6855.67,
         "commodity_total": 0.0,
-        "computed_portfolio_value": 8800.91,
-        "portfolio_value": 8800.91,
+        "computed_portfolio_value": 8914.05,
+        "portfolio_value": 8914.05,
         "portfolio_value_source": "portfolio_positions",
-        "crypto_exposure_ratio": 0.7665,
-        "diversification_hhi": 0.5362,
-        "asset_class_hhi": 0.642,
-        "position_hhi": 0.5362,
+        "crypto_exposure_ratio": 0.7691,
+        "diversification_hhi": 0.5391,
+        "asset_class_hhi": 0.6448,
+        "position_hhi": 0.5391,
         "position_count": 4,
         "expenses_estimated": false,
         "expenses_missing": false
@@ -1175,8 +1175,8 @@
         "liquidity_score": 92.78,
         "debt_score": 88.33,
         "housing_score": null,
-        "diversification_score": 45.52,
-        "risk_alignment_score": 63.55
+        "diversification_score": 45.33,
+        "risk_alignment_score": 63.18
       },
       "resilience_summary": "Moderately resilient: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
       "action_insights": [
@@ -1184,18 +1184,18 @@
       ]
     },
     "risk_profile": 50.0,
-    "behavioral_resilience_score": 76.91,
-    "financial_resilience_score": 76.91,
-    "financial_wellness_score": 76.91,
-    "financial_stress_index": 26.96,
+    "behavioral_resilience_score": 76.82,
+    "financial_resilience_score": 76.82,
+    "financial_wellness_score": 76.82,
+    "financial_stress_index": 27.05,
     "confidence": "High",
     "resilience_summary": "Moderately resilient: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 92.78,
       "debt_score": 88.33,
       "housing_score": null,
-      "diversification_score": 45.52,
-      "risk_alignment_score": 63.55
+      "diversification_score": 45.33,
+      "risk_alignment_score": 63.18
     },
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification."
@@ -1222,15 +1222,15 @@
           "symbol": "BABA",
           "qty": 15.0,
           "avg_price": 86.2,
-          "market_value": 2052.75,
-          "current_price": 136.85
+          "market_value": 1989.6,
+          "current_price": 132.64
         },
         {
           "symbol": "PDD",
           "qty": 5.0,
           "avg_price": 148.5,
-          "market_value": 524.3,
-          "current_price": 104.86
+          "market_value": 513.2,
+          "current_price": 102.64
         }
       ],
       "cryptos": [
@@ -1238,48 +1238,48 @@
           "symbol": "BTC-USD",
           "qty": 0.1,
           "avg_price": 45000.0,
-          "current_price": 69547.2344,
-          "market_value": 6954.72
+          "current_price": 70680.4375,
+          "market_value": 7068.04
         },
         {
           "symbol": "ETH-USD",
           "qty": 7.25,
           "avg_price": 2092.696552,
-          "current_price": 2027.7444,
-          "market_value": 14701.15,
+          "current_price": 2060.1436,
+          "market_value": 14936.04,
           "name": "Ethereum"
         },
         {
           "symbol": "DOGE-USD",
           "qty": 70368.0,
           "avg_price": 0.09314,
-          "current_price": 0.0929,
+          "current_price": 0.0952,
           "name": "Dogecoin",
-          "market_value": 6537.19
+          "market_value": 6699.03
         },
         {
           "symbol": "BCH-USD",
           "qty": 9.0,
           "avg_price": 457.81,
-          "current_price": 450.6466,
+          "current_price": 447.0483,
           "name": "Bitcoin Cash",
-          "market_value": 4055.82
+          "market_value": 4023.43
         },
         {
           "symbol": "BNB-USD",
           "qty": 6.0,
           "avg_price": 648.09,
-          "current_price": 641.1039,
+          "current_price": 646.9768,
           "name": "BNB",
-          "market_value": 3846.62
+          "market_value": 3881.86
         }
       ],
       "commodities": []
     },
     "manual_assets": [],
-    "portfolio_value": 38672.55,
-    "total_balance": 41612.8,
-    "net_worth": 37472.55,
+    "portfolio_value": 39111.2,
+    "total_balance": 42051.45,
+    "net_worth": 37911.2,
     "income": 3500.0,
     "expenses": 1200.0,
     "income_streams": [
@@ -1294,15 +1294,15 @@
     "wellness_metrics": {
       "liquidity_months": 2.45,
       "liquidity_score": 69.69,
-      "diversification_hhi": 0.2293,
-      "diversification_score": 63.32,
+      "diversification_hhi": 0.231,
+      "diversification_score": 63.23,
       "debt_income_ratio": 0.07,
       "debt_income_score": 94.14,
       "housing_score": null,
-      "risk_alignment_score": 37.85,
-      "behavioral_resilience_score": 71.64,
-      "financial_resilience_score": 71.64,
-      "financial_stress_index": 33.39,
+      "risk_alignment_score": 37.41,
+      "behavioral_resilience_score": 71.56,
+      "financial_resilience_score": 71.56,
+      "financial_stress_index": 33.47,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 3500.0,
@@ -1320,16 +1320,16 @@
         "non_mortgage_debt_to_annual_income": 0.07,
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
-        "stock_total": 2577.05,
-        "crypto_total": 36095.5,
+        "stock_total": 2502.8,
+        "crypto_total": 36608.4,
         "commodity_total": 0.0,
-        "computed_portfolio_value": 38672.55,
-        "portfolio_value": 38672.55,
+        "computed_portfolio_value": 39111.2,
+        "portfolio_value": 39111.2,
         "portfolio_value_source": "portfolio_positions",
-        "crypto_exposure_ratio": 0.9334,
-        "diversification_hhi": 0.2293,
-        "asset_class_hhi": 0.8756,
-        "position_hhi": 0.2293,
+        "crypto_exposure_ratio": 0.936,
+        "diversification_hhi": 0.231,
+        "asset_class_hhi": 0.8802,
+        "position_hhi": 0.231,
         "position_count": 7,
         "expenses_estimated": false,
         "expenses_missing": false
@@ -1338,8 +1338,8 @@
         "liquidity_score": 69.69,
         "debt_score": 94.14,
         "housing_score": null,
-        "diversification_score": 63.32,
-        "risk_alignment_score": 37.85
+        "diversification_score": 63.23,
+        "risk_alignment_score": 37.41
       },
       "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
       "action_insights": [
@@ -1348,18 +1348,18 @@
       ]
     },
     "risk_profile": 50.0,
-    "behavioral_resilience_score": 71.64,
-    "financial_resilience_score": 71.64,
-    "financial_wellness_score": 71.64,
-    "financial_stress_index": 33.39,
+    "behavioral_resilience_score": 71.56,
+    "financial_resilience_score": 71.56,
+    "financial_wellness_score": 71.56,
+    "financial_stress_index": 33.47,
     "confidence": "High",
     "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 69.69,
       "debt_score": 94.14,
       "housing_score": null,
-      "diversification_score": 63.32,
-      "risk_alignment_score": 37.85
+      "diversification_score": 63.23,
+      "risk_alignment_score": 37.41
     },
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification.",
@@ -1391,8 +1391,8 @@
           "symbol": "AAPL",
           "qty": 2.0,
           "avg_price": 257.46,
-          "current_price": 260.83,
-          "market_value": 521.66,
+          "current_price": 259.88,
+          "market_value": 519.76,
           "name": "AAPL"
         }
       ],
@@ -1401,17 +1401,30 @@
           "symbol": "BTC-USD",
           "qty": 20.0,
           "avg_price": 67768.87,
-          "current_price": 69547.2344,
+          "current_price": 70680.4375,
           "name": "Bitcoin",
-          "market_value": 1390944.69
+          "market_value": 1413608.75
         }
       ],
       "commodities": []
     },
-    "manual_assets": [],
-    "portfolio_value": 1391466.35,
-    "total_balance": 1400166.35,
-    "net_worth": 1380666.35,
+    "manual_assets": [
+      {
+        "id": "48539507-9147-4517-9e3e-e2dfe1c67b84",
+        "label": "dbs",
+        "category": "banks",
+        "value": 10000.0
+      },
+      {
+        "id": "64e0d725-a86e-411b-add8-c8f20e7bd5d6",
+        "label": "house",
+        "category": "real_estate",
+        "value": 100000.0
+      }
+    ],
+    "portfolio_value": 1414128.51,
+    "total_balance": 1532828.51,
+    "net_worth": 1513328.51,
     "income": 4900.0,
     "expenses": 1800.0,
     "income_streams": [
@@ -1422,41 +1435,41 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 100000.0,
     "wellness_metrics": {
-      "liquidity_months": 4.83,
-      "liquidity_score": 94.38,
+      "liquidity_months": 10.39,
+      "liquidity_score": 100.0,
       "diversification_hhi": 0.9993,
       "diversification_score": 0.67,
       "debt_income_ratio": 0.301,
       "debt_income_score": 78.3,
-      "housing_score": null,
+      "housing_score": 95.0,
       "risk_alignment_score": 0.0,
-      "behavioral_resilience_score": 56.5,
-      "financial_resilience_score": 56.5,
-      "financial_stress_index": 47.85,
+      "behavioral_resilience_score": 63.96,
+      "financial_resilience_score": 63.96,
+      "financial_stress_index": 40.86,
       "confidence": "High",
       "derived_metrics": {
         "derived_income": 4900.0,
         "derived_income_source": "income_streams",
         "derived_expenses": 1800.0,
         "derived_expenses_source": "expenses_field",
-        "derived_estate": 0.0,
-        "derived_cash_like_manual_assets": 0.0,
+        "derived_estate": 100000.0,
+        "derived_cash_like_manual_assets": 10000.0,
         "derived_mortgage": 0.0,
         "derived_non_mortgage_liability": 17700.0,
         "derived_total_liability": 17700.0,
-        "derived_total_cash_buffer": 8700.0,
-        "liquidity_months": 4.83,
+        "derived_total_cash_buffer": 18700.0,
+        "liquidity_months": 10.39,
         "debt_to_annual_income": 0.301,
         "non_mortgage_debt_to_annual_income": 0.301,
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
-        "stock_total": 521.66,
-        "crypto_total": 1390944.69,
+        "stock_total": 519.76,
+        "crypto_total": 1413608.75,
         "commodity_total": 0.0,
-        "computed_portfolio_value": 1391466.35,
-        "portfolio_value": 1391466.35,
+        "computed_portfolio_value": 1414128.51,
+        "portfolio_value": 1414128.51,
         "portfolio_value_source": "portfolio_positions",
         "crypto_exposure_ratio": 0.9996,
         "diversification_hhi": 0.9993,
@@ -1467,29 +1480,29 @@
         "expenses_missing": false
       },
       "resilience_breakdown": {
-        "liquidity_score": 94.38,
+        "liquidity_score": 100.0,
         "debt_score": 78.3,
-        "housing_score": null,
+        "housing_score": 95.0,
         "diversification_score": 0.67,
         "risk_alignment_score": 0.0
       },
-      "resilience_summary": "Vulnerable: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
+      "resilience_summary": "Moderately resilient: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
       "action_insights": [
         "Reduce concentration in a single volatile asset class and broaden diversification.",
         "Realign portfolio risk with stated tolerance so market swings are easier to absorb."
       ]
     },
     "risk_profile": 15.0,
-    "behavioral_resilience_score": 56.5,
-    "financial_resilience_score": 56.5,
-    "financial_wellness_score": 56.5,
-    "financial_stress_index": 47.85,
+    "behavioral_resilience_score": 63.96,
+    "financial_resilience_score": 63.96,
+    "financial_wellness_score": 63.96,
+    "financial_stress_index": 40.86,
     "confidence": "High",
-    "resilience_summary": "Vulnerable: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
+    "resilience_summary": "Moderately resilient: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
     "resilience_breakdown": {
-      "liquidity_score": 94.38,
+      "liquidity_score": 100.0,
       "debt_score": 78.3,
-      "housing_score": null,
+      "housing_score": 95.0,
       "diversification_score": 0.67,
       "risk_alignment_score": 0.0
     },
@@ -1513,64 +1526,87 @@
           "symbol": "XRP-USD",
           "qty": 6000.0,
           "avg_price": 1.4127,
-          "current_price": 1.3824,
+          "current_price": 1.4117,
           "name": "XRP",
-          "market_value": 8294.4
+          "market_value": 8470.2
         },
         {
           "symbol": "BTC-USD",
           "qty": 0.04,
           "avg_price": 67768.87,
-          "current_price": 69547.2344,
+          "current_price": 70801.31,
           "name": "Bitcoin",
-          "market_value": 2781.89
+          "market_value": 2832.05
         },
         {
           "symbol": "ETH-USD",
           "qty": 1.0,
           "avg_price": 2060.91,
-          "current_price": 2027.7444,
+          "current_price": 2061.78,
           "name": "Ethereum",
-          "market_value": 2027.74
+          "market_value": 2061.78
         }
       ],
-      "commodities": []
+      "commodities": [
+        {
+          "symbol": "KC=F",
+          "qty": 1.0,
+          "avg_price": 276.2,
+          "current_price": 276.2,
+          "market_value": 276.2,
+          "name": "KC=F"
+        },
+        {
+          "symbol": "GC=F",
+          "qty": 0.1,
+          "avg_price": 4574.8999,
+          "current_price": 4574.8999,
+          "market_value": 457.49,
+          "name": "GC=F"
+        }
+      ]
     },
     "manual_assets": [
       {
-        "id": "192c45df-9a75-43b6-bb38-103507f4e74d",
+        "id": "30b418dc-196b-44f9-8138-09e60e9778c8",
+        "label": "zs=f",
+        "category": "real_estate",
+        "value": 0.5
+      },
+      {
+        "id": "8eee4cbb-84d8-4970-8529-8c07d8f7315e",
         "label": "Cash",
         "category": "banks",
         "value": 20000.0
       }
     ],
-    "portfolio_value": 13104.03,
-    "total_balance": 34104.03,
-    "net_worth": 34104.03,
+    "portfolio_value": 14097.72,
+    "total_balance": 35098.22,
+    "net_worth": 35098.22,
     "income": 0,
     "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0.5,
     "wellness_metrics": {
       "liquidity_months": 0.0,
       "liquidity_score": 0.0,
-      "diversification_hhi": 0.4697,
-      "diversification_score": 49.66,
+      "diversification_hhi": 0.4242,
+      "diversification_score": 52.39,
       "debt_income_ratio": 0.0,
       "debt_income_score": 50.0,
-      "housing_score": null,
-      "risk_alignment_score": 9.56,
-      "behavioral_resilience_score": 27.52,
-      "financial_resilience_score": 27.52,
-      "financial_stress_index": 65.99,
+      "housing_score": 95.0,
+      "risk_alignment_score": 22.32,
+      "behavioral_resilience_score": 39.46,
+      "financial_resilience_score": 39.46,
+      "financial_stress_index": 57.37,
       "confidence": "Medium",
       "derived_metrics": {
         "derived_income": 0.0,
         "derived_income_source": "income_field",
         "derived_expenses": 0.0,
         "derived_expenses_source": "missing",
-        "derived_estate": 0.0,
+        "derived_estate": 0.5,
         "derived_cash_like_manual_assets": 20000.0,
         "derived_mortgage": 0.0,
         "derived_non_mortgage_liability": 0.0,
@@ -1582,25 +1618,25 @@
         "mortgage_to_annual_income": 0.0,
         "housing_cushion": 0.0,
         "stock_total": 0.0,
-        "crypto_total": 13104.03,
-        "commodity_total": 0.0,
-        "computed_portfolio_value": 13104.03,
-        "portfolio_value": 13104.03,
+        "crypto_total": 13364.03,
+        "commodity_total": 733.69,
+        "computed_portfolio_value": 14097.72,
+        "portfolio_value": 14097.72,
         "portfolio_value_source": "portfolio_positions",
-        "crypto_exposure_ratio": 1.0,
-        "diversification_hhi": 0.4697,
-        "asset_class_hhi": 1.0,
-        "position_hhi": 0.4697,
-        "position_count": 3,
+        "crypto_exposure_ratio": 0.948,
+        "diversification_hhi": 0.4242,
+        "asset_class_hhi": 0.9013,
+        "position_hhi": 0.4242,
+        "position_count": 5,
         "expenses_estimated": false,
         "expenses_missing": true
       },
       "resilience_breakdown": {
         "liquidity_score": 0.0,
         "debt_score": 50.0,
-        "housing_score": null,
-        "diversification_score": 49.66,
-        "risk_alignment_score": 9.56
+        "housing_score": 95.0,
+        "diversification_score": 52.39,
+        "risk_alignment_score": 22.32
       },
       "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
       "action_insights": [
@@ -1609,19 +1645,19 @@
         "Reduce concentration in a single volatile asset class and broaden diversification."
       ]
     },
-    "risk_profile": 28.0,
-    "behavioral_resilience_score": 27.52,
-    "financial_resilience_score": 27.52,
-    "financial_wellness_score": 27.52,
-    "financial_stress_index": 65.99,
+    "risk_profile": 33.0,
+    "behavioral_resilience_score": 39.46,
+    "financial_resilience_score": 39.46,
+    "financial_wellness_score": 39.46,
+    "financial_stress_index": 57.37,
     "confidence": "Medium",
     "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 0.0,
       "debt_score": 50.0,
-      "housing_score": null,
-      "diversification_score": 49.66,
-      "risk_alignment_score": 9.56
+      "housing_score": 95.0,
+      "diversification_score": 52.39,
+      "risk_alignment_score": 22.32
     },
     "action_insights": [
       "Build emergency savings toward 3 to 6 months of expenses.",
