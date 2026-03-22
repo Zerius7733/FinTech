@@ -309,7 +309,7 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 1.53,
       "liquidity_score": 51.35,
@@ -445,7 +445,7 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 4.5,
       "liquidity_score": 92.24,
@@ -581,7 +581,7 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 2.94,
       "liquidity_score": 76.94,
@@ -717,7 +717,7 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 4.2,
       "liquidity_score": 90.01,
@@ -853,7 +853,7 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 2.43,
       "liquidity_score": 69.36,
@@ -989,7 +989,7 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 1.68,
       "liquidity_score": 54.84,
@@ -1127,7 +1127,7 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 4.58,
       "liquidity_score": 92.78,
@@ -1290,7 +1290,7 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 2.45,
       "liquidity_score": 69.69,
@@ -1422,7 +1422,7 @@
       }
     ],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 4.83,
       "liquidity_score": 94.38,
@@ -1551,7 +1551,7 @@
     "expenses": 0.0,
     "income_streams": [],
     "mortgage": 0,
-    "estate": 0.0,
+    "estate": 0,
     "wellness_metrics": {
       "liquidity_months": 0.0,
       "liquidity_score": 0.0,
@@ -1560,10 +1560,10 @@
       "debt_income_ratio": 0.0,
       "debt_income_score": 50.0,
       "housing_score": null,
-      "risk_alignment_score": 50.37,
-      "behavioral_resilience_score": 32.32,
-      "financial_resilience_score": 32.32,
-      "financial_stress_index": 59.15,
+      "risk_alignment_score": 9.56,
+      "behavioral_resilience_score": 27.52,
+      "financial_resilience_score": 27.52,
+      "financial_stress_index": 65.99,
       "confidence": "Medium",
       "derived_metrics": {
         "derived_income": 0.0,
@@ -1600,7 +1600,7 @@
         "debt_score": 50.0,
         "housing_score": null,
         "diversification_score": 49.66,
-        "risk_alignment_score": 50.37
+        "risk_alignment_score": 9.56
       },
       "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
       "action_insights": [
@@ -1609,11 +1609,11 @@
         "Reduce concentration in a single volatile asset class and broaden diversification."
       ]
     },
-    "risk_profile": 81.0,
-    "behavioral_resilience_score": 32.32,
-    "financial_resilience_score": 32.32,
-    "financial_wellness_score": 32.32,
-    "financial_stress_index": 59.15,
+    "risk_profile": 28.0,
+    "behavioral_resilience_score": 27.52,
+    "financial_resilience_score": 27.52,
+    "financial_wellness_score": 27.52,
+    "financial_stress_index": 65.99,
     "confidence": "Medium",
     "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
     "resilience_breakdown": {
@@ -1621,7 +1621,7 @@
       "debt_score": 50.0,
       "housing_score": null,
       "diversification_score": 49.66,
-      "risk_alignment_score": 50.37
+      "risk_alignment_score": 9.56
     },
     "action_insights": [
       "Build emergency savings toward 3 to 6 months of expenses.",
