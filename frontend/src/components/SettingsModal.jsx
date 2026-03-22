@@ -201,7 +201,7 @@ export default function SettingsModal({ onClose }) {
           country: String(csvData?.profile?.country || jsonData?.user?.country || prev.country || 'Singapore'),
           investorType: String(csvData?.profile?.investor_type || jsonData?.user?.investor_type || prev.investorType || 'Individual Investor'),
           currency: String(csvData?.profile?.currency || jsonData?.user?.currency || prev.currency || 'SGD'),
-          password: String(csvData?.profile?.password || prev.password || ''),
+          password: '',
         }))
       })
       .catch(() => {})
@@ -227,6 +227,7 @@ export default function SettingsModal({ onClose }) {
     let profileSaved = false
     if (user?.user_id) {
       try {
+        const trimmedPassword = profileForm.password.trim()
         const profileRes = await fetch(`${API}/users/profile/details`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -238,7 +239,7 @@ export default function SettingsModal({ onClose }) {
             country: profileForm.country,
             investor_type: profileForm.investorType,
             currency: profileForm.currency,
-            password: profileForm.password || undefined,
+            password: trimmedPassword || undefined,
           }),
         })
         if (!profileRes.ok) {

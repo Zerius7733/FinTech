@@ -1516,7 +1516,7 @@
   "u011": {
     "name": "Zerius Heng",
     "age": 23,
-    "cash_balance": 1009.0,
+    "cash_balance": 0.0,
     "liability": 0,
     "liability_items": [],
     "portfolio": {
@@ -1581,8 +1581,8 @@
       }
     ],
     "portfolio_value": 14097.72,
-    "total_balance": 35107.22,
-    "net_worth": 35107.22,
+    "total_balance": 34098.22,
+    "net_worth": 34098.22,
     "income": 0,
     "expenses": 0.0,
     "income_streams": [],
@@ -1596,10 +1596,10 @@
       "debt_income_ratio": 0.0,
       "debt_income_score": 50.0,
       "housing_score": 95.0,
-      "risk_alignment_score": 49.27,
-      "behavioral_resilience_score": 42.16,
-      "financial_resilience_score": 42.16,
-      "financial_stress_index": 52.93,
+      "risk_alignment_score": 22.32,
+      "behavioral_resilience_score": 39.46,
+      "financial_resilience_score": 39.46,
+      "financial_stress_index": 57.37,
       "confidence": "Medium",
       "derived_metrics": {
         "derived_income": 0.0,
@@ -1611,7 +1611,7 @@
         "derived_mortgage": 0.0,
         "derived_non_mortgage_liability": 0.0,
         "derived_total_liability": 0.0,
-        "derived_total_cash_buffer": 21009.0,
+        "derived_total_cash_buffer": 20000.0,
         "liquidity_months": 0.0,
         "debt_to_annual_income": 0.0,
         "non_mortgage_debt_to_annual_income": 0.0,
@@ -1636,28 +1636,28 @@
         "debt_score": 50.0,
         "housing_score": 95.0,
         "diversification_score": 52.39,
-        "risk_alignment_score": 49.27
+        "risk_alignment_score": 22.32
       },
-      "resilience_summary": "Vulnerable: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
+      "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
       "action_insights": [
         "Build emergency savings toward 3 to 6 months of expenses.",
         "Lower unsecured liabilities to improve shock absorption and monthly flexibility.",
         "Reduce concentration in a single volatile asset class and broaden diversification."
       ]
     },
-    "risk_profile": 68.0,
-    "behavioral_resilience_score": 42.16,
-    "financial_resilience_score": 42.16,
-    "financial_wellness_score": 42.16,
-    "financial_stress_index": 52.93,
+    "risk_profile": 33.0,
+    "behavioral_resilience_score": 39.46,
+    "financial_resilience_score": 39.46,
+    "financial_wellness_score": 39.46,
+    "financial_stress_index": 57.37,
     "confidence": "Medium",
-    "resilience_summary": "Vulnerable: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
+    "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
     "resilience_breakdown": {
       "liquidity_score": 0.0,
       "debt_score": 50.0,
       "housing_score": 95.0,
       "diversification_score": 52.39,
-      "risk_alignment_score": 49.27
+      "risk_alignment_score": 22.32
     },
     "action_insights": [
       "Build emergency savings toward 3 to 6 months of expenses.",
