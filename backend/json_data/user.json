@@ -1516,7 +1516,7 @@
   "u011": {
     "name": "Zerius Heng",
     "age": 23,
-    "cash_balance": 0.0,
+    "cash_balance": 1000.0,
     "liability": 0,
     "liability_items": [],
     "portfolio": {
@@ -1549,10 +1549,17 @@
       ],
       "commodities": []
     },
-    "manual_assets": [],
+    "manual_assets": [
+      {
+        "id": "55777afb-3b4c-44aa-a71d-941e5bf94d57",
+        "label": "Cash",
+        "category": "banks",
+        "value": 20000.0
+      }
+    ],
     "portfolio_value": 13364.03,
-    "total_balance": 13364.03,
-    "net_worth": 13364.03,
+    "total_balance": 34364.03,
+    "net_worth": 34364.03,
     "income": 0,
     "expenses": 0.0,
     "income_streams": [],
@@ -1577,11 +1584,11 @@
         "derived_expenses": 0.0,
         "derived_expenses_source": "missing",
         "derived_estate": 0.0,
-        "derived_cash_like_manual_assets": 0.0,
+        "derived_cash_like_manual_assets": 20000.0,
         "derived_mortgage": 0.0,
         "derived_non_mortgage_liability": 0.0,
         "derived_total_liability": 0.0,
-        "derived_total_cash_buffer": 0.0,
+        "derived_total_cash_buffer": 21000.0,
         "liquidity_months": 0.0,
         "debt_to_annual_income": 0.0,
         "non_mortgage_debt_to_annual_income": 0.0,

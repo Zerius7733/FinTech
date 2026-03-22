@@ -35,6 +35,20 @@ function hasFinancialActivity(profile) {
   return hasPortfolioPositions || hasManualAssets || hasIncomeStreams || hasLiabilityItems
 }
 
+function getDeployableCash(profile) {
+  if (!profile || typeof profile !== 'object') return 0
+
+  const syncedCashBalance = Number(profile.cash_balance || 0)
+  const bankEntryTotal = Array.isArray(profile.manual_assets)
+    ? profile.manual_assets.reduce((sum, item) => {
+        if (item?.category !== 'banks') return sum
+        return sum + Number(item?.value || 0)
+      }, 0)
+    : 0
+
+  return syncedCashBalance + bankEntryTotal
+}
+
 export default function Navbar() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -114,7 +128,7 @@ export default function Navbar() {
     if (!navProfile) return []
     if (!isAccountAtLeastDaysOld(user?.created_at, 30)) return []
     if (!hasFinancialActivity(navProfile)) return []
-    const cashBalance = Number(navProfile.cash_balance || 0)
+    const cashBalance = getDeployableCash(navProfile)
     const monthlyIncome = Number(navProfile.income || 0)
     const reserveTarget = Math.max(monthlyIncome * 3, 10000)
     const idleCash = Math.max(0, cashBalance - reserveTarget)
