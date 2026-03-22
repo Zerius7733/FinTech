@@ -1566,10 +1566,10 @@
       "debt_income_ratio": 0.0,
       "debt_income_score": 50.0,
       "housing_score": null,
-      "risk_alignment_score": 50.37,
-      "behavioral_resilience_score": 32.31,
-      "financial_resilience_score": 32.31,
-      "financial_stress_index": 59.16,
+      "risk_alignment_score": 40.36,
+      "behavioral_resilience_score": 31.13,
+      "financial_resilience_score": 31.13,
+      "financial_stress_index": 60.83,
       "confidence": "Medium",
       "derived_metrics": {
         "derived_income": 0.0,
@@ -1606,7 +1606,7 @@
         "debt_score": 50.0,
         "housing_score": null,
         "diversification_score": 49.62,
-        "risk_alignment_score": 50.37
+        "risk_alignment_score": 40.36
       },
       "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
       "action_insights": [
@@ -1615,11 +1615,11 @@
         "Reduce concentration in a single volatile asset class and broaden diversification."
       ]
     },
-    "risk_profile": 81.0,
-    "behavioral_resilience_score": 32.31,
-    "financial_resilience_score": 32.31,
-    "financial_wellness_score": 32.31,
-    "financial_stress_index": 59.16,
+    "risk_profile": 68.0,
+    "behavioral_resilience_score": 31.13,
+    "financial_resilience_score": 31.13,
+    "financial_wellness_score": 31.13,
+    "financial_stress_index": 60.83,
     "confidence": "Medium",
     "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
     "resilience_breakdown": {
@@ -1627,7 +1627,7 @@
       "debt_score": 50.0,
       "housing_score": null,
       "diversification_score": 49.62,
-      "risk_alignment_score": 50.37
+      "risk_alignment_score": 40.36
     },
     "action_insights": [
       "Build emergency savings toward 3 to 6 months of expenses.",
