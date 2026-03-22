@@ -1,0 +1,1730 @@
+{
+  "u001": {
+    "name": "Alice Tan",
+    "age": 40,
+    "cash_balance": 152000.5,
+    "liability": 999.0,
+    "liability_items": [
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 999.0,
+        "is_mortgage": false
+      },
+      {
+        "id": "mortgage-seed",
+        "label": "Mortgage",
+        "amount": 145000.0,
+        "is_mortgage": true
+      }
+    ],
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "AAPL",
+          "qty": 25.0,
+          "avg_price": 182.4,
+          "market_value": 6520.75,
+          "current_price": 260.83
+        },
+        {
+          "symbol": "MSFT",
+          "qty": 18.0,
+          "avg_price": 320.0,
+          "market_value": 7303.68,
+          "current_price": 405.76
+        },
+        {
+          "symbol": "CSPX",
+          "qty": 140.0,
+          "avg_price": 455.0,
+          "market_value": 85743.0,
+          "current_price": 612.45
+        },
+        {
+          "symbol": "ES3.SI",
+          "qty": 3500.0,
+          "avg_price": 3.05,
+          "market_value": 16975.0,
+          "current_price": 4.85,
+          "name": "STI ETF"
+        },
+        {
+          "symbol": "D05.SI",
+          "qty": 900.0,
+          "avg_price": 31.8,
+          "market_value": 50148.0,
+          "current_price": 55.72,
+          "name": "DBS Group"
+        },
+        {
+          "symbol": "VWRA",
+          "qty": 65.0,
+          "avg_price": 112.5,
+          "market_value": 8918.0,
+          "current_price": 137.2,
+          "name": "Vanguard FTSE All-World"
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.08,
+          "avg_price": 67666.205179,
+          "current_price": 69547.2344,
+          "market_value": 5563.78,
+          "name": "Bitcoin"
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 6.0,
+          "avg_price": 1882.716667,
+          "current_price": 2027.7444,
+          "market_value": 12166.47,
+          "name": "Ethereum"
+        },
+        {
+          "symbol": "SOL-USD",
+          "qty": 65.0,
+          "avg_price": 101.0,
+          "current_price": 85.293,
+          "market_value": 5544.05,
+          "name": "Solana"
+        },
+        {
+          "symbol": "BNB-USD",
+          "qty": 8.0,
+          "avg_price": 546.0225,
+          "current_price": 641.1039,
+          "market_value": 5128.83,
+          "name": "BNB"
+        },
+        {
+          "symbol": "DOGE-USD",
+          "qty": 23456.0,
+          "avg_price": 0.09314,
+          "current_price": 0.0929,
+          "name": "Dogecoin",
+          "market_value": 2179.06
+        },
+        {
+          "symbol": "BCH-USD",
+          "qty": 3.0,
+          "avg_price": 457.81,
+          "current_price": 450.6466,
+          "name": "Bitcoin Cash",
+          "market_value": 1351.94
+        }
+      ],
+      "commodities": [
+        {
+          "symbol": "GLD",
+          "qty": 80.0,
+          "avg_price": 241.6,
+          "current_price": 477.86,
+          "market_value": 38228.8,
+          "name": "SPDR Gold Shares"
+        },
+        {
+          "symbol": "SLV",
+          "qty": 120.0,
+          "avg_price": 25.4,
+          "current_price": 80.09,
+          "market_value": 9610.8,
+          "name": "iShares Silver Trust"
+        }
+      ]
+    },
+    "manual_assets": [
+      {
+        "id": "estate-seed",
+        "label": "Property",
+        "category": "real_estate",
+        "value": 500000.0
+      }
+    ],
+    "portfolio_value": 255382.16,
+    "total_balance": 907382.66,
+    "net_worth": 905383.66,
+    "income": 19800.0,
+    "expenses": 1000.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 19800.0
+      }
+    ],
+    "mortgage": 145000.0,
+    "estate": 500000.0,
+    "wellness_metrics": {
+      "liquidity_months": 152.0,
+      "liquidity_score": 100.0,
+      "diversification_hhi": 0.1859,
+      "diversification_score": 87.49,
+      "debt_income_ratio": 0.6145,
+      "debt_income_score": 91.23,
+      "housing_score": 86.03,
+      "risk_alignment_score": 96.35,
+      "behavioral_resilience_score": 92.84,
+      "financial_resilience_score": 92.84,
+      "financial_stress_index": 4.01,
+      "confidence": "High",
+      "derived_metrics": {
+        "derived_income": 19800.0,
+        "derived_income_source": "income_streams",
+        "derived_expenses": 1000.0,
+        "derived_expenses_source": "expenses_field",
+        "derived_estate": 500000.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 145000.0,
+        "derived_non_mortgage_liability": 999.0,
+        "derived_total_liability": 145999.0,
+        "derived_total_cash_buffer": 152000.5,
+        "liquidity_months": 152.0,
+        "debt_to_annual_income": 0.6145,
+        "non_mortgage_debt_to_annual_income": 0.0042,
+        "mortgage_to_annual_income": 0.6103,
+        "housing_cushion": 3.4483,
+        "stock_total": 175608.43,
+        "crypto_total": 31934.13,
+        "commodity_total": 47839.6,
+        "computed_portfolio_value": 255382.16,
+        "portfolio_value": 255382.16,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 0.125,
+        "diversification_hhi": 0.1859,
+        "asset_class_hhi": 0.5236,
+        "position_hhi": 0.1859,
+        "position_count": 14,
+        "expenses_estimated": false,
+        "expenses_missing": false
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 100.0,
+        "debt_score": 91.23,
+        "housing_score": 86.03,
+        "diversification_score": 87.49,
+        "risk_alignment_score": 96.35
+      },
+      "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
+      "action_insights": [
+        "Maintain current buffers and rebalance periodically to preserve resilience."
+      ]
+    },
+    "risk_profile": 31.0,
+    "behavioral_resilience_score": 92.84,
+    "financial_resilience_score": 92.84,
+    "financial_wellness_score": 92.84,
+    "financial_stress_index": 4.01,
+    "confidence": "High",
+    "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 100.0,
+      "debt_score": 91.23,
+      "housing_score": 86.03,
+      "diversification_score": 87.49,
+      "risk_alignment_score": 96.35
+    },
+    "action_insights": [
+      "Maintain current buffers and rebalance periodically to preserve resilience."
+    ],
+    "email": "alice@gmail.com",
+    "country": "Singapore"
+  },
+  "u002": {
+    "name": "Brandon Lim",
+    "age": 28,
+    "cash_balance": 2300.0,
+    "liability": 6400.75,
+    "liability_items": [
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 6400.75,
+        "is_mortgage": false
+      }
+    ],
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "TSLA",
+          "qty": 4,
+          "avg_price": 228.5,
+          "market_value": 1596.96,
+          "current_price": 399.24
+        },
+        {
+          "symbol": "NVDA",
+          "qty": 3,
+          "avg_price": 870.0,
+          "market_value": 554.31,
+          "current_price": 184.77
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.03,
+          "avg_price": 45000.0,
+          "current_price": 69547.2344,
+          "market_value": 2086.42
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.18,
+          "avg_price": 2500.0,
+          "current_price": 2027.7444,
+          "market_value": 364.99
+        }
+      ],
+      "commodities": [
+        {
+          "symbol": "GC=F",
+          "qty": 0.35,
+          "avg_price": 2200.0,
+          "current_price": 5197.2002,
+          "market_value": 1819.02
+        },
+        {
+          "symbol": "SI=F",
+          "qty": 10.0,
+          "avg_price": 24.8,
+          "current_price": 86.795,
+          "market_value": 867.95
+        }
+      ]
+    },
+    "manual_assets": [],
+    "portfolio_value": 7289.65,
+    "total_balance": 9589.65,
+    "net_worth": 1688.9,
+    "income": 4000.0,
+    "expenses": 1500.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 4000.0
+      }
+    ],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 1.53,
+      "liquidity_score": 51.35,
+      "diversification_hhi": 0.2146,
+      "diversification_score": 85.47,
+      "debt_income_ratio": 0.1333,
+      "debt_income_score": 89.3,
+      "housing_score": null,
+      "risk_alignment_score": 89.66,
+      "behavioral_resilience_score": 75.05,
+      "financial_resilience_score": 75.05,
+      "financial_stress_index": 31.09,
+      "confidence": "High",
+      "derived_metrics": {
+        "derived_income": 4000.0,
+        "derived_income_source": "income_streams",
+        "derived_expenses": 1500.0,
+        "derived_expenses_source": "expenses_field",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 6400.75,
+        "derived_total_liability": 6400.75,
+        "derived_total_cash_buffer": 2300.0,
+        "liquidity_months": 1.53,
+        "debt_to_annual_income": 0.1333,
+        "non_mortgage_debt_to_annual_income": 0.1333,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 2151.27,
+        "crypto_total": 2451.41,
+        "commodity_total": 2686.97,
+        "computed_portfolio_value": 7289.65,
+        "portfolio_value": 7289.65,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 0.3363,
+        "diversification_hhi": 0.2146,
+        "asset_class_hhi": 0.336,
+        "position_hhi": 0.2146,
+        "position_count": 6,
+        "expenses_estimated": false,
+        "expenses_missing": false
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 51.35,
+        "debt_score": 89.3,
+        "housing_score": null,
+        "diversification_score": 85.47,
+        "risk_alignment_score": 89.66
+      },
+      "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but only limited visible weaknesses could amplify stress during shocks.",
+      "action_insights": [
+        "Build emergency savings toward 3 to 6 months of expenses."
+      ]
+    },
+    "risk_profile": 100.0,
+    "behavioral_resilience_score": 75.05,
+    "financial_resilience_score": 75.05,
+    "financial_wellness_score": 75.05,
+    "financial_stress_index": 31.09,
+    "confidence": "High",
+    "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but only limited visible weaknesses could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 51.35,
+      "debt_score": 89.3,
+      "housing_score": null,
+      "diversification_score": 85.47,
+      "risk_alignment_score": 89.66
+    },
+    "action_insights": [
+      "Build emergency savings toward 3 to 6 months of expenses."
+    ]
+  },
+  "u003": {
+    "name": "Cheryl Ng",
+    "age": 23,
+    "cash_balance": 9000.2,
+    "liability": 9000.2,
+    "liability_items": [
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 9000.2,
+        "is_mortgage": false
+      }
+    ],
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "META",
+          "qty": 4,
+          "avg_price": 495.0,
+          "market_value": 2616.28,
+          "current_price": 654.07
+        },
+        {
+          "symbol": "GOOGL",
+          "qty": 7,
+          "avg_price": 152.3,
+          "market_value": 2149.28,
+          "current_price": 307.04
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.04,
+          "avg_price": 45000.0,
+          "current_price": 69547.2344,
+          "market_value": 2781.89
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.19,
+          "avg_price": 2500.0,
+          "current_price": 2027.7444,
+          "market_value": 385.27
+        }
+      ],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 7932.72,
+    "total_balance": 16932.92,
+    "net_worth": 5932.72,
+    "income": 3000.0,
+    "expenses": 2000.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 3000.0
+      }
+    ],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 4.5,
+      "liquidity_score": 92.24,
+      "diversification_hhi": 0.3075,
+      "diversification_score": 78.75,
+      "debt_income_ratio": 0.25,
+      "debt_income_score": 81.38,
+      "housing_score": null,
+      "risk_alignment_score": 98.86,
+      "behavioral_resilience_score": 86.65,
+      "financial_resilience_score": 86.65,
+      "financial_stress_index": 20.13,
+      "confidence": "High",
+      "derived_metrics": {
+        "derived_income": 3000.0,
+        "derived_income_source": "income_streams",
+        "derived_expenses": 2000.0,
+        "derived_expenses_source": "expenses_field",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 9000.2,
+        "derived_total_liability": 9000.2,
+        "derived_total_cash_buffer": 9000.2,
+        "liquidity_months": 4.5,
+        "debt_to_annual_income": 0.25,
+        "non_mortgage_debt_to_annual_income": 0.25,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 4765.56,
+        "crypto_total": 3167.16,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 7932.72,
+        "portfolio_value": 7932.72,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 0.3993,
+        "diversification_hhi": 0.3075,
+        "asset_class_hhi": 0.5203,
+        "position_hhi": 0.3075,
+        "position_count": 4,
+        "expenses_estimated": false,
+        "expenses_missing": false
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 92.24,
+        "debt_score": 81.38,
+        "housing_score": null,
+        "diversification_score": 78.75,
+        "risk_alignment_score": 98.86
+      },
+      "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
+      "action_insights": [
+        "Reduce concentration in a single volatile asset class and broaden diversification."
+      ]
+    },
+    "risk_profile": 50.0,
+    "behavioral_resilience_score": 86.65,
+    "financial_resilience_score": 86.65,
+    "financial_wellness_score": 86.65,
+    "financial_stress_index": 20.13,
+    "confidence": "High",
+    "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 92.24,
+      "debt_score": 81.38,
+      "housing_score": null,
+      "diversification_score": 78.75,
+      "risk_alignment_score": 98.86
+    },
+    "action_insights": [
+      "Reduce concentration in a single volatile asset class and broaden diversification."
+    ]
+  },
+  "u004": {
+    "name": "Daniel Koh",
+    "age": 35,
+    "cash_balance": 7350.4,
+    "liability": 7350.4,
+    "liability_items": [
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 7350.4,
+        "is_mortgage": false
+      }
+    ],
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "SPY",
+          "qty": 10,
+          "avg_price": 520.4,
+          "market_value": 6771.8,
+          "current_price": 677.18
+        },
+        {
+          "symbol": "AVGO",
+          "qty": 2,
+          "avg_price": 1320.0,
+          "market_value": 685.16,
+          "current_price": 342.58
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.05,
+          "avg_price": 45000.0,
+          "current_price": 69547.2344,
+          "market_value": 3477.36
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.2,
+          "avg_price": 2500.0,
+          "current_price": 2027.7444,
+          "market_value": 405.55
+        }
+      ],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 11339.87,
+    "total_balance": 18690.27,
+    "net_worth": 8839.87,
+    "income": 4500.0,
+    "expenses": 2500.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 4500.0
+      }
+    ],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 2.94,
+      "liquidity_score": 76.94,
+      "diversification_hhi": 0.4556,
+      "diversification_score": 67.35,
+      "debt_income_ratio": 0.1361,
+      "debt_income_score": 89.09,
+      "housing_score": null,
+      "risk_alignment_score": 97.98,
+      "behavioral_resilience_score": 80.73,
+      "financial_resilience_score": 80.73,
+      "financial_stress_index": 23.7,
+      "confidence": "High",
+      "derived_metrics": {
+        "derived_income": 4500.0,
+        "derived_income_source": "income_streams",
+        "derived_expenses": 2500.0,
+        "derived_expenses_source": "expenses_field",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 7350.4,
+        "derived_total_liability": 7350.4,
+        "derived_total_cash_buffer": 7350.4,
+        "liquidity_months": 2.94,
+        "debt_to_annual_income": 0.1361,
+        "non_mortgage_debt_to_annual_income": 0.1361,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 7456.96,
+        "crypto_total": 3882.91,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 11339.87,
+        "portfolio_value": 11339.87,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 0.3424,
+        "diversification_hhi": 0.4556,
+        "asset_class_hhi": 0.5497,
+        "position_hhi": 0.4556,
+        "position_count": 4,
+        "expenses_estimated": false,
+        "expenses_missing": false
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 76.94,
+        "debt_score": 89.09,
+        "housing_score": null,
+        "diversification_score": 67.35,
+        "risk_alignment_score": 97.98
+      },
+      "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
+      "action_insights": [
+        "Maintain current buffers and rebalance periodically to preserve resilience."
+      ]
+    },
+    "risk_profile": 50.0,
+    "behavioral_resilience_score": 80.73,
+    "financial_resilience_score": 80.73,
+    "financial_wellness_score": 80.73,
+    "financial_stress_index": 23.7,
+    "confidence": "High",
+    "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but only limited visible weaknesses could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 76.94,
+      "debt_score": 89.09,
+      "housing_score": null,
+      "diversification_score": 67.35,
+      "risk_alignment_score": 97.98
+    },
+    "action_insights": [
+      "Maintain current buffers and rebalance periodically to preserve resilience."
+    ]
+  },
+  "u005": {
+    "name": "Ethan Lee",
+    "age": 37,
+    "cash_balance": 12600.25,
+    "liability": 12600.25,
+    "liability_items": [
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 12600.25,
+        "is_mortgage": false
+      }
+    ],
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "NFLX",
+          "qty": 3,
+          "avg_price": 640.0,
+          "market_value": 290.82,
+          "current_price": 96.94
+        },
+        {
+          "symbol": "AMD",
+          "qty": 10,
+          "avg_price": 165.3,
+          "market_value": 2032.3,
+          "current_price": 203.23
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.06,
+          "avg_price": 45000.0,
+          "current_price": 69547.2344,
+          "market_value": 4172.83
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.21,
+          "avg_price": 2500.0,
+          "current_price": 2027.7444,
+          "market_value": 425.83
+        }
+      ],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 6921.78,
+    "total_balance": 19522.03,
+    "net_worth": 3921.78,
+    "income": 4600.0,
+    "expenses": 3000.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 4600.0
+      }
+    ],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 4.2,
+      "liquidity_score": 90.01,
+      "diversification_hhi": 0.4552,
+      "diversification_score": 67.38,
+      "debt_income_ratio": 0.2283,
+      "debt_income_score": 82.76,
+      "housing_score": null,
+      "risk_alignment_score": 77.35,
+      "behavioral_resilience_score": 81.06,
+      "financial_resilience_score": 81.06,
+      "financial_stress_index": 25.21,
+      "confidence": "High",
+      "derived_metrics": {
+        "derived_income": 4600.0,
+        "derived_income_source": "income_streams",
+        "derived_expenses": 3000.0,
+        "derived_expenses_source": "expenses_field",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 12600.25,
+        "derived_total_liability": 12600.25,
+        "derived_total_cash_buffer": 12600.25,
+        "liquidity_months": 4.2,
+        "debt_to_annual_income": 0.2283,
+        "non_mortgage_debt_to_annual_income": 0.2283,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 2323.12,
+        "crypto_total": 4598.66,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 6921.78,
+        "portfolio_value": 6921.78,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 0.6644,
+        "diversification_hhi": 0.4552,
+        "asset_class_hhi": 0.554,
+        "position_hhi": 0.4552,
+        "position_count": 4,
+        "expenses_estimated": false,
+        "expenses_missing": false
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 90.01,
+        "debt_score": 82.76,
+        "housing_score": null,
+        "diversification_score": 67.38,
+        "risk_alignment_score": 77.35
+      },
+      "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but elevated crypto concentration could amplify stress during shocks.",
+      "action_insights": [
+        "Reduce concentration in a single volatile asset class and broaden diversification."
+      ]
+    },
+    "risk_profile": 50.0,
+    "behavioral_resilience_score": 81.06,
+    "financial_resilience_score": 81.06,
+    "financial_wellness_score": 81.06,
+    "financial_stress_index": 25.21,
+    "confidence": "High",
+    "resilience_summary": "Highly resilient: A solid liquidity buffer supports stability, but elevated crypto concentration could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 90.01,
+      "debt_score": 82.76,
+      "housing_score": null,
+      "diversification_score": 67.38,
+      "risk_alignment_score": 77.35
+    },
+    "action_insights": [
+      "Reduce concentration in a single volatile asset class and broaden diversification."
+    ]
+  },
+  "u006": {
+    "name": "Farah Aziz",
+    "age": 55,
+    "cash_balance": 8490.1,
+    "liability": 8490.1,
+    "liability_items": [
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 8490.1,
+        "is_mortgage": false
+      }
+    ],
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "INTC",
+          "qty": 20,
+          "avg_price": 41.2,
+          "market_value": 935.6,
+          "current_price": 46.78
+        },
+        {
+          "symbol": "BAC",
+          "qty": 25,
+          "avg_price": 34.5,
+          "market_value": 1214.0,
+          "current_price": 48.56
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.07,
+          "avg_price": 45000.0,
+          "current_price": 69547.2344,
+          "market_value": 4868.31
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.22,
+          "avg_price": 2500.0,
+          "current_price": 2027.7444,
+          "market_value": 446.1
+        }
+      ],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 7464.01,
+    "total_balance": 15954.11,
+    "net_worth": 3964.01,
+    "income": 4750.0,
+    "expenses": 3500.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 4750.0
+      }
+    ],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 2.43,
+      "liquidity_score": 69.36,
+      "diversification_hhi": 0.4712,
+      "diversification_score": 66.09,
+      "debt_income_ratio": 0.1489,
+      "debt_income_score": 88.16,
+      "housing_score": null,
+      "risk_alignment_score": 71.09,
+      "behavioral_resilience_score": 74.32,
+      "financial_resilience_score": 74.32,
+      "financial_stress_index": 31.02,
+      "confidence": "High",
+      "derived_metrics": {
+        "derived_income": 4750.0,
+        "derived_income_source": "income_streams",
+        "derived_expenses": 3500.0,
+        "derived_expenses_source": "expenses_field",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 8490.1,
+        "derived_total_liability": 8490.1,
+        "derived_total_cash_buffer": 8490.1,
+        "liquidity_months": 2.43,
+        "debt_to_annual_income": 0.1489,
+        "non_mortgage_debt_to_annual_income": 0.1489,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 2149.6,
+        "crypto_total": 5314.41,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 7464.01,
+        "portfolio_value": 7464.01,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 0.712,
+        "diversification_hhi": 0.4712,
+        "asset_class_hhi": 0.5899,
+        "position_hhi": 0.4712,
+        "position_count": 4,
+        "expenses_estimated": false,
+        "expenses_missing": false
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 69.36,
+        "debt_score": 88.16,
+        "housing_score": null,
+        "diversification_score": 66.09,
+        "risk_alignment_score": 71.09
+      },
+      "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
+      "action_insights": [
+        "Reduce concentration in a single volatile asset class and broaden diversification."
+      ]
+    },
+    "risk_profile": 50.0,
+    "behavioral_resilience_score": 74.32,
+    "financial_resilience_score": 74.32,
+    "financial_wellness_score": 74.32,
+    "financial_stress_index": 31.02,
+    "confidence": "High",
+    "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 69.36,
+      "debt_score": 88.16,
+      "housing_score": null,
+      "diversification_score": 66.09,
+      "risk_alignment_score": 71.09
+    },
+    "action_insights": [
+      "Reduce concentration in a single volatile asset class and broaden diversification."
+    ]
+  },
+  "u007": {
+    "name": "Grace Wong",
+    "age": 36,
+    "cash_balance": 3350.75,
+    "liability": 3350.75,
+    "liability_items": [
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 3350.75,
+        "is_mortgage": false
+      }
+    ],
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "JPM",
+          "qty": 9,
+          "avg_price": 191.0,
+          "market_value": 2598.57,
+          "current_price": 288.73
+        },
+        {
+          "symbol": "V",
+          "qty": 4,
+          "avg_price": 275.4,
+          "market_value": 1257.72,
+          "current_price": 314.43
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.08,
+          "avg_price": 45000.0,
+          "current_price": 69547.2344,
+          "market_value": 5563.78
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.23,
+          "avg_price": 2500.0,
+          "current_price": 2027.7444,
+          "market_value": 466.38
+        }
+      ],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 9886.45,
+    "total_balance": 13237.2,
+    "net_worth": 7886.45,
+    "income": 4800.0,
+    "expenses": 2000.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 4800.0
+      }
+    ],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 1.68,
+      "liquidity_score": 54.84,
+      "diversification_hhi": 0.4042,
+      "diversification_score": 71.42,
+      "debt_income_ratio": 0.0582,
+      "debt_income_score": 95.09,
+      "housing_score": null,
+      "risk_alignment_score": 84.11,
+      "behavioral_resilience_score": 74.02,
+      "financial_resilience_score": 74.02,
+      "financial_stress_index": 29.96,
+      "confidence": "High",
+      "derived_metrics": {
+        "derived_income": 4800.0,
+        "derived_income_source": "income_streams",
+        "derived_expenses": 2000.0,
+        "derived_expenses_source": "expenses_field",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 3350.75,
+        "derived_total_liability": 3350.75,
+        "derived_total_cash_buffer": 3350.75,
+        "liquidity_months": 1.68,
+        "debt_to_annual_income": 0.0582,
+        "non_mortgage_debt_to_annual_income": 0.0582,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 3856.29,
+        "crypto_total": 6030.16,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 9886.45,
+        "portfolio_value": 9886.45,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 0.6099,
+        "diversification_hhi": 0.4042,
+        "asset_class_hhi": 0.5242,
+        "position_hhi": 0.4042,
+        "position_count": 4,
+        "expenses_estimated": false,
+        "expenses_missing": false
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 54.84,
+        "debt_score": 95.09,
+        "housing_score": null,
+        "diversification_score": 71.42,
+        "risk_alignment_score": 84.11
+      },
+      "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
+      "action_insights": [
+        "Build emergency savings toward 3 to 6 months of expenses.",
+        "Reduce concentration in a single volatile asset class and broaden diversification."
+      ]
+    },
+    "risk_profile": 50.0,
+    "behavioral_resilience_score": 74.02,
+    "financial_resilience_score": 74.02,
+    "financial_wellness_score": 74.02,
+    "financial_stress_index": 29.96,
+    "confidence": "High",
+    "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 54.84,
+      "debt_score": 95.09,
+      "housing_score": null,
+      "diversification_score": 71.42,
+      "risk_alignment_score": 84.11
+    },
+    "action_insights": [
+      "Build emergency savings toward 3 to 6 months of expenses.",
+      "Reduce concentration in a single volatile asset class and broaden diversification."
+    ]
+  },
+  "u008": {
+    "name": "Hafiz Rahman",
+    "age": 29,
+    "cash_balance": 9150.5,
+    "liability": 9150.5,
+    "liability_items": [
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 9150.5,
+        "is_mortgage": false
+      }
+    ],
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "KO",
+          "qty": 14,
+          "avg_price": 61.2,
+          "market_value": 1090.32,
+          "current_price": 77.88
+        },
+        {
+          "symbol": "PEP",
+          "qty": 6,
+          "avg_price": 171.3,
+          "market_value": 964.68,
+          "current_price": 160.78
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.09,
+          "avg_price": 45000.0,
+          "current_price": 69547.2344,
+          "market_value": 6259.25
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 0.24,
+          "avg_price": 2500.0,
+          "current_price": 2027.7444,
+          "market_value": 486.66
+        }
+      ],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 8800.91,
+    "total_balance": 17951.41,
+    "net_worth": 6800.91,
+    "income": 5200.0,
+    "expenses": 2000.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 5200.0
+      }
+    ],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 4.58,
+      "liquidity_score": 92.78,
+      "diversification_hhi": 0.5362,
+      "diversification_score": 45.52,
+      "debt_income_ratio": 0.1466,
+      "debt_income_score": 88.33,
+      "housing_score": null,
+      "risk_alignment_score": 63.55,
+      "behavioral_resilience_score": 76.91,
+      "financial_resilience_score": 76.91,
+      "financial_stress_index": 26.96,
+      "confidence": "High",
+      "derived_metrics": {
+        "derived_income": 5200.0,
+        "derived_income_source": "income_streams",
+        "derived_expenses": 2000.0,
+        "derived_expenses_source": "expenses_field",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 9150.5,
+        "derived_total_liability": 9150.5,
+        "derived_total_cash_buffer": 9150.5,
+        "liquidity_months": 4.58,
+        "debt_to_annual_income": 0.1466,
+        "non_mortgage_debt_to_annual_income": 0.1466,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 2055.0,
+        "crypto_total": 6745.91,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 8800.91,
+        "portfolio_value": 8800.91,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 0.7665,
+        "diversification_hhi": 0.5362,
+        "asset_class_hhi": 0.642,
+        "position_hhi": 0.5362,
+        "position_count": 4,
+        "expenses_estimated": false,
+        "expenses_missing": false
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 92.78,
+        "debt_score": 88.33,
+        "housing_score": null,
+        "diversification_score": 45.52,
+        "risk_alignment_score": 63.55
+      },
+      "resilience_summary": "Moderately resilient: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
+      "action_insights": [
+        "Reduce concentration in a single volatile asset class and broaden diversification."
+      ]
+    },
+    "risk_profile": 50.0,
+    "behavioral_resilience_score": 76.91,
+    "financial_resilience_score": 76.91,
+    "financial_wellness_score": 76.91,
+    "financial_stress_index": 26.96,
+    "confidence": "High",
+    "resilience_summary": "Moderately resilient: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 92.78,
+      "debt_score": 88.33,
+      "housing_score": null,
+      "diversification_score": 45.52,
+      "risk_alignment_score": 63.55
+    },
+    "action_insights": [
+      "Reduce concentration in a single volatile asset class and broaden diversification."
+    ],
+    "email": "isabella@example.com",
+    "country": "Singapore"
+  },
+  "u009": {
+    "name": "Isabella Goh",
+    "age": 21,
+    "cash_balance": 2940.25,
+    "liability": 2940.25,
+    "liability_items": [
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 2940.25,
+        "is_mortgage": false
+      }
+    ],
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "BABA",
+          "qty": 15.0,
+          "avg_price": 86.2,
+          "market_value": 2052.75,
+          "current_price": 136.85
+        },
+        {
+          "symbol": "PDD",
+          "qty": 5.0,
+          "avg_price": 148.5,
+          "market_value": 524.3,
+          "current_price": 104.86
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.1,
+          "avg_price": 45000.0,
+          "current_price": 69547.2344,
+          "market_value": 6954.72
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 7.25,
+          "avg_price": 2092.696552,
+          "current_price": 2027.7444,
+          "market_value": 14701.15,
+          "name": "Ethereum"
+        },
+        {
+          "symbol": "DOGE-USD",
+          "qty": 70368.0,
+          "avg_price": 0.09314,
+          "current_price": 0.0929,
+          "name": "Dogecoin",
+          "market_value": 6537.19
+        },
+        {
+          "symbol": "BCH-USD",
+          "qty": 9.0,
+          "avg_price": 457.81,
+          "current_price": 450.6466,
+          "name": "Bitcoin Cash",
+          "market_value": 4055.82
+        },
+        {
+          "symbol": "BNB-USD",
+          "qty": 6.0,
+          "avg_price": 648.09,
+          "current_price": 641.1039,
+          "name": "BNB",
+          "market_value": 3846.62
+        }
+      ],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 38672.55,
+    "total_balance": 41612.8,
+    "net_worth": 37472.55,
+    "income": 3500.0,
+    "expenses": 1200.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 3500.0
+      }
+    ],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 2.45,
+      "liquidity_score": 69.69,
+      "diversification_hhi": 0.2293,
+      "diversification_score": 63.32,
+      "debt_income_ratio": 0.07,
+      "debt_income_score": 94.14,
+      "housing_score": null,
+      "risk_alignment_score": 37.85,
+      "behavioral_resilience_score": 71.64,
+      "financial_resilience_score": 71.64,
+      "financial_stress_index": 33.39,
+      "confidence": "High",
+      "derived_metrics": {
+        "derived_income": 3500.0,
+        "derived_income_source": "income_streams",
+        "derived_expenses": 1200.0,
+        "derived_expenses_source": "expenses_field",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 2940.25,
+        "derived_total_liability": 2940.25,
+        "derived_total_cash_buffer": 2940.25,
+        "liquidity_months": 2.45,
+        "debt_to_annual_income": 0.07,
+        "non_mortgage_debt_to_annual_income": 0.07,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 2577.05,
+        "crypto_total": 36095.5,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 38672.55,
+        "portfolio_value": 38672.55,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 0.9334,
+        "diversification_hhi": 0.2293,
+        "asset_class_hhi": 0.8756,
+        "position_hhi": 0.2293,
+        "position_count": 7,
+        "expenses_estimated": false,
+        "expenses_missing": false
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 69.69,
+        "debt_score": 94.14,
+        "housing_score": null,
+        "diversification_score": 63.32,
+        "risk_alignment_score": 37.85
+      },
+      "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
+      "action_insights": [
+        "Reduce concentration in a single volatile asset class and broaden diversification.",
+        "Realign portfolio risk with stated tolerance so market swings are easier to absorb."
+      ]
+    },
+    "risk_profile": 50.0,
+    "behavioral_resilience_score": 71.64,
+    "financial_resilience_score": 71.64,
+    "financial_wellness_score": 71.64,
+    "financial_stress_index": 33.39,
+    "confidence": "High",
+    "resilience_summary": "Moderately resilient: Manageable debt pressure supports stability, but elevated crypto concentration could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 69.69,
+      "debt_score": 94.14,
+      "housing_score": null,
+      "diversification_score": 63.32,
+      "risk_alignment_score": 37.85
+    },
+    "action_insights": [
+      "Reduce concentration in a single volatile asset class and broaden diversification.",
+      "Realign portfolio risk with stated tolerance so market swings are easier to absorb."
+    ]
+  },
+  "u010": {
+    "name": "Jason Teo",
+    "age": null,
+    "cash_balance": 8700.0,
+    "liability": 17700.0,
+    "liability_items": [
+      {
+        "id": "ef43a664-30e2-4ba7-ae3c-691bf812dfb6",
+        "label": "LOAN",
+        "amount": 10000.0,
+        "is_mortgage": false
+      },
+      {
+        "id": "liability-seed",
+        "label": "Existing Liabilities",
+        "amount": 7700.0,
+        "is_mortgage": false
+      }
+    ],
+    "portfolio": {
+      "stocks": [
+        {
+          "symbol": "AAPL",
+          "qty": 2.0,
+          "avg_price": 257.46,
+          "current_price": 260.83,
+          "market_value": 521.66,
+          "name": "AAPL"
+        }
+      ],
+      "cryptos": [
+        {
+          "symbol": "BTC-USD",
+          "qty": 20.0,
+          "avg_price": 67768.87,
+          "current_price": 69547.2344,
+          "name": "Bitcoin",
+          "market_value": 1390944.69
+        }
+      ],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 1391466.35,
+    "total_balance": 1400166.35,
+    "net_worth": 1380666.35,
+    "income": 4900.0,
+    "expenses": 1800.0,
+    "income_streams": [
+      {
+        "id": "income-seed",
+        "label": "Primary Income",
+        "monthly_amount": 4900.0
+      }
+    ],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 4.83,
+      "liquidity_score": 94.38,
+      "diversification_hhi": 0.9993,
+      "diversification_score": 0.67,
+      "debt_income_ratio": 0.301,
+      "debt_income_score": 78.3,
+      "housing_score": null,
+      "risk_alignment_score": 0.0,
+      "behavioral_resilience_score": 56.5,
+      "financial_resilience_score": 56.5,
+      "financial_stress_index": 47.85,
+      "confidence": "High",
+      "derived_metrics": {
+        "derived_income": 4900.0,
+        "derived_income_source": "income_streams",
+        "derived_expenses": 1800.0,
+        "derived_expenses_source": "expenses_field",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 17700.0,
+        "derived_total_liability": 17700.0,
+        "derived_total_cash_buffer": 8700.0,
+        "liquidity_months": 4.83,
+        "debt_to_annual_income": 0.301,
+        "non_mortgage_debt_to_annual_income": 0.301,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 521.66,
+        "crypto_total": 1390944.69,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 1391466.35,
+        "portfolio_value": 1391466.35,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 0.9996,
+        "diversification_hhi": 0.9993,
+        "asset_class_hhi": 0.9993,
+        "position_hhi": 0.9993,
+        "position_count": 2,
+        "expenses_estimated": false,
+        "expenses_missing": false
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 94.38,
+        "debt_score": 78.3,
+        "housing_score": null,
+        "diversification_score": 0.67,
+        "risk_alignment_score": 0.0
+      },
+      "resilience_summary": "Vulnerable: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
+      "action_insights": [
+        "Reduce concentration in a single volatile asset class and broaden diversification.",
+        "Realign portfolio risk with stated tolerance so market swings are easier to absorb."
+      ]
+    },
+    "risk_profile": 15.0,
+    "behavioral_resilience_score": 56.5,
+    "financial_resilience_score": 56.5,
+    "financial_wellness_score": 56.5,
+    "financial_stress_index": 47.85,
+    "confidence": "High",
+    "resilience_summary": "Vulnerable: A solid liquidity buffer supports stability, but portfolio concentration could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 94.38,
+      "debt_score": 78.3,
+      "housing_score": null,
+      "diversification_score": 0.67,
+      "risk_alignment_score": 0.0
+    },
+    "action_insights": [
+      "Reduce concentration in a single volatile asset class and broaden diversification.",
+      "Realign portfolio risk with stated tolerance so market swings are easier to absorb."
+    ],
+    "email": "jason@example.com",
+    "country": "Singapore"
+  },
+  "u011": {
+    "name": "Zerius Heng",
+    "age": 23,
+    "cash_balance": 949.0,
+    "liability": 0,
+    "liability_items": [],
+    "portfolio": {
+      "stocks": [],
+      "cryptos": [
+        {
+          "symbol": "XRP-USD",
+          "qty": 6000.0,
+          "avg_price": 1.4127,
+          "current_price": 1.3824,
+          "name": "XRP",
+          "market_value": 8294.4
+        },
+        {
+          "symbol": "BTC-USD",
+          "qty": 0.04,
+          "avg_price": 67768.87,
+          "current_price": 69547.2344,
+          "name": "Bitcoin",
+          "market_value": 2781.89
+        },
+        {
+          "symbol": "ETH-USD",
+          "qty": 1.0,
+          "avg_price": 2060.91,
+          "current_price": 2027.7444,
+          "name": "Ethereum",
+          "market_value": 2027.74
+        }
+      ],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 13104.03,
+    "total_balance": 14053.03,
+    "net_worth": 14053.03,
+    "income": 0,
+    "expenses": 0.0,
+    "income_streams": [],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 0.0,
+      "liquidity_score": 0.0,
+      "diversification_hhi": 0.4697,
+      "diversification_score": 49.66,
+      "debt_income_ratio": 0.0,
+      "debt_income_score": 50.0,
+      "housing_score": null,
+      "risk_alignment_score": 50.37,
+      "behavioral_resilience_score": 32.32,
+      "financial_resilience_score": 32.32,
+      "financial_stress_index": 59.15,
+      "confidence": "Medium",
+      "derived_metrics": {
+        "derived_income": 0.0,
+        "derived_income_source": "income_field",
+        "derived_expenses": 0.0,
+        "derived_expenses_source": "missing",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 0.0,
+        "derived_total_liability": 0.0,
+        "derived_total_cash_buffer": 949.0,
+        "liquidity_months": 0.0,
+        "debt_to_annual_income": 0.0,
+        "non_mortgage_debt_to_annual_income": 0.0,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 0.0,
+        "crypto_total": 13104.03,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 13104.03,
+        "portfolio_value": 13104.03,
+        "portfolio_value_source": "portfolio_positions",
+        "crypto_exposure_ratio": 1.0,
+        "diversification_hhi": 0.4697,
+        "asset_class_hhi": 1.0,
+        "position_hhi": 0.4697,
+        "position_count": 3,
+        "expenses_estimated": false,
+        "expenses_missing": true
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 0.0,
+        "debt_score": 50.0,
+        "housing_score": null,
+        "diversification_score": 49.66,
+        "risk_alignment_score": 50.37
+      },
+      "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
+      "action_insights": [
+        "Build emergency savings toward 3 to 6 months of expenses.",
+        "Lower unsecured liabilities to improve shock absorption and monthly flexibility.",
+        "Reduce concentration in a single volatile asset class and broaden diversification."
+      ]
+    },
+    "risk_profile": 81.0,
+    "behavioral_resilience_score": 32.32,
+    "financial_resilience_score": 32.32,
+    "financial_wellness_score": 32.32,
+    "financial_stress_index": 59.15,
+    "confidence": "Medium",
+    "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 0.0,
+      "debt_score": 50.0,
+      "housing_score": null,
+      "diversification_score": 49.66,
+      "risk_alignment_score": 50.37
+    },
+    "action_insights": [
+      "Build emergency savings toward 3 to 6 months of expenses.",
+      "Lower unsecured liabilities to improve shock absorption and monthly flexibility.",
+      "Reduce concentration in a single volatile asset class and broaden diversification."
+    ],
+    "age_group": "18-29",
+    "username": "Zerius",
+    "email": "zerius@example.com",
+    "country": "Singapore"
+  },
+  "u012": {
+    "name": "ah heng",
+    "age": 24,
+    "cash_balance": 1048.0,
+    "liability": 0,
+    "liability_items": [],
+    "portfolio": {
+      "stocks": [],
+      "cryptos": [],
+      "commodities": []
+    },
+    "manual_assets": [],
+    "portfolio_value": 0,
+    "total_balance": 1048.0,
+    "net_worth": 1048.0,
+    "income": 0,
+    "expenses": 0.0,
+    "income_streams": [],
+    "mortgage": 0,
+    "estate": 0.0,
+    "wellness_metrics": {
+      "liquidity_months": 0.0,
+      "liquidity_score": 0.0,
+      "diversification_hhi": 0.0,
+      "diversification_score": 50.0,
+      "debt_income_ratio": 0.0,
+      "debt_income_score": 50.0,
+      "housing_score": null,
+      "risk_alignment_score": 60.0,
+      "behavioral_resilience_score": 33.53,
+      "financial_resilience_score": 33.53,
+      "financial_stress_index": 57.47,
+      "confidence": "Medium",
+      "derived_metrics": {
+        "derived_income": 0.0,
+        "derived_income_source": "income_field",
+        "derived_expenses": 0.0,
+        "derived_expenses_source": "missing",
+        "derived_estate": 0.0,
+        "derived_cash_like_manual_assets": 0.0,
+        "derived_mortgage": 0.0,
+        "derived_non_mortgage_liability": 0.0,
+        "derived_total_liability": 0.0,
+        "derived_total_cash_buffer": 1048.0,
+        "liquidity_months": 0.0,
+        "debt_to_annual_income": 0.0,
+        "non_mortgage_debt_to_annual_income": 0.0,
+        "mortgage_to_annual_income": 0.0,
+        "housing_cushion": 0.0,
+        "stock_total": 0.0,
+        "crypto_total": 0.0,
+        "commodity_total": 0.0,
+        "computed_portfolio_value": 0.0,
+        "portfolio_value": 0.0,
+        "portfolio_value_source": "none",
+        "crypto_exposure_ratio": 0.0,
+        "diversification_hhi": 0.0,
+        "asset_class_hhi": 0.0,
+        "position_hhi": 0.0,
+        "position_count": 0,
+        "expenses_estimated": false,
+        "expenses_missing": true
+      },
+      "resilience_breakdown": {
+        "liquidity_score": 0.0,
+        "debt_score": 50.0,
+        "housing_score": null,
+        "diversification_score": 50.0,
+        "risk_alignment_score": 60.0
+      },
+      "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
+      "action_insights": [
+        "Build emergency savings toward 3 to 6 months of expenses.",
+        "Lower unsecured liabilities to improve shock absorption and monthly flexibility.",
+        "Reduce concentration in a single volatile asset class and broaden diversification."
+      ]
+    },
+    "risk_profile": 68.0,
+    "behavioral_resilience_score": 33.53,
+    "financial_resilience_score": 33.53,
+    "financial_wellness_score": 33.53,
+    "financial_stress_index": 57.47,
+    "confidence": "Medium",
+    "resilience_summary": "Financially fragile: Some baseline financial capacity supports stability, but limited liquid reserves could amplify stress during shocks.",
+    "resilience_breakdown": {
+      "liquidity_score": 0.0,
+      "debt_score": 50.0,
+      "housing_score": null,
+      "diversification_score": 50.0,
+      "risk_alignment_score": 60.0
+    },
+    "action_insights": [
+      "Build emergency savings toward 3 to 6 months of expenses.",
+      "Lower unsecured liabilities to improve shock absorption and monthly flexibility.",
+      "Reduce concentration in a single volatile asset class and broaden diversification."
+    ],
+    "age_group": "18-29",
+    "username": "Zerius_heng",
+    "email": "heng@exmaple.com",
+    "country": "Singapore"
+  }
+}

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 
-KB_DIR = Path(__file__).resolve().parents[2] / "knowledge_base" / "docs"
+KB_DIR = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "docs"
 
 
 def _load_kb_docs() -> List[Dict[str, Any]]:

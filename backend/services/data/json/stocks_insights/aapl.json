@@ -1,0 +1,191 @@
+{
+  "type": "stock",
+  "symbol": "AAPL",
+  "updated_at": "2026-03-22T17:01:13.060542+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "stock",
+      "symbol": "AAPL",
+      "name": "Apple Inc.",
+      "period": {
+        "months": 3,
+        "start": "2025-12-22",
+        "end": "2026-03-22"
+      },
+      "metrics": {
+        "start_price": 270.7167,
+        "end_price": 247.99,
+        "return_pct": -8.395,
+        "volatility_annualized": 0.240084,
+        "max_drawdown_pct": -10.75,
+        "avg_daily_volume": 46139388.7705,
+        "volume_change_pct": -0.1558
+      },
+      "notable_moves": [
+        {
+          "date": "2026-02-02",
+          "move_pct": 4.0581,
+          "close": 269.7576,
+          "volume": 73913400.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-17",
+          "move_pct": 3.1668,
+          "close": 263.88,
+          "volume": 58469100.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-02-12",
+          "move_pct": -4.9982,
+          "close": 261.73,
+          "volume": 81077200.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-20",
+          "move_pct": -3.4556,
+          "close": 246.4694,
+          "volume": 80267500.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-01-30",
+          "move_pct": 0.4646,
+          "close": 259.2374,
+          "volume": 92443400.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-02-04",
+          "move_pct": 2.6013,
+          "close": 276.2315,
+          "volume": 90545700.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-02-02",
+          "headline": "Apple reports first quarter results - Apple",
+          "source": "",
+          "url": "https://www.apple.com/newsroom/2026/01/apple-reports-first-quarter-results/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple earnings report - Tim Cook calls iPhone 17 series 'by far the most popular'",
+          "source": "",
+          "url": "https://www.tomsguide.com/news/live/apple-q1-earnings-call-results-live-2026?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple reports first quarter results - Apple (SN)",
+          "source": "",
+          "url": "https://www.apple.com/sn/newsroom/2026/01/apple-reports-first-quarter-results/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Inc. (NASDAQ: AAPL) Stock Performance - Maxthon | Privacy Private Browser",
+          "source": "",
+          "url": "https://blog.maxthon.com/2026/02/28/apple-inc-nasdaq-aapl-stock-performance/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Inc.",
+          "source": "",
+          "url": "https://en.wikipedia.org/wiki/Apple_Inc.?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "SEC Filings - SEC Filings Details - Apple",
+          "source": "",
+          "url": "https://investor.apple.com/sec-filings/sec-filings-details/default.aspx?FilingId=19035760&utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "AE Wealth Management LLC Buys 206,188 Shares of Apple Inc. $AAPL - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2026/02/28/ae-wealth-management-llc-buys-206188-shares-of-apple-inc-aapl.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Inc. $AAPL Shares Sold by Amalgamated Bank - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2026/02/14/apple-inc-aapl-shares-sold-by-amalgamated-bank.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Inc. $AAPL Shares Sold by Presper Financial Architects LLC - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2026/02/10/apple-inc-aapl-shares-sold-by-presper-financial-architects-llc.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Inc. $AAPL Shares Sold by ERn Financial LLC - Defense World",
+          "source": "",
+          "url": "https://www.defenseworld.net/2026/02/20/apple-inc-aapl-shares-sold-by-ern-financial-llc.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Inc. $AAPL is Sawgrass Asset Management LLC\u2019s 2nd Largest Position - American Market News",
+          "source": "",
+          "url": "https://www.americanbankingnews.com/2026/02/23/apple-inc-aapl-is-sawgrass-asset-management-llcs-2nd-largest-position.html?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "SEC Filings - Apple",
+          "source": "",
+          "url": "https://investor.apple.com/investor-relations/sec-filings/default.aspx?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple Board, Executives Sued Over 'Anticompetitive Playbook' - California City Today",
+          "source": "",
+          "url": "https://nationaltoday.com/us/ca/california-city/news/2026/03/02/apple-board-executives-sued-over-anticompetitive-playbook/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "MLQ.ai | AI for investors",
+          "source": "",
+          "url": "https://mlq.ai/news/west-virginia-attorney-general-launches-lawsuit-against-apple-over-iclouds-role-in-child-abuse-material-distribution/?utm_source=openai"
+        },
+        {
+          "date": "2026-02-02",
+          "headline": "Apple distributes checks from $95 million settlement over Siri \u2013 NBC New York",
+          "source": "",
+          "url": "https://www.nbcnewyork.com/news/apple-settlement-95-million-payments/6465861/?utm_source=openai"
+        }
+      ],
+      "narrative": "Between the start and end of the period, the stock price declined from 270.7167 to 247.99, resulting in a total return of -8.395%. The annualized volatility was 0.240084, and the maximum drawdown reached -10.75%, indicating notable price fluctuations and a significant peak-to-trough decline. The largest upward session occurred on 2026-02-02, with a 4.0581% increase closing at 269.7576, coinciding with multiple reports of Apple's first quarter results and positive commentary on the iPhone 17 series' popularity [1][2]. Conversely, the largest downward day was on 2026-02-12, with a 4.9982% drop closing at 261.73, though no specific driver from the provided data directly aligns with this date. High volume days included 2026-01-30 with 92,443,400 shares traded and 2026-02-04 with 90,545,700 shares, the latter following the strong price increase on 2026-02-02. Overall average daily volume slightly decreased by 0.1558% to 46,139,388.77 shares. The price movements around early February appear linked to Apple's earnings announcements and related news, including SEC filings and institutional trading activity [1][2][6][7]. Some legal and regulatory headlines emerged later but do not clearly correspond to the largest price moves within this timeframe.",
+      "tldr": [
+        "Period return: -8.39% with annualized volatility 0.240.",
+        "Largest up day: 2026-02-02 (4.06%), largest down day: 2026-02-12 (-5.00%).",
+        "Highest volume spike was on 2026-01-30 with volume 92,443,400."
+      ],
+      "conclusion": "Over this period, the asset ended lower (-8.39%) with peak drawdown of -10.75%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.apple.com/newsroom/2026/01/apple-reports-first-quarter-results/?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://www.tomsguide.com/news/live/apple-q1-earnings-call-results-live-2026?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://investor.apple.com/sec-filings/sec-filings-details/default.aspx?FilingId=19035760&utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://www.defenseworld.net/2026/02/28/ae-wealth-management-llc-buys-206188-shares-of-apple-inc-aapl.html?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}
