@@ -148,7 +148,7 @@ def sync_user_to_assets_csv(user_id: str, user: dict[str, Any]) -> None:
 
     target = rows[target_index]
     target["name"] = str(user.get("name", target.get("name", "")) or "")
-    target[const.SYNCED_ACCOUNT_BALANCE_FIELD] = f"{round(float(user.get('cash_balance', 0.0) or 0.0), 2):.2f}"
+    target.setdefault(const.SYNCED_ACCOUNT_BALANCE_FIELD, "0")
     target[const.SYNCED_BALANCE_RELOAD_COUNT_FIELD] = str(_safe_int(target.get(const.SYNCED_BALANCE_RELOAD_COUNT_FIELD), 0))
 
     with open(csv_path, "w", encoding="utf-8", newline="") as f:

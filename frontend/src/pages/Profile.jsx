@@ -1375,7 +1375,7 @@ function FinancialManagerModal({
   const tabMap = {
     assets: {
       title: 'Assets',
-      description: 'Add manual assets like real estate, business ownership, and private holdings. Choosing Banks updates the synced account balance and writes it back to the linked sync CSV.',
+      description: 'Add manual assets like real estate, bank entries, business ownership, and private holdings. Linked bank balances remain separate from manual entries here.',
       items: profile?.manual_assets ?? [],
     },
     liabilities: {
@@ -1523,7 +1523,7 @@ function FinancialManagerModal({
                   style={fm.input}
                 >
                   <option value="real_estate">Real Estate</option>
-                  <option value="banks">Banks</option>
+                  <option value="banks">Bank Entries</option>
                   <option value="stock">Stock</option>
                   <option value="crypto">Crypto</option>
                   <option value="commodity">Commodity</option>
@@ -1623,9 +1623,11 @@ function FinancialManagerModal({
                         ? (item.source === 'portfolio'
                           ? `${startCase(item.category)} holding`
                           : item.source === 'cash'
-                            ? 'Synced from linked banks · editable via Banks form'
+                            ? 'Synced from linked banks · editable via linked balance controls'
                           : item.id === 'estate-seed'
                             ? 'Synced Property'
+                          : item.category === 'banks'
+                            ? 'Manual bank entry'
                           : startCase(item.category))
                         : activeTab === 'income'
                           ? (item.id === 'income-seed' ? 'Synced Income' : 'Monthly income stream')
@@ -1951,7 +1953,7 @@ export default function Profile() {
     if (!groups[key]) {
       groups[key] = {
         key,
-        icon: key === 'real_estate' ? '🏠' : key === 'business' ? '🏢' : key === 'private_asset' ? '🧾' : key === 'banks' ? '🏛️' : '🗂️',
+        icon: key === 'real_estate' ? '🏠' : key === 'business' ? '🏢' : key === 'private_asset' ? '🧾' : key === 'banks' ? '🏦' : '🗂️',
         name: key === 'banks' ? 'Bank Entries' : startCase(key),
         color: key === 'real_estate' ? 'var(--gold)' : key === 'business' ? 'var(--purple)' : key === 'banks' ? '#38bdf8' : 'var(--teal)',
         total: 0,
@@ -2254,16 +2256,11 @@ export default function Profile() {
     setError('')
     try {
       const isPortfolioAssetCreate = tab === 'assets' && ['stock', 'crypto', 'commodity'].includes(String(payload?.category || '').toLowerCase())
-      const isSyncedBalanceUpdate = tab === 'assets' && String(payload?.category || '').toLowerCase() === 'banks'
       const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
-      const url = isSyncedBalanceUpdate
-        ? `${API}/users/${authUser.user_id}/financials/synced-balance`
-        : isPortfolioAssetCreate
+      const url = isPortfolioAssetCreate
         ? `${API}/users/${authUser.user_id}/financials/portfolio`
         : `${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}`
-      const body = isSyncedBalanceUpdate
-        ? JSON.stringify({ balance: Number(payload?.value || 0) })
-        : isPortfolioAssetCreate
+      const body = isPortfolioAssetCreate
         ? JSON.stringify({
             symbol: payload?.symbol || payload?.label,
             asset_class: payload?.category,
