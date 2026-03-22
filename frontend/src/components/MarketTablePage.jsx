@@ -422,8 +422,11 @@ function MarketDetailModal({ item, endpoint, title, profile, profileLoading = fa
           <div style={MD.card}>
             <div style={MD.cardLabel}>Why It Fits</div>
             {hasUserContext && whyItFitsLoading ? (
-              <div style={{ ...MD.metricLabel, marginBottom: 8, color: 'var(--text-faint)' }}>
-                Updating from AI...
+              <div style={MD.whyItFitsLoadingRow}>
+                <span style={MD.whyItFitsSpinner} />
+                <span style={{ ...MD.metricLabel, marginBottom: 0, color: 'var(--text-faint)' }}>
+                  Updating from AI...
+                </span>
               </div>
             ) : null}
             {hasUserContext ? (
@@ -1418,5 +1421,20 @@ const MD = {
     fontFamily: 'var(--font-display)',
     fontWeight: 700,
     fontSize: '1rem',
+  },
+  whyItFitsLoadingRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  whyItFitsSpinner: {
+    width: 12,
+    height: 12,
+    borderRadius: '50%',
+    border: '2px solid rgba(148,163,184,0.35)',
+    borderTopColor: 'rgba(148,163,184,0.9)',
+    animation: 'spin 0.8s linear infinite',
+    flexShrink: 0,
   },
 }
