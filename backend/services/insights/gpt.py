@@ -954,12 +954,13 @@ async def _openai_web_search_news(client: httpx.AsyncClient, query: str) -> List
     )
     if os.getenv("NEWS_DEBUG", "").strip() == "1":
         try:
-            debug_path = Path(__file__).resolve().parents[1] / "data" / "json" / "openai_news_debug.json"
-            debug_path.parent.mkdir(parents=True, exist_ok=True)
-            debug_path.write_text(
-                json.dumps(resp_json, indent=2)[:300000],
-                encoding="utf-8",
-            )
+            # debug_path = Path(__file__).resolve().parents[1] / "data" / "json" / "openai_news_debug.json"
+            # debug_path.parent.mkdir(parents=True, exist_ok=True)
+            # debug_path.write_text(
+            #     json.dumps(resp_json, indent=2)[:300000],
+            #     encoding="utf-8",
+            # )
+            pass
         except Exception:
             pass
     results = _extract_openai_web_results(resp_json)[:10]

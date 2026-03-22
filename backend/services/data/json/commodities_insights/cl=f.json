@@ -1,0 +1,203 @@
+{
+  "type": "commodity",
+  "symbol": "CL=F",
+  "updated_at": "2026-03-22T17:38:36.644236+00:00",
+  "insights_by_months": {
+    "3": {
+      "type": "commodity",
+      "symbol": "CL=F",
+      "name": "Crude Oil",
+      "period": {
+        "months": 3,
+        "start": "2025-12-22",
+        "end": "2026-03-22"
+      },
+      "metrics": {
+        "start_price": 58.01,
+        "end_price": 98.23,
+        "return_pct": 69.3329,
+        "volatility_annualized": 0.567628,
+        "max_drawdown_pct": -11.9447,
+        "avg_daily_volume": 381749.8197,
+        "volume_change_pct": 109.5756
+      },
+      "notable_moves": [
+        {
+          "date": "2026-03-06",
+          "move_pct": 12.2084,
+          "close": 90.9,
+          "volume": 996251.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-03-12",
+          "move_pct": 9.7192,
+          "close": 95.73,
+          "volume": 548999.0,
+          "tag": "largest_up_day"
+        },
+        {
+          "date": "2026-03-10",
+          "move_pct": -11.9447,
+          "close": 83.45,
+          "volume": 801564.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-03-16",
+          "move_pct": -5.2781,
+          "close": 93.5,
+          "volume": 455454.0,
+          "tag": "largest_down_day"
+        },
+        {
+          "date": "2026-03-09",
+          "move_pct": 4.2574,
+          "close": 94.77,
+          "volume": 1107193.0,
+          "tag": "high_volume_day"
+        },
+        {
+          "date": "2026-03-03",
+          "move_pct": 4.675,
+          "close": 74.56,
+          "volume": 1009753.0,
+          "tag": "high_volume_day"
+        }
+      ],
+      "drivers": [
+        {
+          "date": "2026-03-06",
+          "headline": "Oil Prices Hit 12-Month High Amid Escalating Middle East Supply Fears - TradingGPT Pro",
+          "source": "",
+          "url": "https://www.tradinggpt.pro/market/news/82126?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Crude Oil Apr 26 (CL=F) Stock Price, News, Quote & History - Yahoo Finance",
+          "source": "",
+          "url": "https://finance.yahoo.com/quote/CL%3DF//?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Oil Price Forecast: Brent at $84, WTI at $78 \u2014 Goldman Raises Q2 to $76",
+          "source": "",
+          "url": "https://www.tradingnews.com/news/oil-price-forecast-brent-at84-usd-goldman-raises-q2target-by-10-usd?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Brent Moves Into the $80s as Traders Price Real Supply Risk From Hormuz | investing.com",
+          "source": "",
+          "url": "https://m.in.investing.com/analysis/brent-moves-into-the-80s-as-traders-price-real-supply-risk-from-hormuz-200635203?ampMode=1&utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Commodity Futures Positioning: Silver, WTI Crude Oil | COT rep\u2026",
+          "source": "",
+          "url": "https://www.stonex.com/en/market-intelligence/commodity-futures-positioning-silver-wti-crude-oil-cot-report-3-march-2026/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Crude Oil Apr 26 (CL=F) stock price, news, quote and history - Yahoo Finance",
+          "source": "",
+          "url": "https://uk.finance.yahoo.com/quote/CL%3DF/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Market Surveillance",
+          "source": "",
+          "url": "https://www.cmegroup.com/content/dam/cmegroup/notices/market-regulation/2026/02/msn02-09-26.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "Search Content | CFTC",
+          "source": "",
+          "url": "https://www.cftc.gov/solr-search/content?keys=wti&utm_source=openai"
+        },
+        {
+          "date": "2026-03-06",
+          "headline": "March 6, 2026 \u2013 Aegis Commodities Group",
+          "source": "",
+          "url": "https://aegiscommodities.com/2026/03/06/?utm_source=openai"
+        },
+        {
+          "date": "2026-03-12",
+          "headline": "Crude Oil Price Update",
+          "source": "",
+          "url": "https://www.ftportfolios.com/Commentary/MarketCommentary/2026/2/17/crude-oil-price-update?utm_source=openai"
+        },
+        {
+          "date": "2026-03-12",
+          "headline": "February 3, 2026 Oil & Gas Resource Report: Monthly Oil & Gas Perspectives Oil & Gas John Stephenson, P.Eng., CFA Analyst January 2026 Edition jstephenson@granitepointresearch.com (647) 267-1906 Bottom Line: Inside This Issue WTI and Brent prices moved sharply higher in January rallying 13.6% 1. A bounce back for crude oil and 16.2% respectively as tensions between the U.S. and Iran grew. Last week Tehran announced that it would conduct a two-day live fire exercise in and around the Strait of Hormuz near where the buildup of U.S naval assets was occurring. WTI/WCS differentials widened at the beginning of the month but narrowed in the last week or so as some of the noise over cheap Venezuelan crude in the U.S. settled down. Key Points Natural Gas. NYMEX prices increased by 5.8% in January despite tumbling 25.9% in the last week of the month as the February contract rolled over. AECO prices fell 15.7% m/m as WCSB production continues to grow (up 180 mmcf/d in the last week of January). Crude Oil. WTI prices rallied 13.6% in January as tensions between the U.S. and Iran continued. Equities. Oil and gas equities followed the commodity throughout the month, with the TSX E&P Index and the S&P 500 E&P Index up 8.4%/8.6% respectively in January. Important Disclosures: See pages 16-17 None | Oil & Gas John Stephenson, P.Eng., CFA Analyst jstephenson@granitepointresearch.com (647) 267-1906 |",
+          "source": "",
+          "url": "https://granitepointresearch.com/wp-content/uploads/2026/02/Resource-Report-January-2026.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-03-12",
+          "headline": "2025 \nCONSOLIDATED FINANCIAL STATEMENTS",
+          "source": "",
+          "url": "https://rubelliteenergy.com/wp-content/uploads/2026/03/2025-Year-End-Financial-Statements.pdf?utm_source=openai"
+        },
+        {
+          "date": "2026-03-12",
+          "headline": "User | ricentral.com - The Third Great Oil Shock: Crude Surges as Geopolitical Firestorm Erupts in the Middle East",
+          "source": "",
+          "url": "https://business.ricentral.com/ricentral/article/marketminute-2026-3-12-the-third-great-oil-shock-crude-surges-as-geopolitical-firestorm-erupts-in-the-middle-east?utm_source=openai"
+        },
+        {
+          "date": "2026-03-12",
+          "headline": "Oil prices surpass $92 a barrel as Middle East conflict continues",
+          "source": "",
+          "url": "https://uk.finance.yahoo.com/news/oil-prices-iran-conflict-gold-pound-latest-095124506.html?utm_source=openai"
+        },
+        {
+          "date": "2026-03-12",
+          "headline": "Will Crude Oil (CL) hit (HIGH) $80 by end of March? | FrenFlow",
+          "source": "",
+          "url": "https://www.frenflow.com/polymarket/market/will-crude-oil-cl-hit-high-80-by-end-of-march-113-384-528-915?utm_source=openai"
+        }
+      ],
+      "narrative": "The asset began the period at a price of 58.01 and ended at 98.23, delivering a total return of 69.33%. Over this timeframe, the annualized volatility was relatively high at 0.5676, reflecting notable price fluctuations, while the maximum drawdown reached -11.94%, indicating a significant but contained decline during the period. The largest upward price movement occurred on March 6, 2026, with a 12.21% increase closing at 90.9, coinciding with multiple reports of oil prices hitting a 12-month high amid escalating Middle East supply fears and geopolitical tensions around the Strait of Hormuz, which may have contributed to this surge [1][2][3][4]. Conversely, the largest downward move was on March 10, 2026, with an 11.94% drop to a close of 83.45, a decline that followed shortly after the March 6 peak and may reflect market reactions to evolving geopolitical developments. High volume trading days were observed on March 9 and March 3, with volumes of 1,107,193 and 1,009,753 shares respectively, suggesting increased market activity around these dates. The price rally and volatility appear to be closely linked to ongoing geopolitical tensions in the Middle East, as highlighted by news on March 6 and March 12, 2026, including reports of a 'Third Great Oil Shock' and continued conflict impacting crude oil prices [1][11][12][13]. These factors collectively shaped the market dynamics during this period.",
+      "tldr": [
+        "Period return: 69.33% with annualized volatility 0.568.",
+        "Largest up day: 2026-03-06 (12.21%), largest down day: 2026-03-10 (-11.94%).",
+        "Highest volume spike was on 2026-03-09 with volume 1,107,193."
+      ],
+      "conclusion": "Over this period, the asset ended higher (69.33%) with peak drawdown of -11.94%, indicating meaningful price swings during the window.",
+      "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
+      "citations": [
+        {
+          "id": 1,
+          "url": "https://www.tradinggpt.pro/market/news/82126?utm_source=openai"
+        },
+        {
+          "id": 2,
+          "url": "https://finance.yahoo.com/quote/CL%3DF//?utm_source=openai"
+        },
+        {
+          "id": 3,
+          "url": "https://www.tradingnews.com/news/oil-price-forecast-brent-at84-usd-goldman-raises-q2target-by-10-usd?utm_source=openai"
+        },
+        {
+          "id": 4,
+          "url": "https://m.in.investing.com/analysis/brent-moves-into-the-80s-as-traders-price-real-supply-risk-from-hormuz-200635203?ampMode=1&utm_source=openai"
+        },
+        {
+          "id": 5,
+          "url": "https://granitepointresearch.com/wp-content/uploads/2026/02/Resource-Report-January-2026.pdf?utm_source=openai"
+        },
+        {
+          "id": 6,
+          "url": "https://business.ricentral.com/ricentral/article/marketminute-2026-3-12-the-third-great-oil-shock-crude-surges-as-geopolitical-firestorm-erupts-in-the-middle-east?utm_source=openai"
+        },
+        {
+          "id": 7,
+          "url": "https://uk.finance.yahoo.com/news/oil-prices-iran-conflict-gold-pound-latest-095124506.html?utm_source=openai"
+        }
+      ],
+      "warnings": [
+        "Informational only. No investment recommendation."
+      ]
+    }
+  }
+}
