@@ -21,6 +21,11 @@ function fmt$(n) {
   const converted = convertCurrency(n, 'USD', DISPLAY_CURRENCY)
   return converted == null ? '—' : formatCurrency(converted, DISPLAY_CURRENCY, { maximumFractionDigits: 2 })
 }
+function fmtProfile$(n) {
+  if (n == null) return '—'
+  const converted = convertCurrency(n, 'SGD', DISPLAY_CURRENCY)
+  return converted == null ? '—' : formatCurrency(converted, DISPLAY_CURRENCY, { maximumFractionDigits: 2 })
+}
 function fmtSgd(n) {
   if (n == null) return '—'
   const converted = convertCurrency(n, 'SGD', DISPLAY_CURRENCY)
@@ -1600,10 +1605,10 @@ function FinancialManagerModal({
               <div style={fm.empty}>Nothing added yet.</div>
             ) : renderItems.map(item => {
               const value = activeTab === 'assets'
-                ? fmt$(item.value)
+                ? fmtProfile$(item.value)
                 : activeTab === 'liabilities'
-                  ? fmt$(item.amount)
-                  : `${fmt$(item.monthly_amount)} / mo`
+                  ? fmtProfile$(item.amount)
+                  : `${fmtProfile$(item.monthly_amount)} / mo`
               const itemTitle = activeTab === 'assets' && item.id === 'estate-seed'
                 ? 'Synced Property'
                 : activeTab === 'liabilities' && item.id === 'mortgage-seed'
@@ -2009,15 +2014,15 @@ export default function Profile() {
     compositionBase > 0 && stocksValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / compositionBase * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
     compositionBase > 0 && commoditiesValue > 0 && { icon:'🪙', name:'Commodities', pct:Math.round(commoditiesValue / compositionBase * 100), val:fmt$(commoditiesValue), color:'#d4a63a' },
     compositionBase > 0 && cryptosValue > 0 && { icon:'₿',  name:'Digital Assets', pct:Math.round(cryptosValue / compositionBase * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
-    compositionBase > 0 && cashBalance > 0 && { icon:'🏦', name:'Synced Account Balance', pct:Math.round(cashBalance / compositionBase * 100), val:fmt$(cashBalance), color:'#7dd3fc' },
+    compositionBase > 0 && cashBalance > 0 && { icon:'🏦', name:'Synced Account Balance', pct:Math.round(cashBalance / compositionBase * 100), val:fmtProfile$(cashBalance), color:'#7dd3fc' },
     ...manualAssetRows.map(item => ({
       icon: item.icon,
       name: item.name,
       pct: compositionBase > 0 ? Math.round(item.total / compositionBase * 100) : 0,
-      val: fmt$(item.total),
+      val: fmtProfile$(item.total),
       color: item.color,
     })),
-    currentIncome > 0 && { icon:'🏛️', name:'Fixed Income', pct:null, val:`${fmt$(currentIncome)} / mo`, color:'var(--purple)', special:'income' },
+    currentIncome > 0 && { icon:'🏛️', name:'Fixed Income', pct:null, val:`${fmtProfile$(currentIncome)} / mo`, color:'var(--purple)', special:'income' },
   ].filter(Boolean)
 
   const gptPayload = gptRecs?.gpt_recommendations ?? gptRecs?.recommendations ?? gptRecs ?? null
@@ -2260,6 +2265,19 @@ export default function Profile() {
       const url = isPortfolioAssetCreate
         ? `${API}/users/${authUser.user_id}/financials/portfolio`
         : `${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}`
+      const normalizeMoneyInput = (value) => {
+        const numeric = Number(value)
+        if (!Number.isFinite(numeric)) return 0
+        const converted = convertCurrency(numeric, DISPLAY_CURRENCY, 'SGD')
+        return converted == null ? numeric : converted
+      }
+      const normalizedPayload = isPortfolioAssetCreate
+        ? payload
+        : tab === 'assets'
+          ? { ...payload, value: normalizeMoneyInput(payload?.value) }
+          : tab === 'liabilities'
+            ? { ...payload, amount: normalizeMoneyInput(payload?.amount) }
+            : { ...payload, monthly_amount: normalizeMoneyInput(payload?.monthly_amount) }
       const body = isPortfolioAssetCreate
         ? JSON.stringify({
             symbol: payload?.symbol || payload?.label,
@@ -2268,7 +2286,7 @@ export default function Profile() {
             avg_price: null,
             name: payload?.symbol || payload?.label,
           })
-        : JSON.stringify(payload)
+        : JSON.stringify(normalizedPayload)
       const res = await fetch(url, {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
@@ -2941,7 +2959,7 @@ export default function Profile() {
                 ))}
                 {(liabilityItems.length > 0 || incomeStreams.length > 0) && (
                   <div style={{ marginTop:6, display:'flex', gap:8, flexWrap:'wrap' }}>
-                    <span style={s.compMetaPill}>Liabilities {fmt$(liabilityItems.reduce((sum, item) => sum + Number(item.amount || 0), 0))}</span>
+                    <span style={s.compMetaPill}>Liabilities {fmtProfile$(liabilityItems.reduce((sum, item) => sum + Number(item.amount || 0), 0))}</span>
                     <span style={s.compMetaPill}>Income Streams {incomeStreams.length}</span>
                   </div>
                 )}
