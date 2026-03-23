@@ -189,7 +189,7 @@ function renderAuthState() {
     setStatus("Scroll your assets into view, then click Capture + Parse.", "neutral");
     setAuthStatus(`Signed in as ${authUser.username}.`, "success");
   } else {
-    setAuthStatus("Sign in with your WealthSphere account to unlock importing.", "neutral");
+    setAuthStatus("Sign in with your Unova account to unlock importing.", "neutral");
   }
 }
 
@@ -265,7 +265,7 @@ async function handleLogin(event) {
 
   try {
     loginBtn.disabled = true;
-    setAuthStatus("Signing in to WealthSphere...", "busy");
+    setAuthStatus("Signing in to Unova...", "busy");
 
     const res = await fetch(`${getApiBase()}/auth/login`, {
       method: "POST",
