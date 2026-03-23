@@ -2,27 +2,47 @@ import { createContext, useContext, useState } from 'react'
 
 const AuthContext = createContext(null)
 
+function getSessionItem(key) {
+  try {
+    return sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function setSessionItem(key, value) {
+  try {
+    sessionStorage.setItem(key, value)
+  } catch {}
+}
+
+function removeSessionItem(key) {
+  try {
+    sessionStorage.removeItem(key)
+  } catch {}
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     // Rehydrate from sessionStorage on page refresh
-    const id       = sessionStorage.getItem('user_id')
-    const username = sessionStorage.getItem('username')
-    const createdAt = sessionStorage.getItem('created_at')
+    const id = getSessionItem('user_id')
+    const username = getSessionItem('username')
+    const createdAt = getSessionItem('created_at')
     return id ? { user_id: id, username, created_at: createdAt } : null
   })
 
   function login(data) {
-    sessionStorage.setItem('user_id',  data.user_id)
-    sessionStorage.setItem('username', data.username)
-    if (data.created_at) sessionStorage.setItem('created_at', data.created_at)
-    else sessionStorage.removeItem('created_at')
+    setSessionItem('user_id', data.user_id)
+    setSessionItem('username', data.username)
+    if (data.created_at) setSessionItem('created_at', data.created_at)
+    else removeSessionItem('created_at')
     setUser({ user_id: data.user_id, username: data.username, created_at: data.created_at ?? null })
   }
 
   function logout() {
-    sessionStorage.removeItem('user_id')
-    sessionStorage.removeItem('username')
-    sessionStorage.removeItem('created_at')
+    removeSessionItem('user_id')
+    removeSessionItem('username')
+    removeSessionItem('created_at')
     setUser(null)
   }
 

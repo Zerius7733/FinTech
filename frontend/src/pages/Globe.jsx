@@ -816,6 +816,14 @@ function writeSessionJson(key, value) {
   } catch {}
 }
 
+function readSessionValue(key) {
+  try {
+    return sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
 function readCachedGlobeProfile(userId) {
   const cached = readSessionJson(GLOBE_PROFILE_CACHE_KEY, null)
   return cached?.userId === userId ? (cached.data || null) : null
@@ -1007,7 +1015,7 @@ export default function Globe() {
   const { user } = useAuth()
   const { setLoginModalOpen, setSurveyModalOpen } = useLoginModal()
   const { activeTheme } = useTheme()
-  const initialCachedProfile = readCachedGlobeProfile(sessionStorage.getItem('user_id') || '')
+  const initialCachedProfile = readCachedGlobeProfile(readSessionValue('user_id') || '')
   const canvasRef   = useRef(null)
   const globeRef    = useRef(null)   // THREE globe mesh
   const globeWrapRef = useRef(null)
@@ -1067,7 +1075,7 @@ export default function Globe() {
 
   // Wellness score + portfolio nodes for logged-in hero
   const [userProfile, setUserProfile] = useState(initialCachedProfile)
-  const [isProfileLoading, setIsProfileLoading] = useState(() => Boolean(sessionStorage.getItem('user_id')) && !initialCachedProfile)
+  const [isProfileLoading, setIsProfileLoading] = useState(() => Boolean(readSessionValue('user_id')) && !initialCachedProfile)
   useEffect(() => {
     if (!user?.user_id) {
       setUserProfile(null)

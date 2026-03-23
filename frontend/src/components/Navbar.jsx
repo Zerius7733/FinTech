@@ -10,6 +10,12 @@ const NAV_LINKS = [
   { label: 'Markets',    path: '/stocks' },
 ]
 
+const PROFILE_ALLOCATIONS = {
+  Low: { equities: 0.30, bonds: 0.50, cash: 0.18, commodities: 0.02, crypto: 0.00 },
+  Moderate: { equities: 0.50, bonds: 0.25, cash: 0.15, commodities: 0.05, crypto: 0.05 },
+  High: { equities: 0.55, bonds: 0.10, cash: 0.10, commodities: 0.05, crypto: 0.20 },
+}
+
 function isAccountAtLeastDaysOld(createdAt, minDays = 30) {
   if (!createdAt) return false
   const created = new Date(createdAt)
@@ -47,6 +53,90 @@ function getDeployableCash(profile) {
     : 0
 
   return syncedCashBalance + bankEntryTotal
+}
+
+function normalizeRiskProfile(profileValue) {
+  if (typeof profileValue === 'number' && Number.isFinite(profileValue)) {
+    if (profileValue <= 33.33) return 'Low'
+    if (profileValue <= 66.66) return 'Moderate'
+    return 'High'
+  }
+
+  const normalized = String(profileValue || '').trim().toLowerCase()
+  if (['low', 'conservative'].includes(normalized)) return 'Low'
+  if (['moderate', 'medium', 'balanced'].includes(normalized)) return 'Moderate'
+  if (['high', 'aggressive'].includes(normalized)) return 'High'
+
+  const parsed = Number(normalized)
+  if (Number.isFinite(parsed)) return normalizeRiskProfile(parsed)
+  return 'Moderate'
+}
+
+function getStressScore(profile) {
+  const direct = Number(profile?.financial_stress_index)
+  if (Number.isFinite(direct)) return direct
+  const nested = Number(profile?.wellness_metrics?.financial_stress_index)
+  return Number.isFinite(nested) ? nested : 0
+}
+
+function getCurrentAllocation(profile) {
+  const portfolio = profile?.portfolio && typeof profile.portfolio === 'object' ? profile.portfolio : {}
+  const sumBucket = bucket => (
+    Array.isArray(portfolio[bucket])
+      ? portfolio[bucket].reduce((sum, item) => sum + Number(item?.market_value || 0), 0)
+      : 0
+  )
+
+  const amounts = {
+    equities: sumBucket('stocks'),
+    bonds: 0,
+    cash: getDeployableCash(profile),
+    commodities: sumBucket('commodities'),
+    crypto: sumBucket('cryptos'),
+  }
+
+  const total = Object.values(amounts).reduce((sum, value) => sum + value, 0)
+  const weights = Object.fromEntries(
+    Object.entries(amounts).map(([key, value]) => [key, total > 0 ? value / total : 0])
+  )
+
+  return { amounts, weights, total }
+}
+
+function applyStressGuardrails(allocation, stressScore) {
+  const adjusted = { ...allocation }
+
+  if (stressScore >= 60) {
+    adjusted.cash += 0.10
+    adjusted.equities = Math.max(0.20, adjusted.equities - 0.05)
+    adjusted.crypto = Math.max(0, adjusted.crypto - 0.05)
+  } else if (stressScore >= 40) {
+    adjusted.cash += 0.05
+    adjusted.equities = Math.max(0.25, adjusted.equities - 0.03)
+    adjusted.crypto = Math.max(0, adjusted.crypto - 0.02)
+  }
+
+  const total = Object.values(adjusted).reduce((sum, value) => sum + value, 0)
+  return Object.fromEntries(Object.entries(adjusted).map(([key, value]) => [key, value / total]))
+}
+
+function getReserveMonths(profileBucket, stressScore) {
+  const baseMonths = { Low: 6, Moderate: 4, High: 3 }[profileBucket] ?? 4
+  if (stressScore >= 60) return baseMonths + 2
+  if (stressScore >= 40) return baseMonths + 1
+  return baseMonths
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function formatPercent(value) {
+  return `${Math.round(value * 100)}%`
 }
 
 export default function Navbar() {
@@ -128,26 +218,35 @@ export default function Navbar() {
     if (!navProfile) return []
     if (!isAccountAtLeastDaysOld(user?.created_at, 30)) return []
     if (!hasFinancialActivity(navProfile)) return []
-    const cashBalance = getDeployableCash(navProfile)
+    const riskProfile = normalizeRiskProfile(navProfile.risk_profile)
+    const stressScore = getStressScore(navProfile)
     const monthlyIncome = Number(navProfile.income || 0)
-    const reserveTarget = Math.max(monthlyIncome * 3, 10000)
-    const idleCash = Math.max(0, cashBalance - reserveTarget)
+    const reserveMonths = getReserveMonths(riskProfile, stressScore)
+    const reserveTarget = Math.max(monthlyIncome * reserveMonths, 10000)
+    const allocation = getCurrentAllocation(navProfile)
+    const targetWeights = applyStressGuardrails(PROFILE_ALLOCATIONS[riskProfile], stressScore)
+    const targetCashAmount = allocation.total * targetWeights.cash
+    const excessAboveReserve = Math.max(0, allocation.amounts.cash - reserveTarget)
+    const excessAboveAllocation = Math.max(0, allocation.amounts.cash - targetCashAmount)
+    const idleCash = Math.min(excessAboveReserve, excessAboveAllocation || excessAboveReserve)
     const potentialAnnualGrowth = idleCash * 0.05
     const items = []
 
     if (idleCash >= 5000) {
-      const suggestedMove = Math.round(idleCash * 0.6)
+      const moveRatio = stressScore >= 60 ? 0.35 : stressScore >= 40 ? 0.5 : riskProfile === 'Low' ? 0.45 : riskProfile === 'Moderate' ? 0.6 : 0.75
+      const suggestedMove = Math.round(Math.min(idleCash, excessAboveAllocation) * moveRatio || idleCash * moveRatio)
+      const pace = suggestedMove >= 20000 || stressScore >= 40 ? '3 to 5 entries' : riskProfile === 'High' ? '2 to 3 entries' : '2 to 4 entries'
       items.push({
         id:'latent-growth-idle-cash',
         tone:'var(--teal)',
         label:'Latent growth detected',
-        title:`Potential +${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(potentialAnnualGrowth)}/year from idle cash`,
-        body:`About ${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(idleCash)} is sitting above a 3-month reserve. Redirecting part of it into your portfolio could improve long-term growth.`,
+        title:`Potential +${formatCurrency(potentialAnnualGrowth)}/year from idle cash`,
+        body:`About ${formatCurrency(idleCash)} is sitting above your ${reserveMonths}-month reserve and above your profile-aligned cash target. Redirecting part of it into your portfolio could improve long-term growth.`,
         detailTitle:'Suggested next step',
         details:[
-          `Keep about ${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(reserveTarget)} in cash as your current emergency reserve.`,
-          `Consider moving roughly ${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(suggestedMove)} of the excess into long-term investments instead of leaving it idle.`,
-          'Do it gradually in 2 to 4 entries if you want to reduce timing risk.',
+          `Keep about ${formatCurrency(Math.max(reserveTarget, targetCashAmount))} in cash. That reflects a ${reserveMonths}-month reserve, your ${riskProfile.toLowerCase()} risk profile, and a stress score of ${Math.round(stressScore)}.`,
+          `Your current allocation is about ${formatPercent(allocation.weights.cash)} cash versus a profile-aligned target near ${formatPercent(targetWeights.cash)} cash. Consider moving roughly ${formatCurrency(suggestedMove)} toward long-term investments.`,
+          `Phase it in over ${pace} so the shift matches your current allocation gap without forcing a one-shot rebalance.`,
         ],
         cta:'Review optimization',
       })
