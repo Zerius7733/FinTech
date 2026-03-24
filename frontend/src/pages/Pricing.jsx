@@ -11,11 +11,13 @@ const PLANS = [
     label: 'Free',
     price: '$0',
     cadence: '/month',
-    description: 'For tracking your portfolio, checking markets, and building your financial baseline.',
+    description: 'For tracking your money, understanding your baseline, and previewing the next decision to make.',
     features: [
-      'Portfolio tracking across stocks, crypto, and commodities',
-      'Wellness scoring and resilience insights',
+      'Portfolio tracking across stocks, bonds, real assets, crypto, and commodities',
+      'Wellness scoring, resilience insights, and income breakdowns',
       'Retirement planning tools',
+      'Singapore CPF and US tax-aware income views',
+      'One scenario-lab preview with shared-goal tracking',
       'Screenshot import and holdings sync',
       'Live market tables and watchlists',
     ],
@@ -25,13 +27,14 @@ const PLANS = [
     label: 'Premium',
     price: '$14',
     cadence: '/month',
-    description: 'For deeper guidance, richer analysis, and premium intelligence on top of the core product.',
+    description: 'For richer decision support, deeper planning, and premium intelligence layered on top of the core product.',
     features: [
       'Everything in Free',
       'Premium market insights for tracked assets',
-      'Richer scenario context and analyst-style briefs',
+      'Full scenario lab with downside, rates, and retirement what-ifs',
+      'Analyst-style decision briefs and richer next-best-action guidance',
       'Priority growth guidance surfaces',
-      'Expanded decision support for portfolio moves',
+      'Expanded household planning and partner-aware goals',
     ],
   },
 ]
@@ -118,7 +121,7 @@ export default function Pricing() {
           <div style={styles.eyebrow}>Pricing</div>
           <h1 style={styles.heroTitle}>Choose the depth you need.</h1>
           <p style={styles.heroCopy}>
-            Free gives you the core product. Premium unlocks deeper market intelligence and richer decision support when you want more than raw data.
+            Free gives you a useful wealth baseline. Premium turns that baseline into a clearer decision layer when you want help choosing what to do next.
           </p>
           {source ? (
             <div style={styles.contextPill}>Opened from {source.replace(/-/g, ' ')}</div>
@@ -181,13 +184,31 @@ export default function Pricing() {
             <div style={styles.compareItem}>
               <div style={styles.compareLabel}>Free keeps</div>
               <div style={styles.compareCopy}>
-                Portfolio tracking, wellness scoring, retirement planning, screenshot import, and live market tables.
+                Portfolio tracking, wellness scoring, CPF-aware income views, shared-goal tracking, screenshot import, and live market tables.
               </div>
             </div>
             <div style={styles.compareItem}>
               <div style={styles.compareLabel}>Premium adds</div>
               <div style={styles.compareCopy}>
-                Market insights, deeper asset context, and higher-value guidance when you need a more opinionated layer.
+                Decision support depth: premium market insights, richer scenario outcomes, and more opinionated guidance when the choice matters.
+              </div>
+            </div>
+          </div>
+        </section>
+        <section style={styles.compareCard}>
+          <div style={styles.compareEyebrow}>Decision ladder</div>
+          <div style={styles.compareTitle}>Preview on Free. Decide with Premium.</div>
+          <div style={styles.compareGrid}>
+            <div style={styles.compareItem}>
+              <div style={styles.compareLabel}>Free preview</div>
+              <div style={styles.compareCopy}>
+                See your baseline, one scenario preview, and enough context to understand where the pressure is.
+              </div>
+            </div>
+            <div style={styles.compareItem}>
+              <div style={styles.compareLabel}>Premium depth</div>
+              <div style={styles.compareCopy}>
+                Compare multiple scenarios, get deeper market context, and receive next-step guidance with clearer tradeoffs.
               </div>
             </div>
           </div>

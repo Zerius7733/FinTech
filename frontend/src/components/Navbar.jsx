@@ -9,6 +9,8 @@ import { GUIDED_SCROLL_EVENT, queueGuidedScroll } from '../utils/guidedScroll.js
 const NAV_LINKS = [
   { label: 'Home',      path: '/' },
   { label: 'Markets',    path: '/stocks' },
+  { label: 'Planning',   path: '/planning' },
+  { label: 'Income',     path: '/income' },
   { label: 'Pricing',    path: '/pricing' },
 ]
 
@@ -276,6 +278,10 @@ export default function Navbar() {
         {NAV_LINKS.map(({ label, path }) => {
           const active = label === 'Markets'
             ? ['/stocks', '/bonds', '/real-assets', '/commodities', '/crypto'].includes(pathname)
+            : label === 'Planning'
+              ? pathname === '/planning'
+              : label === 'Income'
+                ? pathname === '/income'
             : pathname === path
           return (
             <li key={label}>

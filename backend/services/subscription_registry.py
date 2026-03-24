@@ -11,26 +11,37 @@ SUBSCRIPTION_FEATURES: dict[str, list[str]] = {
         "Market data and quote lookup",
         "Wellness scoring",
         "Retirement planning",
+        "Income and CPF breakdowns",
+        "Scenario lab preview",
+        "Shared goals tracking",
         "Screenshot import",
     ],
     SUBSCRIPTION_PREMIUM: [
         "Everything in Free",
-        "Premium market insights",
-        "Deeper scenario analysis",
-        "Priority guidance",
+        "Premium market insights and decision briefs",
+        "Deeper scenario lab with richer outcomes",
+        "Priority guidance and next-best-action support",
+        "Household planning depth and partner-aware guidance",
     ],
 }
 
 SUBSCRIPTION_LIMITS: dict[str, dict[str, Any]] = {
     SUBSCRIPTION_FREE: {
         "market_insights": False,
-        "monthly_insights": 0,
-        "analysis_depth": "lite",
+        "analysis_depth": "preview",
+        "insight_preview_sections": 1,
+        "scenario_lab_cases": 1,
+        "shared_goal_limit": 2,
+        "decision_support": "preview",
     },
     SUBSCRIPTION_PREMIUM: {
         "market_insights": True,
         "monthly_insights": "unlimited",
         "analysis_depth": "full",
+        "insight_preview_sections": "full",
+        "scenario_lab_cases": 4,
+        "shared_goal_limit": 12,
+        "decision_support": "full",
     },
 }
 

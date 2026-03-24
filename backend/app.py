@@ -15,6 +15,7 @@ from fastapi.responses import Response
 from pydantic import AliasChoices, BaseModel, Field
 import yfinance as yf
 import backend.services.api_deps as api
+from backend.services.income_profile import build_income_summary, normalize_country
 from backend.services.subscription_registry import ensure_user_subscription as ensure_subscription_user
 from backend.services.subscription_registry import is_premium_subscription
 from backend.services.subscription_registry import subscription_payload
@@ -63,7 +64,7 @@ app = FastAPI(
         {"name": "Market", "description": "Live market quote retrieval endpoints."},
         {"name": "Portfolio", "description": "User portfolio information endpoints."},
         {"name": "Retirement", "description": "Retirement planning and target allocation endpoints."},
-        {"name": "Team", "description": "Live team dashboard and graceful stop controls."},
+        {"name": "Planning", "description": "Income, CPF, tax, household, and scenario modeling endpoints."},
     ],
 )
 
@@ -577,6 +578,27 @@ def _ensure_financial_collections(user: Dict[str, Any]) -> Dict[str, Any]:
     income_streams = user.get("income_streams")
     if not isinstance(income_streams, list):
         income_streams = []
+    default_household_profile = {
+        "mode": "personal",
+        "partner_name": "",
+        "partner_monthly_contribution": 0.0,
+        "partner_monthly_income": 0.0,
+        "partner_fixed_expenses": 0.0,
+        "shared_budget_monthly": 0.0,
+        "contribution_style": "income_weighted",
+        "dependents_count": 0,
+        "shared_cash_reserve_target": 0.0,
+    }
+    household_profile = user.get("household_profile")
+    if not isinstance(household_profile, dict):
+        household_profile = dict(default_household_profile)
+    else:
+        merged_household_profile = dict(default_household_profile)
+        merged_household_profile.update(household_profile)
+        household_profile = merged_household_profile
+    shared_goals = user.get("shared_goals")
+    if not isinstance(shared_goals, list):
+        shared_goals = []
 
     if not manual_assets and float(user.get("estate", 0.0) or 0.0) > 0:
         manual_assets = [{
@@ -604,11 +626,18 @@ def _ensure_financial_collections(user: Dict[str, Any]) -> Dict[str, Any]:
             "id": "income-seed",
             "label": "Primary Income",
             "monthly_amount": round(float(user.get("income", 0.0) or 0.0), 2),
+            "gross_monthly_amount": round(float(user.get("income", 0.0) or 0.0), 2),
+            "tax_country": normalize_country(user.get("country"), fallback="SG"),
+            "income_type": "salary",
+            "cpf_applicable": normalize_country(user.get("country"), fallback="SG") == "SG",
+            "annual_bonus": 0.0,
         }]
 
     user["manual_assets"] = manual_assets
     user["liability_items"] = liability_items
     user["income_streams"] = income_streams
+    user["household_profile"] = household_profile
+    user["shared_goals"] = shared_goals
     return user
 
 
@@ -638,7 +667,9 @@ def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
         for item in liability_items
         if bool(item.get("is_mortgage"))
     ), 2)
-    income_total = round(sum(float(item.get("monthly_amount", 0.0) or 0.0) for item in income_streams), 2)
+    income_summary = build_income_summary(user)
+    income_streams = income_summary["streams"]
+    income_total = round(float(income_summary.get("monthly_net", 0.0) or 0.0), 2)
     portfolio_total = _sum_portfolio_positions(user)
     cash_balance = round(float(user.get("cash_balance", 0.0) or 0.0), 2)
     expenses = round(float(user.get("expenses", 0.0) or 0.0), 2)
@@ -647,6 +678,8 @@ def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
     user["liability"] = liability_total
     user["mortgage"] = mortgage_total
     user["income"] = income_total
+    user["income_summary"] = income_summary
+    user["income_streams"] = income_streams
     user["portfolio_value"] = portfolio_total
     user["total_balance"] = round(cash_balance + portfolio_total + real_estate_value + non_estate_asset_value, 2)
     user["net_worth"] = round(user["total_balance"] - liability_total - expenses, 2)
@@ -770,6 +803,11 @@ def _apply_synced_csv_profile_to_user(user: Dict[str, Any], row: Dict[str, Any])
             "id": "income-seed",
             "label": "Primary Income",
             "monthly_amount": synced_income,
+            "gross_monthly_amount": synced_income,
+            "tax_country": normalize_country(user.get("country"), fallback="SG"),
+            "income_type": "salary",
+            "cpf_applicable": normalize_country(user.get("country"), fallback="SG") == "SG",
+            "annual_bonus": 0.0,
         } if synced_income > 0 else None,
     )
 
@@ -968,6 +1006,34 @@ class RetirementPlanRequest(BaseModel):
     essential_monthly_expenses: float = Field(..., ge=0)
 
 
+class PlanningHouseholdMemberRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=80)
+    monthly_income: float = Field(default=0.0, ge=0)
+    monthly_expenses: float = Field(default=0.0, ge=0)
+
+
+class PlanningSharedGoalRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=80)
+    target_amount: float = Field(..., ge=0)
+    target_months: int = Field(..., ge=1, le=600)
+    owners: list[str] = Field(default_factory=list)
+    priority: int = Field(default=3, ge=1, le=5)
+
+
+class FinancialPlanningScenarioRequest(BaseModel):
+    cpf_age: int | None = Field(default=None, ge=18, le=100)
+    cpf_eligible_monthly_income: float | None = Field(default=None, ge=0)
+    cpf_ordinary_wage_ceiling: float = Field(default=8000.0, ge=0)
+    tax_residency: str = Field(default="resident")
+    annual_reliefs: float = Field(default=0.0, ge=0)
+    household_members: list[PlanningHouseholdMemberRequest] = Field(default_factory=list)
+    shared_goals: list[PlanningSharedGoalRequest] = Field(default_factory=list)
+    retirement_age: int | None = Field(default=None, ge=19, le=100)
+    monthly_expenses: float | None = Field(default=None, ge=0)
+    essential_monthly_expenses: float | None = Field(default=None, ge=0)
+    horizon_years: int = Field(default=5, ge=1, le=10)
+
+
 class ManualAssetCreateRequest(BaseModel):
     label: str = Field(..., min_length=1, max_length=80)
     category: str = Field(..., min_length=1, max_length=40)
@@ -991,7 +1057,37 @@ class LiabilityItemCreateRequest(BaseModel):
 
 class IncomeStreamCreateRequest(BaseModel):
     label: str = Field(..., min_length=1, max_length=80)
-    monthly_amount: float = Field(..., ge=0)
+    monthly_amount: float = Field(0.0, ge=0)
+    gross_monthly_amount: float = Field(0.0, ge=0)
+    annual_bonus: float = Field(0.0, ge=0)
+    tax_country: str | None = Field(default=None, max_length=20)
+    income_type: str | None = Field(default="salary", max_length=40)
+    cpf_applicable: bool | None = None
+
+
+class HouseholdProfileUpdateRequest(BaseModel):
+    mode: str = Field(..., min_length=1, max_length=20)
+    partner_name: str | None = Field(default="", max_length=80)
+    partner_monthly_contribution: float = Field(0.0, ge=0)
+    partner_monthly_income: float = Field(0.0, ge=0)
+    partner_fixed_expenses: float = Field(0.0, ge=0)
+    shared_budget_monthly: float = Field(0.0, ge=0)
+    contribution_style: str = Field(default="income_weighted", min_length=1, max_length=32)
+    dependents_count: int = Field(default=0, ge=0, le=20)
+    shared_cash_reserve_target: float = Field(0.0, ge=0)
+
+
+class SharedGoalCreateRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=120)
+    target_amount: float = Field(..., ge=0)
+    current_saved: float = Field(0.0, ge=0)
+    monthly_contribution: float = Field(0.0, ge=0)
+    household_share: float = Field(0.0, ge=0)
+    target_date: str | None = Field(default="")
+    category: str | None = Field(default="shared_goal", max_length=40)
+    priority: int = Field(default=3, ge=1, le=5)
+    owners: list[str] = Field(default_factory=list)
+    notes: str | None = Field(default="", max_length=240)
 
 
 class RegisterRequest(BaseModel):
@@ -1123,6 +1219,20 @@ class AssetResolveResponse(BaseModel):
     symbol: str
     name: str
     category: str
+
+
+def _resolve_user_for_planning(user_id: str, user: Dict[str, Any]) -> Dict[str, Any]:
+    resolved = dict(user)
+    raw_age = resolved.get("age")
+    if raw_age in (None, "", 0, "0"):
+        csv_profile = _read_user_csv_profile(user_id)
+        csv_age = (csv_profile.get("age") or "").strip()
+        if csv_age:
+            try:
+                resolved["age"] = int(float(csv_age))
+            except Exception:
+                pass
+    return resolved
     source: str
 
 
@@ -1668,7 +1778,7 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
         user = data.get(user_id)
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-        user = _ensure_financial_collections(user)
+        user = _recalculate_user_financials(_ensure_financial_collections(user))
         user = _enrich_portfolio_with_ath(user)
         user = ensure_subscription_user(user)
         return {"status": "ok", "user_id": user_id, "user": user, "subscription": subscription_payload(user)}
@@ -1741,15 +1851,18 @@ def get_user_financial_items(user_id: str) -> Dict[str, Any]:
         user = data.get(user_id)
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-        user = _ensure_financial_collections(user)
+        user = _recalculate_user_financials(_ensure_financial_collections(user))
         return {
             "status": "ok",
             "user_id": user_id,
             "manual_assets": user.get("manual_assets", []),
             "liability_items": user.get("liability_items", []),
             "income_streams": user.get("income_streams", []),
+            "household_profile": user.get("household_profile", {}),
+            "shared_goals": user.get("shared_goals", []),
             "summary": {
                 "income": user.get("income", 0.0),
+                "income_summary": user.get("income_summary", {}),
                 "liability": user.get("liability", 0.0),
                 "mortgage": user.get("mortgage", 0.0),
                 "estate": user.get("estate", 0.0),
@@ -2107,6 +2220,15 @@ def add_user_income_stream(user_id: str, payload: IncomeStreamCreateRequest) -> 
             "id": str(uuid.uuid4()),
             "label": payload.label.strip(),
             "monthly_amount": round(float(payload.monthly_amount), 2),
+            "gross_monthly_amount": round(float(payload.gross_monthly_amount), 2),
+            "annual_bonus": round(float(payload.annual_bonus), 2),
+            "tax_country": normalize_country(payload.tax_country or user.get("country"), fallback="SG"),
+            "income_type": str(payload.income_type or "salary").strip().lower() or "salary",
+            "cpf_applicable": bool(
+                payload.cpf_applicable
+                if payload.cpf_applicable is not None
+                else normalize_country(payload.tax_country or user.get("country"), fallback="SG") == "SG"
+            ),
         }
         user["income_streams"].append(item)
         users[user_id] = _recalculate_user_financials(user)
@@ -2141,6 +2263,101 @@ def remove_user_income_stream(user_id: str, item_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"income delete failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/household",
+    tags=["Planning"],
+    summary="Update household / partner mode for a user profile",
+)
+def update_user_household_profile(user_id: str, payload: HouseholdProfileUpdateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        mode = str(payload.mode or "personal").strip().lower()
+        if mode not in {"personal", "household"}:
+            raise HTTPException(status_code=400, detail="mode must be personal or household")
+        user = _ensure_financial_collections(user)
+        user["household_profile"] = {
+            "mode": mode,
+            "partner_name": str(payload.partner_name or "").strip(),
+            "partner_monthly_contribution": round(float(payload.partner_monthly_contribution), 2),
+            "partner_monthly_income": round(float(payload.partner_monthly_income), 2),
+            "partner_fixed_expenses": round(float(payload.partner_fixed_expenses), 2),
+            "shared_budget_monthly": round(float(payload.shared_budget_monthly), 2),
+            "contribution_style": str(payload.contribution_style or "income_weighted").strip().lower() or "income_weighted",
+            "dependents_count": int(payload.dependents_count or 0),
+            "shared_cash_reserve_target": round(float(payload.shared_cash_reserve_target), 2),
+        }
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "household_profile": users[user_id]["household_profile"], "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"household update failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/shared-goals",
+    tags=["Planning"],
+    summary="Add a shared goal to a user profile",
+)
+def add_user_shared_goal(user_id: str, payload: SharedGoalCreateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        goal = {
+            "id": str(uuid.uuid4()),
+            "title": payload.title.strip(),
+            "target_amount": round(float(payload.target_amount), 2),
+            "current_saved": round(float(payload.current_saved), 2),
+            "monthly_contribution": round(float(payload.monthly_contribution), 2),
+            "household_share": round(float(payload.household_share), 2),
+            "target_date": str(payload.target_date or "").strip(),
+            "category": str(payload.category or "shared_goal").strip().lower(),
+            "priority": int(payload.priority or 3),
+            "owners": [str(item).strip() for item in payload.owners if str(item).strip()],
+            "notes": str(payload.notes or "").strip(),
+        }
+        user["shared_goals"].append(goal)
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "goal": goal, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"shared goal create failed: {exc}") from exc
+
+
+@app.delete(
+    "/users/{user_id}/shared-goals/{goal_id}",
+    tags=["Planning"],
+    summary="Remove a shared goal from a user profile",
+)
+def remove_user_shared_goal(user_id: str, goal_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        before = len(user["shared_goals"])
+        user["shared_goals"] = [item for item in user["shared_goals"] if item.get("id") != goal_id]
+        if len(user["shared_goals"]) == before:
+            raise HTTPException(status_code=404, detail=f"shared goal '{goal_id}' not found")
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"shared goal delete failed: {exc}") from exc
 
 
 @app.post(
@@ -2553,17 +2770,7 @@ def build_user_retirement_plan(user_id: str, payload: RetirementPlanRequest) -> 
         user = users.get(user_id)
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-        plan_user = dict(user)
-        raw_age = plan_user.get("age")
-        needs_csv_age = raw_age in (None, "", 0, "0")
-        if needs_csv_age:
-            csv_profile = _read_user_csv_profile(user_id)
-            csv_age = (csv_profile.get("age") or "").strip()
-            if csv_age:
-                try:
-                    plan_user["age"] = int(float(csv_age))
-                except Exception:
-                    pass
+        plan_user = _resolve_user_for_planning(user_id, user)
 
         plan = api.build_retirement_plan(
             user=plan_user,
@@ -2578,6 +2785,62 @@ def build_user_retirement_plan(user_id: str, payload: RetirementPlanRequest) -> 
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"retirement plan failed: {exc}") from exc
+
+
+@app.get(
+    "/users/{user_id}/planning/overview",
+    tags=["Planning"],
+    summary="Get income, CPF, tax, household, subscription, and latent growth overview",
+)
+def get_user_financial_planning_overview(user_id: str) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        planning_user = _resolve_user_for_planning(user_id, user)
+        overview = api.build_financial_planning_overview(planning_user)
+        return {"status": "ok", "user_id": user_id, **overview}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"planning overview failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/planning/scenario",
+    tags=["Planning"],
+    summary="Build an income, CPF, tax, household, and scenario model for a user",
+)
+def build_user_financial_planning_scenario(
+    user_id: str,
+    payload: FinancialPlanningScenarioRequest,
+) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        planning_user = _resolve_user_for_planning(user_id, user)
+        scenario = api.build_financial_planning_scenario(
+            planning_user,
+            cpf_age=payload.cpf_age,
+            cpf_eligible_monthly_income=payload.cpf_eligible_monthly_income,
+            cpf_ordinary_wage_ceiling=payload.cpf_ordinary_wage_ceiling,
+            tax_residency=payload.tax_residency,
+            annual_reliefs=payload.annual_reliefs,
+            household_members=[member.model_dump() for member in payload.household_members],
+            shared_goals=[goal.model_dump() for goal in payload.shared_goals],
+            retirement_age=payload.retirement_age,
+            monthly_expenses=payload.monthly_expenses,
+            essential_monthly_expenses=payload.essential_monthly_expenses,
+            horizon_years=payload.horizon_years,
+        )
+        return {"status": "ok", "user_id": user_id, **scenario}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"planning scenario failed: {exc}") from exc
 
 
 @app.get(

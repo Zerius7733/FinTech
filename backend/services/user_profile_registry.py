@@ -6,6 +6,7 @@ from typing import Any, Dict
 USER_FIELD_ORDER = [
     "name",
     "age",
+    "country",
     "subscription_plan",
     "cash_balance",
     "liability",
@@ -16,8 +17,11 @@ USER_FIELD_ORDER = [
     "total_balance",
     "net_worth",
     "income",
+    "income_summary",
     "expenses",
     "income_streams",
+    "household_profile",
+    "shared_goals",
     "mortgage",
     "estate",
     "wellness_metrics",
@@ -38,6 +42,7 @@ def _build_default_user_profile(name: str) -> Dict[str, Any]:
         "name": name,
         "age": None,
         "subscription_plan": "free",
+        "country": "Singapore",
         "cash_balance": 0.0,
         "liability": 0.0,
         "liability_items": [],
@@ -47,8 +52,41 @@ def _build_default_user_profile(name: str) -> Dict[str, Any]:
         "total_balance": 0.0,
         "net_worth": 0.0,
         "income": 0.0,
+        "income_summary": {
+            "country": "SG",
+            "monthly_gross": 0.0,
+            "monthly_net": 0.0,
+            "monthly_tax": 0.0,
+            "annual_gross": 0.0,
+            "annual_net": 0.0,
+            "annual_tax": 0.0,
+            "effective_tax_rate": 0.0,
+            "streams": [],
+            "cpf": {
+                "employee_monthly": 0.0,
+                "employer_monthly": 0.0,
+                "total_monthly": 0.0,
+                "employee_annual": 0.0,
+                "employer_annual": 0.0,
+                "total_annual": 0.0,
+                "accounts_monthly": {"ordinary": 0.0, "special": 0.0, "medisave": 0.0},
+                "accounts_annual": {"ordinary": 0.0, "special": 0.0, "medisave": 0.0},
+            },
+        },
         "expenses": 0.0,
         "income_streams": [],
+        "household_profile": {
+            "mode": "personal",
+            "partner_name": "",
+            "partner_monthly_contribution": 0.0,
+            "partner_monthly_income": 0.0,
+            "partner_fixed_expenses": 0.0,
+            "shared_budget_monthly": 0.0,
+            "contribution_style": "income_weighted",
+            "dependents_count": 0,
+            "shared_cash_reserve_target": 0.0,
+        },
+        "shared_goals": [],
         "mortgage": 0.0,
         "estate": 0.0,
         "wellness_metrics": {
@@ -113,6 +151,13 @@ def normalize_user_profile(user: Dict[str, Any]) -> Dict[str, Any]:
     normalized.setdefault("manual_assets", [])
     normalized.setdefault("liability_items", [])
     normalized.setdefault("income_streams", [])
+    normalized.setdefault("shared_goals", [])
+    normalized.setdefault("household_profile", default_profile["household_profile"])
+    normalized.setdefault("income_summary", default_profile["income_summary"])
+    if isinstance(normalized.get("household_profile"), dict):
+        merged_household = dict(default_profile["household_profile"])
+        merged_household.update(normalized["household_profile"])
+        normalized["household_profile"] = merged_household
 
     portfolio = normalized.get("portfolio")
     if isinstance(portfolio, dict):

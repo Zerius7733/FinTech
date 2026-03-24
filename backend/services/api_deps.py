@@ -117,6 +117,16 @@ def build_portfolio_impact(*args: Any, **kwargs: Any) -> Any:
     return impl(*args, **kwargs)
 
 
+def build_financial_planning_overview(*args: Any, **kwargs: Any) -> Any:
+    from backend.services.financial_planning import build_financial_planning_overview as impl
+    return impl(*args, **kwargs)
+
+
+def build_financial_planning_scenario(*args: Any, **kwargs: Any) -> Any:
+    from backend.services.financial_planning import build_financial_planning_scenario as impl
+    return impl(*args, **kwargs)
+
+
 def get_positions_by_asset_class(*args: Any, **kwargs: Any) -> Any:
     from backend.services.portfolio_selector import get_positions_by_asset_class as impl
     return impl(*args, **kwargs)
@@ -286,6 +296,8 @@ __all__ = [
     "add_default_user_profile",
     "authenticate_login_user",
     "build_insights",
+    "build_financial_planning_overview",
+    "build_financial_planning_scenario",
     "build_peer_benchmarks",
     "build_portfolio_impact",
     "build_retirement_plan",

@@ -423,6 +423,13 @@ function retirementStatus(plan) {
   return { title:'A savings gap still needs closing', tone:'var(--red)' }
 }
 
+function planningCountryCode(value) {
+  const normalized = String(value || '').trim().toUpperCase()
+  if (['SG', 'SGP', 'SINGAPORE'].includes(normalized)) return 'SG'
+  if (['US', 'USA', 'UNITED STATES', 'UNITED STATES OF AMERICA'].includes(normalized)) return 'US'
+  return 'SG'
+}
+
 function retirementTopMix(plan) {
   const top = toArray(plan?.recommended_vehicle_mix)
     .slice()
@@ -1463,13 +1470,30 @@ function FinancialManagerModal({
 }) {
   const [assetForm, setAssetForm] = useState({ label:'', category:'real_estate', value:'' })
   const [liabilityForm, setLiabilityForm] = useState({ label:'', amount:'', is_mortgage:false })
-  const [incomeForm, setIncomeForm] = useState({ label:'', monthly_amount:'' })
+  const [incomeForm, setIncomeForm] = useState({
+    label:'',
+    monthly_amount:'',
+    gross_monthly_amount:'',
+    annual_bonus:'',
+    tax_country: planningCountryCode(profile?.country),
+    income_type:'salary',
+    cpf_applicable: planningCountryCode(profile?.country) === 'SG',
+  })
 
   useEffect(() => {
     if (!open) return
     setAssetForm({ label:'', category:'real_estate', value:'' })
     setLiabilityForm({ label:'', amount:'', is_mortgage:false })
-    setIncomeForm({ label:'', monthly_amount:'' })
+    const defaultCountry = planningCountryCode(profile?.country)
+    setIncomeForm({
+      label:'',
+      monthly_amount:'',
+      gross_monthly_amount:'',
+      annual_bonus:'',
+      tax_country: defaultCountry,
+      income_type:'salary',
+      cpf_applicable: defaultCountry === 'SG',
+    })
   }, [open, activeTab])
 
   if (!open) return null
@@ -1596,6 +1620,11 @@ function FinancialManagerModal({
       onSubmit('income', {
         label: incomeForm.label,
         monthly_amount: Number(incomeForm.monthly_amount),
+        gross_monthly_amount: Number(incomeForm.gross_monthly_amount),
+        annual_bonus: Number(incomeForm.annual_bonus || 0),
+        tax_country: incomeForm.tax_country,
+        income_type: incomeForm.income_type,
+        cpf_applicable: Boolean(incomeForm.cpf_applicable),
       })
     }
   }
@@ -1711,13 +1740,59 @@ function FinancialManagerModal({
                   style={fm.input}
                 />
                 <input
-                  value={incomeForm.monthly_amount}
-                  onChange={e => setIncomeForm(prev => ({ ...prev, monthly_amount:e.target.value }))}
-                  placeholder="Monthly amount"
+                  value={incomeForm.gross_monthly_amount}
+                  onChange={e => setIncomeForm(prev => ({ ...prev, gross_monthly_amount:e.target.value }))}
+                  placeholder="Monthly gross"
                   type="text"
                   inputMode="decimal"
                   style={{ ...fm.input, ...fm.numberInput }}
                 />
+                <input
+                  value={incomeForm.monthly_amount}
+                  onChange={e => setIncomeForm(prev => ({ ...prev, monthly_amount:e.target.value }))}
+                  placeholder="Monthly take-home (optional override)"
+                  type="text"
+                  inputMode="decimal"
+                  style={{ ...fm.input, ...fm.numberInput }}
+                />
+                <input
+                  value={incomeForm.annual_bonus}
+                  onChange={e => setIncomeForm(prev => ({ ...prev, annual_bonus:e.target.value }))}
+                  placeholder="Annual bonus"
+                  type="text"
+                  inputMode="decimal"
+                  style={{ ...fm.input, ...fm.numberInput }}
+                />
+                <select
+                  value={incomeForm.tax_country}
+                  onChange={e => setIncomeForm(prev => ({ ...prev, tax_country:e.target.value, cpf_applicable:e.target.value === 'SG' }))}
+                  style={fm.input}
+                >
+                  <option value="SG">Singapore</option>
+                  <option value="US">United States</option>
+                </select>
+                <select
+                  value={incomeForm.income_type}
+                  onChange={e => setIncomeForm(prev => ({ ...prev, income_type:e.target.value }))}
+                  style={fm.input}
+                >
+                  <option value="salary">Salary</option>
+                  <option value="bonus">Bonus</option>
+                  <option value="rental">Rental</option>
+                  <option value="dividend">Dividend</option>
+                  <option value="freelance">Freelance</option>
+                  <option value="business">Business</option>
+                </select>
+                {incomeForm.tax_country === 'SG' && (
+                  <label style={{ display:'flex', alignItems:'center', gap:8, color:'var(--text-dim)', fontSize:'0.82rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(incomeForm.cpf_applicable)}
+                      onChange={e => setIncomeForm(prev => ({ ...prev, cpf_applicable:e.target.checked }))}
+                    />
+                    CPF applies
+                  </label>
+                )}
               </>
             )}
             <button type="submit" style={fm.submitBtn} disabled={busy}>
@@ -1758,7 +1833,9 @@ function FinancialManagerModal({
                             ? 'Synced Property'
                           : startCase(item.category))
                         : activeTab === 'income'
-                          ? (item.id === 'income-seed' ? 'Synced Income' : 'Monthly income stream')
+                          ? (item.id === 'income-seed'
+                            ? 'Synced Income'
+                            : `${startCase(item.income_type || 'salary')} · ${planningCountryCode(item.tax_country || profile?.country)}`)
                           : (item.is_mortgage
                             ? (item.id === 'mortgage-seed' ? 'Synced Mortgage' : 'Mortgage')
                             : (item.id === 'liability-seed' ? 'Synced Liabilities' : 'Non-mortgage liability'))}
@@ -1937,6 +2014,10 @@ export default function Profile() {
   const [benchmarkError, setBenchmarkError] = useState('')
   const [benchmarkOpen, setBenchmarkOpen] = useState(false)
   const [priceRefreshing, setPriceRefreshing] = useState(false)
+  const [householdBusy, setHouseholdBusy] = useState(false)
+  const [sharedGoalBusy, setSharedGoalBusy] = useState(false)
+  const [householdForm, setHouseholdForm] = useState({ mode:'personal', partner_name:'', partner_monthly_contribution:'', shared_budget_monthly:'' })
+  const [sharedGoalForm, setSharedGoalForm] = useState({ title:'', target_amount:'', monthly_contribution:'', household_share:'', target_date:'', notes:'' })
   const portfolioAnalysisRef = useRef(null)
   const portfolioAnalysisFocusTimerRef = useRef(null)
   const pendingGuidedScrollRef = useRef(false)
@@ -2009,6 +2090,16 @@ export default function Profile() {
       })
     })
   }, [loading, loadingOverlayVisible, profile])
+
+  useEffect(() => {
+    const household = profile?.household_profile ?? {}
+    setHouseholdForm({
+      mode: household.mode || 'personal',
+      partner_name: household.partner_name || '',
+      partner_monthly_contribution: household.partner_monthly_contribution ? String(household.partner_monthly_contribution) : '',
+      shared_budget_monthly: household.shared_budget_monthly ? String(household.shared_budget_monthly) : '',
+    })
+  }, [profile?.household_profile])
   const retirementStatCardStyle = isSilentNight ? {
     background:'linear-gradient(180deg, rgba(15,23,42,0.78), rgba(15,23,42,0.66))',
     border:'1px solid rgba(148,163,184,0.18)',
@@ -2234,6 +2325,11 @@ export default function Profile() {
   const currentIncome  = incomeStreams.length
     ? incomeStreams.reduce((sum, item) => sum + Number(item.monthly_amount || 0), 0)
     : Number(profile?.income ?? 0)
+  const incomeSummary = profile?.income_summary ?? null
+  const planningCountry = planningCountryCode(incomeSummary?.country || profile?.country)
+  const cpfSummary = incomeSummary?.cpf ?? null
+  const householdProfile = profile?.household_profile ?? { mode:'personal', partner_name:'', partner_monthly_contribution:0, shared_budget_monthly:0 }
+  const sharedGoals = Array.isArray(profile?.shared_goals) ? profile.shared_goals : []
   const wellness       = profile?.wellness_metrics ?? {}
   const behavioralResilienceScore =
     profile?.behavioral_resilience_score
@@ -2328,6 +2424,56 @@ export default function Profile() {
       sub:'Recommended near-term moves',
     },
   ]
+  const scenarioLabCards = useMemo(() => {
+    const cards = []
+    if (latentGrowthContext) {
+      cards.push({
+        id: 'excess-cash',
+        title: 'Redirect 20% of excess cash',
+        preview: `Redirect about ${fmtCompactCurrency((latentGrowthContext.suggested_move || 0) * 0.2)} from idle cash while keeping ${fmtCompactCurrency(latentGrowthContext.keep_cash_amount)} set aside.`,
+        detail: `Based on your current reserve target, redirecting a measured slice of surplus cash can preserve your ${latentGrowthContext.reserve_months}-month runway while improving long-term expected growth.`,
+        premium: false,
+        tone: 'var(--teal)',
+      })
+    }
+
+    const portfolioBase = portfolioValue || 0
+    cards.push({
+      id: 'rates-fall',
+      title: 'If rates fall',
+      preview: bondsValue > 0
+        ? `Your bond sleeve could benefit first. A 4% uplift would add about ${fmt$(bondsValue * 0.04)} to current bond holdings.`
+        : 'Lower rates would mostly help future borrowing costs and bond-heavy allocations.',
+      detail: bondsValue > 0
+        ? `With ${fmt$(bondsValue)} already in bonds, falling rates usually improve bond prices and ease refinancing pressure. Premium should explain whether to keep duration exposure or rotate gradually.`
+        : 'You have limited bond exposure today, so the main decision is whether to add duration for resilience or keep the portfolio growth-heavy.',
+      premium: true,
+      tone: 'var(--purple)',
+    })
+    cards.push({
+      id: 'income-shock',
+      title: 'If income stops for 4 months',
+      preview: `Your current monthly take-home is about ${fmt$(incomeSummary?.monthly_net || currentIncome)}. A 4-month interruption would pressure roughly ${fmt$((incomeSummary?.monthly_net || currentIncome) * 4)} of cashflow.`,
+      detail: `This scenario compares your take-home income, expenses, and cash runway to show whether you should defend reserves first, trim liabilities, or slow investing temporarily.`,
+      premium: true,
+      tone: 'var(--red)',
+    })
+    cards.push({
+      id: 'retire-12',
+      title: 'If you retire in 12 years',
+      preview: retirementPlan
+        ? `Your current retirement path targets ${fmtCompactCurrency(retirementPlan.target_retirement_fund)} and projects ${fmtCompactCurrency(retirementPlan.projected_value_at_retirement)}.`
+        : 'Use your current assets, spending, and savings pace to estimate the gap to a 12-year retirement timeline.',
+      detail: retirementPlan
+        ? `Premium should show how much monthly top-up, CPF support, and household contributions are needed to close the remaining gap before retirement.`
+        : 'Premium should model the contribution gap, reserve target, and allocation shifts needed to retire on a shorter timeline.',
+      premium: true,
+      tone: 'var(--gold)',
+    })
+    return cards
+  }, [bondsValue, currentIncome, incomeSummary?.monthly_net, latentGrowthContext, portfolioValue, retirementPlan])
+  const visibleScenarioLabCards = isPremiumPlan ? scenarioLabCards : scenarioLabCards.slice(0, 1)
+  const lockedScenarioCount = Math.max(0, scenarioLabCards.length - visibleScenarioLabCards.length)
   const exportComprehensivePdf = useCallback(() => {
     const lines = [
       'Unova Comprehensive Portfolio Analysis',
@@ -2608,6 +2754,83 @@ export default function Profile() {
       setError(err.message || 'Could not remove financial item.')
     } finally {
       setFinancialBusy(false)
+    }
+  }, [authUser?.user_id])
+  const saveHouseholdProfile = useCallback(async () => {
+    if (!authUser?.user_id) return
+    setHouseholdBusy(true)
+    setError('')
+    try {
+      const res = await fetch(`${API}/users/${authUser.user_id}/household`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: householdForm.mode,
+          partner_name: householdForm.partner_name,
+          partner_monthly_contribution: Number(householdForm.partner_monthly_contribution || 0),
+          shared_budget_monthly: Number(householdForm.shared_budget_monthly || 0),
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      if (data.user) setProfile(data.user)
+    } catch (err) {
+      setError(err.message || 'Could not save household settings.')
+    } finally {
+      setHouseholdBusy(false)
+    }
+  }, [authUser?.user_id, householdForm])
+  const addSharedGoal = useCallback(async () => {
+    if (!authUser?.user_id) return
+    setSharedGoalBusy(true)
+    setError('')
+    try {
+      const res = await fetch(`${API}/users/${authUser.user_id}/shared-goals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: sharedGoalForm.title,
+          target_amount: Number(sharedGoalForm.target_amount || 0),
+          monthly_contribution: Number(sharedGoalForm.monthly_contribution || 0),
+          household_share: Number(sharedGoalForm.household_share || 0),
+          target_date: sharedGoalForm.target_date,
+          notes: sharedGoalForm.notes,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      if (data.user) setProfile(data.user)
+      setSharedGoalForm({ title:'', target_amount:'', monthly_contribution:'', household_share:'', target_date:'', notes:'' })
+    } catch (err) {
+      setError(err.message || 'Could not add shared goal.')
+    } finally {
+      setSharedGoalBusy(false)
+    }
+  }, [authUser?.user_id, sharedGoalForm])
+  const removeSharedGoal = useCallback(async (goalId) => {
+    if (!authUser?.user_id) return
+    setSharedGoalBusy(true)
+    setError('')
+    try {
+      const res = await fetch(`${API}/users/${authUser.user_id}/shared-goals/${encodeURIComponent(goalId)}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      if (data.user) setProfile(data.user)
+    } catch (err) {
+      setError(err.message || 'Could not remove shared goal.')
+    } finally {
+      setSharedGoalBusy(false)
     }
   }, [authUser?.user_id])
   const reloadSyncedBalance = useCallback(async () => {
@@ -3399,13 +3622,13 @@ export default function Profile() {
             <div style={s.subscriptionBanner}>
               <div>
                 <div style={s.subscriptionEyebrow}>Free plan</div>
-                <div style={s.subscriptionTitle}>Market insights are locked to Premium.</div>
+                <div style={s.subscriptionTitle}>Free gives you the headline. Premium helps you decide.</div>
                 <div style={s.subscriptionBody}>
-                  Your core portfolio tools still work. Upgrade when you want analyst-style market insights and deeper narrative context.
+                  You can still track holdings, income, CPF, shared goals, and preview one scenario. Upgrade when you want richer market context, deeper scenario outcomes, and clearer next-best-action guidance.
                 </div>
               </div>
-              <button type="button" onClick={() => navigate('/pricing')} style={s.subscriptionBtn}>
-                View plans
+              <button type="button" onClick={() => navigate('/pricing?source=portfolio-analysis')} style={s.subscriptionBtn}>
+                Compare decision layers
               </button>
             </div>
           )}
