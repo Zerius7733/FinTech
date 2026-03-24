@@ -22,6 +22,7 @@ USER_FIELD_ORDER = [
     "income_streams",
     "household_profile",
     "shared_goals",
+    "advisor_match_requests",
     "mortgage",
     "estate",
     "wellness_metrics",
@@ -87,6 +88,7 @@ def _build_default_user_profile(name: str) -> Dict[str, Any]:
             "shared_cash_reserve_target": 0.0,
         },
         "shared_goals": [],
+        "advisor_match_requests": [],
         "mortgage": 0.0,
         "estate": 0.0,
         "wellness_metrics": {
@@ -152,6 +154,7 @@ def normalize_user_profile(user: Dict[str, Any]) -> Dict[str, Any]:
     normalized.setdefault("liability_items", [])
     normalized.setdefault("income_streams", [])
     normalized.setdefault("shared_goals", [])
+    normalized.setdefault("advisor_match_requests", [])
     normalized.setdefault("household_profile", default_profile["household_profile"])
     normalized.setdefault("income_summary", default_profile["income_summary"])
     if isinstance(normalized.get("household_profile"), dict):

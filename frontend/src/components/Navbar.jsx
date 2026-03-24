@@ -9,9 +9,14 @@ import { GUIDED_SCROLL_EVENT, queueGuidedScroll } from '../utils/guidedScroll.js
 const NAV_LINKS = [
   { label: 'Home',      path: '/' },
   { label: 'Markets',    path: '/stocks' },
-  { label: 'Planning',   path: '/planning' },
-  { label: 'Income',     path: '/income' },
-  { label: 'Pricing',    path: '/pricing' },
+  { label: 'Institutions', path: '/institutions' },
+  { label: 'More', path: '/more', type: 'dropdown' },
+]
+
+const MORE_LINKS = [
+  { label: 'Planning', path: '/planning' },
+  { label: 'Income', path: '/income' },
+  { label: 'Pricing', path: '/pricing' },
 ]
 
 const PROFILE_ALLOCATIONS = {
@@ -153,10 +158,12 @@ export default function Navbar() {
   const [notifOpen, setNotifOpen] = useState(false)
   const [expandedNotifId, setExpandedNotifId] = useState(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [themeModalOpen, setThemeModalOpen] = useState(false)
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const notifRef = useRef(null)
   const settingsRef = useRef(null)
+  const moreRef = useRef(null)
 
   function handleSignOut() {
     logout()
@@ -219,6 +226,24 @@ export default function Navbar() {
     }
   }, [settingsOpen])
 
+  useEffect(() => {
+    if (!moreOpen) return
+    function handleClickOutside(event) {
+      if (moreRef.current && !moreRef.current.contains(event.target)) {
+        setMoreOpen(false)
+      }
+    }
+    function handleEscape(event) {
+      if (event.key === 'Escape') setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [moreOpen])
+
   const notifications = useMemo(() => {
     if (!navProfile) return []
     if (!isAccountAtLeastDaysOld(user?.created_at, 30)) return []
@@ -276,12 +301,53 @@ export default function Navbar() {
       {/* Links */}
       <ul style={S.links}>
         {NAV_LINKS.map(({ label, path }) => {
+          if (label === 'More') {
+            const active = MORE_LINKS.some(item => item.path === pathname)
+            return (
+              <li key={label} ref={moreRef} style={S.dropdownItem}>
+                <span
+                  onClick={() => setMoreOpen(open => !open)}
+                  style={{
+                    ...S.link,
+                    ...S.linkDropdown,
+                    ...(active ? S.linkActive : {}),
+                  }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text)' }}
+                  onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--text-dim)' }}
+                >
+                  <span>More</span>
+                  <span style={S.linkCaret}>▼</span>
+                </span>
+                {moreOpen ? (
+                  <div style={S.linkMenu}>
+                    {MORE_LINKS.map(item => {
+                      const childActive = pathname === item.path
+                      return (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={() => {
+                            setMoreOpen(false)
+                            navigate(item.path)
+                          }}
+                          style={{
+                            ...S.linkMenuItem,
+                            ...(childActive ? S.linkMenuItemActive : null),
+                          }}
+                        >
+                          {item.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : null}
+              </li>
+            )
+          }
           const active = label === 'Markets'
             ? ['/stocks', '/bonds', '/real-assets', '/commodities', '/crypto'].includes(pathname)
-            : label === 'Planning'
-              ? pathname === '/planning'
-              : label === 'Income'
-                ? pathname === '/income'
+            : label === 'Institutions'
+              ? pathname === '/institutions'
             : pathname === path
           return (
             <li key={label}>
@@ -520,9 +586,56 @@ const S = {
     userSelect: 'none',
     paddingBottom: 6,
   },
+  dropdownItem: {
+    position: 'relative',
+  },
+  linkDropdown: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    lineHeight: 'inherit',
+    verticalAlign: 'middle',
+  },
+  linkCaret: {
+    fontSize: '0.58rem',
+    lineHeight: 1,
+    transform: 'translateY(1px)',
+    display: 'inline-block',
+  },
   linkActive: {
     color: 'var(--text)',
     borderBottom: '2px solid var(--text)',
+  },
+  linkMenu: {
+    position: 'absolute',
+    top: 'calc(100% + 14px)',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    minWidth: 168,
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    boxShadow: '0 16px 42px rgba(15,23,42,0.12)',
+    padding: 8,
+    display: 'grid',
+    gap: 4,
+    zIndex: 140,
+  },
+  linkMenuItem: {
+    border: 'none',
+    background: 'transparent',
+    borderRadius: 10,
+    padding: '10px 12px',
+    textAlign: 'left',
+    cursor: 'pointer',
+    color: 'var(--text-dim)',
+    fontFamily: 'var(--font-body)',
+    fontSize: '0.84rem',
+    fontWeight: 600,
+  },
+  linkMenuItemActive: {
+    background: 'var(--surface2)',
+    color: 'var(--text)',
   },
   btnGold: {
     background: 'var(--btn-primary-bg)',

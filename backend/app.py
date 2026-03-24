@@ -5,6 +5,7 @@ import random
 import time
 import uuid
 import io
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from collections import defaultdict, deque
 from pathlib import Path
@@ -599,6 +600,9 @@ def _ensure_financial_collections(user: Dict[str, Any]) -> Dict[str, Any]:
     shared_goals = user.get("shared_goals")
     if not isinstance(shared_goals, list):
         shared_goals = []
+    advisor_match_requests = user.get("advisor_match_requests")
+    if not isinstance(advisor_match_requests, list):
+        advisor_match_requests = []
 
     if not manual_assets and float(user.get("estate", 0.0) or 0.0) > 0:
         manual_assets = [{
@@ -638,6 +642,7 @@ def _ensure_financial_collections(user: Dict[str, Any]) -> Dict[str, Any]:
     user["income_streams"] = income_streams
     user["household_profile"] = household_profile
     user["shared_goals"] = shared_goals
+    user["advisor_match_requests"] = advisor_match_requests
     return user
 
 
@@ -1088,6 +1093,14 @@ class SharedGoalCreateRequest(BaseModel):
     priority: int = Field(default=3, ge=1, le=5)
     owners: list[str] = Field(default_factory=list)
     notes: str | None = Field(default="", max_length=240)
+
+
+class AdvisorMatchCreateRequest(BaseModel):
+    institution_id: str = Field(..., min_length=1, max_length=80)
+    institution_name: str = Field(..., min_length=1, max_length=120)
+    product_id: str | None = Field(default="", max_length=80)
+    product_name: str | None = Field(default="", max_length=160)
+    notes: str | None = Field(default="", max_length=500)
 
 
 class RegisterRequest(BaseModel):
@@ -1860,6 +1873,7 @@ def get_user_financial_items(user_id: str) -> Dict[str, Any]:
             "income_streams": user.get("income_streams", []),
             "household_profile": user.get("household_profile", {}),
             "shared_goals": user.get("shared_goals", []),
+            "advisor_match_requests": user.get("advisor_match_requests", []),
             "summary": {
                 "income": user.get("income", 0.0),
                 "income_summary": user.get("income_summary", {}),
@@ -2358,6 +2372,42 @@ def remove_user_shared_goal(user_id: str, goal_id: str) -> Dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"shared goal delete failed: {exc}") from exc
+
+
+@app.post(
+    "/users/{user_id}/advisor-match",
+    tags=["Planning"],
+    summary="Create a financial advisor match request for a user",
+)
+def create_user_advisor_match_request(user_id: str, payload: AdvisorMatchCreateRequest) -> Dict[str, Any]:
+    try:
+        users = _read_users_data()
+        user = users.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+        user = _ensure_financial_collections(user)
+        request_item = {
+            "id": str(uuid.uuid4()),
+            "institution_id": payload.institution_id.strip(),
+            "institution_name": payload.institution_name.strip(),
+            "product_id": str(payload.product_id or "").strip(),
+            "product_name": str(payload.product_name or "").strip(),
+            "notes": str(payload.notes or "").strip(),
+            "status": "requested",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        match_requests = user.get("advisor_match_requests")
+        if not isinstance(match_requests, list):
+            match_requests = []
+        match_requests.insert(0, request_item)
+        user["advisor_match_requests"] = match_requests
+        users[user_id] = _recalculate_user_financials(user)
+        _write_users_data(users)
+        return {"status": "ok", "user_id": user_id, "request": request_item, "user": users[user_id]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"advisor match request failed: {exc}") from exc
 
 
 @app.post(

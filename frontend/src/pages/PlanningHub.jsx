@@ -320,7 +320,7 @@ export default function PlanningHub() {
   const lockedScenarioCount = Math.max(0, scenarioLabCards.length - visibleScenarioLabCards.length)
   const [selectedScenarioId, setSelectedScenarioId] = useState('')
   const [selectedMoveId, setSelectedMoveId] = useState('')
-  const [showAllGoals, setShowAllGoals] = useState(false)
+  const [goalsExpanded, setGoalsExpanded] = useState(false)
 
   const goalPlanner = useMemo(() => {
     const targetAmount = Number(sharedGoalForm.target_amount || 0)
@@ -416,7 +416,7 @@ export default function PlanningHub() {
     })
   ), [sharedGoals])
   const hasExtraGoals = sortedSharedGoals.length > 2
-  const visibleSharedGoals = showAllGoals ? sortedSharedGoals : sortedSharedGoals.slice(0, 2)
+  const visibleSharedGoals = goalsExpanded ? sortedSharedGoals : sortedSharedGoals.slice(0, 2)
   const scenarioMeters = useMemo(() => {
     if (!activeMove) return []
     const base = { resilience: 50, growth: 50, flexibility: 50 }
@@ -449,7 +449,7 @@ export default function PlanningHub() {
   }, [activeScenario, selectedMoveId])
 
   const openGoalManager = useCallback(() => {
-    setShowAllGoals(true)
+    setGoalsExpanded(true)
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         document.getElementById('shared-goal-title-input')?.focus()
@@ -711,18 +711,20 @@ export default function PlanningHub() {
                     </div>
                   )}
                 </div>
-                {hasExtraGoals && (
-                  <div style={styles.goalExpandRow}>
-                    <button
-                      type="button"
-                      onClick={() => setShowAllGoals(prev => !prev)}
-                      style={styles.goalExpandBtn}
-                    >
-                      {showAllGoals ? `Show top 2 goals` : `Show all ${sharedGoals.length} goals`}
-                    </button>
-                  </div>
-                )}
-                {showAllGoals && (
+                <div style={styles.goalExpandRow}>
+                  <button
+                    type="button"
+                    onClick={() => setGoalsExpanded(prev => !prev)}
+                    style={styles.goalExpandBtn}
+                  >
+                    {goalsExpanded
+                      ? 'Collapse goal manager'
+                      : hasExtraGoals
+                        ? `Show all ${sharedGoals.length} goals`
+                        : 'Manage goals'}
+                  </button>
+                </div>
+                {goalsExpanded && (
                   <>
                     <div style={styles.formSectionTitle}>Add a new shared goal</div>
                     <div style={styles.goalPlannerHero}>

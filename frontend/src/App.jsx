@@ -10,6 +10,7 @@ import Commodities from './pages/Commodities.jsx'
 import Crypto  from './pages/Crypto.jsx'
 import IncomeHub from './pages/IncomeHub.jsx'
 import PlanningHub from './pages/PlanningHub.jsx'
+import InstitutionsHub from './pages/InstitutionsHub.jsx'
 import Login   from './pages/Login.jsx'
 import Theme   from './pages/Theme.jsx'
 import LoginModal from './components/LoginModal.jsx'
@@ -71,6 +72,7 @@ export default function App() {
         <Route path="/crypto"   element={<Crypto />} />
         <Route path="/income"   element={<IncomeHub />} />
         <Route path="/planning" element={<PlanningHub />} />
+        <Route path="/institutions" element={<InstitutionsHub />} />
         <Route path="/theme"    element={<Theme />} />
         <Route
           path="/pricing"

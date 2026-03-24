@@ -178,8 +178,8 @@ export default function Pricing() {
         </section>
 
         <section style={styles.compareCard}>
-          <div style={styles.compareEyebrow}>What changes with Premium</div>
-          <div style={styles.compareTitle}>Premium gates depth, not the core product.</div>
+          <div style={styles.compareEyebrow}>Free vs Premium</div>
+          <div style={styles.compareTitle}>Premium adds depth while Free keeps the core product useful.</div>
           <div style={styles.compareGrid}>
             <div style={styles.compareItem}>
               <div style={styles.compareLabel}>Free keeps</div>
@@ -193,12 +193,6 @@ export default function Pricing() {
                 Decision support depth: premium market insights, richer scenario outcomes, and more opinionated guidance when the choice matters.
               </div>
             </div>
-          </div>
-        </section>
-        <section style={styles.compareCard}>
-          <div style={styles.compareEyebrow}>Decision ladder</div>
-          <div style={styles.compareTitle}>Preview on Free. Decide with Premium.</div>
-          <div style={styles.compareGrid}>
             <div style={styles.compareItem}>
               <div style={styles.compareLabel}>Free preview</div>
               <div style={styles.compareCopy}>

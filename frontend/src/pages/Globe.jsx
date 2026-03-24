@@ -1822,20 +1822,7 @@ export default function Globe() {
         {/* Stats bar */}
         <div style={{ ...S.statsBar, ...blurredUiStyle }}>
           {[
-            { label:'Total Portfolio', val:`$${aum.toLocaleString()}`,
-              sub: (() => {
-                if (!userProfile?.portfolio) return 'loading…'
-                const { stocks=[], bonds=[], real_assets: realAssets=[], cryptos=[], commodities=[] } = userProfile.portfolio
-                const types = [
-                  stocks.some(h => h.qty > 0) && 'Stocks',
-                  bonds.some(h => h.qty > 0) && 'Bonds',
-                  realAssets.some(h => h.qty > 0) && 'Real Assets',
-                  cryptos.some(h => h.qty > 0) && 'Crypto',
-                  commodities.some(h => h.qty > 0) && 'Commodities',
-                ].filter(Boolean)
-                return `${types.length} asset class${types.length !== 1 ? 'es' : ''} · ${types.join(', ')}`
-              })(),
-              c:'var(--gold)' },
+            { label:'Total Portfolio', val:`$${aum.toLocaleString()}`, sub:'', c:'var(--gold)' },
             { label:'Unrealised P&L',
               val: userProfile ? `${plSign >= 0 ? '+' : '-'}$${pl.toLocaleString()}` : '—',
               sub: userProfile ? `${plSign >= 0 ? '+' : ''}${plPct.toFixed(2)}% vs avg cost` : 'loading…',

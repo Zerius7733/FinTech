@@ -406,6 +406,28 @@
         "notes": ""
       }
     ],
+    "advisor_match_requests": [
+      {
+        "id": "c4c38baa-c205-4d93-8d2f-46264d4a80b5",
+        "institution_id": "prudential-sg",
+        "institution_name": "Prudential Singapore",
+        "product_id": "prushield",
+        "product_name": "PRUShield",
+        "notes": "",
+        "status": "requested",
+        "created_at": "2026-03-24T16:38:10.781235+00:00"
+      },
+      {
+        "id": "797e5bcf-5b9f-474e-8e24-4d7863ff6ed4",
+        "institution_id": "aia-sg",
+        "institution_name": "AIA Singapore",
+        "product_id": "aia-healthshield-gold-max",
+        "product_name": "AIA HealthShield Gold Max",
+        "notes": "",
+        "status": "requested",
+        "created_at": "2026-03-24T15:08:13.442959+00:00"
+      }
+    ],
     "mortgage": 145000.0,
     "estate": 500000.0,
     "wellness_metrics": {
@@ -605,6 +627,7 @@
       "shared_cash_reserve_target": 0.0
     },
     "shared_goals": [],
+    "advisor_match_requests": [],
     "mortgage": 0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -788,6 +811,7 @@
       "shared_cash_reserve_target": 0.0
     },
     "shared_goals": [],
+    "advisor_match_requests": [],
     "mortgage": 0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -969,6 +993,7 @@
       "shared_cash_reserve_target": 0.0
     },
     "shared_goals": [],
+    "advisor_match_requests": [],
     "mortgage": 0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -1150,6 +1175,7 @@
       "shared_cash_reserve_target": 0.0
     },
     "shared_goals": [],
+    "advisor_match_requests": [],
     "mortgage": 0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -1331,6 +1357,7 @@
       "shared_cash_reserve_target": 0.0
     },
     "shared_goals": [],
+    "advisor_match_requests": [],
     "mortgage": 0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -1512,6 +1539,7 @@
       "shared_cash_reserve_target": 0.0
     },
     "shared_goals": [],
+    "advisor_match_requests": [],
     "mortgage": 0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -1695,6 +1723,7 @@
       "shared_cash_reserve_target": 0.0
     },
     "shared_goals": [],
+    "advisor_match_requests": [],
     "mortgage": 0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -1902,6 +1931,7 @@
       "shared_cash_reserve_target": 0.0
     },
     "shared_goals": [],
+    "advisor_match_requests": [],
     "mortgage": 0,
     "estate": 0.0,
     "wellness_metrics": {
@@ -2092,6 +2122,7 @@
       "shared_cash_reserve_target": 0.0
     },
     "shared_goals": [],
+    "advisor_match_requests": [],
     "mortgage": 0,
     "estate": 100000.0,
     "wellness_metrics": {
@@ -2288,6 +2319,7 @@
       "shared_cash_reserve_target": 0.0
     },
     "shared_goals": [],
+    "advisor_match_requests": [],
     "mortgage": 0,
     "estate": 0.5,
     "wellness_metrics": {
