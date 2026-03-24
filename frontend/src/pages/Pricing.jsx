@@ -215,10 +215,7 @@ export default function Pricing() {
 const styles = {
   page: {
     minHeight: '100vh',
-    background: `
-      radial-gradient(circle at top left, rgba(109,141,247,0.06), transparent 28%),
-      linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%)
-    `,
+    background: 'transparent',
     color: 'var(--text)',
   },
   shell: {
@@ -258,8 +255,8 @@ const styles = {
     alignItems: 'center',
     padding: '8px 12px',
     borderRadius: 999,
-    background: 'rgba(255,255,255,0.76)',
-    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'color-mix(in srgb, var(--surface) 84%, transparent)',
+    border: '1px solid var(--border)',
     fontFamily: 'var(--font-mono)',
     fontSize: '0.66rem',
     letterSpacing: '0.12em',
@@ -278,9 +275,9 @@ const styles = {
     marginBottom: 18,
     padding: '16px 18px',
     borderRadius: 20,
-    background: 'rgba(255,244,244,0.9)',
-    border: '1px solid rgba(226,85,85,0.12)',
-    color: 'var(--red)',
+    background: 'color-mix(in srgb, var(--surface) 88%, rgba(248,113,113,0.12))',
+    border: '1px solid color-mix(in srgb, var(--red) 24%, var(--border))',
+    color: '#ef4444',
     fontWeight: 600,
   },
   planGrid: {
@@ -290,16 +287,16 @@ const styles = {
     marginBottom: 24,
   },
   planCard: {
-    background: 'rgba(255,255,255,0.84)',
-    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'color-mix(in srgb, var(--surface) 88%, transparent)',
+    border: '1px solid var(--border)',
     borderRadius: 24,
     padding: '28px 24px',
-    boxShadow: '0 16px 36px rgba(15,23,42,0.06)',
+    boxShadow: 'var(--glow-gold)',
     backdropFilter: 'blur(16px)',
   },
   planCardFeatured: {
-    borderColor: 'rgba(29,39,56,0.14)',
-    boxShadow: '0 22px 44px rgba(15,23,42,0.08)',
+    borderColor: 'var(--border-act)',
+    boxShadow: 'var(--glow-gold)',
   },
   planHeader: {
     display: 'flex',
@@ -330,8 +327,8 @@ const styles = {
   planChip: {
     borderRadius: 999,
     padding: '8px 12px',
-    background: 'rgba(29,39,56,0.08)',
-    border: '1px solid rgba(29,39,56,0.1)',
+    background: 'color-mix(in srgb, var(--surface2) 92%, transparent)',
+    border: '1px solid var(--border)',
     fontFamily: 'var(--font-mono)',
     fontSize: '0.62rem',
     letterSpacing: '0.12em',
@@ -376,25 +373,25 @@ const styles = {
   planButtonPrimary: {
     border: 'none',
     background: 'var(--btn-primary-bg)',
-    color: '#fff',
+    color: 'var(--btn-primary-text)',
   },
   planButtonSecondary: {
-    border: '1px solid rgba(15,23,42,0.08)',
-    background: 'rgba(255,255,255,0.76)',
+    border: '1px solid var(--border)',
+    background: 'color-mix(in srgb, var(--surface) 84%, transparent)',
     color: 'var(--text)',
   },
   planButtonMuted: {
-    border: '1px solid rgba(15,23,42,0.06)',
-    background: 'rgba(241,245,249,0.9)',
+    border: '1px solid var(--border)',
+    background: 'var(--surface2)',
     color: 'var(--text-faint)',
     cursor: 'default',
   },
   compareCard: {
-    background: 'rgba(255,255,255,0.82)',
-    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'color-mix(in srgb, var(--surface) 88%, transparent)',
+    border: '1px solid var(--border)',
     borderRadius: 24,
     padding: '24px 24px 26px',
-    boxShadow: '0 16px 36px rgba(15,23,42,0.06)',
+    boxShadow: 'var(--glow-gold)',
   },
   compareEyebrow: {
     fontFamily: 'var(--font-mono)',
@@ -418,7 +415,7 @@ const styles = {
   },
   compareItem: {
     background: 'var(--surface2)',
-    border: '1px solid rgba(15,23,42,0.06)',
+    border: '1px solid var(--border)',
     borderRadius: 18,
     padding: '18px 16px',
   },
