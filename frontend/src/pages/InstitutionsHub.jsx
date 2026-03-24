@@ -422,7 +422,6 @@ export default function InstitutionsHub() {
         <section style={styles.commandCard}>
           <div style={styles.commandTopRow}>
             <div style={styles.searchWrap}>
-              <div style={styles.filterSectionLabel}>Search the shelf</div>
               <input
                 value={searchValue}
                 onChange={event => setSearchValue(event.target.value)}
@@ -671,57 +670,50 @@ const styles = {
   },
   commandCard: {
     borderRadius: 34,
-    padding: 18,
+    padding: '16px 18px 14px',
     background: 'color-mix(in srgb, var(--surface) 88%, transparent)',
     border: '1px solid var(--border)',
     boxShadow: 'var(--glow-gold)',
     marginBottom: 20,
   },
   commandTopRow: {
-    marginBottom: 20,
+    marginBottom: 14,
   },
   searchWrap: {
     width: '100%',
-  },
-  filterSection: {
-    display: 'grid',
-    gap: 10,
-    alignContent: 'start',
-  },
-  filterSectionLabel: {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.68rem',
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
-    color: 'var(--text-faint)',
   },
   searchInput: {
     width: '100%',
     border: '1px solid var(--border)',
     borderRadius: 999,
-    padding: '18px 24px',
+    padding: '15px 22px',
     background: 'var(--surface2)',
     color: 'var(--text)',
     font: 'inherit',
     outline: 'none',
-    fontSize: '1.02rem',
+    fontSize: '1rem',
   },
   commandBottomRow: {
     display: 'grid',
     gridTemplateColumns: 'minmax(240px, auto) minmax(0, 1fr)',
-    gap: 24,
+    gap: 18,
     alignItems: 'start',
+  },
+  filterSection: {
+    display: 'grid',
+    gap: 8,
+    alignContent: 'start',
   },
   filterGroup: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
   filterChip: {
     border: '1px solid var(--border)',
     background: 'var(--surface)',
     borderRadius: 999,
-    padding: '10px 14px',
+    padding: '9px 14px',
     color: 'var(--text-dim)',
     fontWeight: 600,
     cursor: 'pointer',
@@ -735,10 +727,17 @@ const styles = {
     border: '1px solid var(--border)',
     background: 'var(--surface2)',
     borderRadius: 999,
-    padding: '10px 14px',
+    padding: '9px 14px',
     color: 'var(--text-dim)',
     fontWeight: 600,
     cursor: 'pointer',
+  },
+  filterSectionLabel: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.64rem',
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+    color: 'var(--text-faint)',
   },
   categoryChipActive: {
     background: 'var(--btn-primary-bg)',
