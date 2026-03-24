@@ -1,0 +1,68 @@
+{
+  "branch": "zian",
+  "maxAgents": 7,
+  "managerCountsTowardCap": true,
+  "defaultTeam": [
+    {
+      "role": "manager",
+      "count": 1,
+      "orchestrates": true
+    },
+    {
+      "role": "developer",
+      "count": 2,
+      "orchestrates": false
+    },
+    {
+      "role": "qa",
+      "count": 1,
+      "orchestrates": false
+    },
+    {
+      "role": "researcher",
+      "count": 1,
+      "orchestrates": false
+    }
+  ],
+  "flexSlots": 2,
+  "ownershipBoundaries": {
+    "frontend": [
+      "frontend/src",
+      "frontend/public"
+    ],
+    "backend": [
+      "backend/app.py",
+      "backend/services",
+      "backend/tests",
+      "backend/analyze_portfolio.py",
+      "backend/*_retriever.py",
+      "backend/*_updater.py",
+      "backend/users_assets_update.py"
+    ],
+    "extension": [
+      "chrome-extension"
+    ]
+  },
+  "defaultAssignments": {
+    "developer_1": [
+      "frontend/src",
+      "chrome-extension"
+    ],
+    "developer_2": [
+      "backend/app.py",
+      "backend/services",
+      "backend/tests"
+    ],
+    "qa": [
+      "frontend",
+      "backend/tests",
+      "chrome-extension"
+    ],
+    "researcher": [
+      "frontend architecture",
+      "backend architecture",
+      "fintech product opportunities",
+      "browser extension opportunities"
+    ]
+  }
+}

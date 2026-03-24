@@ -6,6 +6,7 @@ from typing import Any, Dict
 USER_FIELD_ORDER = [
     "name",
     "age",
+    "subscription_plan",
     "cash_balance",
     "liability",
     "liability_items",
@@ -36,10 +37,11 @@ def _build_default_user_profile(name: str) -> Dict[str, Any]:
     return {
         "name": name,
         "age": None,
+        "subscription_plan": "free",
         "cash_balance": 0.0,
         "liability": 0.0,
         "liability_items": [],
-        "portfolio": {"stocks": [], "cryptos": [], "commodities": []},
+        "portfolio": {"stocks": [], "bonds": [], "real_assets": [], "cryptos": [], "commodities": []},
         "manual_assets": [],
         "portfolio_value": 0.0,
         "total_balance": 0.0,
@@ -114,11 +116,11 @@ def normalize_user_profile(user: Dict[str, Any]) -> Dict[str, Any]:
 
     portfolio = normalized.get("portfolio")
     if isinstance(portfolio, dict):
-        for bucket in ("stocks", "cryptos", "commodities"):
+        for bucket in ("stocks", "bonds", "real_assets", "cryptos", "commodities"):
             if not isinstance(portfolio.get(bucket), list):
                 portfolio[bucket] = []
     else:
-        normalized["portfolio"] = {"stocks": [], "cryptos": [], "commodities": []}
+        normalized["portfolio"] = {"stocks": [], "bonds": [], "real_assets": [], "cryptos": [], "commodities": []}
 
     wellness = normalized.get("wellness_metrics")
     if not isinstance(wellness, dict):

@@ -5,9 +5,11 @@ import { useLoginModal } from '../context/LoginModalContext.jsx'
 import ThemeModal from './ThemeModal.jsx'
 import SettingsModal from './SettingsModal.jsx'
 import { API_BASE as API } from '../utils/api.js'
+import { GUIDED_SCROLL_EVENT, queueGuidedScroll } from '../utils/guidedScroll.js'
 const NAV_LINKS = [
   { label: 'Home',      path: '/' },
   { label: 'Markets',    path: '/stocks' },
+  { label: 'Pricing',    path: '/pricing' },
 ]
 
 const PROFILE_ALLOCATIONS = {
@@ -27,7 +29,7 @@ function hasFinancialActivity(profile) {
   if (!profile || typeof profile !== 'object') return false
 
   const portfolio = profile.portfolio && typeof profile.portfolio === 'object' ? profile.portfolio : {}
-  const portfolioBuckets = ['stocks', 'cryptos', 'commodities']
+  const portfolioBuckets = ['stocks', 'bonds', 'real_assets', 'cryptos', 'commodities']
   const hasPortfolioPositions = portfolioBuckets.some(bucket =>
     Array.isArray(portfolio[bucket]) && portfolio[bucket].some(item =>
       Number(item?.qty || 0) > 0 || Number(item?.market_value || 0) > 0
@@ -89,7 +91,8 @@ function getCurrentAllocation(profile) {
 
   const amounts = {
     equities: sumBucket('stocks'),
-    bonds: 0,
+    bonds: sumBucket('bonds'),
+    real_assets: sumBucket('real_assets'),
     cash: getDeployableCash(profile),
     commodities: sumBucket('commodities'),
     crypto: sumBucket('cryptos'),
@@ -249,11 +252,16 @@ export default function Navbar() {
           `Phase it in over ${pace} so the shift matches your current allocation gap without forcing a one-shot rebalance.`,
         ],
         cta:'Review optimization',
+        guideTargetId:'portfolio-analysis',
       })
     }
 
     return items
   }, [navProfile])
+
+  function handleNotificationAction(item) {
+    setExpandedNotifId(current => current === item.id ? null : item.id)
+  }
 
   return (
     <nav style={S.nav}>
@@ -267,7 +275,7 @@ export default function Navbar() {
       <ul style={S.links}>
         {NAV_LINKS.map(({ label, path }) => {
           const active = label === 'Markets'
-            ? ['/stocks', '/commodities', '/crypto'].includes(pathname)
+            ? ['/stocks', '/bonds', '/real-assets', '/commodities', '/crypto'].includes(pathname)
             : pathname === path
           return (
             <li key={label}>
@@ -367,12 +375,35 @@ export default function Navbar() {
                                   </div>
                                 ))}
                               </div>
+                              <div style={S.notifDetailActions}>
+                                <button
+                                  type="button"
+                                  style={S.notifPrimaryButton}
+                                  onClick={() => {
+                                    queueGuidedScroll('portfolio-analysis', {
+                                      source: 'navbar-notification',
+                                      tone: item.tone,
+                                    })
+                                    setNotifOpen(false)
+                                    setExpandedNotifId(null)
+                                    if (pathname === '/profile') {
+                                      window.dispatchEvent(new CustomEvent(GUIDED_SCROLL_EVENT, {
+                                        detail: { targetId: 'portfolio-analysis', source: 'navbar-notification' },
+                                      }))
+                                      return
+                                    }
+                                    navigate('/profile')
+                                  }}
+                                >
+                                  Open portfolio analysis
+                                </button>
+                              </div>
                             </div>
                           )}
                           <button
                             type="button"
                             style={{ ...S.notifAction, color:item.tone }}
-                            onClick={() => setExpandedNotifId(current => current === item.id ? null : item.id)}
+                            onClick={() => handleNotificationAction(item)}
                           >
                             {expandedNotifId === item.id ? 'Hide optimization' : item.cta}
                           </button>
@@ -695,6 +726,11 @@ const S = {
     display:'grid',
     gap:8,
   },
+  notifDetailActions: {
+    display:'flex',
+    justifyContent:'flex-start',
+    marginTop:12,
+  },
   notifDetailRow: {
     display:'flex',
     alignItems:'flex-start',
@@ -718,6 +754,17 @@ const S = {
     padding:0,
     fontFamily:'var(--font-body)',
     fontSize:'0.8rem',
+    fontWeight:700,
+    cursor:'pointer',
+  },
+  notifPrimaryButton: {
+    border:'1px solid rgba(42,184,163,0.18)',
+    background:'rgba(42,184,163,0.1)',
+    color:'var(--text)',
+    padding:'10px 14px',
+    borderRadius:10,
+    fontFamily:'var(--font-display)',
+    fontSize:'0.82rem',
     fontWeight:700,
     cursor:'pointer',
   },

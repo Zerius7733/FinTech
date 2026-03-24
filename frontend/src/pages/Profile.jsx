@@ -10,6 +10,7 @@ import AssetInsightsPanel, { getCachedInsight } from '../components/AssetInsight
 import { API_BASE as API } from '../utils/api.js'
 import { refreshPage } from '../utils/refreshPage.js'
 import { convertCurrency, formatCurrency, normalizeCurrencyCode } from '../utils/currency.js'
+import { consumeGuidedScroll, GUIDED_SCROLL_EVENT } from '../utils/guidedScroll.js'
 let DISPLAY_CURRENCY = 'USD'
 function setDisplayCurrency(code) {
   DISPLAY_CURRENCY = normalizeCurrencyCode(code || 'USD')
@@ -36,8 +37,109 @@ function gainPct(current, avg) {
   return ((current - avg) / avg) * 100
 }
 
+async function fetchWithTimeout(input, init = {}, timeoutMs = 10000) {
+  const controller = new AbortController()
+  const timerId = window.setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    })
+  } finally {
+    window.clearTimeout(timerId)
+  }
+}
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
+}
+
+function normalizeRiskBucket(profileValue) {
+  if (typeof profileValue === 'number' && Number.isFinite(profileValue)) {
+    if (profileValue <= 33.33) return 'Low'
+    if (profileValue <= 66.66) return 'Moderate'
+    return 'High'
+  }
+  const normalized = String(profileValue || '').trim().toLowerCase()
+  if (['low', 'conservative'].includes(normalized)) return 'Low'
+  if (['moderate', 'medium', 'balanced'].includes(normalized)) return 'Moderate'
+  if (['high', 'aggressive'].includes(normalized)) return 'High'
+  const parsed = Number(normalized)
+  if (Number.isFinite(parsed)) return normalizeRiskBucket(parsed)
+  return 'Moderate'
+}
+
+function profileStressScore(profile) {
+  const direct = Number(profile?.financial_stress_index)
+  if (Number.isFinite(direct)) return direct
+  const nested = Number(profile?.wellness_metrics?.financial_stress_index)
+  return Number.isFinite(nested) ? nested : 0
+}
+
+function deployableCash(profile) {
+  if (!profile || typeof profile !== 'object') return 0
+  const syncedCashBalance = Number(profile.cash_balance || 0)
+  const bankEntryTotal = Array.isArray(profile.manual_assets)
+    ? profile.manual_assets.reduce((sum, item) => {
+        if (item?.category !== 'banks') return sum
+        return sum + Number(item?.value || 0)
+      }, 0)
+    : 0
+  return syncedCashBalance + bankEntryTotal
+}
+
+function profileAllocation(profile) {
+  const portfolio = profile?.portfolio && typeof profile.portfolio === 'object' ? profile.portfolio : {}
+  const sumBucket = bucket => (
+    Array.isArray(portfolio[bucket])
+      ? portfolio[bucket].reduce((sum, item) => sum + Number(item?.market_value || 0), 0)
+      : 0
+  )
+  const amounts = {
+    equities: sumBucket('stocks'),
+    bonds: sumBucket('bonds'),
+    real_assets: sumBucket('real_assets'),
+    cash: deployableCash(profile),
+    commodities: sumBucket('commodities'),
+    crypto: sumBucket('cryptos'),
+  }
+  const total = Object.values(amounts).reduce((sum, value) => sum + value, 0)
+  const weights = Object.fromEntries(
+    Object.entries(amounts).map(([key, value]) => [key, total > 0 ? value / total : 0]),
+  )
+  return { amounts, weights, total }
+}
+
+function reserveMonthsForProfile(profileBucket, stressScore) {
+  const baseMonths = { Low: 6, Moderate: 4, High: 3 }[profileBucket] ?? 4
+  if (stressScore >= 60) return baseMonths + 2
+  if (stressScore >= 40) return baseMonths + 1
+  return baseMonths
+}
+
+function applyProfileStressGuardrails(allocation, stressScore) {
+  const adjusted = { ...allocation }
+  if (stressScore >= 60) {
+    adjusted.cash += 0.10
+    adjusted.equities = Math.max(0.20, adjusted.equities - 0.05)
+    adjusted.crypto = Math.max(0, adjusted.crypto - 0.05)
+  } else if (stressScore >= 40) {
+    adjusted.cash += 0.05
+    adjusted.equities = Math.max(0.25, adjusted.equities - 0.03)
+    adjusted.crypto = Math.max(0, adjusted.crypto - 0.02)
+  }
+  const total = Object.values(adjusted).reduce((sum, value) => sum + value, 0)
+  return Object.fromEntries(Object.entries(adjusted).map(([key, value]) => [key, value / total]))
+}
+
+const PROFILE_ALLOCATIONS = {
+  Low: { equities: 0.30, bonds: 0.50, cash: 0.18, commodities: 0.02, crypto: 0.00 },
+  Moderate: { equities: 0.50, bonds: 0.25, cash: 0.15, commodities: 0.05, crypto: 0.05 },
+  High: { equities: 0.55, bonds: 0.10, cash: 0.10, commodities: 0.05, crypto: 0.20 },
+}
+
+function formatPercent(value) {
+  return `${Math.round(Number(value || 0) * 100)}%`
 }
 
 function formatTrendDate(value) {
@@ -51,6 +153,8 @@ function buildTrendSeriesFromHistory({ history, periodKey, viewKey, fallbackCurr
   const fieldMap = {
     combined: 'total_net_worth',
     stocks: 'stocks_value',
+    bonds: 'bonds_value',
+    real_assets: 'real_assets_value',
     commodities: 'commodities_value',
     crypto: 'crypto_value',
   }
@@ -1369,7 +1473,7 @@ function FinancialManagerModal({
   }, [open, activeTab])
 
   if (!open) return null
-  const symbolDrivenCategories = new Set(['stock', 'crypto', 'commodity'])
+  const symbolDrivenCategories = new Set(['stock', 'bond', 'real_asset', 'crypto', 'commodity'])
   const needsExactSymbol = symbolDrivenCategories.has(String(assetForm.category || '').toLowerCase())
 
   const tabMap = {
@@ -1402,6 +1506,30 @@ function FinancialManagerModal({
       value: Number(marketValue || 0),
       source: 'portfolio',
       asset_class: 'stocks',
+      symbol: item.symbol || item.name || '',
+    })})),
+    ...((profile?.portfolio?.bonds ?? []).map((item, index) => {
+      const fallbackValue = Number(item.qty || 0) * Number(item.current_price || 0)
+      const marketValue = item.market_value ?? fallbackValue
+      return ({
+      id: `portfolio-bond-${index}-${item.symbol ?? item.name ?? 'item'}`,
+      label: item.name || item.symbol || `Bond ${index + 1}`,
+      category: 'bonds',
+      value: Number(marketValue || 0),
+      source: 'portfolio',
+      asset_class: 'bonds',
+      symbol: item.symbol || item.name || '',
+    })})),
+    ...((profile?.portfolio?.real_assets ?? []).map((item, index) => {
+      const fallbackValue = Number(item.qty || 0) * Number(item.current_price || 0)
+      const marketValue = item.market_value ?? fallbackValue
+      return ({
+      id: `portfolio-real-asset-${index}-${item.symbol ?? item.name ?? 'item'}`,
+      label: item.name || item.symbol || `Real Asset ${index + 1}`,
+      category: 'real_assets',
+      value: Number(marketValue || 0),
+      source: 'portfolio',
+      asset_class: 'real_assets',
       symbol: item.symbol || item.name || '',
     })})),
     ...((profile?.portfolio?.cryptos ?? []).map((item, index) => {
@@ -1514,7 +1642,7 @@ function FinancialManagerModal({
                 <input
                   value={assetForm.label}
                   onChange={e => setAssetForm(prev => ({ ...prev, label:e.target.value }))}
-                  placeholder={needsExactSymbol ? 'Exact symbol (e.g., AAPL, BTC, GOLD)' : 'Asset label'}
+                  placeholder={needsExactSymbol ? 'Exact symbol (e.g., AAPL, BND, VNQ, BTC, GOLD)' : 'Asset label'}
                   style={fm.input}
                 />
                 <select
@@ -1525,6 +1653,8 @@ function FinancialManagerModal({
                   <option value="real_estate">Real Estate</option>
                   <option value="banks">Banks</option>
                   <option value="stock">Stock</option>
+                  <option value="bond">Bond</option>
+                  <option value="real_asset">Real Asset</option>
                   <option value="crypto">Crypto</option>
                   <option value="commodity">Commodity</option>
                   <option value="business">Business</option>
@@ -1807,12 +1937,78 @@ export default function Profile() {
   const [benchmarkError, setBenchmarkError] = useState('')
   const [benchmarkOpen, setBenchmarkOpen] = useState(false)
   const [priceRefreshing, setPriceRefreshing] = useState(false)
+  const portfolioAnalysisRef = useRef(null)
+  const portfolioAnalysisFocusTimerRef = useRef(null)
+  const pendingGuidedScrollRef = useRef(false)
+  const [portfolioAnalysisFocused, setPortfolioAnalysisFocused] = useState(false)
   const holdingsStrongText = isSilentNight ? 'rgba(248,250,252,0.96)' : 'var(--text)'
   const holdingsDimText = isSilentNight ? 'rgba(226,232,240,0.88)' : 'var(--text-dim)'
   const holdingsGoldText = isSilentNight ? '#d4bd92' : 'var(--gold)'
   const holdingsHeaderText = isSilentNight ? 'rgba(203,213,225,0.8)' : 'var(--text-faint)'
   const holdingsRowBorder = isSilentNight ? '1px solid rgba(248,250,252,0.06)' : '1px solid rgba(255,255,255,0.04)'
   const holdingsHeadBorder = isSilentNight ? '1px solid rgba(248,250,252,0.12)' : '1px solid var(--border)'
+
+  useEffect(() => {
+    const triggerPortfolioAnalysisFocus = () => {
+      const target = portfolioAnalysisRef.current
+      if (!target) return
+
+      const runScroll = () => {
+        target.scrollIntoView({ behavior:'smooth', block:'center' })
+        setPortfolioAnalysisFocused(true)
+        if (portfolioAnalysisFocusTimerRef.current) clearTimeout(portfolioAnalysisFocusTimerRef.current)
+        portfolioAnalysisFocusTimerRef.current = window.setTimeout(() => {
+          setPortfolioAnalysisFocused(false)
+        }, 1800)
+      }
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          window.setTimeout(runScroll, 80)
+        })
+      })
+    }
+
+    const request = consumeGuidedScroll()
+    if (request?.targetId === 'portfolio-analysis') {
+      pendingGuidedScrollRef.current = true
+    }
+
+    const onGuidedScroll = event => {
+      if (event?.detail?.targetId !== 'portfolio-analysis') return
+      pendingGuidedScrollRef.current = true
+    }
+
+    window.addEventListener(GUIDED_SCROLL_EVENT, onGuidedScroll)
+    return () => {
+      window.removeEventListener(GUIDED_SCROLL_EVENT, onGuidedScroll)
+      if (portfolioAnalysisFocusTimerRef.current) clearTimeout(portfolioAnalysisFocusTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!pendingGuidedScrollRef.current) return
+    if (loading || loadingOverlayVisible || !profile) return
+    if (!portfolioAnalysisRef.current) return
+
+    pendingGuidedScrollRef.current = false
+
+    const target = portfolioAnalysisRef.current
+    const runScroll = () => {
+      target.scrollIntoView({ behavior:'smooth', block:'center' })
+      setPortfolioAnalysisFocused(true)
+      if (portfolioAnalysisFocusTimerRef.current) clearTimeout(portfolioAnalysisFocusTimerRef.current)
+      portfolioAnalysisFocusTimerRef.current = window.setTimeout(() => {
+        setPortfolioAnalysisFocused(false)
+      }, 1800)
+    }
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        window.setTimeout(runScroll, 80)
+      })
+    })
+  }, [loading, loadingOverlayVisible, profile])
   const retirementStatCardStyle = isSilentNight ? {
     background:'linear-gradient(180deg, rgba(15,23,42,0.78), rgba(15,23,42,0.66))',
     border:'1px solid rgba(148,163,184,0.18)',
@@ -1831,6 +2027,61 @@ export default function Profile() {
     color:'var(--text)',
   } : {}
 
+  const latentGrowthContext = useMemo(() => {
+    if (!profile || typeof profile !== 'object') return null
+
+    const riskProfile = normalizeRiskBucket(profile.risk_profile)
+    const stressScore = profileStressScore(profile)
+    const monthlyIncome = Number(profile.income || 0)
+    const allocation = profileAllocation(profile)
+    if (!allocation.total || allocation.total <= 0) return null
+
+    const reserveMonths = reserveMonthsForProfile(riskProfile, stressScore)
+    const reserveTarget = Math.max(monthlyIncome * reserveMonths, 10000)
+    const targetWeights = applyProfileStressGuardrails(PROFILE_ALLOCATIONS[riskProfile] ?? PROFILE_ALLOCATIONS.Moderate, stressScore)
+    const targetCashAmount = allocation.total * targetWeights.cash
+    const excessAboveReserve = Math.max(0, allocation.amounts.cash - reserveTarget)
+    const excessAboveAllocation = Math.max(0, allocation.amounts.cash - targetCashAmount)
+    const idleCash = Math.min(excessAboveReserve, excessAboveAllocation || excessAboveReserve)
+
+    if (idleCash < 5000) return null
+
+    const potentialAnnualGrowth = idleCash * 0.05
+    const moveRatio = stressScore >= 60 ? 0.35 : stressScore >= 40 ? 0.5 : riskProfile === 'Low' ? 0.45 : riskProfile === 'Moderate' ? 0.6 : 0.75
+    const suggestedMove = Math.round(Math.min(idleCash, excessAboveAllocation) * moveRatio || idleCash * moveRatio)
+    const pace = suggestedMove >= 20000 || stressScore >= 40 ? '3 to 5 entries' : riskProfile === 'High' ? '2 to 3 entries' : '2 to 4 entries'
+    const keepCashAmount = Math.max(reserveTarget, targetCashAmount)
+    const title = `Potential +${formatCurrency(potentialAnnualGrowth)}/year from idle cash`
+    const body = `About ${formatCurrency(idleCash)} is sitting above your ${reserveMonths}-month reserve and above your profile-aligned cash target. Redirecting part of it into your portfolio could improve long-term growth.`
+    const details = [
+      `Keep about ${formatCurrency(keepCashAmount)} in cash. That reflects a ${reserveMonths}-month reserve, your ${riskProfile.toLowerCase()} risk profile, and a stress score of ${Math.round(stressScore)}.`,
+      `Your current allocation is about ${formatPercent(allocation.weights.cash)} cash versus a profile-aligned target near ${formatPercent(targetWeights.cash)} cash. Consider moving roughly ${formatCurrency(suggestedMove)} toward long-term investments.`,
+      `Phase it in over ${pace} so the shift matches your current allocation gap without forcing a one-shot rebalance.`,
+    ]
+
+    return {
+      detected: true,
+      label: 'Latent growth detected',
+      title,
+      body,
+      summary: `${title}. ${body}`,
+      detail_title: 'Suggested next step',
+      details,
+      risk_profile: riskProfile,
+      stress_score: Math.round(stressScore),
+      reserve_months: reserveMonths,
+      reserve_target: Math.round(reserveTarget),
+      target_cash_amount: Math.round(targetCashAmount),
+      keep_cash_amount: Math.round(keepCashAmount),
+      current_cash_weight: Number(allocation.weights.cash.toFixed(4)),
+      target_cash_weight: Number(targetWeights.cash.toFixed(4)),
+      idle_cash: Math.round(idleCash),
+      suggested_move: suggestedMove,
+      projected_annual_growth: Math.round(potentialAnnualGrowth),
+      pacing_guidance: pace,
+    }
+  }, [profile])
+
   // â”€â”€ Initial data fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!authUser?.user_id) { setLoading(false); return }
@@ -1838,14 +2089,14 @@ export default function Profile() {
     async function fetchAll() {
       setLoading(true); setError('')
       try {
-        // Keep portfolio page data fresh on reload.
-        await fetch(`${API}/update/assets`).catch(() => null)
-        await fetch(`${API}/update/wellness`).catch(() => null)
+        // Refresh jobs should never block the profile from rendering.
+        fetchWithTimeout(`${API}/update/assets`, {}, 6000).catch(() => null)
+        fetchWithTimeout(`${API}/update/wellness`, {}, 6000).catch(() => null)
 
         const [profRes, portRes, historyRes] = await Promise.all([
-          fetch(`${API}/users/${authUser.user_id}`),
-          fetch(`${API}/portfolio/${authUser.user_id}`),
-          fetch(`${API}/portfolio/${authUser.user_id}/history`),
+          fetchWithTimeout(`${API}/users/${authUser.user_id}`),
+          fetchWithTimeout(`${API}/portfolio/${authUser.user_id}`),
+          fetchWithTimeout(`${API}/portfolio/${authUser.user_id}/history`),
         ])
         if (cancelled) return
         if (profRes.ok) {
@@ -1861,7 +2112,9 @@ export default function Profile() {
         } else {
           setPortfolioHistory([])
         }
-      } catch { if (!cancelled) setError('Could not reach the server. Is the backend running?') }
+      } catch {
+        if (!cancelled) setError('Could not reach the server. Is the backend running?')
+      }
       finally  { if (!cancelled) setLoading(false) }
     }
     fetchAll()
@@ -1906,12 +2159,19 @@ export default function Profile() {
     if (!authUser?.user_id) return
     setGptLoading(true); setGptError(''); setGptRecs(null)
     try {
-      const res = await fetch(`${API}/users/${authUser.user_id}/recommendations/gpt?limit=3&model=gpt-4.1-mini`)
+      const params = new URLSearchParams({
+        limit: '3',
+        model: 'gpt-4.1-mini',
+      })
+      if (latentGrowthContext) {
+        params.set('latent_growth_context', JSON.stringify(latentGrowthContext))
+      }
+      const res = await fetch(`${API}/users/${authUser.user_id}/recommendations/gpt?${params.toString()}`)
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.detail ?? `HTTP ${res.status}`) }
       setGptRecs(await res.json())
     } catch (e) { setGptError(e.message) }
     finally     { setGptLoading(false) }
-  }, [authUser?.user_id])
+  }, [authUser?.user_id, latentGrowthContext])
 
   const fetchBenchmarks = useCallback(async () => {
     if (!authUser?.user_id) return
@@ -1932,6 +2192,8 @@ export default function Profile() {
 
   // â”€â”€ Derived values â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const stocks         = portfolio?.stocks  ?? []
+  const bonds          = portfolio?.bonds ?? []
+  const realAssets     = portfolio?.real_assets ?? []
   const commodities    = portfolio?.commodities ?? []
   const cryptos        = portfolio?.cryptos ?? []
   const manualAssets   = profile?.manual_assets ?? []
@@ -1939,13 +2201,17 @@ export default function Profile() {
   const incomeStreams  = profile?.income_streams ?? []
   const allHoldings    = [
     ...stocks.map(h => ({ ...h, type:'Stock' })),
+    ...bonds.map(h => ({ ...h, type:'Bond' })),
+    ...realAssets.map(h => ({ ...h, type:'Real Asset' })),
     ...commodities.map(h => ({ ...h, type:'Commodity' })),
     ...cryptos.map(h => ({ ...h, type:'Crypto' })),
   ]
   const stocksValue    = stocks.reduce((s,h)  => s + (h.market_value ?? 0), 0)
+  const bondsValue     = bonds.reduce((s,h) => s + (h.market_value ?? 0), 0)
+  const realAssetsValue = realAssets.reduce((s,h) => s + (h.market_value ?? 0), 0)
   const commoditiesValue = commodities.reduce((s,h) => s + (h.market_value ?? 0), 0)
   const cryptosValue   = cryptos.reduce((s,h) => s + (h.market_value ?? 0), 0)
-  const portfolioValue = stocksValue + commoditiesValue + cryptosValue
+  const portfolioValue = stocksValue + bondsValue + realAssetsValue + commoditiesValue + cryptosValue
   const manualAssetGroups = manualAssets.reduce((groups, item) => {
     const key = item.category || 'other'
     if (!groups[key]) {
@@ -1964,7 +2230,7 @@ export default function Profile() {
   const manualAssetTotal = manualAssetRows.reduce((sum, item) => sum + item.total, 0)
   const cashBalance = Number(profile?.cash_balance ?? 0)
   const totalAUM       = portfolioValue + (profile?.cash_balance ?? 0)
-  const positionCount  = stocks.length + commodities.length + cryptos.length
+  const positionCount  = stocks.length + bonds.length + realAssets.length + commodities.length + cryptos.length
   const currentIncome  = incomeStreams.length
     ? incomeStreams.reduce((sum, item) => sum + Number(item.monthly_amount || 0), 0)
     : Number(profile?.income ?? 0)
@@ -1996,6 +2262,8 @@ export default function Profile() {
     ?? wellness?.derived_metrics
     ?? {}
   const wellnessScore  = profile?.financial_wellness_score ?? 0
+  const subscriptionPlan = String(profile?.subscription_plan ?? profile?.subscription?.plan ?? 'free').toLowerCase()
+  const isPremiumPlan = subscriptionPlan === 'premium'
   const stressIndex    = profile?.financial_stress_index   ?? null
   const netWorth       = profile?.net_worth ?? null
   const [trendRange, setTrendRange] = useState('6M')
@@ -2005,6 +2273,8 @@ export default function Profile() {
   const compositionBase = portfolioValue + manualAssetTotal + cashBalance
   const COMPOSITION_REAL = [
     compositionBase > 0 && stocksValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / compositionBase * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
+    compositionBase > 0 && bondsValue > 0 && { icon:'🏛️', name:'Bonds', pct:Math.round(bondsValue / compositionBase * 100), val:fmt$(bondsValue), color:'var(--purple)' },
+    compositionBase > 0 && realAssetsValue > 0 && { icon:'🏠', name:'Real Assets', pct:Math.round(realAssetsValue / compositionBase * 100), val:fmt$(realAssetsValue), color:'var(--green)' },
     compositionBase > 0 && commoditiesValue > 0 && { icon:'🪙', name:'Commodities', pct:Math.round(commoditiesValue / compositionBase * 100), val:fmt$(commoditiesValue), color:'#d4a63a' },
     compositionBase > 0 && cryptosValue > 0 && { icon:'₿',  name:'Digital Assets', pct:Math.round(cryptosValue / compositionBase * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
     compositionBase > 0 && cashBalance > 0 && { icon:'🏦', name:'Synced Account Balance', pct:Math.round(cashBalance / compositionBase * 100), val:fmt$(cashBalance), color:'#7dd3fc' },
@@ -2114,6 +2384,8 @@ export default function Profile() {
   const currentMap = {
     combined: netWorth ?? totalAUM,
     stocks: stocksValue,
+    bonds: bondsValue,
+    real_assets: realAssetsValue,
     commodities: commoditiesValue,
     crypto: cryptosValue,
   }
@@ -2125,12 +2397,14 @@ export default function Profile() {
       viewKey: trendView,
       fallbackCurrent: currentMap[trendView] ?? (netWorth ?? totalAUM),
     })
-  }, [portfolioHistory, trendRange, trendView, netWorth, totalAUM, stocksValue, commoditiesValue, cryptosValue])
+  }, [portfolioHistory, trendRange, trendView, netWorth, totalAUM, stocksValue, bondsValue, realAssetsValue, commoditiesValue, cryptosValue])
 
   const trendComparisons = useMemo(() => {
     const comparisonColors = {
       combined: '#8b5cf6',
       stocks: '#6d8df7',
+      bonds: '#8b5cf6',
+      real_assets: '#1dbb7a',
       commodities: '#e4a04f',
       crypto: '#2ab8a3',
     }
@@ -2153,12 +2427,16 @@ export default function Profile() {
   const trendTitleMap = {
     combined: 'Combined Net Worth',
     stocks: 'Stocks Value',
+    bonds: 'Bonds Value',
+    real_assets: 'Real Assets Value',
     commodities: 'Commodities Value',
     crypto: 'Crypto Value',
   }
   const trendDescMap = {
     combined: 'Daily combined net worth across cash, liabilities, and invested assets.',
     stocks: 'Daily equity value across your stock holdings.',
+    bonds: 'Daily fixed-income value across your bond holdings.',
+    real_assets: 'Daily listed real-asset value across your real-asset holdings.',
     commodities: 'Daily commodity exposure value across your commodity positions.',
     crypto: 'Daily digital-asset value across your crypto holdings.',
   }
@@ -2253,7 +2531,7 @@ export default function Profile() {
     setFinancialBusy(true)
     setError('')
     try {
-      const isPortfolioAssetCreate = tab === 'assets' && ['stock', 'crypto', 'commodity'].includes(String(payload?.category || '').toLowerCase())
+      const isPortfolioAssetCreate = tab === 'assets' && ['stock', 'bond', 'real_asset', 'crypto', 'commodity'].includes(String(payload?.category || '').toLowerCase())
       const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
       const url = isPortfolioAssetCreate
         ? `${API}/users/${authUser.user_id}/financials/portfolio`
@@ -2277,7 +2555,22 @@ export default function Profile() {
         throw new Error(err?.detail ?? `HTTP ${res.status}`)
       }
       const data = await res.json()
-      if (data.user) setProfile(data.user)
+      if (data.user) {
+        setProfile(data.user)
+        try {
+          sessionStorage.setItem('ws_globe_profile', JSON.stringify({
+            userId: authUser.user_id,
+            data: data.user,
+          }))
+        } catch {}
+        window.dispatchEvent(new CustomEvent('ws-profile-updated', {
+          detail: {
+            userId: authUser.user_id,
+            user: data.user,
+            source: 'profile-financial-update',
+          },
+        }))
+      }
       refreshPage()
     } catch (err) {
       setError(err.message || 'Could not save financial item.')
@@ -2789,6 +3082,8 @@ export default function Profile() {
               {[
                 ['combined', 'Combined'],
                 ['stocks', 'Stocks'],
+                ['bonds', 'Bonds'],
+                ['real_assets', 'Real Assets'],
                 ['commodities', 'Commodities'],
                 ['crypto', 'Crypto'],
               ].map(([key, label]) => (
@@ -2989,6 +3284,15 @@ export default function Profile() {
                   {allHoldings.map((h,i) => {
                     const gain = gainPct(h.current_price, h.avg_price)
                     const gainColor = gain == null ? 'var(--text-faint)' : gain >= 0 ? 'var(--green)' : 'var(--red)'
+                    const typePill = h.type === 'Stock'
+                      ? { background:'rgba(96,165,250,0.1)', color:'var(--blue)' }
+                      : h.type === 'Bond'
+                        ? { background:'rgba(167,139,250,0.12)', color:'var(--purple)' }
+                        : h.type === 'Real Asset'
+                          ? { background:'rgba(29,187,122,0.12)', color:'var(--green)' }
+                          : h.type === 'Commodity'
+                            ? { background:'rgba(251,191,36,0.12)', color:'#c68f1b' }
+                            : { background:'rgba(45,212,191,0.1)', color:'var(--teal)' }
                     return (
                       <tr key={i} style={{ borderBottom:holdingsRowBorder, cursor:'pointer' }}
                         onClick={() => setSelectedHolding(h)}
@@ -2996,7 +3300,7 @@ export default function Profile() {
                         onMouseLeave={e => e.currentTarget.style.background='transparent'}>
                         <td style={{ padding:'12px 12px', color:holdingsStrongText, fontWeight:isSilentNight ? 700 : 600 }}>{h.symbol}</td>
                         <td style={{ padding:'12px 12px', textAlign:'right' }}>
-                          <span style={{ background: h.type==='Stock' ? 'rgba(96,165,250,0.1)' : 'rgba(45,212,191,0.1)', color: h.type==='Stock' ? 'var(--blue)' : 'var(--teal)', padding:'2px 8px', borderRadius:6, fontSize:'0.65rem' }}>{h.type}</span>
+                          <span style={{ ...typePill, padding:'2px 8px', borderRadius:6, fontSize:'0.65rem' }}>{h.type}</span>
                         </td>
                         <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsDimText }}>{h.qty}</td>
                         <td style={{ padding:'12px 12px', textAlign:'right', color:holdingsDimText }}>{fmt$(h.avg_price)}</td>
@@ -3023,7 +3327,17 @@ export default function Profile() {
             AI Recommendations
             POST /users/:id/recommendations/gpt
         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-        <div style={{ ...s.card, marginBottom:24, animation:'sectionIn 0.5s ease both', animationDelay:'0.44s' }}>
+        <div
+          ref={portfolioAnalysisRef}
+          id="portfolio-analysis"
+          style={{
+            ...s.card,
+            ...(portfolioAnalysisFocused ? s.cardFocused : null),
+            marginBottom:24,
+            animation:'sectionIn 0.5s ease both',
+            animationDelay:'0.44s',
+          }}
+        >
           <div style={s.secLabel}>
             <span style={{ display:'flex', alignItems:'center', gap:8 }}>
               Portfolio Analysis
@@ -3080,6 +3394,21 @@ export default function Profile() {
           <p style={{ fontSize:'0.9rem', color:'var(--text-dim)', lineHeight:1.72, marginBottom:20, maxWidth:900 }}>
             Uses your portfolio context, risk profile, and financial wellness signals to generate curated insights and next-step guidance.
           </p>
+
+          {!isPremiumPlan && (
+            <div style={s.subscriptionBanner}>
+              <div>
+                <div style={s.subscriptionEyebrow}>Free plan</div>
+                <div style={s.subscriptionTitle}>Market insights are locked to Premium.</div>
+                <div style={s.subscriptionBody}>
+                  Your core portfolio tools still work. Upgrade when you want analyst-style market insights and deeper narrative context.
+                </div>
+              </div>
+              <button type="button" onClick={() => navigate('/pricing')} style={s.subscriptionBtn}>
+                View plans
+              </button>
+            </div>
+          )}
 
           {gptError && <div style={s.errBox}>Warning: {gptError}</div>}
 
@@ -3628,6 +3957,10 @@ const s = {
   userName:  { fontFamily:'var(--font-display)', fontSize:'1.45rem', fontWeight:800, marginBottom:6 },
   twoCol:    { display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(360px, 1fr))', gap:22, marginBottom:22 },
   card:      { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, padding:24 },
+  cardFocused: {
+    border:'1px solid rgba(45,212,191,0.34)',
+    boxShadow:'0 20px 48px rgba(45,212,191,0.16)',
+  },
   featureCard: {
     minHeight:320,
     display:'flex',
@@ -3793,6 +4126,52 @@ const s = {
     flexWrap:'nowrap',
     minWidth:0,
     flexShrink:0,
+  },
+  subscriptionBanner: {
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'space-between',
+    gap:16,
+    flexWrap:'wrap',
+    background:'linear-gradient(135deg, rgba(45,212,191,0.08), rgba(109,141,247,0.06))',
+    border:'1px solid rgba(45,212,191,0.16)',
+    borderRadius:16,
+    padding:'18px 20px',
+    marginBottom:18,
+  },
+  subscriptionEyebrow: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    letterSpacing:'0.14em',
+    textTransform:'uppercase',
+    color:'var(--teal)',
+    marginBottom:8,
+  },
+  subscriptionTitle: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1rem',
+    fontWeight:800,
+    marginBottom:8,
+  },
+  subscriptionBody: {
+    maxWidth:760,
+    color:'var(--text-dim)',
+    lineHeight:1.7,
+    fontSize:'0.88rem',
+  },
+  subscriptionBtn: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    background:'rgba(255,255,255,0.98)',
+    border:'1px solid rgba(15,23,42,0.08)',
+    color:'#172033',
+    padding:'11px 16px',
+    borderRadius:12,
+    fontFamily:'var(--font-display)',
+    fontSize:'0.84rem',
+    fontWeight:700,
+    cursor:'pointer',
+    boxShadow:'0 8px 20px rgba(15,23,42,0.08)',
   },
   btnReport: {
     background:'var(--surface2)',

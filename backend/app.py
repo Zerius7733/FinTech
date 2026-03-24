@@ -9,12 +9,16 @@ from dotenv import load_dotenv
 from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any, Dict, Optional
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import AliasChoices, BaseModel, Field
 import yfinance as yf
 import backend.services.api_deps as api
+import backend.services.team_dashboard as team_dashboard
+from backend.services.subscription_registry import ensure_user_subscription as ensure_subscription_user
+from backend.services.subscription_registry import is_premium_subscription
+from backend.services.subscription_registry import subscription_payload
 
 load_dotenv()
 
@@ -60,6 +64,7 @@ app = FastAPI(
         {"name": "Market", "description": "Live market quote retrieval endpoints."},
         {"name": "Portfolio", "description": "User portfolio information endpoints."},
         {"name": "Retirement", "description": "Retirement planning and target allocation endpoints."},
+        {"name": "Team", "description": "Live team dashboard and graceful stop controls."},
     ],
 )
 
@@ -370,7 +375,7 @@ def _enrich_portfolio_with_ath(user: Dict[str, Any]) -> Dict[str, Any]:
     commodity_index = _build_commodity_ath_index()
     stock_index = _build_stock_ath_index()
 
-    for bucket in ("stocks", "cryptos", "commodities"):
+    for bucket in ("stocks", "bonds", "real_assets", "cryptos", "commodities"):
         entries = portfolio.get(bucket, [])
         if not isinstance(entries, list):
             continue
@@ -463,10 +468,10 @@ def _read_user_portfolio_history(user_id: str) -> Dict[str, Any]:
 def _parse_market_query(query: str) -> Dict[str, str]:
     parts = [part.strip().upper() for part in query.split(",", maxsplit=1)]
     if len(parts) != 2 or not parts[0] or not parts[1]:
-        raise ValueError("query must be in format 'STOCK, SPY', 'CRYPTO, BTC', or 'COMMODITY, GOLD'")
+        raise ValueError("query must be in format 'STOCK, SPY', 'BOND, BND', 'REAL_ASSET, VNQ', 'CRYPTO, BTC', or 'COMMODITY, GOLD'")
     asset_type, ticker = parts
-    if asset_type not in {"STOCK", "CRYPTO", "COMMODITY"}:
-        raise ValueError("asset type must be STOCK, CRYPTO, or COMMODITY")
+    if asset_type not in {"STOCK", "BOND", "REAL_ASSET", "CRYPTO", "COMMODITY"}:
+        raise ValueError("asset type must be STOCK, BOND, REAL_ASSET, CRYPTO, or COMMODITY")
     return {"asset_type": asset_type, "ticker": ticker}
 
 
@@ -531,7 +536,7 @@ def _sum_portfolio_positions(user: Dict[str, Any]) -> float:
         positions = portfolio
     elif isinstance(portfolio, dict):
         positions = []
-        for bucket in ("stocks", "cryptos", "commodities"):
+        for bucket in ("stocks", "bonds", "real_assets", "cryptos", "commodities"):
             bucket_positions = portfolio.get(bucket, [])
             if isinstance(bucket_positions, list):
                 positions.extend(bucket_positions)
@@ -545,16 +550,20 @@ def _normalize_manual_asset_category(value: str) -> str:
     alias_map = {
         "stock": "stock",
         "stocks": "stock",
+        "bond": "bond",
+        "bonds": "bond",
+        "real_asset": "real_asset",
+        "real_assets": "real_asset",
         "crypto": "crypto",
         "cryptos": "crypto",
         "commodity": "commodity",
         "commodities": "commodity",
     }
     normalized = alias_map.get(normalized, normalized)
-    allowed = {"real_estate", "business", "private_asset", "banks", "stock", "crypto", "commodity", "other"}
+    allowed = {"real_estate", "business", "private_asset", "banks", "stock", "bond", "real_asset", "crypto", "commodity", "other"}
     if normalized not in allowed:
         raise ValueError(
-            "asset category must be one of: real_estate, business, private_asset, banks, stock, crypto, commodity, other"
+            "asset category must be one of: real_estate, business, private_asset, banks, stock, bond, real_asset, crypto, commodity, other"
         )
     return normalized
 
@@ -1134,10 +1143,113 @@ class InsightsResponse(BaseModel):
     warnings: list[str]
 
 
+class TeamStopRequest(BaseModel):
+    reason: str | None = None
+
+
+class TeamObjectiveUpdateRequest(BaseModel):
+    objective: str
+
+
+class TeamTaskCreateRequest(BaseModel):
+    title: str
+    description: str = ""
+    owner_id: str
+    area: str = "general"
+
+
+class TeamTaskCompleteRequest(BaseModel):
+    outcome: str | None = None
+
+
+class UserSubscriptionUpdateRequest(BaseModel):
+    plan: str = Field(..., description="One of: free, premium")
+
+
+def _require_team_admin(x_unova_admin_key: str | None) -> None:
+    expected_key = os.getenv("TEAM_ADMIN_KEY", "unova-admin").strip() or "unova-admin"
+    candidate = str(x_unova_admin_key or "").strip()
+    if candidate != expected_key:
+        raise HTTPException(status_code=401, detail="admin authorization required")
+
+
 
 @app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/team/state", tags=["Team"], summary="Get live team dashboard state")
+def get_team_state(x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key")) -> Dict[str, Any]:
+    _require_team_admin(x_unova_admin_key)
+    return {"status": "ok", "team": team_dashboard.load_state()}
+
+
+@app.post("/team/stop", tags=["Team"], summary="Request a graceful team stop after the current task")
+def stop_team(
+    payload: TeamStopRequest | None = None,
+    x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key"),
+) -> Dict[str, Any]:
+    _require_team_admin(x_unova_admin_key)
+    state = team_dashboard.request_graceful_stop(payload.reason if payload else None)
+    return {"status": "ok", "team": state}
+
+
+@app.post("/team/resume", tags=["Team"], summary="Resume the team after a graceful stop")
+def resume_team(x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key")) -> Dict[str, Any]:
+    _require_team_admin(x_unova_admin_key)
+    state = team_dashboard.resume_team()
+    return {"status": "ok", "team": state}
+
+
+@app.post("/team/objective", tags=["Team"], summary="Update the current team objective")
+def update_team_objective(
+    payload: TeamObjectiveUpdateRequest,
+    x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key"),
+) -> Dict[str, Any]:
+    _require_team_admin(x_unova_admin_key)
+    try:
+        state = team_dashboard.update_objective(payload.objective)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"status": "ok", "team": state}
+
+
+@app.post("/team/tasks", tags=["Team"], summary="Queue a new team task")
+def create_team_task(
+    payload: TeamTaskCreateRequest,
+    x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key"),
+) -> Dict[str, Any]:
+    _require_team_admin(x_unova_admin_key)
+    try:
+        state = team_dashboard.add_task(payload.title, payload.description, payload.owner_id, payload.area)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"status": "ok", "team": state}
+
+
+@app.post("/team/tasks/{task_id}/complete", tags=["Team"], summary="Complete a task and record its outcome")
+def complete_team_task(
+    task_id: str,
+    payload: TeamTaskCompleteRequest | None = None,
+    x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key"),
+) -> Dict[str, Any]:
+    _require_team_admin(x_unova_admin_key)
+    try:
+        state = team_dashboard.complete_task(task_id, payload.outcome if payload else None)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"status": "ok", "team": state}
+
+
+@app.post("/team/tasks/start-next", tags=["Team"], summary="Start the next queued task if allowed")
+def start_next_team_task(x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key")) -> Dict[str, Any]:
+    _require_team_admin(x_unova_admin_key)
+    try:
+        state = team_dashboard.start_next_task()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"status": "ok", "team": state}
 
 
 @app.get("/app/content/video", tags=["Health"], summary="Get app help video URL")
@@ -1149,6 +1261,24 @@ def get_app_help_video() -> Dict[str, str]:
     }
 
 
+@app.get("/app/runtime-config", tags=["Health"], summary="Get shared runtime configuration defaults")
+def get_runtime_config(request: Request) -> Dict[str, Any]:
+    configured_api_base = str(os.getenv("PUBLIC_API_BASE", "")).strip().rstrip("/")
+    request_base = str(request.base_url).rstrip("/")
+    api_base = configured_api_base or request_base
+    return {
+        "status": "ok",
+        "config": {
+            "api_base": api_base,
+            "api_api_base": f"{api_base}/api",
+            "vision_model": os.getenv("VISION_MODEL", os.getenv("OPENAI_VISION_MODEL", "gpt-4.1-mini")).strip(),
+            "dashboard_enabled": True,
+            "team_dashboard_path": "/admin/team",
+            "admin_entry_path": "/admin",
+        },
+    }
+
+
 @app.post("/auth/login", tags=["Users"], summary="Authenticate a user")
 def login(payload: LoginRequest) -> Dict[str, Any]:
     try:
@@ -1157,7 +1287,10 @@ def login(payload: LoginRequest) -> Dict[str, Any]:
             username=payload.username,
             password=payload.password,
         )
-        return {"status": "ok", **result}
+        users = _read_users_data()
+        user = users.get(result["user_id"])
+        subscription = subscription_payload(user if isinstance(user, dict) else None)
+        return {"status": "ok", **result, "subscription": subscription, "subscription_plan": subscription["plan"]}
     except api.LoginValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except api.LoginAuthError as exc:
@@ -1195,8 +1328,24 @@ async def get_asset_insights(
     try:
         rate_subject = f"user:{user_id}" if user_id else f"ip:{getattr(request.client, 'host', 'unknown')}"
         _enforce_insights_rate_limit(rate_subject)
+        if user_id:
+            users = _read_users_data()
+            user = users.get(user_id)
+            if not isinstance(user, dict):
+                raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+            if not is_premium_subscription(user.get("subscription_plan")):
+                raise HTTPException(
+                    status_code=402,
+                    detail={
+                        "message": "Market insights are available on Premium.",
+                        "upgrade_url": "/pricing",
+                        "required_plan": "premium",
+                    },
+                )
         result = await api.build_insights(asset_type=type, symbol=symbol, months=months)
         return InsightsResponse(**result)
+    except HTTPException:
+        raise
     except api.InsightError as exc:
         detail = str(exc)
         if detail == "price data not found":
@@ -1245,6 +1394,46 @@ def get_stock_listings(
     except Exception as exc:
         print(f"[api] stock fetch failed: {exc}")
         raise HTTPException(status_code=502, detail=f"stock fetch failed: {exc}") from exc
+
+
+@app.get(
+    "/api/market/bonds",
+    tags=["Market"],
+    summary="Get bond listings in normalized format",
+    response_model=list[StockListingResponse],
+)
+def get_bond_listings(
+    page: int = Query(1, ge=1, description="Bond page number"),
+    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
+) -> list[StockListingResponse]:
+    try:
+        rows = api.get_precomputed_bond_rankings(page=page, per_page=per_page)
+        return [StockListingResponse(**row) for row in rows]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        print(f"[api] bond fetch failed: {exc}")
+        raise HTTPException(status_code=502, detail=f"bond fetch failed: {exc}") from exc
+
+
+@app.get(
+    "/api/market/real-assets",
+    tags=["Market"],
+    summary="Get real-asset listings in normalized format",
+    response_model=list[StockListingResponse],
+)
+def get_real_asset_listings(
+    page: int = Query(1, ge=1, description="Real-asset page number"),
+    per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
+) -> list[StockListingResponse]:
+    try:
+        rows = api.get_precomputed_real_asset_rankings(page=page, per_page=per_page)
+        return [StockListingResponse(**row) for row in rows]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        print(f"[api] real-asset fetch failed: {exc}")
+        raise HTTPException(status_code=502, detail=f"real-asset fetch failed: {exc}") from exc
 
 
 @app.get(
@@ -1584,11 +1773,32 @@ def get_user_by_id(user_id: str) -> Dict[str, Any]:
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
         user = _ensure_financial_collections(user)
         user = _enrich_portfolio_with_ath(user)
-        return {"status": "ok", "user_id": user_id, "user": user}
+        user = ensure_subscription_user(user)
+        return {"status": "ok", "user_id": user_id, "user": user, "subscription": subscription_payload(user)}
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"read user failed: {exc}") from exc
+
+
+@app.post("/users/{user_id}/subscription", tags=["Users"], summary="Update a user's local subscription plan")
+def update_user_subscription(user_id: str, payload: UserSubscriptionUpdateRequest) -> Dict[str, Any]:
+    try:
+        data = _read_users_data()
+        user = data.get(user_id)
+        if not isinstance(user, dict):
+            raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        user = dict(user)
+        user["subscription_plan"] = api.normalize_subscription_plan(payload.plan)
+        user = ensure_subscription_user(user)
+        data[user_id] = user
+        _write_users_data(data)
+        return {"status": "ok", "user_id": user_id, "user": user, "subscription": subscription_payload(user)}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"subscription update failed: {exc}") from exc
 
 
 @app.get(
@@ -1763,7 +1973,7 @@ def add_user_portfolio_holding(user_id: str, payload: PortfolioHoldingCreateRequ
 
         portfolio = user.get("portfolio")
         if not isinstance(portfolio, dict):
-            portfolio = {"stocks": [], "cryptos": [], "commodities": []}
+            portfolio = {"stocks": [], "bonds": [], "real_assets": [], "cryptos": [], "commodities": []}
 
         symbol = payload.symbol.strip().upper()
         if not symbol:
@@ -1773,6 +1983,12 @@ def add_user_portfolio_holding(user_id: str, payload: PortfolioHoldingCreateRequ
         if requested in {"stock", "stocks", "equity", "equities"}:
             bucket = "stocks"
             query_type = "STOCK"
+        elif requested in {"bond", "bonds", "fixed_income", "fixed-income"}:
+            bucket = "bonds"
+            query_type = "BOND"
+        elif requested in {"real_asset", "real_assets", "real-asset", "real-assets"}:
+            bucket = "real_assets"
+            query_type = "REAL_ASSET"
         elif requested in {"crypto", "cryptos", "digital_asset", "digital_assets"}:
             bucket = "cryptos"
             query_type = "CRYPTO"
@@ -1780,7 +1996,7 @@ def add_user_portfolio_holding(user_id: str, payload: PortfolioHoldingCreateRequ
             bucket = "commodities"
             query_type = "COMMODITY"
         else:
-            raise HTTPException(status_code=400, detail="asset_class must be stock, crypto, or commodity")
+            raise HTTPException(status_code=400, detail="asset_class must be stock, bond, real_asset, crypto, or commodity")
 
         quote = get_market_quote(query=f"{query_type}, {symbol}")
         fetched_symbol = str(quote.get("symbol") or symbol).upper()
@@ -1858,12 +2074,16 @@ def remove_user_portfolio_holding(user_id: str, asset_class: str, symbol: str) -
         bucket = asset_class.strip().lower()
         if bucket in {"stock", "stocks", "equity", "equities"}:
             bucket = "stocks"
+        elif bucket in {"bond", "bonds", "fixed_income", "fixed-income"}:
+            bucket = "bonds"
+        elif bucket in {"real_asset", "real_assets", "real-asset", "real-assets"}:
+            bucket = "real_assets"
         elif bucket in {"crypto", "cryptos", "digital_assets", "digital_asset"}:
             bucket = "cryptos"
         elif bucket in {"commodity", "commodities"}:
             bucket = "commodities"
         else:
-            raise HTTPException(status_code=400, detail="asset_class must be stocks, cryptos, or commodities")
+            raise HTTPException(status_code=400, detail="asset_class must be stocks, bonds, real_assets, cryptos, or commodities")
 
         entries = portfolio.get(bucket, [])
         if not isinstance(entries, list):
@@ -2191,12 +2411,22 @@ def get_user_recommendations_gpt(
     user_id: str,
     limit: int = Query(3, ge=1, le=10, description="Maximum number of recommendation items"),
     model: str = Query("gpt-4.1-mini", description="OpenAI model name"),
+    latent_growth_context: str | None = Query(default=None, description="Optional JSON-encoded latent growth context"),
 ) -> Dict[str, Any]:
     try:
         data = _read_users_data()
         user = data.get(user_id)
         if not isinstance(user, dict):
             raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+        parsed_latent_growth_context = None
+        if latent_growth_context:
+            try:
+                candidate = json.loads(latent_growth_context)
+                if isinstance(candidate, dict):
+                    parsed_latent_growth_context = candidate
+            except json.JSONDecodeError:
+                parsed_latent_growth_context = None
 
         rule_based = api.generate_user_recommendations(user, limit=limit)
         gpt_output = api.generate_gpt_recommendations(
@@ -2205,6 +2435,7 @@ def get_user_recommendations_gpt(
             rule_based=rule_based,
             limit=limit,
             model=model,
+            latent_growth_context=parsed_latent_growth_context,
         )
         return {
             "status": "ok",
@@ -2455,12 +2686,12 @@ def build_user_retirement_plan(user_id: str, payload: RetirementPlanRequest) -> 
 @app.get(
     "/market/quote",
     tags=["Market"],
-    summary="Get quote for STOCK, CRYPTO, or COMMODITY",
+    summary="Get quote for STOCK, BOND, REAL_ASSET, CRYPTO, or COMMODITY",
 )
 def get_market_quote(
     query: str = Query(
         ...,
-        description="Format: STOCK, SPY or CRYPTO, BTC or COMMODITY, GOLD",
+        description="Format: STOCK, SPY or BOND, BND or REAL_ASSET, VNQ or CRYPTO, BTC or COMMODITY, GOLD",
     ),
 ) -> Dict[str, Any]:
     try:
@@ -2468,7 +2699,7 @@ def get_market_quote(
         asset_type = parsed["asset_type"]
         ticker = parsed["ticker"]
 
-        if asset_type == "STOCK":
+        if asset_type in {"STOCK", "BOND", "REAL_ASSET"}:
             price = api.fetch_latest_prices([ticker])[ticker]
             return {"status": "ok", "asset_type": asset_type, "symbol": ticker, "price": price}
 
@@ -2545,7 +2776,7 @@ def get_portfolio_history_by_user_id(user_id: str) -> Dict[str, Any]:
 @app.get(
     "/portfolio/{user_id}/{asset_class}",
     tags=["Portfolio"],
-    summary="Get portfolio positions by asset class (stocks, cryptos, commodities)",
+    summary="Get portfolio positions by asset class (stocks, bonds, real_assets, cryptos, commodities)",
 )
 def get_portfolio_by_asset_class(user_id: str, asset_class: str) -> Dict[str, Any]:
     try:
@@ -2638,6 +2869,48 @@ def refresh_stock_market_rankings() -> Dict[str, Any]:
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"stock market refresh failed: {exc}") from exc
+
+
+@app.get(
+    "/update/market/bonds",
+    tags=["Updates"],
+    summary="Ingest bond market snapshot and rebuild precomputed bond rankings",
+)
+def refresh_bond_market_rankings() -> Dict[str, Any]:
+    try:
+        print("[api] /update/market/bonds called")
+        result = api.refresh_bond_market_data()
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        return {
+            "status": "ok",
+            "source": meta.get("source"),
+            "built_at_epoch": meta.get("built_at_epoch"),
+            "ranked_count": meta.get("ranked_count"),
+            "failed_count": meta.get("failed_count"),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"bond market refresh failed: {exc}") from exc
+
+
+@app.get(
+    "/update/market/real-assets",
+    tags=["Updates"],
+    summary="Ingest real-asset market snapshot and rebuild precomputed real-asset rankings",
+)
+def refresh_real_asset_market_rankings() -> Dict[str, Any]:
+    try:
+        print("[api] /update/market/real-assets called")
+        result = api.refresh_real_asset_market_data()
+        meta = result.get("_meta", {}) if isinstance(result, dict) else {}
+        return {
+            "status": "ok",
+            "source": meta.get("source"),
+            "built_at_epoch": meta.get("built_at_epoch"),
+            "ranked_count": meta.get("ranked_count"),
+            "failed_count": meta.get("failed_count"),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"real-asset market refresh failed: {exc}") from exc
 
 
 @app.get(

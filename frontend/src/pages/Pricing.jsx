@@ -1,0 +1,420 @@
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import Navbar from '../components/Navbar.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useLoginModal } from '../context/LoginModalContext.jsx'
+import { API_BASE } from '../utils/api.js'
+
+const PLANS = [
+  {
+    id: 'free',
+    label: 'Free',
+    price: '$0',
+    cadence: '/month',
+    description: 'For tracking your portfolio, checking markets, and building your financial baseline.',
+    features: [
+      'Portfolio tracking across stocks, crypto, and commodities',
+      'Wellness scoring and resilience insights',
+      'Retirement planning tools',
+      'Screenshot import and holdings sync',
+      'Live market tables and watchlists',
+    ],
+  },
+  {
+    id: 'premium',
+    label: 'Premium',
+    price: '$14',
+    cadence: '/month',
+    description: 'For deeper guidance, richer analysis, and premium intelligence on top of the core product.',
+    features: [
+      'Everything in Free',
+      'Premium market insights for tracked assets',
+      'Richer scenario context and analyst-style briefs',
+      'Priority growth guidance surfaces',
+      'Expanded decision support for portfolio moves',
+    ],
+  },
+]
+
+export default function Pricing() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const { user } = useAuth()
+  const { setLoginModalOpen } = useLoginModal()
+  const [subscription, setSubscription] = useState({ loading: Boolean(user?.user_id), plan: 'free', label: 'Free' })
+  const [updatingPlan, setUpdatingPlan] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!user?.user_id) {
+      setSubscription({ loading: false, plan: 'free', label: 'Free' })
+      return
+    }
+
+    let cancelled = false
+    setSubscription(current => ({ ...current, loading: true }))
+
+    fetch(`${API_BASE}/users/${encodeURIComponent(user.user_id)}`)
+      .then(async res => {
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}))
+          throw new Error(payload?.detail || `HTTP ${res.status}`)
+        }
+        return res.json()
+      })
+      .then(payload => {
+        if (cancelled) return
+        const nextPlan = payload?.subscription?.plan || payload?.user?.subscription_plan || 'free'
+        const nextLabel = payload?.subscription?.label || payload?.user?.subscription_label || 'Free'
+        setSubscription({ loading: false, plan: nextPlan, label: nextLabel })
+      })
+      .catch(err => {
+        if (cancelled) return
+        setSubscription({ loading: false, plan: 'free', label: 'Free' })
+        setError(err.message || 'Could not load your subscription.')
+      })
+
+    return () => { cancelled = true }
+  }, [user?.user_id])
+
+  async function switchPlan(plan) {
+    if (!user?.user_id) {
+      setLoginModalOpen(true)
+      return
+    }
+    setUpdatingPlan(plan)
+    setError('')
+    try {
+      const response = await fetch(`${API_BASE}/users/${encodeURIComponent(user.user_id)}/subscription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.detail || `HTTP ${response.status}`)
+      }
+      const payload = await response.json()
+      setSubscription({
+        loading: false,
+        plan: payload?.subscription?.plan || 'free',
+        label: payload?.subscription?.label || 'Free',
+      })
+    } catch (err) {
+      setError(err.message || 'Could not update your subscription.')
+    } finally {
+      setUpdatingPlan('')
+    }
+  }
+
+  const source = searchParams.get('source')
+
+  return (
+    <div style={styles.page}>
+      <Navbar />
+
+      <main style={styles.shell}>
+        <section style={styles.hero}>
+          <div style={styles.eyebrow}>Pricing</div>
+          <h1 style={styles.heroTitle}>Choose the depth you need.</h1>
+          <p style={styles.heroCopy}>
+            Free gives you the core product. Premium unlocks deeper market intelligence and richer decision support when you want more than raw data.
+          </p>
+          {source ? (
+            <div style={styles.contextPill}>Opened from {source.replace(/-/g, ' ')}</div>
+          ) : null}
+          {user?.user_id ? (
+            <div style={styles.planStatus}>Current plan: {subscription.loading ? 'Loading...' : subscription.label}</div>
+          ) : (
+            <div style={styles.planStatus}>Sign in to activate a plan on this branch.</div>
+          )}
+        </section>
+
+        {error ? <div style={styles.errorBanner}>{error}</div> : null}
+
+        <section style={styles.planGrid}>
+          {PLANS.map(plan => {
+            const active = subscription.plan === plan.id
+            const isPremium = plan.id === 'premium'
+            return (
+              <article key={plan.id} style={{ ...styles.planCard, ...(isPremium ? styles.planCardFeatured : null) }}>
+                <div style={styles.planHeader}>
+                  <div>
+                    <div style={styles.planLabel}>{plan.label}</div>
+                    <div style={styles.planPriceRow}>
+                      <span style={styles.planPrice}>{plan.price}</span>
+                      <span style={styles.planCadence}>{plan.cadence}</span>
+                    </div>
+                  </div>
+                  {isPremium ? <span style={styles.planChip}>Best for insights</span> : null}
+                </div>
+                <p style={styles.planDescription}>{plan.description}</p>
+                <div style={styles.featureList}>
+                  {plan.features.map(feature => (
+                    <div key={feature} style={styles.featureRow}>
+                      <span style={styles.featureDot} />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  style={{
+                    ...styles.planButton,
+                    ...(active ? styles.planButtonMuted : isPremium ? styles.planButtonPrimary : styles.planButtonSecondary),
+                    opacity: updatingPlan === plan.id ? 0.7 : 1,
+                  }}
+                  onClick={() => switchPlan(plan.id)}
+                  disabled={subscription.loading || updatingPlan === plan.id || active}
+                >
+                  {active ? 'Current plan' : user?.user_id ? `Switch to ${plan.label}` : 'Sign in to choose'}
+                </button>
+              </article>
+            )
+          })}
+        </section>
+
+        <section style={styles.compareCard}>
+          <div style={styles.compareEyebrow}>What changes with Premium</div>
+          <div style={styles.compareTitle}>Premium gates depth, not the core product.</div>
+          <div style={styles.compareGrid}>
+            <div style={styles.compareItem}>
+              <div style={styles.compareLabel}>Free keeps</div>
+              <div style={styles.compareCopy}>
+                Portfolio tracking, wellness scoring, retirement planning, screenshot import, and live market tables.
+              </div>
+            </div>
+            <div style={styles.compareItem}>
+              <div style={styles.compareLabel}>Premium adds</div>
+              <div style={styles.compareCopy}>
+                Market insights, deeper asset context, and higher-value guidance when you need a more opinionated layer.
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  )
+}
+
+const styles = {
+  page: {
+    minHeight: '100vh',
+    background: `
+      radial-gradient(circle at top left, rgba(109,141,247,0.06), transparent 28%),
+      linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%)
+    `,
+    color: 'var(--text)',
+  },
+  shell: {
+    width: 'min(1160px, calc(100vw - 40px))',
+    margin: '0 auto',
+    padding: '112px 0 72px',
+  },
+  hero: {
+    padding: '8px 0 28px',
+    maxWidth: 760,
+  },
+  eyebrow: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.7rem',
+    letterSpacing: '0.18em',
+    textTransform: 'uppercase',
+    color: 'var(--text-faint)',
+    marginBottom: 14,
+  },
+  heroTitle: {
+    fontFamily: 'var(--font-display)',
+    fontSize: 'clamp(2.8rem, 5vw, 4.4rem)',
+    lineHeight: 0.96,
+    letterSpacing: '-0.06em',
+    margin: 0,
+  },
+  heroCopy: {
+    marginTop: 18,
+    color: 'var(--text-dim)',
+    fontSize: '1rem',
+    lineHeight: 1.8,
+    maxWidth: 660,
+  },
+  contextPill: {
+    marginTop: 18,
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '8px 12px',
+    borderRadius: 999,
+    background: 'rgba(255,255,255,0.76)',
+    border: '1px solid rgba(15,23,42,0.08)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.66rem',
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    color: 'var(--text-dim)',
+  },
+  planStatus: {
+    marginTop: 16,
+    color: 'var(--text-faint)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.72rem',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+  },
+  errorBanner: {
+    marginBottom: 18,
+    padding: '16px 18px',
+    borderRadius: 20,
+    background: 'rgba(255,244,244,0.9)',
+    border: '1px solid rgba(226,85,85,0.12)',
+    color: 'var(--red)',
+    fontWeight: 600,
+  },
+  planGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: 16,
+    marginBottom: 24,
+  },
+  planCard: {
+    background: 'rgba(255,255,255,0.84)',
+    border: '1px solid rgba(15,23,42,0.08)',
+    borderRadius: 24,
+    padding: '28px 24px',
+    boxShadow: '0 16px 36px rgba(15,23,42,0.06)',
+    backdropFilter: 'blur(16px)',
+  },
+  planCardFeatured: {
+    borderColor: 'rgba(29,39,56,0.14)',
+    boxShadow: '0 22px 44px rgba(15,23,42,0.08)',
+  },
+  planHeader: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  planLabel: {
+    fontFamily: 'var(--font-display)',
+    fontSize: '1.18rem',
+    fontWeight: 700,
+  },
+  planPriceRow: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: 6,
+    marginTop: 10,
+  },
+  planPrice: {
+    fontFamily: 'var(--font-display)',
+    fontSize: '2.4rem',
+    letterSpacing: '-0.05em',
+    fontWeight: 800,
+  },
+  planCadence: {
+    color: 'var(--text-faint)',
+  },
+  planChip: {
+    borderRadius: 999,
+    padding: '8px 12px',
+    background: 'rgba(29,39,56,0.08)',
+    border: '1px solid rgba(29,39,56,0.1)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.62rem',
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    color: 'var(--text-dim)',
+  },
+  planDescription: {
+    marginTop: 16,
+    color: 'var(--text-dim)',
+    lineHeight: 1.75,
+    minHeight: 72,
+  },
+  featureList: {
+    display: 'grid',
+    gap: 10,
+    marginTop: 18,
+    marginBottom: 22,
+  },
+  featureRow: {
+    display: 'flex',
+    gap: 10,
+    color: 'var(--text)',
+    lineHeight: 1.6,
+  },
+  featureDot: {
+    width: 7,
+    height: 7,
+    borderRadius: '50%',
+    background: 'var(--teal)',
+    marginTop: 9,
+    flexShrink: 0,
+  },
+  planButton: {
+    width: '100%',
+    borderRadius: 999,
+    padding: '14px 18px',
+    fontFamily: 'var(--font-display)',
+    fontSize: '0.92rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+  },
+  planButtonPrimary: {
+    border: 'none',
+    background: 'var(--btn-primary-bg)',
+    color: '#fff',
+  },
+  planButtonSecondary: {
+    border: '1px solid rgba(15,23,42,0.08)',
+    background: 'rgba(255,255,255,0.76)',
+    color: 'var(--text)',
+  },
+  planButtonMuted: {
+    border: '1px solid rgba(15,23,42,0.06)',
+    background: 'rgba(241,245,249,0.9)',
+    color: 'var(--text-faint)',
+    cursor: 'default',
+  },
+  compareCard: {
+    background: 'rgba(255,255,255,0.82)',
+    border: '1px solid rgba(15,23,42,0.08)',
+    borderRadius: 24,
+    padding: '24px 24px 26px',
+    boxShadow: '0 16px 36px rgba(15,23,42,0.06)',
+  },
+  compareEyebrow: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.66rem',
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+    color: 'var(--text-faint)',
+    marginBottom: 8,
+  },
+  compareTitle: {
+    fontFamily: 'var(--font-display)',
+    fontSize: '1.24rem',
+    fontWeight: 700,
+    letterSpacing: '-0.03em',
+    marginBottom: 16,
+  },
+  compareGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+    gap: 14,
+  },
+  compareItem: {
+    background: 'var(--surface2)',
+    border: '1px solid rgba(15,23,42,0.06)',
+    borderRadius: 18,
+    padding: '18px 16px',
+  },
+  compareLabel: {
+    fontFamily: 'var(--font-display)',
+    fontSize: '1rem',
+    fontWeight: 700,
+    marginBottom: 8,
+  },
+  compareCopy: {
+    color: 'var(--text-dim)',
+    lineHeight: 1.7,
+  },
+}

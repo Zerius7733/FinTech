@@ -4,6 +4,14 @@ from typing import Any, Dict, Iterable, List, Tuple
 ASSET_CLASS_ALIASES = {
     "stock": "stocks",
     "stocks": "stocks",
+    "bond": "bonds",
+    "bonds": "bonds",
+    "fixed_income": "bonds",
+    "fixed-income": "bonds",
+    "real_asset": "real_assets",
+    "real_assets": "real_assets",
+    "real-asset": "real_assets",
+    "real-assets": "real_assets",
     "crypto": "cryptos",
     "cryptos": "cryptos",
     "commodity": "commodities",
@@ -15,7 +23,7 @@ def resolve_asset_class(asset_class: str) -> str:
     normalized = (asset_class or "").strip().lower()
     bucket = ASSET_CLASS_ALIASES.get(normalized)
     if not bucket:
-        raise ValueError("asset_class must be one of: stocks, cryptos, commodities")
+        raise ValueError("asset_class must be one of: stocks, bonds, real_assets, cryptos, commodities")
     return bucket
 
 
@@ -27,7 +35,7 @@ def iter_portfolio_positions(user: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
                 yield position
         return
     if isinstance(portfolio, dict):
-        for key in ("stocks", "cryptos", "commodities"):
+        for key in ("stocks", "bonds", "real_assets", "cryptos", "commodities"):
             positions = portfolio.get(key, [])
             if not isinstance(positions, list):
                 continue

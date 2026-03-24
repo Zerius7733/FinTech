@@ -2,6 +2,7 @@
   "u001": {
     "name": "Alice Tan",
     "age": 40,
+    "subscription_plan": "premium",
     "cash_balance": 152000.5,
     "liability": 999.0,
     "liability_items": [
@@ -133,6 +134,26 @@
           "market_value": 9391.2,
           "name": "iShares Silver Trust"
         }
+      ],
+      "bonds": [
+        {
+          "symbol": "BND",
+          "qty": 5.0,
+          "avg_price": 73.45,
+          "current_price": 73.45,
+          "market_value": 367.25,
+          "name": "BND"
+        }
+      ],
+      "real_assets": [
+        {
+          "symbol": "PLD",
+          "qty": 5.0,
+          "avg_price": 130.31,
+          "current_price": 130.31,
+          "market_value": 651.55,
+          "name": "PLD"
+        }
       ]
     },
     "manual_assets": [
@@ -143,9 +164,9 @@
         "value": 500000.0
       }
     ],
-    "portfolio_value": 255303.03,
-    "total_balance": 907303.53,
-    "net_worth": 905304.53,
+    "portfolio_value": 256321.83,
+    "total_balance": 908322.33,
+    "net_worth": 906323.33,
     "income": 19800.0,
     "expenses": 1000.0,
     "income_streams": [
@@ -230,11 +251,14 @@
       "Maintain current buffers and rebalance periodically to preserve resilience."
     ],
     "email": "alice@gmail.com",
-    "country": "Singapore"
+    "country": "Singapore",
+    "subscription_status": "active",
+    "subscription_label": "Premium"
   },
   "u002": {
     "name": "Brandon Lim",
     "age": 28,
+    "subscription_plan": "free",
     "cash_balance": 2300.0,
     "liability": 6400.75,
     "liability_items": [
@@ -293,7 +317,9 @@
           "current_price": 89.09,
           "market_value": 890.9
         }
-      ]
+      ],
+      "bonds": [],
+      "real_assets": []
     },
     "manual_assets": [],
     "portfolio_value": 7344.67,
@@ -386,6 +412,7 @@
   "u003": {
     "name": "Cheryl Ng",
     "age": 23,
+    "subscription_plan": "free",
     "cash_balance": 9000.2,
     "liability": 9000.2,
     "liability_items": [
@@ -429,7 +456,9 @@
           "market_value": 391.43
         }
       ],
-      "commodities": []
+      "commodities": [],
+      "bonds": [],
+      "real_assets": []
     },
     "manual_assets": [],
     "portfolio_value": 7952.73,
@@ -522,6 +551,7 @@
   "u004": {
     "name": "Daniel Koh",
     "age": 35,
+    "subscription_plan": "free",
     "cash_balance": 7350.4,
     "liability": 7350.4,
     "liability_items": [
@@ -565,7 +595,9 @@
           "market_value": 412.03
         }
       ],
-      "commodities": []
+      "commodities": [],
+      "bonds": [],
+      "real_assets": []
     },
     "manual_assets": [],
     "portfolio_value": 11420.25,
@@ -658,6 +690,7 @@
   "u005": {
     "name": "Ethan Lee",
     "age": 37,
+    "subscription_plan": "free",
     "cash_balance": 12600.25,
     "liability": 12600.25,
     "liability_items": [
@@ -701,7 +734,9 @@
           "market_value": 432.63
         }
       ],
-      "commodities": []
+      "commodities": [],
+      "bonds": [],
+      "real_assets": []
     },
     "manual_assets": [],
     "portfolio_value": 6995.22,
@@ -794,6 +829,7 @@
   "u006": {
     "name": "Farah Aziz",
     "age": 55,
+    "subscription_plan": "free",
     "cash_balance": 8490.1,
     "liability": 8490.1,
     "liability_items": [
@@ -837,7 +873,9 @@
           "market_value": 453.23
         }
       ],
-      "commodities": []
+      "commodities": [],
+      "bonds": [],
+      "real_assets": []
     },
     "manual_assets": [],
     "portfolio_value": 7509.96,
@@ -930,6 +968,7 @@
   "u007": {
     "name": "Grace Wong",
     "age": 36,
+    "subscription_plan": "free",
     "cash_balance": 3350.75,
     "liability": 3350.75,
     "liability_items": [
@@ -973,7 +1012,9 @@
           "market_value": 473.83
         }
       ],
-      "commodities": []
+      "commodities": [],
+      "bonds": [],
+      "real_assets": []
     },
     "manual_assets": [],
     "portfolio_value": 10001.43,
@@ -1068,6 +1109,7 @@
   "u008": {
     "name": "Hafiz Rahman",
     "age": 29,
+    "subscription_plan": "free",
     "cash_balance": 9150.5,
     "liability": 9150.5,
     "liability_items": [
@@ -1111,7 +1153,9 @@
           "market_value": 494.43
         }
       ],
-      "commodities": []
+      "commodities": [],
+      "bonds": [],
+      "real_assets": []
     },
     "manual_assets": [],
     "portfolio_value": 8914.05,
@@ -1206,6 +1250,7 @@
   "u009": {
     "name": "Isabella Goh",
     "age": 21,
+    "subscription_plan": "free",
     "cash_balance": 2940.25,
     "liability": 2940.25,
     "liability_items": [
@@ -1274,7 +1319,9 @@
           "market_value": 3881.86
         }
       ],
-      "commodities": []
+      "commodities": [],
+      "bonds": [],
+      "real_assets": []
     },
     "manual_assets": [],
     "portfolio_value": 39111.2,
@@ -1369,6 +1416,7 @@
   "u010": {
     "name": "Jason Teo",
     "age": null,
+    "subscription_plan": "free",
     "cash_balance": 7700.0,
     "liability": 17700.0,
     "liability_items": [
@@ -1406,7 +1454,9 @@
           "market_value": 1413608.75
         }
       ],
-      "commodities": []
+      "commodities": [],
+      "bonds": [],
+      "real_assets": []
     },
     "manual_assets": [
       {
@@ -1516,6 +1566,7 @@
   "u011": {
     "name": "Zerius Heng",
     "age": 23,
+    "subscription_plan": "free",
     "cash_balance": 0.0,
     "liability": 0,
     "liability_items": [],
@@ -1564,7 +1615,9 @@
           "market_value": 457.49,
           "name": "GC=F"
         }
-      ]
+      ],
+      "bonds": [],
+      "real_assets": []
     },
     "manual_assets": [
       {
@@ -1667,6 +1720,8 @@
     "age_group": "18-29",
     "username": "Zerius",
     "email": "zerius@example.com",
-    "country": "Singapore"
+    "country": "Singapore",
+    "subscription_status": "free",
+    "subscription_label": "Free"
   }
 }

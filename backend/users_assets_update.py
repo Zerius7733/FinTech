@@ -17,9 +17,11 @@ def _portfolio_positions(user: Dict[str, Any]):
         return portfolio
     if isinstance(portfolio, dict):
         stocks = portfolio.get("stocks", []) if isinstance(portfolio.get("stocks", []), list) else []
+        bonds = portfolio.get("bonds", []) if isinstance(portfolio.get("bonds", []), list) else []
+        real_assets = portfolio.get("real_assets", []) if isinstance(portfolio.get("real_assets", []), list) else []
         cryptos = portfolio.get("cryptos", []) if isinstance(portfolio.get("cryptos", []), list) else []
         commodities = portfolio.get("commodities", []) if isinstance(portfolio.get("commodities", []), list) else []
-        return stocks + cryptos + commodities
+        return stocks + bonds + real_assets + cryptos + commodities
     return []
 
 

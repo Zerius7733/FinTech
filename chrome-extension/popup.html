@@ -48,10 +48,35 @@
       <div id="authStatus" class="status-banner">Sign in with your WealthSphere account to unlock importing.</div>
       <label class="field">
         <span>Backend API Base</span>
-        <input id="apiBase" type="url" placeholder="https://your-backend.up.railway.app" />
+        <input id="apiBase" type="url" placeholder="http://localhost:8000" />
       </label>
       <button id="saveApiBaseBtn" type="button" class="btn btn-secondary btn-block">Save API Endpoint</button>
       <p class="auth-note">Use the same WealthSphere account you use in the web app. The extension stays locked until sign-in succeeds.</p>
+    </section>
+
+    <section class="panel config-panel">
+      <div class="section-head compact">
+        <div>
+          <p class="eyebrow">Runtime Config</p>
+          <h2>Backend connection</h2>
+        </div>
+        <button id="testConnectionBtn" type="button" class="btn btn-mini">Test Connection</button>
+      </div>
+      <div class="config-grid">
+        <div class="config-item">
+          <span class="config-label">Resolved base</span>
+          <div id="resolvedApiBase" class="config-value">Loading...</div>
+        </div>
+        <div class="config-item">
+          <span class="config-label">Source</span>
+          <div id="configSource" class="config-value">Loading...</div>
+        </div>
+        <div class="config-item">
+          <span class="config-label">Health</span>
+          <div id="connectionStatus" class="config-value">Not checked</div>
+        </div>
+      </div>
+      <p id="configHelp" class="config-help">The extension uses the saved API endpoint when present, otherwise it falls back to the current browser/runtime default.</p>
     </section>
 
     <section id="appView" class="panel app-panel hidden">
