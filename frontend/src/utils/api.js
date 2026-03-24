@@ -35,7 +35,6 @@ export function getApiPaths(baseUrl) {
     baseUrl: normalizedBase,
     apiBase: `${normalizedBase}/api`,
     healthUrl: `${normalizedBase}/health`,
-    teamStateUrl: `${normalizedBase}/team/state`,
   }
 }
 

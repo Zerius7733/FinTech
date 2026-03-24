@@ -15,7 +15,6 @@ from fastapi.responses import Response
 from pydantic import AliasChoices, BaseModel, Field
 import yfinance as yf
 import backend.services.api_deps as api
-import backend.services.team_dashboard as team_dashboard
 from backend.services.subscription_registry import ensure_user_subscription as ensure_subscription_user
 from backend.services.subscription_registry import is_premium_subscription
 from backend.services.subscription_registry import subscription_payload
@@ -1143,113 +1142,14 @@ class InsightsResponse(BaseModel):
     warnings: list[str]
 
 
-class TeamStopRequest(BaseModel):
-    reason: str | None = None
-
-
-class TeamObjectiveUpdateRequest(BaseModel):
-    objective: str
-
-
-class TeamTaskCreateRequest(BaseModel):
-    title: str
-    description: str = ""
-    owner_id: str
-    area: str = "general"
-
-
-class TeamTaskCompleteRequest(BaseModel):
-    outcome: str | None = None
-
-
 class UserSubscriptionUpdateRequest(BaseModel):
     plan: str = Field(..., description="One of: free, premium")
-
-
-def _require_team_admin(x_unova_admin_key: str | None) -> None:
-    expected_key = os.getenv("TEAM_ADMIN_KEY", "unova-admin").strip() or "unova-admin"
-    candidate = str(x_unova_admin_key or "").strip()
-    if candidate != expected_key:
-        raise HTTPException(status_code=401, detail="admin authorization required")
 
 
 
 @app.get("/health", tags=["Health"], summary="API health check")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
-
-
-@app.get("/team/state", tags=["Team"], summary="Get live team dashboard state")
-def get_team_state(x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key")) -> Dict[str, Any]:
-    _require_team_admin(x_unova_admin_key)
-    return {"status": "ok", "team": team_dashboard.load_state()}
-
-
-@app.post("/team/stop", tags=["Team"], summary="Request a graceful team stop after the current task")
-def stop_team(
-    payload: TeamStopRequest | None = None,
-    x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key"),
-) -> Dict[str, Any]:
-    _require_team_admin(x_unova_admin_key)
-    state = team_dashboard.request_graceful_stop(payload.reason if payload else None)
-    return {"status": "ok", "team": state}
-
-
-@app.post("/team/resume", tags=["Team"], summary="Resume the team after a graceful stop")
-def resume_team(x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key")) -> Dict[str, Any]:
-    _require_team_admin(x_unova_admin_key)
-    state = team_dashboard.resume_team()
-    return {"status": "ok", "team": state}
-
-
-@app.post("/team/objective", tags=["Team"], summary="Update the current team objective")
-def update_team_objective(
-    payload: TeamObjectiveUpdateRequest,
-    x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key"),
-) -> Dict[str, Any]:
-    _require_team_admin(x_unova_admin_key)
-    try:
-        state = team_dashboard.update_objective(payload.objective)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"status": "ok", "team": state}
-
-
-@app.post("/team/tasks", tags=["Team"], summary="Queue a new team task")
-def create_team_task(
-    payload: TeamTaskCreateRequest,
-    x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key"),
-) -> Dict[str, Any]:
-    _require_team_admin(x_unova_admin_key)
-    try:
-        state = team_dashboard.add_task(payload.title, payload.description, payload.owner_id, payload.area)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"status": "ok", "team": state}
-
-
-@app.post("/team/tasks/{task_id}/complete", tags=["Team"], summary="Complete a task and record its outcome")
-def complete_team_task(
-    task_id: str,
-    payload: TeamTaskCompleteRequest | None = None,
-    x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key"),
-) -> Dict[str, Any]:
-    _require_team_admin(x_unova_admin_key)
-    try:
-        state = team_dashboard.complete_task(task_id, payload.outcome if payload else None)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"status": "ok", "team": state}
-
-
-@app.post("/team/tasks/start-next", tags=["Team"], summary="Start the next queued task if allowed")
-def start_next_team_task(x_unova_admin_key: str | None = Header(default=None, alias="X-Unova-Admin-Key")) -> Dict[str, Any]:
-    _require_team_admin(x_unova_admin_key)
-    try:
-        state = team_dashboard.start_next_task()
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"status": "ok", "team": state}
 
 
 @app.get("/app/content/video", tags=["Health"], summary="Get app help video URL")
@@ -1272,9 +1172,6 @@ def get_runtime_config(request: Request) -> Dict[str, Any]:
             "api_base": api_base,
             "api_api_base": f"{api_base}/api",
             "vision_model": os.getenv("VISION_MODEL", os.getenv("OPENAI_VISION_MODEL", "gpt-4.1-mini")).strip(),
-            "dashboard_enabled": True,
-            "team_dashboard_path": "/admin/team",
-            "admin_entry_path": "/admin",
         },
     }
 

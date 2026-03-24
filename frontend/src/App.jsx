@@ -13,11 +13,8 @@ import Theme   from './pages/Theme.jsx'
 import LoginModal from './components/LoginModal.jsx'
 import SurveyModal from './components/SurveyModal.jsx'
 import { useLoginModal } from './context/LoginModalContext.jsx'
-import { hasAdminAccess } from './utils/adminAccess.js'
 
-const TeamDashboard = lazy(() => import('./pages/TeamDashboard.jsx'))
 const Pricing = lazy(() => import('./pages/Pricing.jsx'))
-const AdminPage = lazy(() => import('./pages/AdminPage.jsx'))
 
 class RouteErrorBoundary extends React.Component {
   constructor(props) {
@@ -55,10 +52,6 @@ function RouteFallback() {
   )
 }
 
-function ProtectedAdminRoute({ children }) {
-  return hasAdminAccess() ? children : <Navigate to="/admin" replace />
-}
-
 export default function App() {
   const { loginModalOpen, setLoginModalOpen, surveyModalOpen, setSurveyModalOpen } = useLoginModal()
 
@@ -81,38 +74,6 @@ export default function App() {
             <RouteErrorBoundary>
               <Suspense fallback={<RouteFallback />}>
                 <Pricing />
-              </Suspense>
-            </RouteErrorBoundary>
-          )}
-        />
-        <Route
-          path="/admin"
-          element={(
-            <RouteErrorBoundary>
-              <Suspense fallback={<RouteFallback />}>
-                <AdminPage />
-              </Suspense>
-            </RouteErrorBoundary>
-          )}
-        />
-        <Route
-          path="/admin/team"
-          element={(
-            <RouteErrorBoundary>
-              <Suspense fallback={<RouteFallback />}>
-                <ProtectedAdminRoute>
-                  <TeamDashboard />
-                </ProtectedAdminRoute>
-              </Suspense>
-            </RouteErrorBoundary>
-          )}
-        />
-        <Route
-          path="/team"
-          element={(
-            <RouteErrorBoundary>
-              <Suspense fallback={<RouteFallback />}>
-                <Navigate to="/admin" replace />
               </Suspense>
             </RouteErrorBoundary>
           )}
