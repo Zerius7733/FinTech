@@ -309,15 +309,14 @@ export default function Navbar() {
                   onClick={() => setMoreOpen(open => !open)}
                   style={{
                     ...S.link,
-                    ...S.linkDropdown,
                     ...(active ? S.linkActive : {}),
                   }}
                   onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text)' }}
                   onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--text-dim)' }}
                 >
-                  <span>More</span>
-                  <span style={S.linkCaret}>▼</span>
+                  More
                 </span>
+                <span style={S.linkCaretStandalone}>▼</span>
                 {moreOpen ? (
                   <div style={S.linkMenu}>
                     {MORE_LINKS.map(item => {
@@ -588,19 +587,19 @@ const S = {
   },
   dropdownItem: {
     position: 'relative',
-  },
-  linkDropdown: {
-    display: 'inline-flex',
+    display: 'flex',
     alignItems: 'center',
-    gap: 8,
-    lineHeight: 'inherit',
-    verticalAlign: 'middle',
+    gap: 6,
+    transform: 'translateY(3px)',
+
   },
-  linkCaret: {
+  linkCaretStandalone: {
+    display: 'inline-block',
     fontSize: '0.58rem',
     lineHeight: 1,
+    color: 'var(--text-dim)',
     transform: 'translateY(1px)',
-    display: 'inline-block',
+    pointerEvents: 'none',
   },
   linkActive: {
     color: 'var(--text)',

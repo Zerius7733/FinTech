@@ -1,0 +1,18 @@
+0 verbose cli /Users/zian/.nvm/versions/node/v22.20.0/bin/node /Users/zian/.nvm/versions/node/v22.20.0/bin/npm
+1 info using npm@11.6.2
+2 info using node@v22.20.0
+3 silly config load:file:/Users/zian/.nvm/versions/node/v22.20.0/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/zian/Documents/Hackathons/fintech/FinTech/frontend/.npmrc
+5 silly config load:file:/Users/zian/.npmrc
+6 silly config load:file:/Users/zian/.nvm/versions/node/v22.20.0/etc/npmrc
+7 verbose title npm run build
+8 verbose argv "run" "build"
+9 verbose logfile logs-max:10 dir:/Users/zian/Documents/Hackathons/fintech/FinTech/frontend/.npm-cache/_logs/2026-03-24T17_36_09_281Z-
+10 verbose logfile /Users/zian/Documents/Hackathons/fintech/FinTech/frontend/.npm-cache/_logs/2026-03-24T17_36_09_281Z-debug-0.log
+11 silly logfile done cleaning log files
+12 verbose cwd /Users/zian/Documents/Hackathons/fintech/FinTech/frontend
+13 verbose os Darwin 25.3.0
+14 verbose node v22.20.0
+15 verbose npm  v11.6.2
+16 verbose exit 0
+17 info ok
