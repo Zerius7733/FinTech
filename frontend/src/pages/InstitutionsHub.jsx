@@ -591,58 +591,65 @@ export default function InstitutionsHub() {
               ) : null}
             </article>
 
-            <article style={styles.selectionCard}>
-              <div style={styles.cardEyebrow}>Advisor handoff</div>
-              <div style={styles.selectionTitle}>Request an FA from {selectedProduct?.institutionShortName || selectedInstitution.shortName}</div>
-              <p style={styles.selectionCopy}>
-                UNOVA will pass the selected institution, product interest, and your current risk and cash posture into the request.
-              </p>
-              <div style={styles.handoffGrid}>
-                <div style={styles.handoffItem}>
-                  <div style={styles.handoffLabel}>Risk profile</div>
-                  <div style={styles.handoffValue}>{signals.risk}</div>
+            {!user?.user_id ? (
+              <article style={styles.selectionCard}>
+                <div style={styles.cardEyebrow}>Advisor handoff</div>
+                <div style={styles.selectionTitle}>Sign in to send an advisor request.</div>
+                <p style={styles.selectionCopy}>
+                  You can browse the full insurer shelf without an account, but advisor handoff stays tied to your profile.
+                </p>
+                <button type="button" onClick={() => setLoginModalOpen(true)} style={styles.primaryBtn}>
+                  Sign in
+                </button>
+              </article>
+            ) : (
+              <article style={styles.selectionCard}>
+                <div style={styles.cardEyebrow}>Advisor handoff</div>
+                <div style={styles.selectionTitle}>Request an FA from {selectedProduct?.institutionShortName || selectedInstitution.shortName}</div>
+                <p style={styles.selectionCopy}>
+                  UNOVA will pass the selected institution, product interest, and your current risk and cash posture into the request.
+                </p>
+                <div style={styles.handoffGrid}>
+                  <div style={styles.handoffItem}>
+                    <div style={styles.handoffLabel}>Risk profile</div>
+                    <div style={styles.handoffValue}>{signals.risk}</div>
+                  </div>
+                  <div style={styles.handoffItem}>
+                    <div style={styles.handoffLabel}>Cash posture</div>
+                    <div style={styles.handoffValue}>{fmtCurrency(signals.cash)}</div>
+                  </div>
+                  <div style={styles.handoffItem}>
+                    <div style={styles.handoffLabel}>Product fit</div>
+                    <div style={styles.handoffValue}>{selectedProduct?.assessment?.score || 0}/100</div>
+                  </div>
+                  <div style={styles.handoffItem}>
+                    <div style={styles.handoffLabel}>Mode</div>
+                    <div style={styles.handoffValue}>{signals.householdMode === 'household' ? 'Household' : 'Personal'}</div>
+                  </div>
                 </div>
-                <div style={styles.handoffItem}>
-                  <div style={styles.handoffLabel}>Cash posture</div>
-                  <div style={styles.handoffValue}>{fmtCurrency(signals.cash)}</div>
-                </div>
-                <div style={styles.handoffItem}>
-                  <div style={styles.handoffLabel}>Product fit</div>
-                  <div style={styles.handoffValue}>{selectedProduct?.assessment?.score || 0}/100</div>
-                </div>
-                <div style={styles.handoffItem}>
-                  <div style={styles.handoffLabel}>Mode</div>
-                  <div style={styles.handoffValue}>{signals.householdMode === 'household' ? 'Household' : 'Personal'}</div>
-                </div>
-              </div>
-              <textarea
-                value={requestNote}
-                onChange={event => setRequestNote(event.target.value)}
-                placeholder="Optional: note your priority, such as hospital cover, CI protection, mortgage cover, or retirement income."
-                style={styles.textArea}
-              />
-              <button type="button" onClick={handleMatchRequest} style={styles.primaryBtn} disabled={submitState.busy || !selectedProduct}>
-                {submitState.busy ? 'Sending request…' : `Match me with ${selectedProduct?.institutionShortName || selectedInstitution.shortName}`}
-              </button>
-              {submitState.message ? <div style={styles.success}>{submitState.message}</div> : null}
-              {submitState.error ? <div style={styles.errorText}>{submitState.error}</div> : null}
-              {latestRequest ? (
-                <div style={styles.latestRequest}>
-                  Latest request: {latestRequest.institution_name}
-                  {latestRequest.product_name ? ` · ${latestRequest.product_name}` : ''}
-                </div>
-              ) : null}
-            </article>
+                <textarea
+                  value={requestNote}
+                  onChange={event => setRequestNote(event.target.value)}
+                  placeholder="Optional: note your priority, such as hospital cover, CI protection, mortgage cover, or retirement income."
+                  style={styles.textArea}
+                />
+                <button type="button" onClick={handleMatchRequest} style={styles.primaryBtn} disabled={submitState.busy || !selectedProduct}>
+                  {submitState.busy ? 'Sending request…' : `Match me with ${selectedProduct?.institutionShortName || selectedInstitution.shortName}`}
+                </button>
+                {submitState.message ? <div style={styles.success}>{submitState.message}</div> : null}
+                {submitState.error ? <div style={styles.errorText}>{submitState.error}</div> : null}
+                {latestRequest ? (
+                  <div style={styles.latestRequest}>
+                    Latest request: {latestRequest.institution_name}
+                    {latestRequest.product_name ? ` · ${latestRequest.product_name}` : ''}
+                  </div>
+                ) : null}
+              </article>
+            )}
           </aside>
         </section>
 
-        {!user?.user_id ? (
-          <section style={styles.emptyCard}>
-            <div style={styles.emptyTitle}>Sign in to send an advisor request.</div>
-            <div style={styles.emptyCopy}>You can browse the full insurer shelf without an account, but advisor handoff stays tied to your profile.</div>
-            <button type="button" onClick={() => setLoginModalOpen(true)} style={styles.primaryBtn}>Sign in</button>
-          </section>
-        ) : loading ? (
+        {loading ? (
           <section style={styles.emptyCard}>
             <div style={styles.emptyTitle}>Loading your fit signals…</div>
           </section>

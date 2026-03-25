@@ -1,12 +1,12 @@
-user_id,created_at,username,password,email,name,dbs,uob,ocbc,other_banks,liability,income,estate,expense,age,age_group,country
-u001,2026-02-08T07:09:52Z,Alice,password,alice@gmail.com,Alice Tan,152000.50,0,0,0.00,999.00,19800.00,500000.00,1000.00,32,30-44,Singapore
-u002,2026-02-08T07:09:52Z,Brandon,password,brandon@example.com,Brandon Lim,0,2300.00,0,0.00,6400.75,4000.00,0.00,1500.00,24,18-29,
-u003,2026-02-08T07:09:52Z,Cheryl,password,cheryl@example.com,Cheryl Ng,7800.20,1200.00,0,0,9000.20,3000.00,0,2000.00,25,18-29,
-u004,2026-02-08T07:09:52Z,Daniel,password,daniel@example.com,Daniel Koh,1500.00,0,2650.40,3200.00,7350.40,4500.00,0,2500.00,26,18-29,
-u005,2026-02-08T07:09:52Z,Ethan,password,ethan@example.com,Ethan Lee,10400.00,0,0,2200.25,12600.25,4600.00,0,3000.00,36,30-44,
-u006,2026-02-08T07:09:52Z,Farah,password,farah@example.com,Farah Aziz,0,4890.10,0,3600.00,8490.10,4750.00,0,3500.00,37,30-44,
-u007,2026-02-08T07:09:52Z,Grace,password,grace@example.com,Grace Wong,0,2250.75,1100.00,0,3350.75,4800.00,0,2000.00,53,45-59,
-u008,2026-02-08T07:09:52Z,Hafiz,password,hafiz@example.com,Hafiz Rahman,0,6400.00,0,2750.50,9150.50,5200.00,0,2000.00,39,30-44,
-u009,2026-02-08T07:09:52Z,Isabella,password,isabella@example.com,Isabella Goh,0,1200.00,980.25,760.00,2940.25,3500.00,0,1200.00,23,18-29,Singapore
-u010,2026-02-08T07:09:52Z,Jason,password,jason@example.com,Jason Teo,0,0,3500.00,4200.00,7700.00,4900.00,0,1800.00,24,18-29,
-u011,2025-11-23T07:09:52Z,Zerius,password,zerius@example.com,Zerius Heng,0,0,0,0,0,0,0,0,23,18-29,Singapore
+user_id,username,password,email,name,dbs,uob,ocbc,other_banks,synced_account_balance,synced_balance_reload_count,liability,income,estate,expense,age,age_group,country,created_at,email_verified,password_updated_at
+u001,Alice,pbkdf2_sha256$390000$ad655203b1fb574a2274655c9267139f$bba2aaedb1544df12355f7d9d402fa036c428b51624f29e0902678cc7c6c5734,alice@gmail.com,Alice Tan,152000.50,0,0,0.00,,,999.00,19800.00,500000.00,1000.00,32,30-44,Singapore,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z
+u002,Brandon,pbkdf2_sha256$390000$e22e66dbaf3ffd15dd2f103b9ad12714$68d318324ee6c570b26d5763f5952ddc172deabc58175c92ee82dc9bf3955ee8,brandon@example.com,Brandon Lim,0,2300.00,0,0.00,,,6400.75,4000.00,0.00,1500.00,24,18-29,Singapore,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z
+u003,Cheryl,pbkdf2_sha256$390000$ad7ef97d6925a913cdf457a55f6b5600$24e15b023b124d9d1d21aadcae5118613fb6685504b5c292921bba7354e5440e,cheryl@example.com,Cheryl Ng,7800.20,1200.00,0,0,,,9000.20,3000.00,0,2000.00,25,18-29,,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z
+u004,Daniel,pbkdf2_sha256$390000$abd159a5e1b745bf6ba5bbdf21d844c7$c0f1d6a079dac204b65c4d790c8edf158f3086d6a065e0b44a562c22e4d5403e,daniel@example.com,Daniel Koh,1500.00,0,2650.40,3200.00,,,7350.40,4500.00,0,2500.00,26,18-29,,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z
+u005,Ethan,pbkdf2_sha256$390000$deb7453be0d1f96bc0ee9b622eafca6c$6bb474cb2d6a645ec63f78c796a1d5d8d3cc0b00013233f3c9e8b7fabb105e0f,ethan@example.com,Ethan Lee,10400.00,0,0,2200.25,,,12600.25,4600.00,0,3000.00,36,30-44,,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z
+u006,Farah,pbkdf2_sha256$390000$5fb3b2bf2909344fb135695a0fb34f17$f27aa131a9c59619bbf7ffa184c27e56f7ad0fdc33bfdfd39394af17232f87b3,farah@example.com,Farah Aziz,0,4890.10,0,3600.00,,,8490.10,4750.00,0,3500.00,37,30-44,,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z
+u007,Grace,pbkdf2_sha256$390000$ccbce703b630f79a37316034c87f8e07$fdfc4dec3ea65c8b9b4f294f7c4f6369b9f78b6453ea68646ecd2dd600b9bbaa,grace@example.com,Grace Wong,0,2250.75,1100.00,0,,,3350.75,4800.00,0,2000.00,53,45-59,,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z
+u008,Hafiz,pbkdf2_sha256$390000$bb261370adeb301a1afa5798e859ecea$604f924dd4f04d75340c4c09ff976d72deea068d428955ea9e488cf0311ab098,hafiz@example.com,Hafiz Rahman,0,6400.00,0,2750.50,,,9150.50,5200.00,0,2000.00,39,30-44,,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z
+u009,Isabella,pbkdf2_sha256$390000$3baaa5c2b30c3a9f2b2abddb79874f99$61a50323f2af4df000f937875586e8e5aed162443b0cce9779385740ef041c74,isabella@example.com,Isabella Goh,0,1200.00,980.25,760.00,,,2940.25,3500.00,0,1200.00,23,18-29,Singapore,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z
+u010,Jason,pbkdf2_sha256$390000$371d2c19dfb962c059e3d1b40a10db6c$c032fd9ee32a1a8d32272c168e5e0b28dfcbde24fed6f135cd7567d6a96f373a,jason@example.com,Jason Teo,0,0,3500.00,4200.00,,,7700.00,4900.00,0,1800.00,24,18-29,,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z
+u011,Zerius,pbkdf2_sha256$390000$93da3794cc766f3b4c93d5c64d431ae5$44138fe9c6a8fc878e8cc0ad27f30d384c154e0304ce41eeaafdc5ed1c22b0be,zerius@example.com,Zerius Heng,0,0,0,0,,,0,0,0,0,23,18-29,Singapore,2026-02-22T05:19:45Z,true,2026-02-22T05:19:45Z

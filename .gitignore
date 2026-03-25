@@ -4,6 +4,7 @@ __pycache__/
 node_modules
 .env
 frontend/node_modules/
+frontend/.npm-cache/
 frontend/package-lock.json
 frontend/.env
 frontend/.env.local

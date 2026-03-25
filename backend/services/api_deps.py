@@ -1,8 +1,13 @@
 from pathlib import Path
 from typing import Any, Dict
 
+from backend.services.auth_registry import AccountStateError
 from backend.services.auth_registry import LoginAuthError
 from backend.services.auth_registry import LoginValidationError
+from backend.services.auth_registry import OtpDeliveryError
+from backend.services.auth_registry import OtpExpiredError
+from backend.services.auth_registry import OtpValidationError
+from backend.services.auth_registry import PendingRegistrationError
 from backend.services.auth_registry import RegisterConflictError
 from backend.services.auth_registry import RegisterValidationError
 
@@ -42,6 +47,11 @@ def authenticate_login_user(*args: Any, **kwargs: Any) -> Any:
     return impl(*args, **kwargs)
 
 
+def hash_password(*args: Any, **kwargs: Any) -> Any:
+    from backend.services.auth_registry import hash_password as impl
+    return impl(*args, **kwargs)
+
+
 def ensure_login_csv_schema(*args: Any, **kwargs: Any) -> Any:
     from backend.services.auth_registry import ensure_login_csv_schema as impl
     return impl(*args, **kwargs)
@@ -57,6 +67,26 @@ def register_login_user(*args: Any, **kwargs: Any) -> Any:
     return impl(*args, **kwargs)
 
 
+def resend_registration_otp(*args: Any, **kwargs: Any) -> Any:
+    from backend.services.auth_registry import resend_registration_otp as impl
+    return impl(*args, **kwargs)
+
+
+def reset_password_with_otp(*args: Any, **kwargs: Any) -> Any:
+    from backend.services.auth_registry import reset_password_with_otp as impl
+    return impl(*args, **kwargs)
+
+
+def start_password_reset(*args: Any, **kwargs: Any) -> Any:
+    from backend.services.auth_registry import start_password_reset as impl
+    return impl(*args, **kwargs)
+
+
+def start_registration(*args: Any, **kwargs: Any) -> Any:
+    from backend.services.auth_registry import start_registration as impl
+    return impl(*args, **kwargs)
+
+
 def validate_password_strength(*args: Any, **kwargs: Any) -> Any:
     from backend.services.auth_registry import validate_password_strength as impl
     return impl(*args, **kwargs)
@@ -64,6 +94,11 @@ def validate_password_strength(*args: Any, **kwargs: Any) -> Any:
 
 def validate_registration_fields(*args: Any, **kwargs: Any) -> Any:
     from backend.services.auth_registry import validate_registration_fields as impl
+    return impl(*args, **kwargs)
+
+
+def verify_registration_otp(*args: Any, **kwargs: Any) -> Any:
+    from backend.services.auth_registry import verify_registration_otp as impl
     return impl(*args, **kwargs)
 
 
@@ -288,8 +323,13 @@ __all__ = [
     "COMMODITY_ALIAS_TO_SYMBOL",
     "DEFAULT_VISION_MODEL",
     "InsightError",
+    "AccountStateError",
     "LoginAuthError",
     "LoginValidationError",
+    "OtpDeliveryError",
+    "OtpExpiredError",
+    "OtpValidationError",
+    "PendingRegistrationError",
     "RegisterConflictError",
     "RegisterValidationError",
     "add_default_assets_row",
@@ -321,12 +361,17 @@ __all__ = [
     "normalize_email_address",
     "normalize_users_data",
     "parse_screenshot_with_llm",
+    "hash_password",
     "rebuild_stock_listings_cache_from_nasdaq",
     "refresh_commodity_market_data",
     "refresh_stock_market_data",
     "register_login_user",
+    "resend_registration_otp",
+    "reset_password_with_otp",
     "resolve_asset",
     "rewrite_user_profiles_with_order",
+    "start_password_reset",
+    "start_registration",
     "synthesize_compatibility_with_llm",
     "update_assets_file",
     "update_stock_listings_cache_prices_file",
@@ -334,4 +379,5 @@ __all__ = [
     "update_wellness_file",
     "validate_password_strength",
     "validate_registration_fields",
+    "verify_registration_otp",
 ]

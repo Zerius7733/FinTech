@@ -713,7 +713,8 @@
     "action_insights": [
       "Build emergency savings toward 3 to 6 months of expenses.",
       "Reduce concentration in a single volatile asset class and broaden diversification."
-    ]
+    ],
+    "email": "brandon@example.com"
   },
   "u003": {
     "name": "Cheryl Ng",
@@ -1938,7 +1939,8 @@
       "shared_budget_monthly": 0.0,
       "contribution_style": "income_weighted",
       "dependents_count": 0,
-      "shared_cash_reserve_target": 0.0},
+      "shared_cash_reserve_target": 0.0
+    },
     "shared_goals": [],
     "advisor_match_requests": [],
     "mortgage": 0,

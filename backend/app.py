@@ -26,6 +26,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 USER_JSON_PATH = BASE_DIR / "json_data" / "user.json"
+AUTH_STATE_PATH = BASE_DIR / "json_data" / "auth_state.json"
 USER_PORTFOLIO_DIR = BASE_DIR / "json_data" / "user_portfolio"
 CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
 LOGIN_CSV_PATH = BASE_DIR / "csv_data" / "users.csv"
@@ -705,9 +706,12 @@ def _recalculate_user_financials(user: Dict[str, Any]) -> Dict[str, Any]:
 def _ensure_users_csv_fieldnames(fieldnames: list[str]) -> list[str]:
     required = [
         "user_id",
+        "created_at",
         "username",
         "password",
         "email",
+        "email_verified",
+        "password_updated_at",
         "name",
         "dbs",
         "uob",
@@ -830,9 +834,12 @@ def _sync_user_to_assets_csv(user_id: str, user: Dict[str, Any]) -> None:
     csv_path = ASSETS_CSV_PATH
     default_headers = [
         "user_id",
+        "created_at",
         "username",
         "password",
         "email",
+        "email_verified",
+        "password_updated_at",
         "name",
         "dbs",
         "uob",
@@ -1106,7 +1113,7 @@ class AdvisorMatchCreateRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: str
     password: str
-    email: str | None = None
+    email: str
 
 
 class RegisterPrecheckRequest(BaseModel):
@@ -1115,9 +1122,29 @@ class RegisterPrecheckRequest(BaseModel):
     email: str
     user_id: str | None = None
 
+
+class RegisterVerifyRequest(BaseModel):
+    email: str
+    otp_code: str = Field(validation_alias=AliasChoices("otp_code", "otp", "code"))
+
+
+class RegisterResendRequest(BaseModel):
+    email: str
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+
+class PasswordResetStartRequest(BaseModel):
+    identifier: str = Field(validation_alias=AliasChoices("identifier", "email", "username"))
+
+
+class PasswordResetVerifyRequest(BaseModel):
+    email: str
+    otp_code: str = Field(validation_alias=AliasChoices("otp_code", "otp", "code"))
+    new_password: str
 
 
 class SurveyProfileUpdateRequest(BaseModel):
@@ -1216,17 +1243,6 @@ class ScreenshotConfirmRequest(BaseModel):
     holdings: list[ScreenshotHolding]
 
 
-class RegisterRequest(BaseModel):
-    username: str
-    password: str
-    email: str | None = None
-
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
 class AssetResolveResponse(BaseModel):
     query: str
     symbol: str
@@ -1315,6 +1331,8 @@ def login(payload: LoginRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except api.LoginAuthError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except api.AccountStateError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"login failed: {exc}") from exc
 
@@ -1479,15 +1497,35 @@ def get_commodity_listings(
         raise HTTPException(status_code=502, detail=f"commodity fetch failed: {exc}") from exc
 
 
-@app.post("/auth/register", tags=["Users"], summary="Register login user into users.csv")
+@app.post("/auth/register", tags=["Users"], summary="Start account registration and email OTP verification")
 def register_user(payload: RegisterRequest) -> Dict[str, Any]:
     try:
-        result = api.register_login_user(
+        return api.start_registration(
             login_csv_path=LOGIN_CSV_PATH,
+            auth_state_path=AUTH_STATE_PATH,
             username=payload.username,
             password=payload.password,
             email=payload.email,
-            user_id=_next_available_user_id(),
+            requested_user_id=_next_available_user_id(),
+        )
+    except api.RegisterValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except api.RegisterConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except api.OtpDeliveryError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
+
+
+@app.post("/auth/register/verify", tags=["Users"], summary="Verify registration OTP and create the user")
+def verify_register_user(payload: RegisterVerifyRequest) -> Dict[str, Any]:
+    try:
+        result = api.verify_registration_otp(
+            login_csv_path=LOGIN_CSV_PATH,
+            auth_state_path=AUTH_STATE_PATH,
+            email=payload.email,
+            otp_code=payload.otp_code,
         )
         api.add_default_user_profile(
             json_path=USER_JSON_PATH,
@@ -1499,13 +1537,34 @@ def register_user(payload: RegisterRequest) -> Dict[str, Any]:
             user_id=result["user_id"],
             name=result["username"],
         )
-        return {"status": "ok", **result}
-    except api.RegisterValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return result
     except api.RegisterConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except api.PendingRegistrationError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except api.OtpExpiredError as exc:
+        raise HTTPException(status_code=410, detail=str(exc)) from exc
+    except api.OtpValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"register failed: {exc}") from exc
+        raise HTTPException(status_code=500, detail=f"verify registration failed: {exc}") from exc
+
+
+@app.post("/auth/register/resend", tags=["Users"], summary="Resend registration OTP")
+def resend_register_otp(payload: RegisterResendRequest) -> Dict[str, Any]:
+    try:
+        return api.resend_registration_otp(
+            auth_state_path=AUTH_STATE_PATH,
+            email=payload.email,
+        )
+    except api.PendingRegistrationError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except api.OtpValidationError as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
+    except api.OtpDeliveryError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"resend registration otp failed: {exc}") from exc
 
 
 @app.post("/auth/register/precheck", tags=["Users"], summary="Validate signup fields before registration")
@@ -1531,6 +1590,44 @@ def register_precheck(payload: RegisterPrecheckRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"register precheck failed: {exc}") from exc
+
+
+@app.post("/auth/password-reset", tags=["Users"], summary="Send a password reset OTP")
+def start_password_reset(payload: PasswordResetStartRequest) -> Dict[str, Any]:
+    try:
+        return api.start_password_reset(
+            login_csv_path=LOGIN_CSV_PATH,
+            auth_state_path=AUTH_STATE_PATH,
+            identifier=payload.identifier,
+        )
+    except api.LoginValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except api.OtpValidationError as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
+    except api.OtpDeliveryError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"password reset start failed: {exc}") from exc
+
+
+@app.post("/auth/password-reset/verify", tags=["Users"], summary="Verify password reset OTP and update password")
+def verify_password_reset(payload: PasswordResetVerifyRequest) -> Dict[str, Any]:
+    try:
+        return api.reset_password_with_otp(
+            login_csv_path=LOGIN_CSV_PATH,
+            auth_state_path=AUTH_STATE_PATH,
+            email=payload.email,
+            otp_code=payload.otp_code,
+            new_password=payload.new_password,
+        )
+    except api.RegisterValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except api.OtpExpiredError as exc:
+        raise HTTPException(status_code=410, detail=str(exc)) from exc
+    except api.OtpValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"password reset verify failed: {exc}") from exc
 
 
 @app.post("/users/survey/profile", tags=["Users"], summary="Persist survey profile fields into users.csv")
@@ -1616,7 +1713,9 @@ def update_profile_details(payload: UserProfileDetailsUpdateRequest) -> Dict[str
             updates["name"] = full_name
         password = (payload.password or "").strip()
         if password:
-            updates["password"] = api.validate_password_strength(password)
+            api.validate_password_strength(password)
+            updates["password"] = api.hash_password(password)
+            updates["password_updated_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
         if updates["email"]:
             updates["email"] = api.normalize_email_address(updates["email"], require_email=True)
 

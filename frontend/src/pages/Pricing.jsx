@@ -293,6 +293,8 @@ const styles = {
     padding: '28px 24px',
     boxShadow: 'var(--glow-gold)',
     backdropFilter: 'blur(16px)',
+    display: 'flex',
+    flexDirection: 'column',
   },
   planCardFeatured: {
     borderColor: 'var(--border-act)',
@@ -346,6 +348,7 @@ const styles = {
     gap: 10,
     marginTop: 18,
     marginBottom: 22,
+    flex: 1,
   },
   featureRow: {
     display: 'flex',
@@ -369,6 +372,7 @@ const styles = {
     fontSize: '0.92rem',
     fontWeight: 700,
     cursor: 'pointer',
+    marginTop: 'auto',
   },
   planButtonPrimary: {
     border: 'none',
