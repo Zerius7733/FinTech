@@ -11,6 +11,8 @@ def build_router(
     market: Any,
     insights: Any,
     coingecko: Any,
+    user_store: Any | None = None,
+    subscriptions: Any | None = None,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -42,6 +44,19 @@ def build_router(
         try:
             rate_subject = f"user:{user_id}" if user_id else f"ip:{getattr(request.client, 'host', 'unknown')}"
             config.enforce_insights_rate_limit(rate_subject)
+            if user_id and user_store is not None and subscriptions is not None:
+                user = user_store.read_users_data().get(user_id)
+                if not isinstance(user, dict):
+                    raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+                if not subscriptions.is_premium_subscription(user.get("subscription_plan")):
+                    raise HTTPException(
+                        status_code=402,
+                        detail={
+                            "message": "Market insights are available on Premium.",
+                            "upgrade_url": "/pricing",
+                            "required_plan": "premium",
+                        },
+                    )
             result = await insights.build_insights(asset_type=type, symbol=symbol, months=months)
             return models.InsightsResponse(**result)
         except insights.InsightError as exc:

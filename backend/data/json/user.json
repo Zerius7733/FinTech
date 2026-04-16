@@ -404,6 +404,15 @@
           "sarah"
         ],
         "notes": ""
+      },
+      {
+        "title": "veit",
+        "target_amount": 200000.0,
+        "current_saved": 10000.0,
+        "monthly_contribution": 1000.0,
+        "target_date": "2026-12",
+        "priority": 2,
+        "owners": []
       }
     ],
     "advisor_match_requests": [
@@ -714,7 +723,9 @@
       "Build emergency savings toward 3 to 6 months of expenses.",
       "Reduce concentration in a single volatile asset class and broaden diversification."
     ],
-    "email": "brandon@example.com"
+    "email": "brandon@example.com",
+    "subscription_status": "free",
+    "subscription_label": "Free"
   },
   "u003": {
     "name": "Cheryl Ng",
@@ -896,7 +907,9 @@
     },
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification."
-    ]
+    ],
+    "subscription_status": "free",
+    "subscription_label": "Free"
   },
   "u004": {
     "name": "Daniel Koh",
@@ -1078,7 +1091,9 @@
     },
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification."
-    ]
+    ],
+    "subscription_status": "free",
+    "subscription_label": "Free"
   },
   "u005": {
     "name": "Ethan Lee",
@@ -1260,7 +1275,9 @@
     },
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification."
-    ]
+    ],
+    "subscription_status": "free",
+    "subscription_label": "Free"
   },
   "u006": {
     "name": "Farah Aziz",
@@ -1442,7 +1459,9 @@
     },
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification."
-    ]
+    ],
+    "subscription_status": "free",
+    "subscription_label": "Free"
   },
   "u007": {
     "name": "Grace Wong",
@@ -1626,7 +1645,9 @@
     "action_insights": [
       "Build emergency savings toward 3 to 6 months of expenses.",
       "Reduce concentration in a single volatile asset class and broaden diversification."
-    ]
+    ],
+    "subscription_status": "free",
+    "subscription_label": "Free"
   },
   "u008": {
     "name": "Hafiz Rahman",
@@ -1809,7 +1830,9 @@
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification."
     ],
-    "email": "isabella@example.com"
+    "email": "isabella@example.com",
+    "subscription_status": "free",
+    "subscription_label": "Free"
   },
   "u009": {
     "name": "Isabella Goh",
@@ -2018,14 +2041,16 @@
     "action_insights": [
       "Reduce concentration in a single volatile asset class and broaden diversification.",
       "Realign portfolio risk with stated tolerance so market swings are easier to absorb."
-    ]
+    ],
+    "subscription_status": "free",
+    "subscription_label": "Free"
   },
   "u010": {
     "name": "Jason Teo",
     "age": null,
     "country": "Singapore",
     "subscription_plan": "free",
-    "cash_balance": 7700.0,
+    "cash_balance": 8700.0,
     "liability": 17700.0,
     "liability_items": [
       {
@@ -2081,8 +2106,8 @@
       }
     ],
     "portfolio_value": 1425318.29,
-    "total_balance": 1543018.29,
-    "net_worth": 1523518.29,
+    "total_balance": 1544018.29,
+    "net_worth": 1524518.29,
     "income": 4900.0,
     "income_summary": {
       "country": "SG",
@@ -2137,7 +2162,7 @@
     "mortgage": 0,
     "estate": 100000.0,
     "wellness_metrics": {
-      "liquidity_months": 9.83,
+      "liquidity_months": 10.39,
       "liquidity_score": 100.0,
       "diversification_hhi": 0.9993,
       "diversification_score": 0.67,
@@ -2159,8 +2184,8 @@
         "derived_mortgage": 0.0,
         "derived_non_mortgage_liability": 17700.0,
         "derived_total_liability": 17700.0,
-        "derived_total_cash_buffer": 17700.0,
-        "liquidity_months": 9.83,
+        "derived_total_cash_buffer": 18700.0,
+        "liquidity_months": 10.39,
         "debt_to_annual_income": 0.301,
         "non_mortgage_debt_to_annual_income": 0.301,
         "mortgage_to_annual_income": 0.0,
@@ -2210,14 +2235,16 @@
       "Reduce concentration in a single volatile asset class and broaden diversification.",
       "Realign portfolio risk with stated tolerance so market swings are easier to absorb."
     ],
-    "email": "jason@example.com"
+    "email": "jason@example.com",
+    "subscription_status": "free",
+    "subscription_label": "Free"
   },
   "u011": {
     "name": "Zerius Heng",
     "age": 23,
     "country": "Singapore",
     "subscription_plan": "free",
-    "cash_balance": 0.0,
+    "cash_balance": 1020.0,
     "liability": 0,
     "liability_items": [],
     "portfolio": {
@@ -2284,8 +2311,8 @@
       }
     ],
     "portfolio_value": 14284.25,
-    "total_balance": 34284.75,
-    "net_worth": 34284.75,
+    "total_balance": 35304.75,
+    "net_worth": 35304.75,
     "income": 0,
     "income_summary": {
       "country": "SG",
@@ -2356,7 +2383,7 @@
         "derived_mortgage": 0.0,
         "derived_non_mortgage_liability": 0.0,
         "derived_total_liability": 0.0,
-        "derived_total_cash_buffer": 20000.0,
+        "derived_total_cash_buffer": 21020.0,
         "liquidity_months": 0.0,
         "debt_to_annual_income": 0.0,
         "non_mortgage_debt_to_annual_income": 0.0,

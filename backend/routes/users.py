@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 
 import backend.api_models as models
+from backend.services.income_profile import build_income_summary
 
 
 def build_router(
@@ -213,7 +214,10 @@ def build_router(
                     "estate": user.get("estate", 0.0),
                     "portfolio_value": user.get("portfolio_value", 0.0),
                     "net_worth": user.get("net_worth", 0.0),
+                    "income_summary": build_income_summary(user),
                 },
+                "household_profile": user.get("household_profile", {}),
+                "shared_goals": user.get("shared_goals", []),
                 "user": user,
             }
         except HTTPException:

@@ -282,7 +282,7 @@ def build_router(
 
             portfolio = user.get("portfolio")
             if not isinstance(portfolio, dict):
-                portfolio = {"stocks": [], "cryptos": [], "commodities": []}
+                portfolio = {"stocks": [], "bonds": [], "real_assets": [], "cryptos": [], "commodities": []}
 
             symbol = payload.symbol.strip().upper()
             if not symbol:
@@ -292,6 +292,12 @@ def build_router(
             if requested in {"stock", "stocks", "equity", "equities"}:
                 bucket = "stocks"
                 query_type = "STOCK"
+            elif requested in {"bond", "bonds", "fixed_income"}:
+                bucket = "bonds"
+                query_type = "BOND"
+            elif requested in {"real_asset", "real_assets", "reit", "reits"}:
+                bucket = "real_assets"
+                query_type = "REAL_ASSET"
             elif requested in {"crypto", "cryptos", "digital_asset", "digital_assets"}:
                 bucket = "cryptos"
                 query_type = "CRYPTO"
@@ -299,11 +305,20 @@ def build_router(
                 bucket = "commodities"
                 query_type = "COMMODITY"
             else:
-                raise HTTPException(status_code=400, detail="asset_class must be stock, crypto, or commodity")
+                raise HTTPException(status_code=400, detail="asset_class must be stock, bond, real_asset, crypto, or commodity")
 
-            quote = market.get_market_quote(query=f"{query_type}, {symbol}")
-            fetched_symbol = str(quote.get("symbol") or symbol).upper()
-            price = round(float(quote.get("price") or 0.0), 6)
+            if query_type in {"STOCK", "BOND", "REAL_ASSET"}:
+                fetched_symbol = symbol
+                price = round(float(market.fetch_latest_prices([symbol])[symbol]), 6)
+            elif query_type == "CRYPTO":
+                quote = market.fetch_crypto_price(symbol)
+                fetched_symbol = str(quote.get("symbol") or symbol).upper()
+                price = round(float(quote.get("price") or 0.0), 6)
+            else:
+                quote = market.fetch_commodity_price(symbol)
+                fetched_symbol = str(quote.get("symbol") or symbol).upper()
+                price = round(float(quote.get("price") or 0.0), 6)
+
             if price <= 0:
                 raise HTTPException(status_code=400, detail=f"could not fetch a valid market price for '{symbol}'")
 
