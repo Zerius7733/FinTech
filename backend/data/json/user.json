@@ -4,7 +4,7 @@
     "age": 40,
     "country": "Singapore",
     "subscription_plan": "premium",
-    "cash_balance": 152000.5,
+    "cash_balance": 153009.5,
     "liability": 999.0,
     "liability_items": [
       {
@@ -163,11 +163,17 @@
         "label": "Property",
         "category": "real_estate",
         "value": 500000.0
+      },
+      {
+        "id": "dd5eaa10-243b-4c36-b23a-4acb9dc7ec0e",
+        "label": "test",
+        "category": "business",
+        "value": 13.5
       }
     ],
     "portfolio_value": 250106.08,
-    "total_balance": 902106.58,
-    "net_worth": 900107.58,
+    "total_balance": 903129.08,
+    "net_worth": 901130.08,
     "income": 20600.0,
     "income_summary": {
       "country": "SG",
@@ -450,7 +456,7 @@
     "mortgage": 145000.0,
     "estate": 500000.0,
     "wellness_metrics": {
-      "liquidity_months": 152.0,
+      "liquidity_months": 153.01,
       "liquidity_score": 100.0,
       "diversification_hhi": 0.1898,
       "diversification_score": 87.21,
@@ -472,8 +478,8 @@
         "derived_mortgage": 145000.0,
         "derived_non_mortgage_liability": 999.0,
         "derived_total_liability": 145999.0,
-        "derived_total_cash_buffer": 152000.5,
-        "liquidity_months": 152.0,
+        "derived_total_cash_buffer": 153009.5,
+        "liquidity_months": 153.01,
         "debt_to_annual_income": 0.5906,
         "non_mortgage_debt_to_annual_income": 0.004,
         "mortgage_to_annual_income": 0.5866,

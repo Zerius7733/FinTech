@@ -2,8 +2,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-import yfinance as yf
-
 import backend.settings.constants as const
 from backend.services.wealth_wellness.engine import calculate_user_wellness
 
@@ -112,35 +110,6 @@ def _build_stock_ath_index() -> dict[str, dict[str, Any]]:
     return index
 
 
-def _fetch_stock_ath_payload(symbol: Any) -> dict[str, Any] | None:
-    symbol_text = str(symbol or "").strip().upper()
-    if not symbol_text:
-        return None
-    try:
-        ticker = yf.Ticker(symbol_text)
-        info = ticker.info or {}
-        fast_info = getattr(ticker, "fast_info", {}) or {}
-        ath = _safe_float(
-            info.get("fiftyTwoWeekHigh")
-            or fast_info.get("yearHigh")
-            or fast_info.get("fiftyTwoWeekHigh")
-        )
-        current_price = _safe_float(
-            fast_info.get("lastPrice")
-            or fast_info.get("last_price")
-            or info.get("regularMarketPrice")
-            or info.get("currentPrice")
-        )
-        if ath is None:
-            return None
-        return {
-            "ath": ath,
-            "ath_change_percentage": _compute_ath_change_percentage(current_price, ath),
-        }
-    except Exception:
-        return None
-
-
 def _lookup_ath_payload(
     bucket: str,
     symbol: Any,
@@ -163,10 +132,7 @@ def _lookup_ath_payload(
         if symbol_key in const.COMMON_COMMODITY_ETFS:
             return stock_index.get(symbol_key)
         return None
-    cached_payload = stock_index.get(symbol_key)
-    if cached_payload:
-        return cached_payload
-    return _fetch_stock_ath_payload(symbol)
+    return stock_index.get(symbol_key)
 
 
 def enrich_portfolio_with_ath(user: dict[str, Any]) -> dict[str, Any]:
