@@ -18,6 +18,8 @@ const saveFaves = arr => { try { localStorage.setItem(FAVES_KEY, JSON.stringify(
 
 const MARKET_TABS = [
   { label: 'Stocks', path: '/stocks' },
+  { label: 'Bonds', path: '/bonds' },
+  { label: 'Real Assets', path: '/real-assets' },
   { label: 'Commodities', path: '/commodities' },
   { label: 'Crypto', path: '/crypto' },
   { label: 'Favourites', path: null, fav: true },
@@ -133,6 +135,8 @@ function getAssetClassBase(endpoint, riskProfile) {
   const risk = normalizeRiskBucket(riskProfile)
   const matrix = {
     stocks: { conservative: 58, balanced: 76, aggressive: 84 },
+    bonds: { conservative: 86, balanced: 78, aggressive: 62 },
+    'real-assets': { conservative: 64, balanced: 74, aggressive: 72 },
     commodities: { conservative: 68, balanced: 72, aggressive: 62 },
     cryptos: { conservative: 28, balanced: 52, aggressive: 82 },
   }
@@ -153,13 +157,15 @@ function getCompatibilityAnalysis(item, endpoint, userProfile, fallbackRank) {
 
   if (endpoint === 'cryptos') score += (wellness - 60) * 0.18 - (stress - 50) * 0.26 - absMove * 1.35
   if (endpoint === 'stocks') score += (wellness - 55) * 0.12 - (stress - 50) * 0.14 - Math.max(0, absMove - 6) * 0.55
+  if (endpoint === 'bonds') score += (wellness - 50) * 0.08 + (stress - 50) * 0.12 - Math.max(0, absMove - 4) * 0.35
+  if (endpoint === 'real-assets') score += (wellness - 55) * 0.11 - (stress - 50) * 0.08 - Math.max(0, absMove - 7) * 0.42
   if (endpoint === 'commodities') score += (wellness - 55) * 0.08 + (stress - 50) * 0.08 - Math.max(0, absMove - 9) * 0.35
 
   score += sizeBonus
   score = Math.round(clamp(score, 18, 95))
 
   const reasons = []
-  reasons.push(`${riskProfile} risk profile has ${endpoint === 'cryptos' ? 'the strongest sensitivity' : endpoint === 'stocks' ? 'a constructive bias' : 'a measured fit'} to ${endpoint.slice(0, -1)} exposure.`)
+  reasons.push(`${riskProfile} risk profile has ${endpoint === 'cryptos' ? 'the strongest sensitivity' : endpoint === 'stocks' ? 'a constructive bias' : endpoint === 'bonds' ? 'a stabilizing bias' : endpoint === 'real-assets' ? 'a measured inflation-aware fit' : 'a measured fit'} to ${endpoint === 'real-assets' ? 'real-asset' : endpoint.slice(0, -1)} exposure.`)
   reasons.push(`Current market behavior is ${absMove > 12 ? 'volatile' : absMove > 6 ? 'active' : 'relatively stable'}, based on the latest 24h and 7d move profile.`)
   reasons.push(`Scale support is ${rank <= 25 ? 'strong' : rank <= 75 ? 'moderate' : 'limited'}, using market-cap rank as a liquidity and resilience signal.`)
 
@@ -183,6 +189,8 @@ function getCompatibilityAnalysis(item, endpoint, userProfile, fallbackRank) {
 function endpointToCompatibilityType(endpoint) {
   if (endpoint === 'stocks') return 'stock'
   if (endpoint === 'cryptos') return 'crypto'
+  if (endpoint === 'bonds') return 'stock'
+  if (endpoint === 'real-assets') return 'stock'
   return 'commodity'
 }
 
@@ -295,7 +303,7 @@ function MarketDetailModal({ item, endpoint, title, profile, profileLoading = fa
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
-  const insightAssetType = endpoint === 'stocks' ? 'stock' : endpoint === 'cryptos' ? 'crypto' : 'commodity'
+  const insightAssetType = endpoint === 'cryptos' ? 'crypto' : endpoint === 'commodities' ? 'commodity' : 'stock'
   const cachedInsight = getCachedInsight(insightAssetType, item?.symbol, 3)
   const [liveInsightNarrative, setLiveInsightNarrative] = useState(() => insightNarrativeText(cachedInsight))
   const compatibilityCacheKey = getCompatibilityCacheKey({
@@ -723,6 +731,8 @@ function FavouritesView({ favourites, onSelect, fmt }) {
   }
   const groups = [
     { ep: 'stocks', label: 'Stocks' },
+    { ep: 'bonds', label: 'Bonds' },
+    { ep: 'real-assets', label: 'Real Assets' },
     { ep: 'commodities', label: 'Commodities' },
     { ep: 'cryptos', label: 'Crypto' },
   ]

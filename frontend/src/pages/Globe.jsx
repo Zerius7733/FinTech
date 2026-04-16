@@ -754,9 +754,9 @@ const GLOBE_ZONES = [
   {
     label:'Real Assets', cx:1250, cy:430, rx:202, ry:158,
     core:[{cx:1250,cy:430,rx:202,ry:158,rot:0.06},{cx:1272,cy:450,rx:148,ry:114,rot:-0.06}],
-    dr:10,  dg:68,  db:48,    // very dark emerald
-    lr:52,  lg:211, lb:153,   // light edge #34d399
-    color:'#34d399',
+    dr:94,  dg:46,  db:34,    // deep terracotta
+    lr:201, lg:123, lb:99,    // light edge #C97B63
+    color:'#C97B63',
   },
   {
     label:'Digital',     cx:1680, cy:280, rx:182, ry:152,
@@ -777,7 +777,7 @@ const GLOBE_ZONES = [
 const ZONE_ROTATION_TARGETS = {
   Equities: getRotationForLatLng(38, -95),
   Bonds: getRotationForLatLng(52, -25),
-  'Real Assets': getRotationForLatLng(18, 35),
+  'Real Assets': getRotationForLatLng(-18, -68),
   Digital: getRotationForLatLng(34, 118),
   Commodities: getRotationForLatLng(-18, 22),
 }
@@ -814,6 +814,14 @@ function writeSessionJson(key, value) {
   try {
     sessionStorage.setItem(key, JSON.stringify(value))
   } catch {}
+}
+
+function readSessionValue(key) {
+  try {
+    return sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
 }
 
 function readCachedGlobeProfile(userId) {
@@ -908,6 +916,9 @@ function paintGlobeCanvas(ctx, themeId) {
 
 // Deterministic spread: place n items in a ring/spiral around a base lat/lng
 function spreadPositions(n, baseLat, baseLng, latRadius, lngRadius) {
+  if (n <= 1) {
+    return [{ lat: baseLat, lng: baseLng }]
+  }
   return Array.from({ length: n }, (_, i) => {
     const angle = (i / Math.max(n, 1)) * Math.PI * 2
     // two rings: inner half, outer half
@@ -923,7 +934,7 @@ function buildGlobeNodes(profile, commodityDisplayMap = {}) {
   if (!profile?.portfolio) return []
 
   const fmt2 = n => Math.round(n * 100) / 100
-  const { stocks = [], cryptos = [], commodities = [] } = profile.portfolio
+  const { stocks = [], bonds = [], real_assets: realAssets = [], cryptos = [], commodities = [] } = profile.portfolio
   const wm = profile.wellness_metrics ?? {}
 
   const makeNode = (h, ep, lat, lng, color, region, flag) => {
@@ -955,7 +966,7 @@ function buildGlobeNodes(profile, commodityDisplayMap = {}) {
       flag,
       region,
       color,
-      type:     ep === 'cryptos' ? 'crypto' : ep === 'commodities' ? 'commodity' : 'equity',
+      type:     ep === 'cryptos' ? 'crypto' : ep === 'commodities' ? 'commodity' : ep === 'bonds' ? 'bond' : ep === 'real_assets' ? 'real_asset' : 'equity',
       aum:      Math.round(h.market_value ?? 0),
       mtd,
       ath: typeof commodityDisplayAth === 'number' ? commodityDisplayAth : null,
@@ -985,6 +996,18 @@ function buildGlobeNodes(profile, commodityDisplayMap = {}) {
     nodes.push(makeNode(h, 'stocks', stockPos[i].lat, stockPos[i].lng, 0x60a5fa, 'Equities', '📈'))
   )
 
+  const activeBonds = bonds.filter(h => (h.qty ?? 0) > 0)
+  const bondPos = spreadPositions(activeBonds.length, 54, -8, 12, 18)
+  activeBonds.forEach((h, i) =>
+    nodes.push(makeNode(h, 'bonds', bondPos[i].lat, bondPos[i].lng, 0xa78bfa, 'Bonds', '🏛️'))
+  )
+
+  const activeRealAssets = realAssets.filter(h => (h.qty ?? 0) > 0)
+  const realAssetPos = spreadPositions(activeRealAssets.length, -18, -68, 18, 20)
+  activeRealAssets.forEach((h, i) =>
+    nodes.push(makeNode(h, 'real_assets', realAssetPos[i].lat, realAssetPos[i].lng, 0xc97b63, 'Real Assets', '🏠'))
+  )
+
   // Crypto — spread across East Asia / Pacific
   const activeCryptos = cryptos.filter(h => (h.qty ?? 0) > 0)
   const cryptoPos = spreadPositions(activeCryptos.length, 32, 118, 14, 22)
@@ -1007,7 +1030,7 @@ export default function Globe() {
   const { user } = useAuth()
   const { setLoginModalOpen, setSurveyModalOpen } = useLoginModal()
   const { activeTheme } = useTheme()
-  const initialCachedProfile = readCachedGlobeProfile(sessionStorage.getItem('user_id') || '')
+  const initialCachedProfile = readCachedGlobeProfile(readSessionValue('user_id') || '')
   const canvasRef   = useRef(null)
   const globeRef    = useRef(null)   // THREE globe mesh
   const globeWrapRef = useRef(null)
@@ -1067,25 +1090,55 @@ export default function Globe() {
 
   // Wellness score + portfolio nodes for logged-in hero
   const [userProfile, setUserProfile] = useState(initialCachedProfile)
-  const [isProfileLoading, setIsProfileLoading] = useState(() => Boolean(sessionStorage.getItem('user_id')) && !initialCachedProfile)
+  const [isProfileLoading, setIsProfileLoading] = useState(() => Boolean(readSessionValue('user_id')) && !initialCachedProfile)
   useEffect(() => {
     if (!user?.user_id) {
       setUserProfile(null)
       setIsProfileLoading(false)
       return
     }
+    let cancelled = false
+    const loadUserProfile = () => {
+      fetch(`${API}/users/${user.user_id}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (cancelled || !d?.user) return
+          setUserProfile(d.user)
+          writeSessionJson(GLOBE_PROFILE_CACHE_KEY, { userId: user.user_id, data: d.user })
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setIsProfileLoading(false)
+        })
+    }
     const cachedProfile = readCachedGlobeProfile(user.user_id)
     if (cachedProfile) setUserProfile(cachedProfile)
     setIsProfileLoading(!cachedProfile)
-    fetch(`${API}/users/${user.user_id}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (!d?.user) return
-        setUserProfile(d.user)
-        writeSessionJson(GLOBE_PROFILE_CACHE_KEY, { userId: user.user_id, data: d.user })
-      })
-      .catch(() => {})
-      .finally(() => setIsProfileLoading(false))
+    loadUserProfile()
+
+    const onProfileUpdated = event => {
+      const detailUserId = event?.detail?.userId
+      if (detailUserId && detailUserId !== user.user_id) return
+      const nextUser = event?.detail?.user
+      if (nextUser) {
+        setUserProfile(nextUser)
+        writeSessionJson(GLOBE_PROFILE_CACHE_KEY, { userId: user.user_id, data: nextUser })
+        setIsProfileLoading(false)
+        return
+      }
+      setIsProfileLoading(true)
+      loadUserProfile()
+    }
+
+    const onWindowFocus = () => loadUserProfile()
+
+    window.addEventListener('ws-profile-updated', onProfileUpdated)
+    window.addEventListener('focus', onWindowFocus)
+    return () => {
+      cancelled = true
+      window.removeEventListener('ws-profile-updated', onProfileUpdated)
+      window.removeEventListener('focus', onWindowFocus)
+    }
   }, [user?.user_id])
 
   useEffect(() => {
@@ -1118,8 +1171,8 @@ export default function Globe() {
   // Count of active holdings across all asset classes
   const activePositions = (() => {
     if (!userProfile?.portfolio) return 40
-    const { stocks = [], cryptos = [], commodities = [] } = userProfile.portfolio
-    return [...stocks, ...cryptos, ...commodities].filter(h => (h.qty ?? 0) > 0).length
+    const { stocks = [], bonds = [], real_assets: realAssets = [], cryptos = [], commodities = [] } = userProfile.portfolio
+    return [...stocks, ...bonds, ...realAssets, ...cryptos, ...commodities].filter(h => (h.qty ?? 0) > 0).length
   })()
   const showGlobeLoadingState = Boolean(user) && isProfileLoading && !userProfile
 
@@ -1129,8 +1182,8 @@ export default function Globe() {
     const pv = userProfile.portfolio_value ?? userProfile.total_balance ?? 0
     animateCount(setAum, pv, 1200)
     // Compute total unrealised P&L: Σ (market_value - qty * avg_price)
-    const { stocks = [], cryptos = [], commodities = [] } = userProfile.portfolio ?? {}
-    const allHoldings = [...stocks, ...cryptos, ...commodities]
+    const { stocks = [], bonds = [], real_assets: realAssets = [], cryptos = [], commodities = [] } = userProfile.portfolio ?? {}
+    const allHoldings = [...stocks, ...bonds, ...realAssets, ...cryptos, ...commodities]
     const totalPL = allHoldings.reduce((sum, h) => {
       if ((h.qty ?? 0) === 0) return sum
       return sum + ((h.market_value ?? 0) - (h.qty * (h.avg_price ?? 0)))
@@ -1769,18 +1822,7 @@ export default function Globe() {
         {/* Stats bar */}
         <div style={{ ...S.statsBar, ...blurredUiStyle }}>
           {[
-            { label:'Total Portfolio', val:`$${aum.toLocaleString()}`,
-              sub: (() => {
-                if (!userProfile?.portfolio) return 'loading…'
-                const { stocks=[], cryptos=[], commodities=[] } = userProfile.portfolio
-                const types = [
-                  stocks.some(h => h.qty > 0) && 'Stocks',
-                  cryptos.some(h => h.qty > 0) && 'Crypto',
-                  commodities.some(h => h.qty > 0) && 'Commodities',
-                ].filter(Boolean)
-                return `${types.length} asset class${types.length !== 1 ? 'es' : ''} · ${types.join(', ')}`
-              })(),
-              c:'var(--gold)' },
+            { label:'Total Portfolio', val:`$${aum.toLocaleString()}`, sub:'', c:'var(--gold)' },
             { label:'Unrealised P&L',
               val: userProfile ? `${plSign >= 0 ? '+' : '-'}$${pl.toLocaleString()}` : '—',
               sub: userProfile ? `${plSign >= 0 ? '+' : ''}${plPct.toFixed(2)}% vs avg cost` : 'loading…',
@@ -1798,6 +1840,7 @@ export default function Globe() {
             </div>
           ))}
         </div>
+
       </section>
 
       {/* ══════════════════════════════════════════════════ */}

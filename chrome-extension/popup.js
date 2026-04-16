@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE = "https://fintech-production-d308.up.railway.app";
+const DEFAULT_LOCAL_API_BASE = "http://localhost:8000";
 const DEFAULT_MODEL = "gpt-4.1-mini";
 
 const authViewEl = document.getElementById("authView");
@@ -12,6 +12,11 @@ const logoutBtn = document.getElementById("logoutBtn");
 const authStatusEl = document.getElementById("authStatus");
 const apiBaseInput = document.getElementById("apiBase");
 const saveApiBaseBtn = document.getElementById("saveApiBaseBtn");
+const resolvedApiBaseEl = document.getElementById("resolvedApiBase");
+const configSourceEl = document.getElementById("configSource");
+const connectionStatusEl = document.getElementById("connectionStatus");
+const configHelpEl = document.getElementById("configHelp");
+const testConnectionBtn = document.getElementById("testConnectionBtn");
 
 const statusEl = document.getElementById("status");
 const previewEl = document.getElementById("preview");
@@ -25,14 +30,41 @@ const confirmBtn = document.getElementById("confirmBtn");
 let screenshotDataUrl = "";
 let authUser = null;
 let currentImportId = "";
-let apiBase = DEFAULT_API_BASE;
+let apiBase = "";
+let connectionState = {
+  checkedAt: null,
+  ok: false,
+  message: "Not checked",
+  source: "runtime default",
+};
 
 function normalizeApiBase(value) {
   return String(value || "").trim().replace(/\/+$/, "");
 }
 
+function inferBrowserApiBase() {
+  if (typeof window === "undefined") return DEFAULT_LOCAL_API_BASE;
+  return DEFAULT_LOCAL_API_BASE;
+}
+
 function getApiBase() {
-  return normalizeApiBase(apiBase) || DEFAULT_API_BASE;
+  return normalizeApiBase(apiBase) || inferBrowserApiBase();
+}
+
+function getConfigSource() {
+  if (normalizeApiBase(apiBase)) return "saved override";
+  return "runtime default";
+}
+
+function updateConfigPanel() {
+  const resolvedBase = getApiBase();
+  resolvedApiBaseEl.textContent = resolvedBase;
+  configSourceEl.textContent = getConfigSource();
+  connectionStatusEl.textContent = connectionState.message;
+  connectionStatusEl.dataset.tone = connectionState.ok ? "success" : connectionState.message === "Not checked" ? "neutral" : "error";
+  configHelpEl.textContent = normalizeApiBase(apiBase)
+    ? "Saved override is active. The extension will use this endpoint for auth, parse, and confirm requests."
+    : "No saved override is active. The extension follows the browser/runtime default so local and deployed flows can coexist.";
 }
 
 function toRawBase64(dataUrl) {
@@ -176,7 +208,7 @@ async function saveSettings() {
   await chrome.storage.local.set({
     authUser,
     importId: currentImportId,
-    apiBase: getApiBase(),
+    apiBase: normalizeApiBase(apiBase),
   });
 }
 
@@ -197,7 +229,7 @@ async function loadSettings() {
   const saved = await chrome.storage.local.get(["importId", "authUser", "apiBase"]);
   currentImportId = saved.importId || "";
   authUser = saved.authUser || null;
-  apiBase = normalizeApiBase(saved.apiBase) || DEFAULT_API_BASE;
+  apiBase = normalizeApiBase(saved.apiBase);
   apiBaseInput.value = getApiBase();
   setHoldingsToUI([]);
   setWarnings([]);
@@ -205,6 +237,7 @@ async function loadSettings() {
   previewEl.removeAttribute("src");
   renderPreviewState();
   renderAuthState();
+  updateConfigPanel();
 }
 
 async function getActiveTab() {
@@ -302,7 +335,7 @@ async function captureAndParse() {
   previewEl.src = screenshotDataUrl;
   renderPreviewState();
 
-  const res = await fetch(`${getApiBase()}/users/${encodeURIComponent(authUser.user_id)}/imports/screenshot/parse`, {
+    const res = await fetch(`${getApiBase()}/users/${encodeURIComponent(authUser.user_id)}/imports/screenshot/parse`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -364,13 +397,64 @@ async function confirmImport() {
   setStatus(`Merged ${data.merged_count} holdings into ${authUser.username}'s portfolio.`, "success");
 }
 
+async function testBackendConnection() {
+  const base = getApiBase();
+  const startedAt = new Date();
+  connectionState = {
+    checkedAt: startedAt.toISOString(),
+    ok: false,
+    message: "Checking backend health...",
+    source: getConfigSource(),
+  };
+  updateConfigPanel();
+
+  try {
+    const res = await fetch(`${base}/health`, { method: "GET" });
+    if (!res.ok) {
+      throw new Error(`Health check failed (${res.status})`);
+    }
+    connectionState = {
+      checkedAt: new Date().toISOString(),
+      ok: true,
+      message: `Connected to backend at ${base}`,
+      source: getConfigSource(),
+    };
+    setAuthStatus(`Connection verified for ${base}`, "success");
+  } catch (error) {
+    connectionState = {
+      checkedAt: new Date().toISOString(),
+      ok: false,
+      message: error.message || `Unable to reach ${base}`,
+      source: getConfigSource(),
+    };
+    setAuthStatus(connectionState.message, "error");
+  }
+  updateConfigPanel();
+}
+
 loginForm.addEventListener("submit", handleLogin);
 
 saveApiBaseBtn.addEventListener("click", async () => {
-  apiBase = normalizeApiBase(apiBaseInput.value) || DEFAULT_API_BASE;
+  apiBase = normalizeApiBase(apiBaseInput.value);
   apiBaseInput.value = getApiBase();
   await saveSettings();
-  setAuthStatus(`API endpoint saved: ${getApiBase()}`, "success");
+  connectionState = {
+    checkedAt: new Date().toISOString(),
+    ok: false,
+    message: `API override saved: ${normalizeApiBase(apiBase) || "runtime default"}`,
+    source: getConfigSource(),
+  };
+  setAuthStatus(connectionState.message, "success");
+  updateConfigPanel();
+});
+
+testConnectionBtn.addEventListener("click", async () => {
+  testConnectionBtn.disabled = true;
+  try {
+    await testBackendConnection();
+  } finally {
+    testConnectionBtn.disabled = false;
+  }
 });
 
 logoutBtn.addEventListener("click", async () => {
@@ -410,4 +494,5 @@ addRowBtn.addEventListener("click", () => {
 });
 
 renderPreviewState();
-loadSettings();
+updateConfigPanel();
+loadSettings().then(() => testBackendConnection().catch(() => null));

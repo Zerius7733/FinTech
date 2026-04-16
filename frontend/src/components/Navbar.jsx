@@ -5,10 +5,25 @@ import { useLoginModal } from '../context/LoginModalContext.jsx'
 import ThemeModal from './ThemeModal.jsx'
 import SettingsModal from './SettingsModal.jsx'
 import { API_BASE as API } from '../utils/api.js'
+import { GUIDED_SCROLL_EVENT, queueGuidedScroll } from '../utils/guidedScroll.js'
 const NAV_LINKS = [
   { label: 'Home',      path: '/' },
   { label: 'Markets',    path: '/stocks' },
+  { label: 'Institutions', path: '/institutions' },
+  { label: 'More', path: '/more', type: 'dropdown' },
 ]
+
+const MORE_LINKS = [
+  { label: 'Planning', path: '/planning' },
+  { label: 'Income', path: '/income' },
+  { label: 'Pricing', path: '/pricing' },
+]
+
+const PROFILE_ALLOCATIONS = {
+  Low: { equities: 0.30, bonds: 0.50, cash: 0.18, commodities: 0.02, crypto: 0.00 },
+  Moderate: { equities: 0.50, bonds: 0.25, cash: 0.15, commodities: 0.05, crypto: 0.05 },
+  High: { equities: 0.55, bonds: 0.10, cash: 0.10, commodities: 0.05, crypto: 0.20 },
+}
 
 function isAccountAtLeastDaysOld(createdAt, minDays = 30) {
   if (!createdAt) return false
@@ -21,7 +36,7 @@ function hasFinancialActivity(profile) {
   if (!profile || typeof profile !== 'object') return false
 
   const portfolio = profile.portfolio && typeof profile.portfolio === 'object' ? profile.portfolio : {}
-  const portfolioBuckets = ['stocks', 'cryptos', 'commodities']
+  const portfolioBuckets = ['stocks', 'bonds', 'real_assets', 'cryptos', 'commodities']
   const hasPortfolioPositions = portfolioBuckets.some(bucket =>
     Array.isArray(portfolio[bucket]) && portfolio[bucket].some(item =>
       Number(item?.qty || 0) > 0 || Number(item?.market_value || 0) > 0
@@ -49,6 +64,91 @@ function getDeployableCash(profile) {
   return syncedCashBalance + bankEntryTotal
 }
 
+function normalizeRiskProfile(profileValue) {
+  if (typeof profileValue === 'number' && Number.isFinite(profileValue)) {
+    if (profileValue <= 33.33) return 'Low'
+    if (profileValue <= 66.66) return 'Moderate'
+    return 'High'
+  }
+
+  const normalized = String(profileValue || '').trim().toLowerCase()
+  if (['low', 'conservative'].includes(normalized)) return 'Low'
+  if (['moderate', 'medium', 'balanced'].includes(normalized)) return 'Moderate'
+  if (['high', 'aggressive'].includes(normalized)) return 'High'
+
+  const parsed = Number(normalized)
+  if (Number.isFinite(parsed)) return normalizeRiskProfile(parsed)
+  return 'Moderate'
+}
+
+function getStressScore(profile) {
+  const direct = Number(profile?.financial_stress_index)
+  if (Number.isFinite(direct)) return direct
+  const nested = Number(profile?.wellness_metrics?.financial_stress_index)
+  return Number.isFinite(nested) ? nested : 0
+}
+
+function getCurrentAllocation(profile) {
+  const portfolio = profile?.portfolio && typeof profile.portfolio === 'object' ? profile.portfolio : {}
+  const sumBucket = bucket => (
+    Array.isArray(portfolio[bucket])
+      ? portfolio[bucket].reduce((sum, item) => sum + Number(item?.market_value || 0), 0)
+      : 0
+  )
+
+  const amounts = {
+    equities: sumBucket('stocks'),
+    bonds: sumBucket('bonds'),
+    real_assets: sumBucket('real_assets'),
+    cash: getDeployableCash(profile),
+    commodities: sumBucket('commodities'),
+    crypto: sumBucket('cryptos'),
+  }
+
+  const total = Object.values(amounts).reduce((sum, value) => sum + value, 0)
+  const weights = Object.fromEntries(
+    Object.entries(amounts).map(([key, value]) => [key, total > 0 ? value / total : 0])
+  )
+
+  return { amounts, weights, total }
+}
+
+function applyStressGuardrails(allocation, stressScore) {
+  const adjusted = { ...allocation }
+
+  if (stressScore >= 60) {
+    adjusted.cash += 0.10
+    adjusted.equities = Math.max(0.20, adjusted.equities - 0.05)
+    adjusted.crypto = Math.max(0, adjusted.crypto - 0.05)
+  } else if (stressScore >= 40) {
+    adjusted.cash += 0.05
+    adjusted.equities = Math.max(0.25, adjusted.equities - 0.03)
+    adjusted.crypto = Math.max(0, adjusted.crypto - 0.02)
+  }
+
+  const total = Object.values(adjusted).reduce((sum, value) => sum + value, 0)
+  return Object.fromEntries(Object.entries(adjusted).map(([key, value]) => [key, value / total]))
+}
+
+function getReserveMonths(profileBucket, stressScore) {
+  const baseMonths = { Low: 6, Moderate: 4, High: 3 }[profileBucket] ?? 4
+  if (stressScore >= 60) return baseMonths + 2
+  if (stressScore >= 40) return baseMonths + 1
+  return baseMonths
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function formatPercent(value) {
+  return `${Math.round(value * 100)}%`
+}
+
 export default function Navbar() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -58,10 +158,12 @@ export default function Navbar() {
   const [notifOpen, setNotifOpen] = useState(false)
   const [expandedNotifId, setExpandedNotifId] = useState(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [themeModalOpen, setThemeModalOpen] = useState(false)
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const notifRef = useRef(null)
   const settingsRef = useRef(null)
+  const moreRef = useRef(null)
 
   function handleSignOut() {
     logout()
@@ -124,37 +226,69 @@ export default function Navbar() {
     }
   }, [settingsOpen])
 
+  useEffect(() => {
+    if (!moreOpen) return
+    function handleClickOutside(event) {
+      if (moreRef.current && !moreRef.current.contains(event.target)) {
+        setMoreOpen(false)
+      }
+    }
+    function handleEscape(event) {
+      if (event.key === 'Escape') setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [moreOpen])
+
   const notifications = useMemo(() => {
     if (!navProfile) return []
     if (!isAccountAtLeastDaysOld(user?.created_at, 30)) return []
     if (!hasFinancialActivity(navProfile)) return []
-    const cashBalance = getDeployableCash(navProfile)
+    const riskProfile = normalizeRiskProfile(navProfile.risk_profile)
+    const stressScore = getStressScore(navProfile)
     const monthlyIncome = Number(navProfile.income || 0)
-    const reserveTarget = Math.max(monthlyIncome * 3, 10000)
-    const idleCash = Math.max(0, cashBalance - reserveTarget)
+    const reserveMonths = getReserveMonths(riskProfile, stressScore)
+    const reserveTarget = Math.max(monthlyIncome * reserveMonths, 10000)
+    const allocation = getCurrentAllocation(navProfile)
+    const targetWeights = applyStressGuardrails(PROFILE_ALLOCATIONS[riskProfile], stressScore)
+    const targetCashAmount = allocation.total * targetWeights.cash
+    const excessAboveReserve = Math.max(0, allocation.amounts.cash - reserveTarget)
+    const excessAboveAllocation = Math.max(0, allocation.amounts.cash - targetCashAmount)
+    const idleCash = Math.min(excessAboveReserve, excessAboveAllocation || excessAboveReserve)
     const potentialAnnualGrowth = idleCash * 0.05
     const items = []
 
     if (idleCash >= 5000) {
-      const suggestedMove = Math.round(idleCash * 0.6)
+      const moveRatio = stressScore >= 60 ? 0.35 : stressScore >= 40 ? 0.5 : riskProfile === 'Low' ? 0.45 : riskProfile === 'Moderate' ? 0.6 : 0.75
+      const suggestedMove = Math.round(Math.min(idleCash, excessAboveAllocation) * moveRatio || idleCash * moveRatio)
+      const pace = suggestedMove >= 20000 || stressScore >= 40 ? '3 to 5 entries' : riskProfile === 'High' ? '2 to 3 entries' : '2 to 4 entries'
       items.push({
         id:'latent-growth-idle-cash',
         tone:'var(--teal)',
         label:'Latent growth detected',
-        title:`Potential +${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(potentialAnnualGrowth)}/year from idle cash`,
-        body:`About ${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(idleCash)} is sitting above a 3-month reserve. Redirecting part of it into your portfolio could improve long-term growth.`,
+        title:`Potential +${formatCurrency(potentialAnnualGrowth)}/year from idle cash`,
+        body:`About ${formatCurrency(idleCash)} is sitting above your ${reserveMonths}-month reserve and above your profile-aligned cash target. Redirecting part of it into your portfolio could improve long-term growth.`,
         detailTitle:'Suggested next step',
         details:[
-          `Keep about ${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(reserveTarget)} in cash as your current emergency reserve.`,
-          `Consider moving roughly ${new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(suggestedMove)} of the excess into long-term investments instead of leaving it idle.`,
-          'Do it gradually in 2 to 4 entries if you want to reduce timing risk.',
+          `Keep about ${formatCurrency(Math.max(reserveTarget, targetCashAmount))} in cash. That reflects a ${reserveMonths}-month reserve, your ${riskProfile.toLowerCase()} risk profile, and a stress score of ${Math.round(stressScore)}.`,
+          `Your current allocation is about ${formatPercent(allocation.weights.cash)} cash versus a profile-aligned target near ${formatPercent(targetWeights.cash)} cash. Consider moving roughly ${formatCurrency(suggestedMove)} toward long-term investments.`,
+          `Phase it in over ${pace} so the shift matches your current allocation gap without forcing a one-shot rebalance.`,
         ],
         cta:'Review optimization',
+        guideTargetId:'portfolio-analysis',
       })
     }
 
     return items
   }, [navProfile])
+
+  function handleNotificationAction(item) {
+    setExpandedNotifId(current => current === item.id ? null : item.id)
+  }
 
   return (
     <nav style={S.nav}>
@@ -167,8 +301,52 @@ export default function Navbar() {
       {/* Links */}
       <ul style={S.links}>
         {NAV_LINKS.map(({ label, path }) => {
+          if (label === 'More') {
+            const active = MORE_LINKS.some(item => item.path === pathname)
+            return (
+              <li key={label} ref={moreRef} style={S.dropdownItem}>
+                <span
+                  onClick={() => setMoreOpen(open => !open)}
+                  style={{
+                    ...S.link,
+                    ...(active ? S.linkActive : {}),
+                  }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text)' }}
+                  onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--text-dim)' }}
+                >
+                  More
+                </span>
+                <span style={S.linkCaretStandalone}>▼</span>
+                {moreOpen ? (
+                  <div style={S.linkMenu}>
+                    {MORE_LINKS.map(item => {
+                      const childActive = pathname === item.path
+                      return (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={() => {
+                            setMoreOpen(false)
+                            navigate(item.path)
+                          }}
+                          style={{
+                            ...S.linkMenuItem,
+                            ...(childActive ? S.linkMenuItemActive : null),
+                          }}
+                        >
+                          {item.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : null}
+              </li>
+            )
+          }
           const active = label === 'Markets'
-            ? ['/stocks', '/commodities', '/crypto'].includes(pathname)
+            ? ['/stocks', '/bonds', '/real-assets', '/commodities', '/crypto'].includes(pathname)
+            : label === 'Institutions'
+              ? pathname === '/institutions'
             : pathname === path
           return (
             <li key={label}>
@@ -268,12 +446,35 @@ export default function Navbar() {
                                   </div>
                                 ))}
                               </div>
+                              <div style={S.notifDetailActions}>
+                                <button
+                                  type="button"
+                                  style={S.notifPrimaryButton}
+                                  onClick={() => {
+                                    queueGuidedScroll('portfolio-analysis', {
+                                      source: 'navbar-notification',
+                                      tone: item.tone,
+                                    })
+                                    setNotifOpen(false)
+                                    setExpandedNotifId(null)
+                                    if (pathname === '/profile') {
+                                      window.dispatchEvent(new CustomEvent(GUIDED_SCROLL_EVENT, {
+                                        detail: { targetId: 'portfolio-analysis', source: 'navbar-notification' },
+                                      }))
+                                      return
+                                    }
+                                    navigate('/profile')
+                                  }}
+                                >
+                                  Open portfolio analysis
+                                </button>
+                              </div>
                             </div>
                           )}
                           <button
                             type="button"
                             style={{ ...S.notifAction, color:item.tone }}
-                            onClick={() => setExpandedNotifId(current => current === item.id ? null : item.id)}
+                            onClick={() => handleNotificationAction(item)}
                           >
                             {expandedNotifId === item.id ? 'Hide optimization' : item.cta}
                           </button>
@@ -384,9 +585,56 @@ const S = {
     userSelect: 'none',
     paddingBottom: 6,
   },
+  dropdownItem: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    transform: 'translateY(3px)',
+
+  },
+  linkCaretStandalone: {
+    display: 'inline-block',
+    fontSize: '0.58rem',
+    lineHeight: 1,
+    color: 'var(--text-dim)',
+    transform: 'translateY(1px)',
+    pointerEvents: 'none',
+  },
   linkActive: {
     color: 'var(--text)',
     borderBottom: '2px solid var(--text)',
+  },
+  linkMenu: {
+    position: 'absolute',
+    top: 'calc(100% + 14px)',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    minWidth: 168,
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    boxShadow: '0 16px 42px rgba(15,23,42,0.12)',
+    padding: 8,
+    display: 'grid',
+    gap: 4,
+    zIndex: 140,
+  },
+  linkMenuItem: {
+    border: 'none',
+    background: 'transparent',
+    borderRadius: 10,
+    padding: '10px 12px',
+    textAlign: 'left',
+    cursor: 'pointer',
+    color: 'var(--text-dim)',
+    fontFamily: 'var(--font-body)',
+    fontSize: '0.84rem',
+    fontWeight: 600,
+  },
+  linkMenuItemActive: {
+    background: 'var(--surface2)',
+    color: 'var(--text)',
   },
   btnGold: {
     background: 'var(--btn-primary-bg)',
@@ -596,6 +844,11 @@ const S = {
     display:'grid',
     gap:8,
   },
+  notifDetailActions: {
+    display:'flex',
+    justifyContent:'flex-start',
+    marginTop:12,
+  },
   notifDetailRow: {
     display:'flex',
     alignItems:'flex-start',
@@ -619,6 +872,17 @@ const S = {
     padding:0,
     fontFamily:'var(--font-body)',
     fontSize:'0.8rem',
+    fontWeight:700,
+    cursor:'pointer',
+  },
+  notifPrimaryButton: {
+    border:'1px solid rgba(42,184,163,0.18)',
+    background:'rgba(42,184,163,0.1)',
+    color:'var(--text)',
+    padding:'10px 14px',
+    borderRadius:10,
+    fontFamily:'var(--font-display)',
+    fontSize:'0.82rem',
     fontWeight:700,
     cursor:'pointer',
   },

@@ -1,35 +1,45 @@
 import { useState } from 'react'
+
 import { useAuth } from '../context/AuthContext.jsx'
+import OtpCodeInput from './OtpCodeInput.jsx'
 import { API_BASE as API } from '../utils/api.js'
 
-export default function LoginModal({ open, onClose, onSuccess, onRegisterSuccess, onOpenSurvey }) {
+export default function LoginModal({ open, onClose, onSuccess, onOpenSurvey }) {
   const { login } = useAuth()
   const [tab, setTab] = useState('signin')
-  const [username, setUsername] = useState('')
+  const [mode, setMode] = useState('default')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetOtp, setResetOtp] = useState('')
+  const [resetPassword, setResetPassword] = useState('')
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setNotice('')
     setLoading(true)
 
     try {
       const res = await fetch(`${API}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: identifier, password }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
         setError(data.detail || 'Something went wrong.')
       } else {
         login(data)
-        setUsername('')
+        setIdentifier('')
         setPassword('')
         setError('')
+        setNotice('')
+        setMode('default')
         onSuccess?.()
         onClose()
       }
@@ -40,49 +50,100 @@ export default function LoginModal({ open, onClose, onSuccess, onRegisterSuccess
     }
   }
 
+  async function handleResetStart(e) {
+    e.preventDefault()
+    setError('')
+    setNotice('')
+    setLoading(true)
+    try {
+      const res = await fetch(`${API}/auth/password-reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.detail || 'Unable to send a reset code.')
+        return
+      }
+      setResetEmail(data.email || identifier.trim())
+      setResetOtp('')
+      setResetPassword('')
+      setMode('reset')
+      setNotice(data.email_masked ? `Reset code sent to ${data.email_masked}.` : 'If the account exists, a reset code has been sent.')
+    } catch {
+      setError('Cannot reach the server. Is the backend running?')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResetVerify(e) {
+    e.preventDefault()
+    setError('')
+    setNotice('')
+    setLoading(true)
+    try {
+      const res = await fetch(`${API}/auth/password-reset/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: resetEmail,
+          otp_code: resetOtp,
+          new_password: resetPassword,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.detail || 'Unable to reset your password.')
+        return
+      }
+      setMode('default')
+      setPassword('')
+      setResetOtp('')
+      setResetPassword('')
+      setNotice('Password updated. Sign in with your new password.')
+    } catch {
+      setError('Cannot reach the server. Is the backend running?')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!open) return null
 
   return (
-    <div style={S.backdrop} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div style={S.backdrop} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div style={S.card}>
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          style={S.closeBtn}
-          type="button"
-        >
-          ✕
-        </button>
+        <button onClick={onClose} style={S.closeBtn} type="button">✕</button>
 
-        {/* Logo */}
         <div style={S.logoRow}>
           <img src="/logo.png" alt="Unova" style={S.logoImage} />
           <span style={S.logoText}>Unova</span>
         </div>
 
-        {/* Tabs */}
         <div style={S.tabs}>
-          {['signin', 'register'].map(t => (
+          {['signin', 'register'].map((item) => (
             <button
-              key={t}
-              onClick={() => { setTab(t); setError('') }}
-              style={{ ...S.tab, ...(tab === t ? S.tabActive : {}) }}
+              key={item}
+              onClick={() => { setTab(item); setMode('default'); setError(''); setNotice('') }}
+              style={{ ...S.tab, ...(tab === item ? S.tabActive : {}) }}
               type="button"
             >
-              {t === 'signin' ? 'Sign In' : 'Register'}
+              {item === 'signin' ? 'Sign In' : 'Register'}
             </button>
           ))}
         </div>
 
-        {/* Subtitle */}
         <p style={S.subtitle}>
           {tab === 'signin'
-            ? 'Welcome back. Sign in to your account.'
-            : 'Create a new account to get started.'}
+            ? mode === 'reset'
+              ? 'Reset your password using the OTP in your email.'
+              : 'Welcome back. Sign in to your account.'
+            : 'Create your account through the guided setup with email verification.'}
         </p>
 
-        {/* Form or Register Prompt */}
-        {tab === 'signin' ? (
+        {tab === 'signin' && mode === 'default' && (
           <form onSubmit={handleSubmit} style={S.form}>
             <label style={S.label}>
               Email / Username
@@ -91,8 +152,8 @@ export default function LoginModal({ open, onClose, onSuccess, onRegisterSuccess
                 type="text"
                 autoComplete="username"
                 placeholder="e.g. alice@example.com or Alice"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
               />
             </label>
@@ -105,23 +166,71 @@ export default function LoginModal({ open, onClose, onSuccess, onRegisterSuccess
                 autoComplete="current-password"
                 placeholder="••••••••"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </label>
 
             {error && <p style={S.error}>{error}</p>}
+            {notice && <p style={S.notice}>{notice}</p>}
 
             <button type="submit" style={S.submit} disabled={loading}>
               {loading ? 'Please wait…' : 'Sign In'}
             </button>
+
+            <button type="button" style={S.linkButton} onClick={handleResetStart} disabled={loading}>
+              Forgot your password?
+            </button>
           </form>
-        ) : (
-          <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-            <p style={{ fontSize:'0.9rem', color:'var(--text-dim)', lineHeight:1.6, margin:0 }}>
-              Start by setting up your investor profile. We'll learn about your goals, risk tolerance, and asset preferences to personalize your WealthSphere.
+        )}
+
+        {tab === 'signin' && mode === 'reset' && (
+          <form onSubmit={handleResetVerify} style={S.form}>
+            <label style={S.label}>
+              Email
+              <input style={S.input} type="email" value={resetEmail} disabled />
+            </label>
+
+            <label style={S.label}>
+              OTP Code
+              <OtpCodeInput
+                value={resetOtp}
+                onChange={setResetOtp}
+              />
+            </label>
+
+            <label style={S.label}>
+              New Password
+              <input
+                style={S.input}
+                type="password"
+                autoComplete="new-password"
+                placeholder="At least 8 chars, upper/lower/number/symbol"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                required
+              />
+            </label>
+
+            {error && <p style={S.error}>{error}</p>}
+            {notice && <p style={S.notice}>{notice}</p>}
+
+            <button type="submit" style={S.submit} disabled={loading}>
+              {loading ? 'Please wait…' : 'Update Password'}
+            </button>
+
+            <button type="button" style={S.linkButton} onClick={() => { setMode('default'); setError(''); setNotice('') }}>
+              Back to sign in
+            </button>
+          </form>
+        )}
+
+        {tab === 'register' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', lineHeight: 1.6, margin: 0 }}>
+              Start by setting up your investor profile. We&apos;ll collect your email, verify it with OTP, and use your goals to personalize your WealthSphere.
             </p>
-            <button 
+            <button
               type="button"
               style={S.submit}
               onClick={() => {
@@ -134,7 +243,6 @@ export default function LoginModal({ open, onClose, onSuccess, onRegisterSuccess
           </div>
         )}
 
-        {/* Switch tab hint */}
         <p style={S.switchHint}>
           {tab === 'signin' ? "Don't have an account? " : 'Already have an account? '}
           <span
@@ -143,10 +251,12 @@ export default function LoginModal({ open, onClose, onSuccess, onRegisterSuccess
               if (tab === 'signin') {
                 onClose()
                 onOpenSurvey?.()
-              } else {
-                setTab('signin')
-                setError('')
+                return
               }
+              setTab('signin')
+              setMode('default')
+              setError('')
+              setNotice('')
             }}
           >
             {tab === 'signin' ? 'Register' : 'Sign In'}
@@ -221,8 +331,8 @@ const S = {
     display: 'flex',
     background: 'var(--bg2)',
     borderRadius: 'var(--r-md)',
-    padding: 5,
-    marginBottom: 24,
+    padding: 4,
+    marginBottom: 20,
   },
   tab: {
     flex: 1,
@@ -232,10 +342,9 @@ const S = {
     background: 'transparent',
     color: 'var(--text-dim)',
     fontFamily: 'var(--font-body)',
-    fontSize: '1.02rem',
+    fontSize: '0.85rem',
     fontWeight: 500,
     cursor: 'pointer',
-    transition: 'all 0.2s',
   },
   tabActive: {
     background: 'var(--surface)',
@@ -243,70 +352,73 @@ const S = {
     boxShadow: '0 0 0 1px var(--border-act)',
   },
   subtitle: {
-    fontSize: '1rem',
+    fontSize: '0.82rem',
     color: 'var(--text-dim)',
     textAlign: 'center',
-    marginBottom: 29,
+    marginBottom: 24,
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 19,
+    gap: 16,
   },
   label: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 7,
-    fontSize: '0.93rem',
-    fontWeight: 600,
-    color: 'var(--text-dim)',
-    letterSpacing: '0.05em',
-    textTransform: 'uppercase',
+    gap: 8,
+    fontSize: '0.82rem',
+    color: 'var(--text)',
   },
   input: {
+    width: '100%',
+    padding: '12px 14px',
+    borderRadius: 'var(--r-md)',
+    border: '1px solid rgba(255,255,255,0.08)',
     background: 'var(--bg2)',
-    border: '1px solid var(--border)',
-    borderRadius: 10,
-    padding: '13px 17px',
     color: 'var(--text)',
-    fontSize: '1.08rem',
+    fontSize: '0.92rem',
     outline: 'none',
-    transition: 'border-color 0.2s',
+    boxSizing: 'border-box',
   },
   error: {
-    fontSize: '0.96rem',
-    color: 'var(--red)',
-    background: 'rgba(248,113,113,0.08)',
-    border: '1px solid rgba(248,113,113,0.2)',
-    borderRadius: 10,
-    padding: '10px 14px',
     margin: 0,
+    color: '#ff7b7b',
+    fontSize: '0.8rem',
+    lineHeight: 1.5,
+  },
+  notice: {
+    margin: 0,
+    color: 'var(--gold)',
+    fontSize: '0.8rem',
+    lineHeight: 1.5,
   },
   submit: {
-    marginTop: 5,
-    padding: '16px 0',
+    border: 'none',
+    borderRadius: 'var(--r-md)',
+    padding: '12px 16px',
     background: 'var(--btn-primary-bg)',
-    border: '1px solid var(--btn-primary-bg)',
-    borderRadius: 10,
     color: 'var(--btn-primary-text)',
-    fontFamily: 'var(--font-body)',
     fontWeight: 700,
-    fontSize: '1.08rem',
     cursor: 'pointer',
-    letterSpacing: '0.02em',
-    transition: 'opacity 0.2s',
+  },
+  linkButton: {
+    border: 'none',
+    background: 'transparent',
+    color: 'var(--gold)',
+    cursor: 'pointer',
+    padding: 0,
+    textAlign: 'left',
+    fontSize: '0.82rem',
   },
   switchHint: {
-    paddingTop: 24,
-    marginTop: 24,
     textAlign: 'center',
-    fontSize: '0.96rem',
+    fontSize: '0.82rem',
     color: 'var(--text-dim)',
-    margin: 0,
+    marginTop: 18,
+    marginBottom: 0,
   },
   switchLink: {
     color: 'var(--gold)',
     cursor: 'pointer',
-    fontWeight: 600,
   },
 }

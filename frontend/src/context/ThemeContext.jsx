@@ -330,16 +330,31 @@ export const THEMES = [
 
 // ─── Apply theme to DOM ───────────────────────────────────────────────────────
 function applyTheme(theme) {
+  if (typeof document === 'undefined') return
   const root = document.documentElement
   Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v))
   document.body.style.background = theme.bodyBg
+}
+
+function getStoredThemeId() {
+  try {
+    return localStorage.getItem('ws-theme') || 'default'
+  } catch {
+    return 'default'
+  }
+}
+
+function setStoredThemeId(themeId) {
+  try {
+    localStorage.setItem('ws-theme', themeId)
+  } catch {}
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children }) {
-  const saved = localStorage.getItem('ws-theme') || 'default'
+  const saved = getStoredThemeId()
   const initial = THEMES.find(t => t.id === saved) || THEMES[0]
   const [activeTheme, setActiveTheme] = useState(initial)
 
@@ -349,7 +364,7 @@ export function ThemeProvider({ children }) {
   const selectTheme = (theme) => {
     setActiveTheme(theme)
     applyTheme(theme)
-    localStorage.setItem('ws-theme', theme.id)
+    setStoredThemeId(theme.id)
   }
 
   return (

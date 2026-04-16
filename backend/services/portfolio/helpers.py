@@ -178,7 +178,7 @@ def enrich_portfolio_with_ath(user: dict[str, Any]) -> dict[str, Any]:
     commodity_index = _build_commodity_ath_index()
     stock_index = _build_stock_ath_index()
 
-    for bucket in ("stocks", "cryptos", "commodities"):
+    for bucket in ("stocks", "bonds", "real_assets", "cryptos", "commodities"):
         entries = portfolio.get(bucket, [])
         if not isinstance(entries, list):
             continue
@@ -298,7 +298,7 @@ def _sum_portfolio_positions(user: dict[str, Any]) -> float:
         positions = portfolio
     elif isinstance(portfolio, dict):
         positions = []
-        for bucket in ("stocks", "cryptos", "commodities"):
+        for bucket in ("stocks", "bonds", "real_assets", "cryptos", "commodities"):
             bucket_positions = portfolio.get(bucket, [])
             if isinstance(bucket_positions, list):
                 positions.extend(bucket_positions)

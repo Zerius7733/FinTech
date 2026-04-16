@@ -1,7 +1,7 @@
 {
   "type": "stock",
   "symbol": "NVDA",
-  "updated_at": "2026-03-08T18:26:20.687499+00:00",
+  "updated_at": "2026-03-24T04:44:47.727563+00:00",
   "insights_by_months": {
     "3": {
       "type": "stock",
@@ -9,59 +9,59 @@
       "name": "NVIDIA Corporation",
       "period": {
         "months": 3,
-        "start": "2025-12-08",
-        "end": "2026-03-08"
+        "start": "2025-12-24",
+        "end": "2026-03-24"
       },
       "metrics": {
-        "start_price": 185.55,
-        "end_price": 177.82,
-        "return_pct": -4.166,
-        "volatility_annualized": 0.356635,
-        "max_drawdown_pct": -10.7163,
-        "avg_daily_volume": 176595214.7541,
-        "volume_change_pct": 18.9418
+        "start_price": 188.5998,
+        "end_price": 175.64,
+        "return_pct": -6.8716,
+        "volatility_annualized": 0.342769,
+        "max_drawdown_pct": -11.6847,
+        "avg_daily_volume": 174944679.6333,
+        "volume_change_pct": 30.8831
       },
       "notable_moves": [
         {
           "date": "2026-02-06",
           "move_pct": 7.8718,
-          "close": 185.41,
+          "close": 185.4,
           "volume": 231346200.0,
           "tag": "largest_up_day"
         },
         {
-          "date": "2025-12-19",
-          "move_pct": 3.9336,
-          "close": 180.99,
-          "volume": 324925900.0,
+          "date": "2026-03-02",
+          "move_pct": 2.9855,
+          "close": 182.4701,
+          "volume": 209095300.0,
           "tag": "largest_up_day"
         },
         {
           "date": "2026-02-26",
           "move_pct": -5.4561,
-          "close": 184.89,
+          "close": 184.88,
           "volume": 360807900.0,
           "tag": "largest_down_day"
         },
         {
           "date": "2026-01-20",
           "move_pct": -4.3817,
-          "close": 178.07,
+          "close": 178.0604,
           "volume": 223345300.0,
           "tag": "largest_down_day"
         },
         {
           "date": "2026-02-26",
           "move_pct": -5.4561,
-          "close": 184.89,
+          "close": 184.88,
           "volume": 360807900.0,
           "tag": "high_volume_day"
         },
         {
-          "date": "2025-12-19",
-          "move_pct": 3.9336,
-          "close": 180.99,
-          "volume": 324925900.0,
+          "date": "2026-02-27",
+          "move_pct": -4.1646,
+          "close": 177.1804,
+          "volume": 311636500.0,
           "tag": "high_volume_day"
         }
       ],
@@ -74,15 +74,21 @@
         },
         {
           "date": "2026-02-06",
+          "headline": "Nvidia posts record $215 billion annual revenue in latest quarterly earnings report - gaming GPUs now only 11.45% of revenue",
+          "source": "",
+          "url": "https://www.tomshardware.com/pc-components/gpus/nvidia-posts-record-usd215-billion-annual-revenue-in-latest-quarterly-earnings-report-gaming-gpus-now-only-11-45-percent-of-revenue?utm_source=openai"
+        },
+        {
+          "date": "2026-02-06",
           "headline": "Nvidia results: Nvidia's earnings nearly double as AI chip giant beats expectations again",
           "source": "",
           "url": "https://moneyweek.com/investments/tech-stocks/nvidia-earnings?utm_source=openai"
         },
         {
           "date": "2026-02-06",
-          "headline": "Stocks Slide After Nvidia Earnings | The Financial Market",
+          "headline": "Nvidia posts earnings record: Huang says AI's \"inflection point has arrived\"",
           "source": "",
-          "url": "https://www.youtube.com/watch?v=INOm_NqtC0M&utm_source=openai"
+          "url": "https://www.axios.com/2026/02/25/nvda-earnings-nvidia-jensen-huang?utm_source=openai"
         },
         {
           "date": "2026-02-06",
@@ -92,27 +98,15 @@
         },
         {
           "date": "2026-02-06",
-          "headline": "NVIDIA Stock Forecast Revised by Goldman Sachs Ahead of Earnings | Meyka",
-          "source": "",
-          "url": "https://meyka.com/blog/nvidia-stock-forecast-revised-by-goldman-sachs-ahead-of-earnings-202602/?utm_source=openai"
-        },
-        {
-          "date": "2026-02-06",
           "headline": "NVIDIA Corporation - Financial Info - SEC Filings - SEC Filings Details",
           "source": "",
           "url": "https://investor.nvidia.com/financial-info/sec-filings/sec-filings-details/default.aspx?FilingId=19126157&utm_source=openai"
         },
         {
           "date": "2026-02-06",
-          "headline": "Softbank Group dissolves share stake in Nvidia, according to SEC filing By Reuters",
+          "headline": "Nvidia Corp adopts variable compensation plan for fiscal year 2027 - SEC filing | MarketScreener UK",
           "source": "",
-          "url": "https://www.investing.com/news/stock-market-news/softbank-group-dissolves-share-stake-in-nvidia-according-to-sec-filing-4509386?utm_source=openai"
-        },
-        {
-          "date": "2026-02-06",
-          "headline": "NVIDIA Stock: SCS Capital Cuts NVDA Stake in Latest Filing - Eudaimonia and Co",
-          "source": "",
-          "url": "https://eand.co/nvidia-stock-scs-capital-cuts-nvda-stake-in-latest-filing?utm_source=openai"
+          "url": "https://uk.marketscreener.com/news/nvidia-corp-adopts-variable-compensation-plan-for-fiscal-year-2027-sec-filing-ce7e5fd8de8cfe21?utm_source=openai"
         },
         {
           "date": "2026-02-06",
@@ -122,48 +116,54 @@
         },
         {
           "date": "2026-02-06",
-          "headline": "Penning v. NVIDIA Corporation 5:2025cv09160 | U.S. District Court for the Northern District of California | Justia",
+          "headline": "Penning v. NVIDIA Corporation",
           "source": "",
-          "url": "https://dockets.justia.com/docket/california/candce/5%3A2025cv09160/458584?utm_source=openai"
+          "url": "https://www.law360.com/cases/68fbfacc5854050dddc6f956?article_sidebar=1&utm_source=openai"
         },
         {
           "date": "2026-02-06",
-          "headline": "US Supreme Court dismisses Nvidia's bid to avoid securities fraud suit By Reuters",
+          "headline": "Nvidia Corporation | The ClassAction.org Legal News Wire | Breaking Class Action Lawsuit & Settlement News",
           "source": "",
-          "url": "https://www.investing.com/news/stock-market-news/us-supreme-court-tosses-case-involving-securities-fraud-suit-against-nvidia-3766761?utm_source=openai"
+          "url": "https://www.classaction.org/news/category/nvidia-corporation?utm_source=openai"
         },
         {
           "date": "2026-02-06",
-          "headline": "Home - NVIDIA ERISA Settlement",
+          "headline": "Nvidia",
           "source": "",
-          "url": "https://nvidiaerisasettlement.com/?utm_source=openai"
+          "url": "https://en.wikipedia.org/wiki/Nvidia?utm_source=openai"
         },
         {
-          "date": "2025-12-19",
-          "headline": "NVIDIA Corporation - NVIDIA Announces Financial Results for Third Quarter Fiscal 2026",
+          "date": "2026-03-02",
+          "headline": "Nvidia post earnings review: Q4 2026 and outlook | S&P Global",
           "source": "",
-          "url": "https://investor.nvidia.com/news/press-release-details/2025/NVIDIA-Announces-Financial-Results-for-Third-Quarter-Fiscal-2026/default.aspx?_kx=MYprLEFy8H1YdDyCX72-lk724JhZYQDglcYJ93ErNv4.RaD4Px&utm_source=openai"
+          "url": "https://www.spglobal.com/market-intelligence/en/news-insights/research/2026/03/nvidia-post-earnings-review-q4-2026-and-outlook?utm_source=openai"
         },
         {
-          "date": "2025-12-19",
-          "headline": "FY2026 EPS Estimates for NVIDIA Lifted by Zacks Research - Defense World",
+          "date": "2026-03-02",
+          "headline": "Nvidia reports a truly astonishing $193.7 billion in annual data center revenue in its latest earnings call, up 75% year on year, while little old gaming brought in $16 billion",
           "source": "",
-          "url": "https://www.defenseworld.net/2025/12/15/fy2026-eps-estimates-for-nvidia-lifted-by-zacks-research.html?utm_source=openai"
+          "url": "https://www.pcgamer.com/hardware/nvidia-reports-a-truly-astonishing-usd193-7-billion-in-annual-data-center-revenue-in-its-latest-earnings-call-up-75-percent-year-on-year-while-little-old-gaming-brought-in-usd16-billion/?utm_source=openai"
         },
         {
-          "date": "2025-12-19",
-          "headline": "The AI darlings are slipping. That could be bad for Nvidia.",
+          "date": "2026-03-02",
+          "headline": "NVIDIA CEO granted 936,771 shares in stock awards | NVDA SEC Filing - Form 4",
           "source": "",
-          "url": "https://www.axios.com/2025/12/12/ai-nvidia-oracle-broadcom-stocks?utm_source=openai"
+          "url": "https://www.stocktitan.net/sec-filings/NVDA/form-4-nvidia-corp-insider-trading-activity-9f3a2a888227.html?utm_source=openai"
+        },
+        {
+          "date": "2026-03-02",
+          "headline": "NVIDIA EVP Shoquist granted performance stock awards | NVDA SEC Filing - Form 4",
+          "source": "",
+          "url": "https://www.stocktitan.net/sec-filings/NVDA/form-4-nvidia-corp-insider-trading-activity-60eb478aba6c.html?utm_source=openai"
         }
       ],
-      "narrative": "NVIDIA's stock price declined from a start price of 185.55 to an end price of 177.82, representing a return of -4.166% over the period. The stock exhibited an annualized volatility of 0.356635 and experienced a maximum drawdown of -10.7163%, indicating notable price fluctuations and downside risk during this timeframe. The largest single-day gain occurred on 2026-02-06, with a 7.8718% increase closing at 185.41, coinciding with the release of NVIDIA's financial results for the fourth quarter and fiscal 2026, which included reports of earnings nearly doubling and beating expectations [1][2][4]. Conversely, the largest single-day decline was on 2026-02-26, with a -5.4561% drop closing at 184.89, which also marked a high volume day with 360,807,900 shares traded, though no specific driver is directly linked to this date. Another significant down day was on 2026-01-20 with a -4.3817% move closing at 178.07. High volume days such as 2025-12-19, with 324,925,900 shares traded and a 3.9336% gain closing at 180.99, aligned with the announcement of third quarter fiscal 2026 results and upward revisions of EPS estimates [13][14]. The average daily volume increased by 18.9418%, reaching approximately 176.6 million shares, suggesting heightened trading activity. Additional news around 2026-02-06 included SEC filings, legal proceedings, and institutional stake changes, which may have contributed to market dynamics but their direct impact on price moves is less clear [7][8][11]. Overall, the stock showed significant volatility with notable price swings around earnings announcements and high volume trading days.",
+      "narrative": "From a starting price of 188.5998 to an ending price of 175.64, the stock experienced a negative return of -6.8716% over the period. The annualized volatility was relatively high at 0.342769, and the maximum drawdown reached -11.6847%, indicating notable price fluctuations and downside risk during this timeframe. The largest single-day gain occurred on 2026-02-06, with a 7.8718% increase closing at 185.4, coinciding with multiple positive earnings announcements and financial results for the fourth quarter and fiscal 2026, including reports of record revenue and strong AI chip performance [1][2][3][4][5]. Conversely, the largest single-day decline was on 2026-02-26, with a -5.4561% drop closing at 184.88, which was also a high volume day with 360,807,900 shares traded, followed by another high volume day on 2026-02-27 with a -4.1646% move and 311,636,500 shares traded. The average daily volume increased by 30.8831% to approximately 174,944,680 shares, reflecting heightened trading activity. Another notable positive move was on 2026-03-02, with a 2.9855% gain closing at 182.4701, coinciding with further earnings reviews and reports of substantial data center revenue growth [13][14]. These earnings-related news events appear to have influenced the stock's volatility and volume patterns during the period, although other factors may also have contributed.",
       "tldr": [
-        "Period return: -4.17% with annualized volatility 0.357.",
+        "Period return: -6.87% with annualized volatility 0.343.",
         "Largest up day: 2026-02-06 (7.87%), largest down day: 2026-02-26 (-5.46%).",
         "Highest volume spike was on 2026-02-26 with volume 360,807,900."
       ],
-      "conclusion": "Over this period, the asset ended lower (-4.17%) with peak drawdown of -10.72%, indicating meaningful price swings during the window.",
+      "conclusion": "Over this period, the asset ended lower (-6.87%) with peak drawdown of -11.68%, indicating meaningful price swings during the window.",
       "disclaimer": "AI can make mistakes, please DYOR. Not financial advice.",
       "citations": [
         {
@@ -172,19 +172,27 @@
         },
         {
           "id": 2,
-          "url": "https://moneyweek.com/investments/tech-stocks/nvidia-earnings?utm_source=openai"
+          "url": "https://www.tomshardware.com/pc-components/gpus/nvidia-posts-record-usd215-billion-annual-revenue-in-latest-quarterly-earnings-report-gaming-gpus-now-only-11-45-percent-of-revenue?utm_source=openai"
         },
         {
           "id": 3,
-          "url": "https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-fourth-quarter-and-fiscal-2026?utm_source=openai"
+          "url": "https://moneyweek.com/investments/tech-stocks/nvidia-earnings?utm_source=openai"
         },
         {
           "id": 4,
-          "url": "https://investor.nvidia.com/news/press-release-details/2025/NVIDIA-Announces-Financial-Results-for-Third-Quarter-Fiscal-2026/default.aspx?_kx=MYprLEFy8H1YdDyCX72-lk724JhZYQDglcYJ93ErNv4.RaD4Px&utm_source=openai"
+          "url": "https://www.axios.com/2026/02/25/nvda-earnings-nvidia-jensen-huang?utm_source=openai"
         },
         {
           "id": 5,
-          "url": "https://www.defenseworld.net/2025/12/15/fy2026-eps-estimates-for-nvidia-lifted-by-zacks-research.html?utm_source=openai"
+          "url": "https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-fourth-quarter-and-fiscal-2026?utm_source=openai"
+        },
+        {
+          "id": 6,
+          "url": "https://www.spglobal.com/market-intelligence/en/news-insights/research/2026/03/nvidia-post-earnings-review-q4-2026-and-outlook?utm_source=openai"
+        },
+        {
+          "id": 7,
+          "url": "https://www.pcgamer.com/hardware/nvidia-reports-a-truly-astonishing-usd193-7-billion-in-annual-data-center-revenue-in-its-latest-earnings-call-up-75-percent-year-on-year-while-little-old-gaming-brought-in-usd16-billion/?utm_source=openai"
         }
       ],
       "warnings": [

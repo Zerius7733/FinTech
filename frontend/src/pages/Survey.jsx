@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import OtpCodeInput from '../components/OtpCodeInput.jsx'
 import RiskSlider from '../components/RiskSlider.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { API_BASE as API } from '../utils/api.js'
@@ -440,6 +441,9 @@ export default function Survey() {
   const [riskLevel,      setRiskLevel]      = useState(50)
   const [submitErr, setSubmitErr] = useState('')
   const [isValidatingProfileStep, setIsValidatingProfileStep] = useState(false)
+  const [registrationOtp, setRegistrationOtp] = useState('')
+  const [registrationPending, setRegistrationPending] = useState(null)
+  const [isFinalizingSetup, setIsFinalizingSetup] = useState(false)
 
   const goNext = () => step < 5 ? setStep(s => s+1) : null
   const goBack = () => setStep(s => s-1)
@@ -457,13 +461,16 @@ export default function Survey() {
     }
     setIsValidatingProfileStep(true)
     try {
+      const normalizedUsername = username.trim()
+      const normalizedEmail = email.trim()
+      const normalizedPassword = password.trim()
       const res = await fetch(`${API}/auth/register/precheck`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: username.trim(),
-          email: email.trim(),
-          password: password.trim(),
+          username: normalizedUsername,
+          email: normalizedEmail,
+          password: normalizedPassword,
           user_id: user?.user_id || undefined,
         }),
       })
@@ -472,7 +479,57 @@ export default function Survey() {
         throw new Error(err?.detail || `validation failed (${res.status})`)
       }
       const data = await res.json().catch(() => ({}))
+      const verifiedEmail = data?.email || normalizedEmail
       if (data?.email) setEmail(data.email)
+
+      if (!user?.user_id) {
+        if (!registrationPending) {
+          const registerRes = await fetch(`${API}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: normalizedUsername,
+              password: normalizedPassword,
+              email: verifiedEmail,
+            }),
+          })
+          const registerData = await registerRes.json().catch(() => ({}))
+          if (!registerRes.ok) {
+            throw new Error(registerData?.detail || `register failed (${registerRes.status})`)
+          }
+          setRegistrationPending(registerData)
+          setRegistrationOtp('')
+          setSubmitErr(`Verification code sent to ${registerData?.email_masked || registerData?.email || verifiedEmail}. Enter it below to continue.`)
+          return
+        }
+
+        if (!registrationOtp.trim()) {
+          throw new Error('Enter the verification code from your email.')
+        }
+
+        const verifyRes = await fetch(`${API}/auth/register/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: verifiedEmail,
+            otp_code: registrationOtp.trim(),
+          }),
+        })
+        const verifyData = await verifyRes.json().catch(() => ({}))
+        if (!verifyRes.ok) {
+          throw new Error(verifyData?.detail || `verification failed (${verifyRes.status})`)
+        }
+        const authUser = {
+          user_id: verifyData?.user_id || verifyData?.data?.user_id,
+          username: verifyData?.username || normalizedUsername,
+          created_at: verifyData?.created_at || null,
+        }
+        if (!authUser.user_id) throw new Error('verification did not return user_id')
+        login(authUser)
+        setRegistrationPending(null)
+        setRegistrationOtp('')
+      }
+
       setSubmitErr('')
       goNext()
     } catch (err) {
@@ -483,6 +540,106 @@ export default function Survey() {
   }
 
   const handleImportComplete = (holdings) => { setImportedHoldings(holdings); setDone(true) }
+
+  const finalizeOnboarding = async (activeUser) => {
+    const finalUsername = (username || '').trim()
+    const finalAge = Number(age)
+
+    if (!Number.isFinite(finalAge) || finalAge < 18 || finalAge > 100) {
+      throw new Error('Please enter a valid age between 18 and 100.')
+    }
+
+    const profileRes = await fetch(`${API}/users/survey/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: activeUser.user_id,
+        first_name: firstName,
+        last_name: lastName,
+        username: finalUsername,
+        email,
+        country,
+        age: finalAge,
+      }),
+    })
+    if (!profileRes.ok) {
+      const profileErr = await profileRes.json().catch(() => ({}))
+      throw new Error(profileErr?.detail || `profile update failed (${profileRes.status})`)
+    }
+
+    const riskRes = await fetch(`${API}/users/risk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: activeUser.user_id, risk_profile: Number(riskLevel ?? 50) }),
+    })
+    if (!riskRes.ok) {
+      const riskErr = await riskRes.json().catch(() => ({}))
+      throw new Error(riskErr?.detail || `risk update failed (${riskRes.status})`)
+    }
+
+    if (importedHoldings.length > 0) {
+      const normalizedHoldings = importedHoldings.map((h) => ({
+        asset_class: toBackendAssetClass(h.asset_class || h.type, h.symbol || h.ticker),
+        symbol: h.symbol || h.ticker || '',
+        qty: Number(h.qty ?? h.shares ?? 0),
+        avg_price: Number(h.avg_price ?? h.price ?? 0),
+        current_price: Number(h.current_price ?? h.price ?? 0),
+        market_value: Number(h.market_value ?? ((Number(h.qty ?? h.shares ?? 0) || 0) * (Number(h.current_price ?? h.price ?? 0) || 0))),
+        name: h.name || h.ticker || h.symbol || '',
+        confidence: h.confidence == null ? undefined : Number(h.confidence),
+      })).filter((h) => h.symbol && h.asset_class)
+
+      if (normalizedHoldings.length > 0) {
+        const mergeRes = await fetch(`${API}/users/${activeUser.user_id}/imports/screenshot/merge`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ holdings: normalizedHoldings }),
+        })
+        if (!mergeRes.ok) {
+          const mergeErr = await mergeRes.json().catch(() => ({}))
+          throw new Error(mergeErr?.detail || `holdings merge failed (${mergeRes.status})`)
+        }
+      }
+    }
+  }
+
+  const handleLaunch = async () => {
+    setSubmitErr('')
+    setIsFinalizingSetup(true)
+    try {
+      const activeUser = user
+      if (!activeUser?.user_id) throw new Error('Verify your email in step 1 before continuing.')
+      await finalizeOnboarding(activeUser)
+      navigate('/')
+    } catch (err) {
+      setSubmitErr(err?.message || 'Failed to complete setup. Please try again.')
+    } finally {
+      setIsFinalizingSetup(false)
+    }
+  }
+
+  const handleResendRegistrationOtp = async () => {
+    setSubmitErr('')
+    setIsFinalizingSetup(true)
+    try {
+      const res = await fetch(`${API}/auth/register/resend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data?.detail || `resend failed (${res.status})`)
+      }
+      setRegistrationPending(data)
+      setRegistrationOtp('')
+      setSubmitErr(`A new verification code was sent to ${data?.email_masked || data?.email || email.trim()}.`)
+    } catch (err) {
+      setSubmitErr(err?.message || 'Unable to resend the verification code.')
+    } finally {
+      setIsFinalizingSetup(false)
+    }
+  }
 
   if (done) return (
     <div style={{ minHeight:'100vh', background:'var(--bg)', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -508,119 +665,9 @@ export default function Survey() {
             </div>
           </div>
         )}
-        <button style={cs.btnLaunch} onClick={async () => {
-          setSubmitErr('')
-          try {
-            let activeUser = user
-            const finalUsername = (username || '').trim()
-            const finalPassword = (password || '').trim()
-
-            if (!activeUser?.user_id) {
-              if (!finalUsername || !finalPassword) {
-                setSubmitErr('Username and password are required.')
-                return
-              }
-
-              const regRes = await fetch(`${API}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  username: finalUsername,
-                  password: finalPassword,
-                  email: email.trim(),
-                }),
-              })
-              if (!regRes.ok) {
-                const regErr = await regRes.json().catch(() => ({}))
-                throw new Error(regErr?.detail || `register failed (${regRes.status})`)
-              }
-
-              const loginRes = await fetch(`${API}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  username: finalUsername,
-                  password: finalPassword,
-                }),
-              })
-              if (!loginRes.ok) {
-                const loginErr = await loginRes.json().catch(() => ({}))
-                throw new Error(loginErr?.detail || `login failed (${loginRes.status})`)
-              }
-              const loginData = await loginRes.json()
-              const authUser = {
-                user_id: loginData?.user_id || loginData?.data?.user_id,
-                username: loginData?.username || loginData?.data?.username || finalUsername,
-                created_at: loginData?.created_at || loginData?.data?.created_at || null,
-              }
-              if (!authUser.user_id) throw new Error('login did not return user_id')
-              login(authUser)
-              activeUser = authUser
-            }
-
-            const finalAge = Number(age)
-            if (!Number.isFinite(finalAge) || finalAge < 18 || finalAge > 100) {
-              throw new Error('Please enter a valid age between 18 and 100.')
-            }
-
-            const profileRes = await fetch(`${API}/users/survey/profile`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                user_id: activeUser.user_id,
-                first_name: firstName,
-                last_name: lastName,
-                username: finalUsername,
-                email,
-                country,
-                age: finalAge,
-              }),
-            })
-            if (!profileRes.ok) {
-              const profileErr = await profileRes.json().catch(() => ({}))
-              throw new Error(profileErr?.detail || `profile update failed (${profileRes.status})`)
-            }
-
-            const riskRes = await fetch(`${API}/users/risk`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ user_id: activeUser.user_id, risk_profile: Number(riskLevel ?? 50) }),
-            })
-            if (!riskRes.ok) {
-              const riskErr = await riskRes.json().catch(() => ({}))
-              throw new Error(riskErr?.detail || `risk update failed (${riskRes.status})`)
-            }
-
-            if (importedHoldings.length > 0) {
-              const normalizedHoldings = importedHoldings.map((h) => ({
-                asset_class: toBackendAssetClass(h.asset_class || h.type, h.symbol || h.ticker),
-                symbol: h.symbol || h.ticker || '',
-                qty: Number(h.qty ?? h.shares ?? 0),
-                avg_price: Number(h.avg_price ?? h.price ?? 0),
-                current_price: Number(h.current_price ?? h.price ?? 0),
-                market_value: Number(h.market_value ?? ((Number(h.qty ?? h.shares ?? 0) || 0) * (Number(h.current_price ?? h.price ?? 0) || 0))),
-                name: h.name || h.ticker || h.symbol || '',
-                confidence: h.confidence == null ? undefined : Number(h.confidence),
-              })).filter((h) => h.symbol && h.asset_class)
-
-              if (normalizedHoldings.length > 0) {
-                const mergeRes = await fetch(`${API}/users/${activeUser.user_id}/imports/screenshot/merge`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ holdings: normalizedHoldings }),
-                })
-                if (!mergeRes.ok) {
-                  const mergeErr = await mergeRes.json().catch(() => ({}))
-                  throw new Error(mergeErr?.detail || `holdings merge failed (${mergeRes.status})`)
-                }
-              }
-            }
-
-            navigate('/')
-          } catch (err) {
-            setSubmitErr(err?.message || 'Failed to complete setup. Please try again.')
-          }
-        }}>Enter My Unova →</button>
+        <button style={cs.btnLaunch} onClick={handleLaunch} disabled={isFinalizingSetup}>
+          {isFinalizingSetup ? 'Please wait…' : 'Enter My Unova →'}
+        </button>
         {submitErr && <div style={{ color:'var(--red)', fontFamily:'var(--font-mono)', fontSize:'0.74rem', margin:'12px 0 0' }}>{submitErr}</div>}
       </div>
     </div>
@@ -705,7 +752,23 @@ export default function Survey() {
               value={age}
               onChange={e => setAge(e.target.value)}
             />
-            <Footer onNext={goNextFromProfile} showBack={false} nextLabel={isValidatingProfileStep ? 'Checking...' : 'Continue →'} disableNext={isValidatingProfileStep} />
+            {!user?.user_id && registrationPending && (
+              <div style={cs.otpPanel}>
+                <div style={cs.otpCopy}>
+                  Enter the {registrationPending?.otp_length || 6}-digit code sent to {registrationPending?.email_masked || email.trim()}.
+                </div>
+                <div style={cs.otpRow}>
+                  <OtpCodeInput
+                    value={registrationOtp}
+                    onChange={setRegistrationOtp}
+                  />
+                  <button type="button" style={cs.btnGhost} onClick={handleResendRegistrationOtp} disabled={isValidatingProfileStep}>
+                    Resend code
+                  </button>
+                </div>
+              </div>
+            )}
+            <Footer onNext={goNextFromProfile} showBack={false} nextLabel={isValidatingProfileStep ? 'Checking...' : registrationPending ? 'Verify email & continue' : 'Continue →'} disableNext={isValidatingProfileStep} />
           </div>
         )}
 
@@ -816,6 +879,9 @@ const cs = {
   formGrid: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:28 },
   formLabel:{ fontFamily:'var(--font-mono)', fontSize:'0.65rem', color:'var(--text-faint)', textTransform:'uppercase', letterSpacing:'0.1em', display:'block', marginBottom:6 },
   formInput:{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, padding:'11px 14px', color:'var(--text)', fontSize:'0.9rem', outline:'none', width:'100%' },
+  otpPanel: { marginTop:18, marginBottom:10, padding:'14px 16px', borderRadius:14, border:'1px solid rgba(20,184,166,0.18)', background:'linear-gradient(180deg, rgba(20,184,166,0.06), rgba(32,201,151,0.04))' },
+  otpCopy: { fontSize:'0.78rem', color:'var(--text-dim)', lineHeight:1.6, marginBottom:10 },
+  otpRow: { display:'grid', gridTemplateColumns:'1fr auto', gap:10, alignItems:'center' },
   ageGrid:  { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:28, marginTop:10 },
   ageCard:  { background:'var(--surface)', border:'1.5px solid var(--border)', borderRadius:12, padding:'14px 10px', textAlign:'center', cursor:'pointer', transition:'all 0.2s' },
   ageCardActive: { borderColor:'var(--gold)', background:'rgba(201,168,76,0.08)' },
@@ -831,6 +897,7 @@ const cs = {
   horizonActive: { borderColor:'var(--teal)', color:'var(--teal)', background:'rgba(45,212,191,0.07)' },
   btnBack:  { background:'var(--surface2)', border:'1px solid var(--border-act)', color:'var(--text)', padding:'11px 22px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.87rem', fontWeight:600, cursor:'pointer', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.04)' },
   btnNext:  { background:'var(--btn-primary-bg)', border:'1px solid color-mix(in srgb, var(--btn-primary-bg) 72%, white 10%)', color:'var(--btn-primary-text)', padding:'12px 32px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.88rem', fontWeight:700, boxShadow:'0 10px 24px rgba(17,24,39,0.16), inset 0 1px 0 rgba(255,255,255,0.12)', cursor:'pointer' },
+  btnGhost: { background:'transparent', border:'1px solid var(--border-act)', color:'var(--gold)', padding:'10px 18px', borderRadius:10, fontFamily:'var(--font-display)', fontSize:'0.8rem', fontWeight:600, cursor:'pointer' },
   completeRing: { width:110, height:110, borderRadius:'50%', background:'linear-gradient(135deg,rgba(52,211,153,0.15),rgba(45,212,191,0.1))', border:'2px solid rgba(52,211,153,0.4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.8rem', margin:'0 auto 28px', boxShadow:'0 0 40px rgba(52,211,153,0.2)', animation:'pulseScale 2s ease-in-out infinite' },
   pill:     { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:24, padding:'7px 16px', fontFamily:'var(--font-mono)', fontSize:'0.73rem', color:'var(--text-dim)' },
   btnLaunch:{ background:'var(--gold)', border:'none', color:'var(--btn-text-on-gold)', padding:'15px 44px', borderRadius:12, fontFamily:'var(--font-display)', fontSize:'0.98rem', fontWeight:700, boxShadow:'0 12px 28px rgba(17,24,39,0.18)', cursor:'pointer' },

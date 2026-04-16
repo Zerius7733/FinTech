@@ -41,7 +41,11 @@ def _find_api_key() -> str:
 
 
 def _build_prompt_payload(
-    user_id: str, user: Dict[str, Any], rule_based: Dict[str, Any], limit: int
+    user_id: str,
+    user: Dict[str, Any],
+    rule_based: Dict[str, Any],
+    limit: int,
+    latent_growth_context: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     portfolio = user.get("portfolio", []) or []
     compact_portfolio: List[Dict[str, Any]] = []
@@ -57,7 +61,7 @@ def _build_prompt_payload(
             }
         )
 
-    return {
+    payload = {
         "risk_profile": user.get("risk_profile"),
         "financial_wellness_score": user.get("financial_wellness_score"),
         "financial_stress_index": user.get("financial_stress_index"),
@@ -66,6 +70,9 @@ def _build_prompt_payload(
         "rule_based_recommendations": rule_based.get("recommendations", []),
         "requested_recommendation_count": limit,
     }
+    if latent_growth_context:
+        payload["latent_growth_context"] = latent_growth_context
+    return payload
 
 
 _USER_ID_KEY_PATTERN = re.compile(r'("user_id"\s*:\s*)"[^"]*"', re.IGNORECASE)
@@ -153,12 +160,19 @@ def generate_gpt_recommendations(
     limit: int = 3,
     model: str = DEFAULT_MODEL,
     timeout_seconds: int = 45,
+    latent_growth_context: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     api_key = _find_api_key()
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY is not set (env var or .env at repo root)")
 
-    input_payload = _build_prompt_payload(user_id=user_id, user=user, rule_based=rule_based, limit=limit)
+    input_payload = _build_prompt_payload(
+        user_id=user_id,
+        user=user,
+        rule_based=rule_based,
+        limit=limit,
+        latent_growth_context=latent_growth_context,
+    )
 
     system_prompt = (
         "You are a financial wellness recommendation assistant. "
@@ -173,7 +187,9 @@ def generate_gpt_recommendations(
         "top_recommendations must be an array of up to requested_recommendation_count items, "
         "each with: title, action, why, priority. "
         "scenario_insights should include bullish_case, base_case, bearish_case. "
-        "immediate_next_steps must be a short array for the next 30 days.\\n\\n"
+        "immediate_next_steps must be a short array for the next 30 days. "
+        "If latent_growth_context is present, explicitly incorporate it into the analysis and next steps. "
+        "If latent_growth_context is absent, do not mention it.\\n\\n"
         f"INPUT_DATA:\\n{json.dumps(input_payload, ensure_ascii=True)}"
     )
 

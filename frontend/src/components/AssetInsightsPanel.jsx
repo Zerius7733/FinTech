@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { API_BASE } from '../utils/api.js'
 
@@ -50,9 +51,11 @@ export function getCachedInsight(assetType, symbol, months = 3) {
 }
 
 export default function AssetInsightsPanel({ assetType, symbol, months = 3, compact = false, userId = '', onInsightLoaded = null, prefaceText = '' }) {
+  const navigate = useNavigate()
   const [requested, setRequested] = useState(false)
   const [requestVersion, setRequestVersion] = useState(0)
   const [state, setState] = useState({ loading: false, error: '', data: null })
+  const [subscription, setSubscription] = useState({ loading: Boolean(userId), plan: 'free', label: 'Free' })
   const hasUserContext = Boolean(userId)
 
   useEffect(() => {
@@ -60,23 +63,37 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
     setRequested(false)
     setRequestVersion(0)
     setState({ loading: false, error: '', data: null })
+    setSubscription({ loading: false, plan: 'free', label: 'Free' })
   }, [hasUserContext])
 
-  if (!hasUserContext) {
-    return (
-      <div style={S.card}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <div>
-            <div style={S.label}>Market Insight</div>
-            <div style={{ fontSize: '0.84rem', color: 'var(--text-dim)', lineHeight: 1.7, marginTop: 10, maxWidth: 620 }}>
-              Sign in to generate a personalised market insight for this asset.
-            </div>
-          </div>
-          <div style={S.lockedPill}>Sign In Required</div>
-        </div>
-      </div>
-    )
-  }
+  useEffect(() => {
+    if (!hasUserContext) return
+    let cancelled = false
+    setSubscription(current => ({ ...current, loading: true }))
+
+    fetch(`${API_BASE}/users/${encodeURIComponent(userId)}`)
+      .then(async res => (res.ok ? res.json() : null))
+      .then(payload => {
+        if (cancelled) return
+        const user = payload?.user || {}
+        const plan = String(user.subscription_plan ?? payload?.subscription?.plan ?? 'free').toLowerCase() === 'premium'
+          ? 'premium'
+          : 'free'
+        setSubscription({
+          loading: false,
+          plan,
+          label: plan === 'premium' ? 'Premium' : 'Free',
+        })
+      })
+      .catch(() => {
+        if (cancelled) return
+        setSubscription({ loading: false, plan: 'free', label: 'Free' })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [hasUserContext, userId])
 
   useEffect(() => {
     if (!requested) {
@@ -99,12 +116,19 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
       .then(async res => {
         if (!res.ok) {
           const payload = await res.json().catch(() => ({}))
+          if (res.status === 402) {
+            const message = payload?.detail?.message || payload?.detail || 'Premium required.'
+            setSubscription({ loading: false, plan: 'free', label: 'Free' })
+            setState({ loading: false, error: message, data: null })
+            return null
+          }
           throw new Error(payload?.detail || `HTTP ${res.status}`)
         }
         return res.json()
       })
       .then(data => {
         if (cancelled) return
+        if (!data) return
         insightsCache.set(cacheKey, data)
         setState({ loading: false, error: '', data })
         if (typeof onInsightLoaded === 'function') onInsightLoaded(data)
@@ -116,6 +140,62 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
 
     return () => { cancelled = true }
   }, [assetType, symbol, months, requested, userId, requestVersion])
+
+  if (!hasUserContext) {
+    return (
+      <div style={S.card}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div style={S.label}>Market Insight</div>
+            <div style={{ fontSize: '0.84rem', color: 'var(--text-dim)', lineHeight: 1.7, marginTop: 10, maxWidth: 620 }}>
+              Sign in to generate a personalised market insight for this asset.
+            </div>
+          </div>
+          <div style={S.lockedPill}>Sign In Required</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (subscription.loading) {
+    return (
+      <div style={S.card}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div style={S.label}>Market Insight</div>
+            <div style={{ fontSize: '0.84rem', color: 'var(--text-dim)', lineHeight: 1.7, marginTop: 10, maxWidth: 620 }}>
+              Checking subscription access...
+            </div>
+          </div>
+          <div style={S.lockedPill}>Loading</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (subscription.plan !== 'premium') {
+    return (
+      <div style={S.card}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={S.label}>Market Insight</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.08rem', fontWeight: 700, marginTop: 10 }}>
+              Premium only
+            </div>
+            <div style={{ fontSize: '0.84rem', color: 'var(--text-dim)', lineHeight: 1.75, marginTop: 8, maxWidth: 680 }}>
+              Free accounts keep market data, wellness scoring, and portfolio tools. Premium unlocks analyst-style market insights, deeper context, and richer guidance.
+            </div>
+            <div style={{ marginTop: 14, fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
+              Current plan: {subscription.label}
+            </div>
+          </div>
+          <button type="button" onClick={() => navigate('/pricing')} style={S.triggerBtn}>
+            View plans
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (!requested) {
     return (
@@ -171,6 +251,11 @@ export default function AssetInsightsPanel({ assetType, symbol, months = 3, comp
         <div style={{ fontSize: '0.84rem', color: 'var(--text-faint)', lineHeight: 1.7 }}>
           {state.error || 'Insight data is unavailable for this asset right now.'}
         </div>
+        {String(state.error || '').toLowerCase().includes('premium') ? (
+          <button type="button" onClick={() => navigate('/pricing')} style={{ ...S.triggerBtn, marginTop: 14 }}>
+            View plans
+          </button>
+        ) : null}
       </div>
     )
   }
@@ -417,9 +502,9 @@ const S = {
     lineHeight: 1.6,
   },
   triggerBtn: {
-    background: 'var(--btn-primary-bg)',
-    border: '1px solid color-mix(in srgb, var(--btn-primary-bg) 72%, white 10%)',
-    color: 'var(--btn-primary-text)',
+    background: 'linear-gradient(180deg, #25324a 0%, #1d2738 100%)',
+    border: '1px solid rgba(29,39,56,0.16)',
+    color: '#f8fafc',
     padding: '10px 16px',
     borderRadius: 10,
     fontFamily: 'var(--font-display)',
@@ -491,4 +576,3 @@ const S = {
     lineHeight: 1.7,
   },
 }
-

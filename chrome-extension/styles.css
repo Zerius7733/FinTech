@@ -91,7 +91,8 @@ select {
 }
 
 .auth-panel,
-.app-panel {
+.app-panel,
+.config-panel {
   padding: 18px;
 }
 
@@ -160,6 +161,59 @@ h3 {
   color: var(--text-dim);
   font-size: 0.9rem;
   line-height: 1.65;
+}
+
+.config-panel {
+  padding: 18px;
+}
+
+.config-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  margin-bottom: 10px;
+}
+
+.config-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.68);
+  padding: 12px 14px;
+}
+
+.config-label {
+  display: block;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.config-value {
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.config-value[data-tone="success"] {
+  color: var(--green);
+}
+
+.config-value[data-tone="error"] {
+  color: var(--red);
+}
+
+.config-value[data-tone="neutral"] {
+  color: var(--text);
+}
+
+.config-help {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  line-height: 1.55;
 }
 
 .field-grid,

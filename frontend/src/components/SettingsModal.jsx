@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import RiskSlider from './RiskSlider.jsx'
+import OtpCodeInput from './OtpCodeInput.jsx'
 import { API_BASE as API } from '../utils/api.js'
 import { refreshPage } from '../utils/refreshPage.js'
 const GLOBE_PREFS_KEY = 'ws_globe_prefs'
@@ -82,6 +83,18 @@ function SliderField({ value, min = 0, max = 100, step = 1, onChange, leftLabel,
     </div>
   )
 }
+
+function validatePasswordDraft(password) {
+  const value = String(password || '')
+  if (!value.trim()) return ''
+  if (value.length < 8) return 'Password must be at least 8 characters long.'
+  if (!/[A-Z]/.test(value)) return 'Password must include at least one uppercase letter.'
+  if (!/[a-z]/.test(value)) return 'Password must include at least one lowercase letter.'
+  if (!/\d/.test(value)) return 'Password must include at least one number.'
+  if (!/[^A-Za-z0-9]/.test(value)) return 'Password must include at least one special character.'
+  return ''
+}
+
 function Card({ title, icon, children }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 18, padding: '20px 22px', marginBottom: 16 }}>
@@ -127,6 +140,14 @@ export default function SettingsModal({ onClose }) {
   const [saveError, setSaveError] = useState('')
   const [dangerBusy, setDangerBusy] = useState('')
   const [dangerMsg, setDangerMsg] = useState('')
+  const [profileEmailOnFile, setProfileEmailOnFile] = useState('')
+  const [passwordOtpState, setPasswordOtpState] = useState({
+    pending: false,
+    email: '',
+    emailMasked: '',
+    code: '',
+    message: '',
+  })
   const [profileForm, setProfileForm] = useState({
     firstName: '',
     lastName: '',
@@ -135,11 +156,15 @@ export default function SettingsModal({ onClose }) {
     investorType: 'Individual Investor',
     currency: 'SGD',
     password: '',
+    confirmPassword: '',
   })
 
   const mark = () => setUnsaved(true)
   const setProfileField = (key, value) => {
     setProfileForm(prev => ({ ...prev, [key]: value }))
+    if (key === 'password' || key === 'confirmPassword') {
+      setPasswordOtpState(prev => ({ ...prev, pending: false, code: '', message: '' }))
+    }
     mark()
   }
   const updateDisplayPref = (key, value) => {
@@ -202,7 +227,9 @@ export default function SettingsModal({ onClose }) {
           investorType: String(csvData?.profile?.investor_type || jsonData?.user?.investor_type || prev.investorType || 'Individual Investor'),
           currency: String(csvData?.profile?.currency || jsonData?.user?.currency || prev.currency || 'SGD'),
           password: '',
+          confirmPassword: '',
         }))
+        setProfileEmailOnFile(String(csvData?.profile?.email || jsonData?.user?.email || ''))
       })
       .catch(() => {})
       .finally(() => setProfileLoaded(true))
@@ -225,9 +252,64 @@ export default function SettingsModal({ onClose }) {
     setSaveError('')
     let didPersist = false
     let profileSaved = false
+    let riskSaved = false
     if (user?.user_id) {
       try {
         const trimmedPassword = profileForm.password.trim()
+        const trimmedConfirmPassword = profileForm.confirmPassword.trim()
+        const passwordValidationError = validatePasswordDraft(trimmedPassword)
+
+        if (trimmedPassword && passwordValidationError) {
+          throw new Error(passwordValidationError)
+        }
+        if (trimmedPassword && !trimmedConfirmPassword) {
+          throw new Error('Confirm your new password before saving.')
+        }
+        if (trimmedPassword && trimmedPassword !== trimmedConfirmPassword) {
+          throw new Error('Passwords do not match.')
+        }
+
+        if (trimmedPassword && !passwordOtpState.pending) {
+          const otpStartRes = await fetch(`${API}/auth/password-reset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier: user.user_id }),
+          })
+          const otpStartData = await otpStartRes.json().catch(() => ({}))
+          if (!otpStartRes.ok) {
+            throw new Error(otpStartData?.detail || `password verification failed (${otpStartRes.status})`)
+          }
+          setPasswordOtpState({
+            pending: true,
+            email: otpStartData?.email || profileEmailOnFile || profileForm.email,
+            emailMasked: otpStartData?.email_masked || profileEmailOnFile || profileForm.email,
+            code: '',
+            message: 'We sent a verification code to your email. Enter it below, then save again to confirm the password change.',
+          })
+          setSaveError('')
+          return
+        }
+
+        if (trimmedPassword && passwordOtpState.pending) {
+          const code = passwordOtpState.code.trim()
+          if (!code) {
+            throw new Error('Enter the email verification code to change your password.')
+          }
+          const otpVerifyRes = await fetch(`${API}/auth/password-reset/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: passwordOtpState.email || profileEmailOnFile || profileForm.email,
+              otp_code: code,
+              new_password: trimmedPassword,
+            }),
+          })
+          const otpVerifyData = await otpVerifyRes.json().catch(() => ({}))
+          if (!otpVerifyRes.ok) {
+            throw new Error(otpVerifyData?.detail || `password verification failed (${otpVerifyRes.status})`)
+          }
+        }
+
         const profileRes = await fetch(`${API}/users/profile/details`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -239,18 +321,20 @@ export default function SettingsModal({ onClose }) {
             country: profileForm.country,
             investor_type: profileForm.investorType,
             currency: profileForm.currency,
-            password: trimmedPassword || undefined,
           }),
         })
         if (!profileRes.ok) {
           const err = await profileRes.json().catch(() => ({}))
           throw new Error(err?.detail || `profile save failed (${profileRes.status})`)
         }
-        setProfileForm(prev => ({ ...prev, password: '' }))
+        setProfileForm(prev => ({ ...prev, password: '', confirmPassword: '' }))
+        setProfileEmailOnFile(profileForm.email)
+        setPasswordOtpState({ pending: false, email: '', emailMasked: '', code: '', message: '' })
         didPersist = true
         profileSaved = true
       } catch (err) {
         setSaveError(err?.message || 'Could not save profile details.')
+        return
       }
 
       const riskValue = normalizeRiskProfileValue(riskLevel?.value ?? profileRisk ?? 50)
@@ -263,14 +347,41 @@ export default function SettingsModal({ onClose }) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         setProfileRisk(riskValue)
         didPersist = true
+        riskSaved = true
       } catch (_) {}
     }
-    if (profileSaved) {
+    if (profileSaved || riskSaved) {
       setSaved(true)
       setUnsaved(false)
       setTimeout(() => setSaved(false), 2000)
     }
     if (didPersist) refreshPage()
+  }
+
+  const handleResendPasswordOtp = async () => {
+    if (!user?.user_id) return
+    setSaveError('')
+    try {
+      const res = await fetch(`${API}/auth/password-reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: user.user_id }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data?.detail || `password verification failed (${res.status})`)
+      }
+      setPasswordOtpState(prev => ({
+        ...prev,
+        pending: true,
+        email: data?.email || prev.email || profileEmailOnFile || profileForm.email,
+        emailMasked: data?.email_masked || prev.emailMasked || profileEmailOnFile || profileForm.email,
+        code: '',
+        message: 'A new verification code has been sent. Enter it below, then save again.',
+      }))
+    } catch (err) {
+      setSaveError(err?.message || 'Could not resend the verification code.')
+    }
   }
 
   const handleDeletePortfolio = async () => {
@@ -454,6 +565,34 @@ export default function SettingsModal({ onClose }) {
                       {showPassword ? '\u{1F648}' : '\u{1F441}'}
                     </button>
                   </div>
+                  {profileForm.password.trim() ? (
+                    <div style={{ marginTop: 12 }}>
+                      <div style={s.formLabel}>Confirm Password</div>
+                      <input
+                        style={s.formInput}
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Re-enter your new password"
+                        value={profileForm.confirmPassword}
+                        onChange={e => setProfileField('confirmPassword', e.target.value)}
+                      />
+                    </div>
+                  ) : null}
+                  {passwordOtpState.pending ? (
+                    <div style={s.otpPanel}>
+                      <div style={s.otpCopy}>
+                        {passwordOtpState.message || `Changing your password requires an email OTP sent to ${passwordOtpState.emailMasked || profileEmailOnFile || profileForm.email}.`}
+                      </div>
+                      <div style={s.otpRow}>
+                        <OtpCodeInput
+                          value={passwordOtpState.code}
+                          onChange={(nextValue) => setPasswordOtpState(prev => ({ ...prev, code: nextValue }))}
+                        />
+                        <button type="button" style={s.btnGhost} onClick={handleResendPasswordOtp}>
+                          Resend code
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </Card>
               <Card title="Preferences" icon={'\u{1F310}'}>
@@ -768,6 +907,25 @@ const s = {
     padding:0,
     fontSize:'0.9rem',
   },
+  otpPanel: {
+    marginTop: 10,
+    padding: '12px 14px',
+    borderRadius: 12,
+    border: '1px solid rgba(42,184,163,0.18)',
+    background: 'linear-gradient(180deg, rgba(42,184,163,0.06), rgba(109,141,247,0.04))',
+  },
+  otpCopy: {
+    fontSize: '0.76rem',
+    color: 'var(--text-dim)',
+    lineHeight: 1.6,
+    marginBottom: 10,
+  },
+  otpRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr auto',
+    gap: 10,
+    alignItems: 'center',
+  },
   btnClose: {
     width: 34, height: 34, borderRadius: '50%',
     border: '1px solid var(--border)', background: 'var(--surface2)',
@@ -908,13 +1066,6 @@ const s = {
     whiteSpace:'nowrap',
   },
 }
-
-
-
-
-
-
-
 
 
 
