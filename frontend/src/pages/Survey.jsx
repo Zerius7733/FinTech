@@ -4,6 +4,7 @@ import OtpCodeInput from '../components/OtpCodeInput.jsx'
 import RiskSlider from '../components/RiskSlider.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { API_BASE as API } from '../utils/api.js'
+import { buildOtpDeliveryMessage, buildOtpInputPrompt } from '../utils/authOtp.js'
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 
@@ -499,12 +500,12 @@ export default function Survey() {
           }
           setRegistrationPending(registerData)
           setRegistrationOtp('')
-          setSubmitErr(`Verification code sent to ${registerData?.email_masked || registerData?.email || verifiedEmail}. Enter it below to continue.`)
+          setSubmitErr(buildOtpDeliveryMessage(registerData, verifiedEmail))
           return
         }
 
         if (!registrationOtp.trim()) {
-          throw new Error('Enter the verification code from your email.')
+          throw new Error(buildOtpInputPrompt(registrationPending))
         }
 
         const verifyRes = await fetch(`${API}/auth/register/verify`, {
@@ -633,7 +634,7 @@ export default function Survey() {
       }
       setRegistrationPending(data)
       setRegistrationOtp('')
-      setSubmitErr(`A new verification code was sent to ${data?.email_masked || data?.email || email.trim()}.`)
+      setSubmitErr(buildOtpDeliveryMessage(data, email.trim(), { resend: true }))
     } catch (err) {
       setSubmitErr(err?.message || 'Unable to resend the verification code.')
     } finally {
