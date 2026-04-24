@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 
 import backend.api_models as models
+import backend.settings.config as settings_config
 from backend.services.income_profile import build_income_summary
 
 
@@ -300,7 +301,7 @@ def build_router(
         user_id: str,
         target_type: str = Query(..., description="stock | crypto | commodity"),
         symbol: str = Query(..., description="Target symbol, e.g. SPY, BTC, GC=F"),
-        model: str = Query("gpt-4.1-mini", description="OpenAI model for synthesis"),
+        model: str = Query(settings_config.openai_narrative_model(), description="OpenAI model for synthesis"),
     ) -> dict[str, Any]:
         try:
             data = user_store.read_users_data()

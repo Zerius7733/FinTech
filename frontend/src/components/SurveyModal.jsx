@@ -178,7 +178,6 @@ function PortfolioImportStep({ onBack, onComplete }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           image_base64: fileData.base64,
-          model: 'gpt-4o',
           page_text: null,
         })
       });

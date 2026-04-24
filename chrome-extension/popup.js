@@ -1,5 +1,4 @@
 const DEFAULT_LOCAL_API_BASE = "http://localhost:8000";
-const DEFAULT_MODEL = "gpt-4.1-mini";
 
 const authViewEl = document.getElementById("authView");
 const appViewEl = document.getElementById("appView");
@@ -340,7 +339,6 @@ async function captureAndParse() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       image_base64: toRawBase64(screenshotDataUrl),
-      model: DEFAULT_MODEL,
       page_text: await extractPageText(),
     }),
   });

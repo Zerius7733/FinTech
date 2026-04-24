@@ -5,10 +5,11 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import requests
+import backend.settings.config as settings_config
 
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
-DEFAULT_MODEL = "gpt-4.1-mini"
+DEFAULT_MODEL = settings_config.openai_narrative_model()
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 PROJECT_DIR = BACKEND_DIR.parent
 WORKSPACE_DIR = PROJECT_DIR.parent

@@ -9,12 +9,13 @@ from typing import Any, Dict, List, Tuple
 from uuid import uuid4
 
 import requests
+import backend.settings.config as settings_config
 
 from backend.services.market.providers.commodity_price_retriever import normalize_commodity_symbol
 
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
-DEFAULT_VISION_MODEL = "gpt-4.1-mini"
+DEFAULT_VISION_MODEL = settings_config.openai_narrative_model()
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 PROJECT_DIR = BACKEND_DIR.parent
 WORKSPACE_DIR = PROJECT_DIR.parent

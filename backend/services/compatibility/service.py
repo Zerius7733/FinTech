@@ -4,11 +4,12 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 
 import requests
+import backend.settings.config as settings_config
 from backend.services.market.providers.commodity_price_retriever import COMMODITY_ALIAS_TO_SYMBOL
 
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
-DEFAULT_LLM_MODEL = "gpt-4.1-mini"
+DEFAULT_LLM_MODEL = settings_config.openai_narrative_model()
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 PROJECT_DIR = BACKEND_DIR.parent
 WORKSPACE_DIR = PROJECT_DIR.parent

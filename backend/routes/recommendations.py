@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
+import backend.settings.config as settings_config
 
 def build_router(
     *,
@@ -40,7 +41,7 @@ def build_router(
     def get_user_recommendations_gpt(
         user_id: str,
         limit: int = Query(3, ge=1, le=10, description="Maximum number of recommendation items"),
-        model: str = Query("gpt-4.1-mini", description="OpenAI model name"),
+        model: str = Query(settings_config.openai_narrative_model(), description="OpenAI model name"),
     ) -> dict[str, Any]:
         try:
             data = user_store.read_users_data()

@@ -10,6 +10,7 @@ import { buildOtpDeliveryMessage, buildOtpInputPrompt } from '../utils/authOtp.j
 
 // Paste your OpenAI API key here. In production, proxy this through your backend.
 const OPENAI_API_KEY = ''   // ← e.g. 'sk-...'
+const OPENAI_NARRATIVE_MODEL = import.meta.env.VITE_OPENAI_NARRATIVE_MODEL || 'gpt-4.1-mini'
 
 // ─── GPT-4o Vision call ───────────────────────────────────────────────────────
 async function extractPortfolioFromImage(base64Image, mimeType) {
@@ -35,7 +36,7 @@ Return ONLY the raw JSON array.`
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
     body: JSON.stringify({
-      model: 'gpt-4o',
+      model: OPENAI_NARRATIVE_MODEL,
       max_tokens: 2000,
       messages: [{ role: 'user', content: [
         { type: 'text', text: prompt },
@@ -218,7 +219,6 @@ function PortfolioImportStep({ onBack, onComplete }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           image_base64: fileData.base64,
-          model: 'gpt-4o',
           page_text: null,
         })
       });

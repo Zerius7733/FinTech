@@ -27,7 +27,6 @@ from backend.services.compatibility import evaluate_compatibility
 from backend.services.compatibility import synthesize_compatibility_with_llm
 from backend.services.financial_planning import build_financial_planning_overview
 from backend.services.financial_planning import build_financial_planning_scenario
-from backend.services.imports import DEFAULT_VISION_MODEL
 from backend.services.imports import confirm_import
 from backend.services.imports import create_pending_import
 from backend.services.imports import merge_holdings_into_user

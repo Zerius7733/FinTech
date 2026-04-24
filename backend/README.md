@@ -174,7 +174,8 @@ This backend computes user-level financial metrics from `backend/json_data/user.
 - Rule-based:
   - `GET /users/{user_id}/recommendations?limit=3`
 - GPT-wrapped:
-  - `GET /users/{user_id}/recommendations/gpt?limit=3&model=gpt-4.1-mini`
+  - `GET /users/{user_id}/recommendations/gpt?limit=3`
+  - default model comes from `OPENAI_NARRATIVE_MODEL`
 
 ## User Profile Inputs
 
@@ -410,7 +411,7 @@ Parse screenshot into candidate holdings:
 - `POST /users/{user_id}/imports/screenshot/parse`
 - Body:
   - `image_base64`: image data URL or raw base64
-  - `model` (optional): default `gpt-4.1-mini`
+  - `model` (optional): default comes from `OPENAI_NARRATIVE_MODEL`
 
 Confirm and merge holdings into user portfolio:
 
