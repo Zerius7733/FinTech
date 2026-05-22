@@ -11,10 +11,26 @@ def read_users_data() -> dict[str, Any]:
     with open(const.USER_JSON_PATH, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
     normalized = user_services.normalize_users_data(data)
+    normalized = hydrate_missing_login_users(normalized)
     return user_services.hydrate_users_from_csv(
         normalized,
         recalculate_user_financials=recalculate_user_financials,
     )
+
+
+def hydrate_missing_login_users(users: dict[str, Any]) -> dict[str, Any]:
+    if not const.LOGIN_CSV_PATH.exists():
+        return users
+    hydrated = dict(users)
+    with open(const.LOGIN_CSV_PATH, "r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            user_id = (row.get("user_id") or "").strip()
+            if not user_id or user_id in hydrated:
+                continue
+            name = (row.get("name") or row.get("username") or user_id).strip()
+            hydrated[user_id] = {"name": name}
+    return user_services.normalize_users_data(hydrated)
 
 
 def write_users_data(data: dict[str, Any]) -> None:

@@ -1,4 +1,5 @@
 from typing import Any
+import csv
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -18,6 +19,24 @@ def build_router(
     constants: Any,
 ) -> APIRouter:
     router = APIRouter()
+
+    def ensure_csv_profile_for_login_user(user_id: str) -> dict[str, Any]:
+        row = csv_store.read_user_csv_profile(user_id)
+        if row:
+            return row
+        if not constants.LOGIN_CSV_PATH.exists():
+            return {}
+        with open(constants.LOGIN_CSV_PATH, "r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            login_row = next((item for item in reader if (item.get("user_id") or "").strip() == user_id), None)
+        if not login_row:
+            return {}
+        auth.add_default_assets_row(
+            csv_path=constants.ASSETS_CSV_PATH,
+            user_id=user_id,
+            name=(login_row.get("name") or login_row.get("username") or user_id).strip(),
+        )
+        return csv_store.read_user_csv_profile(user_id)
 
     @router.post("/users/survey/profile", tags=["Users"], summary="Persist survey profile fields into users.csv")
     def update_survey_profile(payload: models.SurveyProfileUpdateRequest) -> dict[str, Any]:
@@ -133,7 +152,7 @@ def build_router(
             user_id = (user_id or "").strip()
             if not user_id:
                 raise HTTPException(status_code=400, detail="user_id is required")
-            row = csv_store.read_user_csv_profile(user_id)
+            row = ensure_csv_profile_for_login_user(user_id)
             if not row:
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found in users.csv")
             return {"status": "ok", "user_id": user_id, "profile": row}

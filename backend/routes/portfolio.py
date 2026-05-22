@@ -9,6 +9,11 @@ from fastapi.responses import Response
 
 import backend.api_models as models
 
+STOCK_SYMBOL_ALIASES = {
+    "ES3": "ES3.SI",
+    "STI": "^STI",
+}
+
 
 def build_router(
     *,
@@ -280,9 +285,9 @@ def build_router(
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            portfolio = user.get("portfolio")
-            if not isinstance(portfolio, dict):
-                portfolio = {"stocks": [], "bonds": [], "real_assets": [], "cryptos": [], "commodities": []}
+            portfolio_data = user.get("portfolio")
+            if not isinstance(portfolio_data, dict):
+                portfolio_data = {"stocks": [], "bonds": [], "real_assets": [], "cryptos": [], "commodities": []}
 
             symbol = payload.symbol.strip().upper()
             if not symbol:
@@ -307,6 +312,9 @@ def build_router(
             else:
                 raise HTTPException(status_code=400, detail="asset_class must be stock, bond, real_asset, crypto, or commodity")
 
+            if query_type == "STOCK":
+                symbol = STOCK_SYMBOL_ALIASES.get(symbol, symbol)
+
             if query_type in {"STOCK", "BOND", "REAL_ASSET"}:
                 fetched_symbol = symbol
                 price = round(float(market.fetch_latest_prices([symbol])[symbol]), 6)
@@ -327,7 +335,7 @@ def build_router(
             market_value = round(qty * price, 2)
             incoming_name = (payload.name or "").strip()
 
-            entries = portfolio.get(bucket, [])
+            entries = portfolio_data.get(bucket, [])
             if not isinstance(entries, list):
                 entries = []
 
@@ -362,8 +370,8 @@ def build_router(
                     item["name"] = incoming_name
                 entries.append(item)
 
-            portfolio[bucket] = entries
-            user["portfolio"] = portfolio
+            portfolio_data[bucket] = entries
+            user["portfolio"] = portfolio_data
             users_data[user_id] = portfolio.recalculate_user_financials(user)
             user_store.write_users_data(users_data)
             return {"status": "ok", "user_id": user_id, "asset_class": bucket, "item": item, "user": users_data[user_id]}

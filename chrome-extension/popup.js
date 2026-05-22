@@ -56,6 +56,18 @@ function getConfigSource() {
   return "runtime default";
 }
 
+function formatApiError(data, fallback) {
+  const detail = data?.detail;
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (detail && typeof detail === "object") {
+    if (typeof detail.message === "string" && detail.message.trim()) return detail.message;
+    try {
+      return JSON.stringify(detail);
+    } catch {}
+  }
+  return fallback;
+}
+
 function updateConfigPanel() {
   const resolvedBase = getApiBase();
   resolvedApiBaseEl.textContent = resolvedBase;
@@ -289,9 +301,9 @@ function requireAuth() {
 async function handleLogin(event) {
   event.preventDefault();
   const username = (usernameInput.value || "").trim();
-  const password = (passwordInput.value || "").trim();
+  const password = passwordInput.value || "";
 
-  if (!username || !password) {
+  if (!username || !password.length) {
     setAuthStatus("Enter both username and password.", "error");
     return;
   }
@@ -308,7 +320,10 @@ async function handleLogin(event) {
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(data.detail || "Login failed.");
+      throw new Error(formatApiError(data, `Login failed (${res.status}).`));
+    }
+    if (!data.user_id) {
+      throw new Error("Login response did not include a user id.");
     }
 
     authUser = {
@@ -316,12 +331,23 @@ async function handleLogin(event) {
       username: data.username,
     };
 
+    const profileRes = await fetch(`${getApiBase()}/users/${encodeURIComponent(authUser.user_id)}`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const profileData = await profileRes.json().catch(() => ({}));
+    if (!profileRes.ok) {
+      authUser = null;
+      throw new Error(formatApiError(profileData, `Signed in, but user profile was not available (${profileRes.status}).`));
+    }
+
     usernameInput.value = "";
     passwordInput.value = "";
     await saveSettings();
     renderAuthState();
-    setStatus(`Signed in as ${authUser.username}.`, "success");
+    setStatus(`Signed in as ${authUser.username || authUser.user_id}.`, "success");
   } catch (error) {
+    await saveSettings();
     setAuthStatus(error.message || "Could not sign in.", "error");
   } finally {
     loginBtn.disabled = false;
@@ -347,7 +373,7 @@ async function captureAndParse() {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.detail || "Parse failed.");
+    throw new Error(formatApiError(data, `Parse failed (${res.status}).`));
   }
 
   currentImportId = data.import_id || "";
@@ -382,7 +408,7 @@ async function confirmImport() {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.detail || "Confirm failed.");
+    throw new Error(formatApiError(data, `Confirm failed (${res.status}).`));
   }
 
   const skipped = Array.isArray(data.skipped) ? data.skipped : [];

@@ -105,6 +105,7 @@ def build_router(
                 override_holdings=override_holdings,
             )
             user_store.write_users_data(users)
+            csv_store.sync_user_to_assets_csv(user_id, users[user_id])
             diagnostics = {
                 "received_holdings_count": len(override_holdings) if override_holdings is not None else None,
                 "received_holdings_preview": (override_holdings or [])[:3],

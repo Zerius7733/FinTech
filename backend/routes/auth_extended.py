@@ -48,7 +48,15 @@ def build_router(
                 username=payload.username,
                 password=payload.password,
             )
-            user = user_store.read_users_data().get(result["user_id"])
+            all_users = user_store.read_users_data()
+            user = all_users.get(result["user_id"])
+            if isinstance(user, dict):
+                user_store.write_users_data(all_users)
+                auth.add_default_assets_row(
+                    csv_path=constants.ASSETS_CSV_PATH,
+                    user_id=result["user_id"],
+                    name=result["username"],
+                )
             subscription = auth.subscription_payload(user if isinstance(user, dict) else None)
             return {"status": "ok", **result, "subscription": subscription, "subscription_plan": subscription["plan"]}
         except auth.LoginValidationError as exc:
@@ -107,6 +115,11 @@ def build_router(
             users = user_store.read_users_data()
             users[result["user_id"]] = normalize_user({"name": result["username"]})
             user_store.write_users_data(users)
+            auth.add_default_assets_row(
+                csv_path=constants.ASSETS_CSV_PATH,
+                user_id=result["user_id"],
+                name=result["username"],
+            )
             return {"status": "ok", **result}
         except auth.RegisterValidationError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -127,6 +140,11 @@ def build_router(
             users = user_store.read_users_data()
             users[result["user_id"]] = normalize_user({"name": result["username"]})
             user_store.write_users_data(users)
+            auth.add_default_assets_row(
+                csv_path=constants.ASSETS_CSV_PATH,
+                user_id=result["user_id"],
+                name=result["username"],
+            )
             return result
         except auth.OtpValidationError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
