@@ -1,5 +1,7 @@
 import json
+import os
 from pathlib import Path
+import tempfile
 from typing import Any, Dict
 
 
@@ -212,14 +214,51 @@ def _reorder_user_fields(user: Dict[str, Any]) -> Dict[str, Any]:
     return ordered
 
 
+def _load_recoverable_json_object(json_path: Path) -> Dict[str, Any]:
+    if not json_path.exists():
+        return {}
+    raw = json_path.read_text(encoding="utf-8-sig")
+    if not raw.strip():
+        return {}
+
+    decoder = json.JSONDecoder()
+    index = 0
+    documents: list[Any] = []
+    while index < len(raw):
+        while index < len(raw) and raw[index].isspace():
+            index += 1
+        if index >= len(raw):
+            break
+        document, index = decoder.raw_decode(raw, index)
+        documents.append(document)
+
+    if len(documents) == 1:
+        return documents[0] if isinstance(documents[0], dict) else {}
+
+    recovered: Dict[str, Any] = {}
+    for document in documents:
+        if isinstance(document, dict):
+            recovered.update(document)
+    return recovered
+
+
+def _atomic_write_json(json_path: Path, data: Dict[str, Any]) -> None:
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(prefix=".profile-registry-", suffix=".tmp", dir=str(json_path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            f.write("\n")
+        os.replace(tmp_path, json_path)
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
 def rewrite_user_profiles_with_order(json_path: Path) -> None:
-    with open(json_path, "r", encoding="utf-8-sig") as f:
-        data = json.load(f)
-
+    data = _load_recoverable_json_object(json_path)
     rewritten = normalize_users_data(data)
-
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(rewritten, f, indent=2)
+    _atomic_write_json(json_path, rewritten)
 
 
 def add_default_user_profile(json_path: Path, user_id: str, name: str) -> None:
@@ -227,13 +266,11 @@ def add_default_user_profile(json_path: Path, user_id: str, name: str) -> None:
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump({}, f, indent=2)
 
-    with open(json_path, "r", encoding="utf-8-sig") as f:
-        data = json.load(f)
+    data = _load_recoverable_json_object(json_path)
 
     if user_id not in data:
         data[user_id] = _build_default_user_profile(name)
 
     rewritten = normalize_users_data(data)
 
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(rewritten, f, indent=2)
+    _atomic_write_json(json_path, rewritten)
