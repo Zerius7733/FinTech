@@ -46,6 +46,23 @@ def build_router(
             item.pop("quote_currency", None)
             item.pop("quote_current_price", None)
 
+    def normalize_portfolio_bucket(asset_class: str) -> str:
+        bucket = asset_class.strip().lower()
+        if bucket in {"stock", "stocks", "equity", "equities"}:
+            return "stocks"
+        if bucket in {"bond", "bonds", "fixed_income"}:
+            return "bonds"
+        if bucket in {"real_asset", "real_assets", "reit", "reits"}:
+            return "real_assets"
+        if bucket in {"crypto", "cryptos", "digital_assets", "digital_asset"}:
+            return "cryptos"
+        if bucket in {"commodity", "commodities"}:
+            return "commodities"
+        raise HTTPException(status_code=400, detail="asset_class must be stocks, bonds, real_assets, cryptos, or commodities")
+
+    def empty_portfolio() -> dict[str, list[Any]]:
+        return {"stocks": [], "bonds": [], "real_assets": [], "cryptos": [], "commodities": []}
+
     @router.get(
         "/users/{user_id}/danger/export",
         tags=["Users"],
@@ -203,6 +220,45 @@ def build_router(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"asset create failed: {exc}") from exc
+
+    @router.patch(
+        "/users/{user_id}/financials/assets/{item_id}",
+        tags=["Users"],
+        summary="Update a manual asset on a user profile",
+    )
+    def update_user_manual_asset(user_id: str, item_id: str, payload: models.ManualAssetUpdateRequest) -> dict[str, Any]:
+        try:
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
+            if not isinstance(user, dict):
+                raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+            user = portfolio.ensure_financial_collections(user)
+            item = next((entry for entry in user["manual_assets"] if entry.get("id") == item_id), None)
+            if item is None:
+                raise HTTPException(status_code=404, detail=f"asset item '{item_id}' not found")
+            normalized_category = portfolio.normalize_manual_asset_category(payload.category)
+            raw_label = payload.label.strip()
+            raw_symbol = (payload.symbol or "").strip()
+            if normalized_category in {"stock", "crypto", "commodity"}:
+                symbol = (raw_symbol or raw_label).strip().upper()
+                if not symbol:
+                    raise HTTPException(status_code=400, detail="symbol is required for stock, crypto, and commodity assets")
+                item["label"] = symbol
+                item["symbol"] = symbol
+            else:
+                item["label"] = raw_label
+                item.pop("symbol", None)
+            item["category"] = normalized_category
+            item["value"] = round(float(payload.value), 2)
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "item": item, "user": users_data[user_id]}
+        except HTTPException:
+            raise
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"asset update failed: {exc}") from exc
 
     @router.post(
         "/users/{user_id}/financials/synced-balance/reload",
@@ -428,19 +484,7 @@ def build_router(
             if not isinstance(portfolio, dict):
                 raise HTTPException(status_code=400, detail="user portfolio is not in expected format")
 
-            bucket = asset_class.strip().lower()
-            if bucket in {"stock", "stocks", "equity", "equities"}:
-                bucket = "stocks"
-            elif bucket in {"bond", "bonds", "fixed_income"}:
-                bucket = "bonds"
-            elif bucket in {"real_asset", "real_assets", "reit", "reits"}:
-                bucket = "real_assets"
-            elif bucket in {"crypto", "cryptos", "digital_assets", "digital_asset"}:
-                bucket = "cryptos"
-            elif bucket in {"commodity", "commodities"}:
-                bucket = "commodities"
-            else:
-                raise HTTPException(status_code=400, detail="asset_class must be stocks, bonds, real_assets, cryptos, or commodities")
+            bucket = normalize_portfolio_bucket(asset_class)
 
             entries = portfolio.get(bucket, [])
             if not isinstance(entries, list):
@@ -471,6 +515,59 @@ def build_router(
             raise
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"portfolio holding delete failed: {exc}") from exc
+
+    @router.patch(
+        "/users/{user_id}/financials/portfolio/{asset_class}/{symbol}",
+        tags=["Users"],
+        summary="Update a portfolio holding quantity or label",
+    )
+    def update_user_portfolio_holding(
+        user_id: str,
+        asset_class: str,
+        symbol: str,
+        payload: models.PortfolioHoldingUpdateRequest,
+    ) -> dict[str, Any]:
+        try:
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
+            if not isinstance(user, dict):
+                raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+
+            portfolio_data = user.get("portfolio")
+            if not isinstance(portfolio_data, dict):
+                raise HTTPException(status_code=400, detail="user portfolio is not in expected format")
+
+            bucket = normalize_portfolio_bucket(asset_class)
+            entries = portfolio_data.get(bucket, [])
+            if not isinstance(entries, list):
+                raise HTTPException(status_code=400, detail=f"portfolio bucket '{bucket}' is invalid")
+
+            target = symbol.strip().lower()
+            item = next((entry for entry in entries if str(entry.get("symbol", "")).strip().lower() == target), None)
+            if item is None:
+                raise HTTPException(status_code=404, detail=f"holding '{symbol}' not found in {bucket}")
+
+            qty = round(float(payload.qty), 8)
+            current_price = float(item.get("current_price") or item.get("price_usd") or item.get("market_value", 0) or 0)
+            if current_price <= 0 and qty > 0:
+                current_price = round(float(item.get("market_value", 0) or 0) / qty, 6)
+            item["qty"] = qty
+            if payload.avg_price is not None:
+                item["avg_price"] = round(float(payload.avg_price), 6)
+            if payload.name is not None:
+                item["name"] = payload.name.strip() or item.get("symbol", symbol)
+            if current_price > 0:
+                item["market_value"] = round(qty * current_price, 2)
+
+            portfolio_data[bucket] = entries
+            user["portfolio"] = portfolio_data
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "asset_class": bucket, "item": item, "user": users_data[user_id]}
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"portfolio holding update failed: {exc}") from exc
 
     @router.delete(
         "/users/{user_id}/financials/assets/{item_id}",
@@ -547,6 +644,32 @@ def build_router(
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"liability delete failed: {exc}") from exc
 
+    @router.patch(
+        "/users/{user_id}/financials/liabilities/{item_id}",
+        tags=["Users"],
+        summary="Update a liability item on a user profile",
+    )
+    def update_user_liability_item(user_id: str, item_id: str, payload: models.LiabilityItemUpdateRequest) -> dict[str, Any]:
+        try:
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
+            if not isinstance(user, dict):
+                raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+            user = portfolio.ensure_financial_collections(user)
+            item = next((entry for entry in user["liability_items"] if entry.get("id") == item_id), None)
+            if item is None:
+                raise HTTPException(status_code=404, detail=f"liability item '{item_id}' not found")
+            item["label"] = payload.label.strip()
+            item["amount"] = round(float(payload.amount), 2)
+            item["is_mortgage"] = bool(payload.is_mortgage)
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "item": item, "user": users_data[user_id]}
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"liability update failed: {exc}") from exc
+
     @router.post(
         "/users/{user_id}/financials/income",
         tags=["Users"],
@@ -597,6 +720,31 @@ def build_router(
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"income delete failed: {exc}") from exc
 
+    @router.patch(
+        "/users/{user_id}/financials/income/{item_id}",
+        tags=["Users"],
+        summary="Update an income stream on a user profile",
+    )
+    def update_user_income_stream(user_id: str, item_id: str, payload: models.IncomeStreamUpdateRequest) -> dict[str, Any]:
+        try:
+            users_data = user_store.read_users_data()
+            user = users_data.get(user_id)
+            if not isinstance(user, dict):
+                raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+            user = portfolio.ensure_financial_collections(user)
+            item = next((entry for entry in user["income_streams"] if entry.get("id") == item_id), None)
+            if item is None:
+                raise HTTPException(status_code=404, detail=f"income stream '{item_id}' not found")
+            item["label"] = payload.label.strip()
+            item["monthly_amount"] = round(float(payload.monthly_amount), 2)
+            users_data[user_id] = portfolio.recalculate_user_financials(user)
+            user_store.write_users_data(users_data)
+            return {"status": "ok", "user_id": user_id, "item": item, "user": users_data[user_id]}
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"income update failed: {exc}") from exc
+
     @router.get(
         "/portfolio/{user_id}",
         tags=["Portfolio"],
@@ -607,13 +755,18 @@ def build_router(
             data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
-                raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = portfolio.enrich_portfolio_with_ath(portfolio.ensure_financial_collections(user))
-            return {"status": "ok", "user_id": user_id, "portfolio": user.get("portfolio", [])}
+                return {"status": "ok", "user_id": user_id, "portfolio": empty_portfolio()}
+            user = portfolio.ensure_financial_collections(user)
+            try:
+                user = portfolio.enrich_portfolio_with_ath(user)
+            except Exception:
+                pass
+            portfolio_data = user.get("portfolio")
+            return {"status": "ok", "user_id": user_id, "portfolio": portfolio_data if isinstance(portfolio_data, dict) else empty_portfolio()}
         except HTTPException:
             raise
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"read portfolio failed: {exc}") from exc
+            return {"status": "ok", "user_id": user_id, "portfolio": empty_portfolio(), "warning": f"read portfolio recovered: {exc}"}
 
     @router.get(
         "/portfolio/{user_id}/history",
@@ -625,7 +778,7 @@ def build_router(
             data = user_store.read_users_data()
             user = data.get(user_id)
             if not isinstance(user, dict):
-                raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+                return {"status": "ok", "user_id": user_id, "history": {"daily_values": []}, "count": 0}
 
             history = portfolio.read_user_portfolio_history(user_id)
             daily_points = history.get("daily_values", [])
@@ -641,7 +794,7 @@ def build_router(
         except HTTPException:
             raise
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"read portfolio history failed: {exc}") from exc
+            return {"status": "ok", "user_id": user_id, "history": {"daily_values": []}, "count": 0, "warning": f"read history recovered: {exc}"}
 
     @router.get(
         "/portfolio/{user_id}/{asset_class}",

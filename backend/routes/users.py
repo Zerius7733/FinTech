@@ -39,6 +39,59 @@ def build_router(
         )
         return csv_store.read_user_csv_profile(user_id)
 
+    def build_recovered_user(user_id: str) -> dict[str, Any] | None:
+        row = ensure_csv_profile_for_login_user(user_id)
+        if not row:
+            return None
+
+        def money(field: str) -> float:
+            try:
+                return round(float(str(row.get(field) or "0").replace(",", "")), 2)
+            except Exception:
+                return 0.0
+
+        def int_or_none(value: Any) -> int | None:
+            try:
+                if value in (None, ""):
+                    return None
+                return int(float(value))
+            except Exception:
+                return None
+
+        name = (row.get("name") or row.get("username") or user_id).strip()
+        user: dict[str, Any] = {
+            "name": name,
+            "age": int_or_none(row.get("age")),
+            "country": (row.get("country") or "Singapore").strip(),
+            "investor_type": (row.get("investor_type") or "Individual Investor").strip(),
+            "currency": (row.get("currency") or "USD").strip().upper(),
+            "investment_horizon": (row.get("investment_horizon") or "").strip(),
+            "goals": [],
+            "subscription_plan": "free",
+            "cash_balance": money(constants.SYNCED_ACCOUNT_BALANCE_FIELD),
+            "liability": money("liability"),
+            "mortgage": 0.0,
+            "estate": money("estate"),
+            "income": money("income"),
+            "expenses": 0.0,
+            "portfolio": {"stocks": [], "bonds": [], "real_assets": [], "cryptos": [], "commodities": []},
+            "manual_assets": [],
+            "liability_items": [],
+            "income_streams": [],
+            "household_profile": {},
+            "shared_goals": [],
+            "advisor_match_requests": [],
+            "risk_profile": 50,
+        }
+        return portfolio.recalculate_user_financials(user)
+
+    def safely_enrich_user(user: dict[str, Any]) -> dict[str, Any]:
+        user = portfolio.ensure_financial_collections(user)
+        try:
+            return portfolio.enrich_portfolio_with_ath(user)
+        except Exception:
+            return user
+
     @router.post("/users/survey/profile", tags=["Users"], summary="Persist survey profile fields into users.csv")
     def update_survey_profile(payload: models.SurveyProfileUpdateRequest) -> dict[str, Any]:
         try:
@@ -190,12 +243,25 @@ def build_router(
     @router.get("/users/{user_id}", tags=["Users"], summary="Get user by ID")
     def get_user_by_id(user_id: str) -> dict[str, Any]:
         try:
-            data = user_store.read_users_data()
+            try:
+                data = user_store.read_users_data()
+                can_persist_recovery = True
+            except Exception:
+                data = {}
+                can_persist_recovery = False
             user = data.get(user_id)
             if not isinstance(user, dict):
-                raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
-            user = portfolio.ensure_financial_collections(user)
-            user = portfolio.enrich_portfolio_with_ath(user)
+                user = build_recovered_user(user_id)
+                if not isinstance(user, dict):
+                    raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
+                try:
+                    if not can_persist_recovery:
+                        raise RuntimeError("skip persist while user store is unreadable")
+                    data[user_id] = user
+                    user_store.write_users_data(data)
+                except Exception:
+                    pass
+            user = safely_enrich_user(user)
             return {"status": "ok", "user_id": user_id, "user": user}
         except HTTPException:
             raise

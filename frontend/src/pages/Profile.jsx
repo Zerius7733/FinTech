@@ -1570,6 +1570,7 @@ function FinancialManagerModal({
   profile,
   onClose,
   onSubmit,
+  onUpdate,
   onRemove,
   busy,
 }) {
@@ -1584,6 +1585,7 @@ function FinancialManagerModal({
     income_type:'salary',
     cpf_applicable: planningCountryCode(profile?.country) === 'SG',
   })
+  const [editingItem, setEditingItem] = useState(null)
 
   useEffect(() => {
     if (!open) return
@@ -1599,6 +1601,7 @@ function FinancialManagerModal({
       income_type:'salary',
       cpf_applicable: defaultCountry === 'SG',
     })
+    setEditingItem(null)
   }, [open, activeTab])
 
   if (!open) return null
@@ -1633,9 +1636,12 @@ function FinancialManagerModal({
       label: item.name || item.symbol || `Stock ${index + 1}`,
       category: 'stocks',
       value: Number(marketValue || 0),
+      qty: Number(item.qty || 0),
+      avg_price: Number(item.avg_price || 0),
       value_currency: 'USD',
       source: 'portfolio',
       asset_class: 'stocks',
+      edit_category: 'stock',
       symbol: item.symbol || item.name || '',
     })})),
     ...((profile?.portfolio?.bonds ?? []).map((item, index) => {
@@ -1646,9 +1652,12 @@ function FinancialManagerModal({
       label: item.name || item.symbol || `Bond ${index + 1}`,
       category: 'bonds',
       value: Number(marketValue || 0),
+      qty: Number(item.qty || 0),
+      avg_price: Number(item.avg_price || 0),
       value_currency: 'USD',
       source: 'portfolio',
       asset_class: 'bonds',
+      edit_category: 'bond',
       symbol: item.symbol || item.name || '',
     })})),
     ...((profile?.portfolio?.real_assets ?? []).map((item, index) => {
@@ -1659,9 +1668,12 @@ function FinancialManagerModal({
       label: item.name || item.symbol || `Real Asset ${index + 1}`,
       category: 'real_assets',
       value: Number(marketValue || 0),
+      qty: Number(item.qty || 0),
+      avg_price: Number(item.avg_price || 0),
       value_currency: 'USD',
       source: 'portfolio',
       asset_class: 'real_assets',
+      edit_category: 'real_asset',
       symbol: item.symbol || item.name || '',
     })})),
     ...((profile?.portfolio?.cryptos ?? []).map((item, index) => {
@@ -1672,9 +1684,12 @@ function FinancialManagerModal({
       label: item.name || item.symbol || `Crypto ${index + 1}`,
       category: 'cryptos',
       value: Number(marketValue || 0),
+      qty: Number(item.qty || 0),
+      avg_price: Number(item.avg_price || 0),
       value_currency: 'USD',
       source: 'portfolio',
       asset_class: 'cryptos',
+      edit_category: 'crypto',
       symbol: item.symbol || item.name || '',
     })})),
     ...((profile?.portfolio?.commodities ?? []).map((item, index) => {
@@ -1685,9 +1700,12 @@ function FinancialManagerModal({
       label: item.name || item.symbol || `Commodity ${index + 1}`,
       category: 'commodities',
       value: Number(marketValue || 0),
+      qty: Number(item.qty || 0),
+      avg_price: Number(item.avg_price || 0),
       value_currency: 'USD',
       source: 'portfolio',
       asset_class: 'commodities',
+      edit_category: 'commodity',
       symbol: item.symbol || item.name || '',
     })})),
   ]
@@ -1708,27 +1726,79 @@ function FinancialManagerModal({
       ]
     : (currentTab.items ?? [])
 
+  const clearEditing = () => {
+    setEditingItem(null)
+    if (activeTab === 'assets') setAssetForm({ label:'', category:'real_estate', value:'' })
+    if (activeTab === 'liabilities') setLiabilityForm({ label:'', amount:'', is_mortgage:false })
+    if (activeTab === 'income') {
+      const defaultCountry = planningCountryCode(profile?.country)
+      setIncomeForm({
+        label:'',
+        monthly_amount:'',
+        gross_monthly_amount:'',
+        annual_bonus:'',
+        tax_country: defaultCountry,
+        income_type:'salary',
+        cpf_applicable: defaultCountry === 'SG',
+      })
+    }
+  }
+
+  const beginEdit = item => {
+    setEditingItem(item)
+    if (activeTab === 'assets') {
+      setAssetForm({
+        label: item.source === 'portfolio' ? String(item.symbol || item.label || '') : String(item.label || ''),
+        category: item.source === 'portfolio' ? (item.edit_category || 'stock') : String(item.category || 'other'),
+        value: item.source === 'portfolio' ? String(item.qty || '') : String(item.value || ''),
+      })
+    }
+    if (activeTab === 'liabilities') {
+      setLiabilityForm({
+        label: String(item.label || ''),
+        amount: String(item.amount || ''),
+        is_mortgage: Boolean(item.is_mortgage),
+      })
+    }
+    if (activeTab === 'income') {
+      setIncomeForm(prev => ({
+        ...prev,
+        label: String(item.label || ''),
+        monthly_amount: String(item.monthly_amount || ''),
+        gross_monthly_amount: String(item.gross_monthly_amount || item.monthly_amount || ''),
+        annual_bonus: String(item.annual_bonus || ''),
+        tax_country: planningCountryCode(item.tax_country || profile?.country),
+        income_type: item.income_type || 'salary',
+        cpf_applicable: Boolean(item.cpf_applicable),
+      }))
+    }
+  }
+
   const submitCurrent = event => {
     event.preventDefault()
     if (activeTab === 'assets') {
       const cleanedLabel = String(assetForm.label || '').trim()
       const normalizedSymbol = needsExactSymbol ? cleanedLabel.toUpperCase() : cleanedLabel
-      onSubmit('assets', {
+      const payload = {
         label: normalizedSymbol,
         category: assetForm.category,
         value: Number(assetForm.value),
         symbol: needsExactSymbol ? normalizedSymbol : undefined,
-      })
+      }
+      if (editingItem) onUpdate('assets', editingItem, payload)
+      else onSubmit('assets', payload)
     }
     if (activeTab === 'liabilities') {
-      onSubmit('liabilities', {
+      const payload = {
         label: liabilityForm.label,
         amount: Number(liabilityForm.amount),
         is_mortgage: Boolean(liabilityForm.is_mortgage),
-      })
+      }
+      if (editingItem) onUpdate('liabilities', editingItem, payload)
+      else onSubmit('liabilities', payload)
     }
     if (activeTab === 'income') {
-      onSubmit('income', {
+      const payload = {
         label: incomeForm.label,
         monthly_amount: Number(incomeForm.monthly_amount),
         gross_monthly_amount: Number(incomeForm.gross_monthly_amount),
@@ -1736,7 +1806,9 @@ function FinancialManagerModal({
         tax_country: incomeForm.tax_country,
         income_type: incomeForm.income_type,
         cpf_applicable: Boolean(incomeForm.cpf_applicable),
-      })
+      }
+      if (editingItem) onUpdate('income', editingItem, payload)
+      else onSubmit('income', payload)
     }
   }
 
@@ -1774,6 +1846,12 @@ function FinancialManagerModal({
           <div>
             <div style={fm.sectionTitle}>{currentTab.title}</div>
             <div style={fm.sectionBody}>{currentTab.description}</div>
+            {editingItem && (
+              <div style={fm.editingBanner}>
+                Editing {editingItem.label || editingItem.symbol}
+                <button type="button" onClick={clearEditing} style={fm.cancelEditBtn}>Cancel</button>
+              </div>
+            )}
           </div>
 
           <form onSubmit={submitCurrent} style={fm.form}>
@@ -1907,7 +1985,7 @@ function FinancialManagerModal({
               </>
             )}
             <button type="submit" style={fm.submitBtn} disabled={busy}>
-              {busy ? 'Saving...' : `Add ${activeTab === 'income' ? 'Income' : activeTab === 'liabilities' ? 'Liability' : 'Asset'}`}
+              {busy ? 'Saving...' : editingItem ? 'Save Changes' : `Add ${activeTab === 'income' ? 'Income' : activeTab === 'liabilities' ? 'Liability' : 'Asset'}`}
             </button>
           </form>
 
@@ -1957,14 +2035,24 @@ function FinancialManagerModal({
                   <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                     <div style={fm.itemValue}>{value}</div>
                     {!isSyncedItem && (
-                      <button
-                        type="button"
-                        onClick={() => onRemove(activeTab, item.id, item)}
-                        style={fm.removeBtn}
-                        disabled={busy}
-                      >
-                        Remove
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => beginEdit(item)}
+                          style={fm.editBtn}
+                          disabled={busy}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onRemove(activeTab, item.id, item)}
+                          style={fm.removeBtn}
+                          disabled={busy}
+                        >
+                          Delete
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -2299,20 +2387,50 @@ export default function Profile() {
         fetchWithTimeout(`${API}/update/assets`, {}, 6000).catch(() => null)
         fetchWithTimeout(`${API}/update/wellness`, {}, 6000).catch(() => null)
 
-        const [profRes, portRes, historyRes] = await Promise.all([
+        const [profResult, portResult, historyResult] = await Promise.allSettled([
           fetchWithTimeout(`${API}/users/${authUser.user_id}`),
           fetchWithTimeout(`${API}/portfolio/${authUser.user_id}`),
           fetchWithTimeout(`${API}/portfolio/${authUser.user_id}/history`),
         ])
         if (cancelled) return
-        if (profRes.ok) {
+        const profRes = profResult.status === 'fulfilled' ? profResult.value : null
+        const portRes = portResult.status === 'fulfilled' ? portResult.value : null
+        const historyRes = historyResult.status === 'fulfilled' ? historyResult.value : null
+        if (profRes?.ok) {
           const d = await profRes.json()
           setProfile(d.user)
           // Keep selected risk aligned with normalized numeric 0-100 backend format.
           if (d.user?.risk_profile != null) setSelectedRisk(String(normalizeRiskScore(d.user.risk_profile) ?? ''))
+        } else {
+          const detailsRes = await fetchWithTimeout(`${API}/users/profile/details/${authUser.user_id}`, {}, 5000).catch(() => null)
+          if (detailsRes?.ok) {
+            const d = await detailsRes.json()
+            const row = d.profile || {}
+            setProfile(prev => prev || {
+              name: row.name || authUser.username,
+              age: row.age ? Number(row.age) : null,
+              country: row.country || 'Singapore',
+              investor_type: row.investor_type || 'Individual Investor',
+              currency: row.currency || 'USD',
+              risk_profile: 50,
+              cash_balance: Number(row.synced_account_balance || row.cash_balance || 0),
+              portfolio: { stocks: [], bonds: [], real_assets: [], cryptos: [], commodities: [] },
+              manual_assets: [],
+              liability_items: [],
+              income_streams: [],
+              financial_wellness_score: 0,
+              wellness_metrics: {},
+            })
+          }
         }
-        if (portRes.ok) { const d = await portRes.json(); setPortfolio(d.portfolio) }
-        if (historyRes.ok) {
+        if (portRes?.ok) {
+          const d = await portRes.json()
+          const portfolioData = d.portfolio
+          setPortfolio(portfolioData)
+          setProfile(prev => prev ? { ...prev, portfolio: prev.portfolio || portfolioData } : prev)
+        }
+        else setPortfolio({ stocks: [], bonds: [], real_assets: [], cryptos: [], commodities: [] })
+        if (historyRes?.ok) {
           const d = await historyRes.json()
           setPortfolioHistory(Array.isArray(d?.history?.daily_values) ? d.history.daily_values : [])
         } else {
@@ -2865,6 +2983,57 @@ export default function Profile() {
       refreshPage()
     } catch (err) {
       setError(err.message || 'Could not save financial item.')
+    } finally {
+      setFinancialBusy(false)
+    }
+  }, [authUser?.user_id])
+  const updateFinancialItem = useCallback(async (tab, itemMeta, payload) => {
+    if (!authUser?.user_id || !itemMeta) return
+    setFinancialBusy(true)
+    setError('')
+    try {
+      const normalizeMoneyInput = (value) => {
+        const numeric = Number(value)
+        if (!Number.isFinite(numeric)) return 0
+        const converted = convertCurrency(numeric, DISPLAY_CURRENCY, 'SGD')
+        return converted == null ? numeric : converted
+      }
+      let url
+      let body
+      if (tab === 'assets' && itemMeta.source === 'portfolio') {
+        const bucket = itemMeta.asset_class
+        const symbol = String(itemMeta.symbol || '').trim()
+        if (!bucket || !symbol) throw new Error('Missing holding symbol for editing.')
+        url = `${API}/users/${authUser.user_id}/financials/portfolio/${bucket}/${encodeURIComponent(symbol)}`
+        body = JSON.stringify({
+          qty: Number(payload?.value || 0),
+          avg_price: Number(itemMeta.avg_price || 0) || null,
+          name: payload?.symbol || payload?.label || symbol,
+        })
+      } else {
+        const endpointMap = { assets:'assets', liabilities:'liabilities', income:'income' }
+        url = `${API}/users/${authUser.user_id}/financials/${endpointMap[tab]}/${itemMeta.id}`
+        const normalizedPayload = tab === 'assets'
+          ? { ...payload, value: normalizeMoneyInput(payload?.value) }
+          : tab === 'liabilities'
+            ? { ...payload, amount: normalizeMoneyInput(payload?.amount) }
+            : { ...payload, monthly_amount: normalizeMoneyInput(payload?.monthly_amount) }
+        body = JSON.stringify(normalizedPayload)
+      }
+      const res = await fetch(url, {
+        method:'PATCH',
+        headers:{ 'Content-Type':'application/json' },
+        body,
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.detail ?? `HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      if (data.user) setProfile(data.user)
+      refreshPage()
+    } catch (err) {
+      setError(err.message || 'Could not update financial item.')
     } finally {
       setFinancialBusy(false)
     }
@@ -4325,6 +4494,7 @@ export default function Profile() {
           profile={profile}
           onClose={() => setFinancialModalOpen(false)}
           onSubmit={submitFinancialItem}
+          onUpdate={updateFinancialItem}
           onRemove={removeFinancialItem}
           busy={financialBusy}
         />
@@ -5414,6 +5584,31 @@ const fm = {
     color:'var(--text-dim)',
     lineHeight:1.7,
   },
+  editingBanner: {
+    marginTop:10,
+    display:'inline-flex',
+    alignItems:'center',
+    gap:10,
+    border:'1px solid rgba(42,184,163,0.2)',
+    borderRadius:12,
+    background:'rgba(42,184,163,0.08)',
+    color:'var(--teal)',
+    padding:'8px 10px',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    textTransform:'uppercase',
+    letterSpacing:'0.08em',
+  },
+  cancelEditBtn: {
+    border:'1px solid var(--border)',
+    borderRadius:8,
+    background:'var(--surface)',
+    color:'var(--text-dim)',
+    padding:'5px 8px',
+    cursor:'pointer',
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+  },
   form: {
     display:'grid',
     gridTemplateColumns:'repeat(4, minmax(0, 1fr))',
@@ -5485,6 +5680,16 @@ const fm = {
     fontFamily:'var(--font-display)',
     fontWeight:700,
     fontSize:'0.95rem',
+  },
+  editBtn: {
+    background:'rgba(109,141,247,0.08)',
+    border:'1px solid rgba(109,141,247,0.18)',
+    color:'#6d8df7',
+    borderRadius:10,
+    padding:'8px 10px',
+    fontFamily:'var(--font-display)',
+    fontWeight:700,
+    cursor:'pointer',
   },
   removeBtn: {
     background:'rgba(248,113,113,0.08)',

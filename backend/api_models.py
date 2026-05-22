@@ -29,10 +29,23 @@ class ManualAssetCreateRequest(BaseModel):
     symbol: str | None = Field(default=None, max_length=20)
 
 
+class ManualAssetUpdateRequest(BaseModel):
+    label: str = Field(..., min_length=1, max_length=80)
+    category: str = Field(..., min_length=1, max_length=40)
+    value: float = Field(..., ge=0)
+    symbol: str | None = Field(default=None, max_length=20)
+
+
 class PortfolioHoldingCreateRequest(BaseModel):
     symbol: str = Field(..., min_length=1, max_length=20)
     asset_class: str = Field(..., min_length=1, max_length=20)
     qty: float = Field(1.0, gt=0)
+    avg_price: float | None = Field(default=None, ge=0)
+    name: str | None = Field(default=None, max_length=80)
+
+
+class PortfolioHoldingUpdateRequest(BaseModel):
+    qty: float = Field(..., gt=0)
     avg_price: float | None = Field(default=None, ge=0)
     name: str | None = Field(default=None, max_length=80)
 
@@ -43,7 +56,18 @@ class LiabilityItemCreateRequest(BaseModel):
     is_mortgage: bool = False
 
 
+class LiabilityItemUpdateRequest(BaseModel):
+    label: str = Field(..., min_length=1, max_length=80)
+    amount: float = Field(..., ge=0)
+    is_mortgage: bool = False
+
+
 class IncomeStreamCreateRequest(BaseModel):
+    label: str = Field(..., min_length=1, max_length=80)
+    monthly_amount: float = Field(..., ge=0)
+
+
+class IncomeStreamUpdateRequest(BaseModel):
     label: str = Field(..., min_length=1, max_length=80)
     monthly_amount: float = Field(..., ge=0)
 
