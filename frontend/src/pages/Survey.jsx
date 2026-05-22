@@ -4,11 +4,13 @@ import OtpCodeInput from '../components/OtpCodeInput.jsx'
 import RiskSlider from '../components/RiskSlider.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { API_BASE as API } from '../utils/api.js'
+import { buildOtpDeliveryMessage, buildOtpInputPrompt } from '../utils/authOtp.js'
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 
 // Paste your OpenAI API key here. In production, proxy this through your backend.
 const OPENAI_API_KEY = ''   // ← e.g. 'sk-...'
+const OPENAI_NARRATIVE_MODEL = import.meta.env.VITE_OPENAI_NARRATIVE_MODEL || 'gpt-4.1-mini'
 
 // ─── GPT-4o Vision call ───────────────────────────────────────────────────────
 async function extractPortfolioFromImage(base64Image, mimeType) {
@@ -34,7 +36,7 @@ Return ONLY the raw JSON array.`
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
     body: JSON.stringify({
-      model: 'gpt-4o',
+      model: OPENAI_NARRATIVE_MODEL,
       max_tokens: 2000,
       messages: [{ role: 'user', content: [
         { type: 'text', text: prompt },
@@ -217,7 +219,6 @@ function PortfolioImportStep({ onBack, onComplete }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           image_base64: fileData.base64,
-          model: 'gpt-4o',
           page_text: null,
         })
       });
@@ -499,12 +500,12 @@ export default function Survey() {
           }
           setRegistrationPending(registerData)
           setRegistrationOtp('')
-          setSubmitErr(`Verification code sent to ${registerData?.email_masked || registerData?.email || verifiedEmail}. Enter it below to continue.`)
+          setSubmitErr(buildOtpDeliveryMessage(registerData, verifiedEmail))
           return
         }
 
         if (!registrationOtp.trim()) {
-          throw new Error('Enter the verification code from your email.')
+          throw new Error(buildOtpInputPrompt(registrationPending))
         }
 
         const verifyRes = await fetch(`${API}/auth/register/verify`, {
@@ -633,7 +634,7 @@ export default function Survey() {
       }
       setRegistrationPending(data)
       setRegistrationOtp('')
-      setSubmitErr(`A new verification code was sent to ${data?.email_masked || data?.email || email.trim()}.`)
+      setSubmitErr(buildOtpDeliveryMessage(data, email.trim(), { resend: true }))
     } catch (err) {
       setSubmitErr(err?.message || 'Unable to resend the verification code.')
     } finally {

@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from backend.services.imports import DEFAULT_VISION_MODEL
+import backend.settings.config as settings_config
 from pydantic import AliasChoices, BaseModel, Field
 
 
@@ -98,7 +98,7 @@ class ScreenshotMergeRequest(BaseModel):
 
 class ScreenshotParseRequest(BaseModel):
     image_base64: str
-    model: str = DEFAULT_VISION_MODEL
+    model: str = Field(default_factory=settings_config.openai_narrative_model)
     page_text: str | None = None
 
 

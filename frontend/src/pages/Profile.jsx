@@ -2252,14 +2252,13 @@ export default function Profile() {
     finally     { setRiskSaving(false) }
   }, [selectedRisk, authUser?.user_id])
 
-  // â”€â”€ GET /users/:id/recommendations/gpt?limit=3&model=gpt-4.1-mini â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€ GET /users/:id/recommendations/gpt?limit=3 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const fetchGptRecs = useCallback(async () => {
     if (!authUser?.user_id) return
     setGptLoading(true); setGptError(''); setGptRecs(null)
     try {
       const params = new URLSearchParams({
         limit: '3',
-        model: 'gpt-4.1-mini',
       })
       if (latentGrowthContext) {
         params.set('latent_growth_context', JSON.stringify(latentGrowthContext))

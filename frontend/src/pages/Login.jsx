@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import OtpCodeInput from '../components/OtpCodeInput.jsx'
 import { API_BASE as API } from '../utils/api.js'
+import { buildOtpDeliveryMessage } from '../utils/authOtp.js'
 
 const initialRegisterState = {
   email: '',
@@ -120,7 +121,7 @@ export default function Login() {
         pending: registerData,
       }))
       setMode('verify-signup')
-      setNotice(`We sent a ${registerData.otp_length || 6}-digit code to ${registerData.email_masked || registerData.email}.`)
+      setNotice(buildOtpDeliveryMessage(registerData, registerData.email || registerForm.email.trim()))
     } catch {
       setError('Cannot reach the server. Is the backend running?')
     } finally {
@@ -189,7 +190,7 @@ export default function Login() {
         return
       }
       setRegisterForm((current) => ({ ...current, pending: data, otp: '' }))
-      setNotice(`A new verification code was sent to ${data.email_masked || data.email}.`)
+      setNotice(buildOtpDeliveryMessage(data, registerForm.email.trim(), { resend: true }))
     } catch {
       setError('Cannot reach the server. Is the backend running?')
     } finally {

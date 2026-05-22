@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
+import backend.settings.config as settings_config
 from backend.services.guardrails.no_advice import validate_text
 # ----------------------------
 # Config / Maps
@@ -74,12 +75,12 @@ GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 def _openai_news_model() -> str:
     _load_env_once()
-    return os.getenv("OPENAI_NEWS_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
+    return settings_config.openai_news_model()
 
 
 def _openai_narrative_model() -> str:
     _load_env_once()
-    return os.getenv("OPENAI_NARRATIVE_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
+    return settings_config.openai_narrative_model()
 
 
 def _groq_narrative_model() -> str:

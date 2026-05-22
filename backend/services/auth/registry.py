@@ -207,7 +207,14 @@ def _smtp_port() -> int:
         return 587
 
 
+def _console_email_mode_enabled() -> bool:
+    return str(os.getenv("AUTH_EMAIL_MODE", "")).strip().lower() == "console"
+
+
 def _send_email_via_smtp(recipient_email: str, subject: str, text_body: str) -> None:
+    if _console_email_mode_enabled():
+        print("[auth-email][console]", {"to": recipient_email, "subject": subject, "body": text_body})
+        return
     host = str(os.getenv("SMTP_HOST", "")).strip()
     username = str(os.getenv("SMTP_USERNAME", "")).strip()
     password = str(os.getenv("SMTP_PASSWORD", "")).strip()
@@ -216,10 +223,6 @@ def _send_email_via_smtp(recipient_email: str, subject: str, text_body: str) -> 
     use_ssl = str(os.getenv("SMTP_USE_SSL", "0")).strip().lower() in {"1", "true", "yes", "on"}
     use_starttls = str(os.getenv("SMTP_USE_STARTTLS", "1")).strip().lower() in {"1", "true", "yes", "on"}
     if not host or not username or not password or not from_email:
-        mode = str(os.getenv("AUTH_EMAIL_MODE", "")).strip().lower()
-        if mode == "console":
-            print("[auth-email][console]", {"to": recipient_email, "subject": subject, "body": text_body})
-            return
         raise OtpDeliveryError("email delivery is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, and SMTP_FROM_EMAIL.")
     message = EmailMessage()
     message["Subject"] = subject
@@ -457,8 +460,23 @@ def _ensure_not_rate_limited(challenge: dict[str, Any]) -> None:
         raise OtpValidationError(f"please wait {max(wait_seconds, 1)} seconds before requesting another code")
 
 
-def _build_otp_response(email: str, *, expires_at: str) -> dict[str, Any]:
-    return {"status": "otp_sent", "email": normalize_email_address(email, require_email=True), "email_masked": _mask_email(email), "expires_at": expires_at, "resend_available_in_seconds": OTP_RESEND_COOLDOWN_SECONDS, "otp_length": OTP_LENGTH}
+def _build_otp_response(email: str, *, expires_at: str, otp_code: str | None = None) -> dict[str, Any]:
+    response = {
+        "status": "otp_sent",
+        "email": normalize_email_address(email, require_email=True),
+        "email_masked": _mask_email(email),
+        "expires_at": expires_at,
+        "resend_available_in_seconds": OTP_RESEND_COOLDOWN_SECONDS,
+        "otp_length": OTP_LENGTH,
+    }
+    if _console_email_mode_enabled() and otp_code:
+        response["delivery_mode"] = "console"
+        response["otp_code"] = otp_code
+        response["delivery_notice"] = (
+            "Email OTP delivery is still under development and requires funding to run in production. "
+            "For now, use the OTP shown here and in the backend console."
+        )
+    return response
 
 
 def start_registration(*, login_csv_path: Path, auth_state_path: Path, username: str, password: str, email: str, requested_user_id: str | None = None) -> dict[str, Any]:
@@ -482,7 +500,7 @@ def start_registration(*, login_csv_path: Path, auth_state_path: Path, username:
             "otp_sent_at": _utc_now_iso(), "otp_attempts_remaining": OTP_MAX_ATTEMPTS, "created_at": _utc_now_iso(),
         }
         _atomic_write_json(auth_state_path, state)
-    return _build_otp_response(normalized_email, expires_at=expires_at)
+    return _build_otp_response(normalized_email, expires_at=expires_at, otp_code=otp_code)
 
 
 def resend_registration_otp(*, auth_state_path: Path, email: str) -> dict[str, Any]:
@@ -503,7 +521,7 @@ def resend_registration_otp(*, auth_state_path: Path, email: str) -> dict[str, A
         pending["otp_attempts_remaining"] = OTP_MAX_ATTEMPTS
         state["pending_registrations"][normalized_email.lower()] = pending
         _atomic_write_json(auth_state_path, state)
-    return _build_otp_response(normalized_email, expires_at=expires_at)
+    return _build_otp_response(normalized_email, expires_at=expires_at, otp_code=otp_code)
 
 
 def verify_registration_otp(*, login_csv_path: Path, auth_state_path: Path, email: str, otp_code: str) -> dict[str, Any]:

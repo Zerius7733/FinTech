@@ -9,6 +9,16 @@ import backend.settings.constants as const
 load_dotenv()
 
 
+def _get_env_trimmed(*names: str, default: str) -> str:
+    for name in names:
+        value = os.getenv(name)
+        if value is not None:
+            trimmed = value.strip()
+            if trimmed:
+                return trimmed
+    return default
+
+
 def parse_csv_env(name: str, default: str) -> list[str]:
     return [value.strip() for value in os.getenv(name, default).split(",") if value.strip()]
 
@@ -20,6 +30,14 @@ def build_allowed_origin_regex() -> str:
     ]
     parts = [value for value in regex_values if value]
     return "|".join(f"(?:{value})" for value in parts) if parts else ""
+
+
+def openai_news_model() -> str:
+    return _get_env_trimmed("OPENAI_NEWS_MODEL", "openai_news_model", default="gpt-4.1-mini")
+
+
+def openai_narrative_model() -> str:
+    return _get_env_trimmed("OPENAI_NARRATIVE_MODEL", "openai_narrative_model", default="gpt-4.1-mini")
 
 
 def enforce_insights_rate_limit(subject: str) -> None:
