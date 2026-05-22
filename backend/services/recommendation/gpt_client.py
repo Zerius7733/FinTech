@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 
 import requests
 import backend.settings.config as settings_config
+from backend.services.currency import convert_currency
 
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
@@ -62,6 +63,15 @@ def _build_prompt_payload(
         else compact_portfolio
     )
 
+    cash_balance_sgd = float(user.get("cash_balance") or 0.0)
+    income_monthly_sgd = float(user.get("income") or 0.0)
+    liability_sgd = float(user.get("liability") or 0.0)
+    mortgage_sgd = float(user.get("mortgage") or 0.0)
+    manual_assets_usd = _manual_assets_total_usd(user)
+    invested_total_usd = sum(float(position.get("market_value") or 0.0) for position in compact_portfolio)
+    cash_balance_usd = round(convert_currency(cash_balance_sgd, "SGD", "USD"), 2)
+    total_assets_context_usd = round(invested_total_usd + cash_balance_usd + manual_assets_usd, 2)
+
     payload = {
         "analysis_scope": normalized_scope,
         "user_profile": {
@@ -74,18 +84,29 @@ def _build_prompt_payload(
         "financial_wellness_score": user.get("financial_wellness_score"),
         "financial_stress_index": user.get("financial_stress_index"),
         "wellness_metrics": user.get("wellness_metrics", {}),
-        "cash_balance_sgd": user.get("cash_balance", 0.0),
-        "income_monthly_sgd": user.get("income", 0.0),
-        "liability_sgd": user.get("liability", 0.0),
-        "mortgage_sgd": user.get("mortgage", 0.0),
+        "cash_balance_sgd": cash_balance_sgd,
+        "cash_balance_usd": cash_balance_usd,
+        "income_monthly_sgd": income_monthly_sgd,
+        "income_monthly_usd": round(convert_currency(income_monthly_sgd, "SGD", "USD"), 2),
+        "liability_sgd": liability_sgd,
+        "liability_usd": round(convert_currency(liability_sgd, "SGD", "USD"), 2),
+        "mortgage_sgd": mortgage_sgd,
+        "mortgage_usd": round(convert_currency(mortgage_sgd, "SGD", "USD"), 2),
         "manual_assets": _compact_manual_assets(user),
+        "manual_assets_total_usd": manual_assets_usd,
         "portfolio": scoped_portfolio,
         "asset_class_totals_usd": asset_class_totals,
+        "financial_context_totals_usd": {
+            "invested_holdings": round(invested_total_usd, 2),
+            "cash": cash_balance_usd,
+            "manual_assets": manual_assets_usd,
+            "total_assets_for_allocation": total_assets_context_usd,
+        },
         "rule_based_recommendations": rule_based.get("recommendations", []),
         "requested_recommendation_count": limit,
     }
     if normalized_scope == "stocks":
-        payload["stock_review_context"] = _build_stock_review_context(compact_portfolio)
+        payload["stock_review_context"] = _build_stock_review_context(compact_portfolio, user)
     if latent_growth_context:
         payload["latent_growth_context"] = latent_growth_context
     return payload
@@ -169,6 +190,17 @@ def _compact_manual_assets(user: Dict[str, Any]) -> List[Dict[str, Any]]:
     return compact
 
 
+def _manual_assets_total_usd(user: Dict[str, Any]) -> float:
+    total = 0.0
+    assets = user.get("manual_assets") or []
+    if not isinstance(assets, list):
+        return 0.0
+    for item in assets:
+        if isinstance(item, dict):
+            total += convert_currency(item.get("value") or 0.0, "SGD", "USD")
+    return round(total, 2)
+
+
 def _stock_strategy_role(position: Dict[str, Any]) -> str:
     symbol = str(position.get("symbol") or "").upper()
     name = str(position.get("name") or "").lower()
@@ -180,10 +212,13 @@ def _stock_strategy_role(position: Dict[str, Any]) -> str:
     return "single_name_or_satellite"
 
 
-def _build_stock_review_context(compact_portfolio: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _build_stock_review_context(compact_portfolio: List[Dict[str, Any]], user: Dict[str, Any]) -> Dict[str, Any]:
     stock_positions = [position for position in compact_portfolio if position.get("asset_class") == "stocks"]
     stock_total = sum(float(position.get("market_value") or 0.0) for position in stock_positions)
-    all_total = sum(float(position.get("market_value") or 0.0) for position in compact_portfolio)
+    invested_total = sum(float(position.get("market_value") or 0.0) for position in compact_portfolio)
+    cash_usd = convert_currency(user.get("cash_balance") or 0.0, "SGD", "USD")
+    manual_assets_usd = _manual_assets_total_usd(user)
+    total_assets_for_allocation = invested_total + cash_usd + manual_assets_usd
     enriched: List[Dict[str, Any]] = []
     for position in stock_positions:
         value = float(position.get("market_value") or 0.0)
@@ -203,7 +238,11 @@ def _build_stock_review_context(compact_portfolio: List[Dict[str, Any]]) -> Dict
     satellite_value = max(0.0, stock_total - core_value - tilt_value)
     return {
         "stock_sleeve_value_usd": round(stock_total, 2),
-        "stock_sleeve_weight_of_portfolio": round((stock_total / all_total) * 100, 2) if all_total > 0 else 0.0,
+        "stock_sleeve_weight_of_invested_holdings": round((stock_total / invested_total) * 100, 2) if invested_total > 0 else 0.0,
+        "stock_sleeve_weight_of_total_assets_including_cash": round((stock_total / total_assets_for_allocation) * 100, 2) if total_assets_for_allocation > 0 else 0.0,
+        "cash_balance_usd": round(cash_usd, 2),
+        "manual_assets_total_usd": manual_assets_usd,
+        "total_assets_for_allocation_usd": round(total_assets_for_allocation, 2),
         "stock_count": len(stock_positions),
         "top_positions": enriched[:10],
         "strategy_mix_hint": {
@@ -334,9 +373,10 @@ def generate_gpt_recommendations(
     scope_instruction = (
         "Focus on the user's stock/equity sleeve only. Use cash, income, liabilities, wellness, and the wider portfolio as context. "
         "Explicitly review whether a core/satellite or tilt/satellite approach appears sensible for the stock sleeve, without assuming either is always optimal. "
-        "Call out concentration, country/currency exposure, and which stock positions look like core, tilt, or satellite candidates based only on provided fields."
+        "Call out concentration, country/currency exposure, and which stock positions look like core, tilt, or satellite candidates based only on provided fields. "
+        "When discussing allocation, distinguish stock_sleeve_weight_of_invested_holdings from stock_sleeve_weight_of_total_assets_including_cash; do not ignore cash."
         if normalized_scope == "stocks"
-        else "Review the full portfolio and financial profile holistically."
+        else "Review the full portfolio and financial profile holistically, including cash balance and liquidity before recommending growth actions."
     )
 
     user_prompt = (
