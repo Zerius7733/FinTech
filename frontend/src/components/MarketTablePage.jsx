@@ -25,9 +25,16 @@ const MARKET_TABS = [
   { label: 'Favourites', path: null, fav: true },
 ]
 
-async function fetchMarketPage(endpoint, page) {
+async function fetchMarketPage(endpoint, page, query = '') {
+  const params = new URLSearchParams({
+    page: String(page),
+    per_page: String(PAGE_SIZE),
+  })
+  const normalizedQuery = query.trim()
+  if (normalizedQuery) params.set('q', normalizedQuery)
+
   const res = await fetch(
-    `${API_BASE}/api/market/${endpoint}?page=${page}&per_page=${PAGE_SIZE}`,
+    `${API_BASE}/api/market/${endpoint}?${params.toString()}`,
     { headers: { Accept: 'application/json' } }
   )
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -882,7 +889,8 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
     setLoading(true)
     setError(null)
 
-    const cacheKey = `${endpoint}:${pg}`
+    const normalizedSearch = search.trim()
+    const cacheKey = `${endpoint}:${pg}:${normalizedSearch.toLowerCase()}`
     const cached = cacheRef.current[cacheKey]
     if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
       setItems(cached.data)
@@ -892,7 +900,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
     }
 
     try {
-      const data = await fetchMarketPage(endpoint, pg)
+      const data = await fetchMarketPage(endpoint, pg, normalizedSearch)
       if (!Array.isArray(data)) throw new Error('Unexpected response format')
       cacheRef.current[cacheKey] = { data, ts: Date.now() }
       setItems(data)
@@ -902,7 +910,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
     } finally {
       setLoading(false)
     }
-  }, [endpoint])
+  }, [endpoint, search])
 
   const mergeRefreshedItem = useCallback((item) => {
     const refreshedSymbol = String(item?.symbol ?? '').trim().toUpperCase()
@@ -922,7 +930,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
       return next
     })
 
-    const cacheKey = `${endpoint}:${page}`
+    const cacheKey = `${endpoint}:${page}:${search.trim().toLowerCase()}`
     const cached = cacheRef.current[cacheKey]
     if (cached?.data) {
       cacheRef.current[cacheKey] = {
@@ -930,7 +938,11 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
         data: cached.data.map(applyRefresh),
       }
     }
-  }, [endpoint, page])
+  }, [endpoint, page, search])
+
+  useEffect(() => {
+    setPage(1)
+  }, [search])
 
   useEffect(() => {
     load(page)
@@ -1127,7 +1139,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
               <MarketRow
                 key={item.id ?? item.symbol ?? i}
                 item={item}
-                rank={startRank + i}
+                rank={item.market_cap_rank ?? startRank + i}
                 style={i % 2 === 1 ? { background: 'rgba(255,255,255,0.015)' } : {}}
                 fmt={fmt}
                 highlightState={
@@ -1150,7 +1162,7 @@ export default function MarketTablePage({ endpoint, title, accentLabel, descript
                   if (node) rowRefs.current[key] = node
                   else delete rowRefs.current[key]
                 }}
-                onClick={clicked => setSelectedItem({ ...clicked, __displayRank: startRank + i })}
+                onClick={clicked => setSelectedItem({ ...clicked, __displayRank: item.market_cap_rank ?? startRank + i })}
               />
             ))}
 

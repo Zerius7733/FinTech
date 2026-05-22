@@ -4,9 +4,9 @@ export default function Stocks() {
   return (
     <MarketTablePage
       endpoint="stocks"
-      title="Stocks"
-      accentLabel="Equities shown"
-      description="Browse listed equities with current pricing, market-cap leadership, and short-term price moves."
+      title="Stocks & ETFs"
+      accentLabel="Markets shown"
+      description="Browse equities, ETFs, and Singapore market instruments with current pricing and short-term price moves."
     />
   )
 }

@@ -12,6 +12,49 @@ SNAPSHOT_PATH = BASE_DIR / "data" / "json" / "stock_market_snapshot.json"
 RANKINGS_PATH = BASE_DIR / "data" / "json" / "stock_market_rankings.json"
 MAX_PROVIDER_ATTEMPTS = 3
 DEFAULT_MAX_AGE_SECONDS = 6 * 60 * 60
+CURATED_MARKET_SYMBOLS = [
+    # Broad-market ETFs that users expect alongside single-name equities.
+    "SPY",
+    "VOO",
+    "IVV",
+    "VTI",
+    "QQQ",
+    "QQQM",
+    "DIA",
+    "IWM",
+    "VT",
+    "VXUS",
+    # Singapore market/index coverage. Yahoo Finance uses .SI for SGX
+    # listings and ^STI for the Straits Times Index.
+    "^STI",
+    "ES3.SI",
+    "D05.SI",
+    "O39.SI",
+    "U11.SI",
+    "Z74.SI",
+    "C6L.SI",
+    "S68.SI",
+]
+CURATED_MARKET_FALLBACKS = {
+    "SPY": ("SPDR S&P 500 ETF Trust", "etf", "NYSEARCA"),
+    "VOO": ("Vanguard S&P 500 ETF", "etf", "NYSEARCA"),
+    "IVV": ("iShares Core S&P 500 ETF", "etf", "NYSEARCA"),
+    "VTI": ("Vanguard Total Stock Market ETF", "etf", "NYSEARCA"),
+    "QQQ": ("Invesco QQQ Trust", "etf", "NASDAQ"),
+    "QQQM": ("Invesco NASDAQ 100 ETF", "etf", "NASDAQ"),
+    "DIA": ("SPDR Dow Jones Industrial Average ETF Trust", "etf", "NYSEARCA"),
+    "IWM": ("iShares Russell 2000 ETF", "etf", "NYSEARCA"),
+    "VT": ("Vanguard Total World Stock ETF", "etf", "NYSEARCA"),
+    "VXUS": ("Vanguard Total International Stock ETF", "etf", "NASDAQ"),
+    "^STI": ("Straits Times Index", "index", "SGX"),
+    "ES3.SI": ("SPDR Straits Times Index ETF", "etf", "SGX"),
+    "D05.SI": ("DBS Group Holdings Ltd", "equity", "SGX"),
+    "O39.SI": ("Oversea-Chinese Banking Corporation Limited", "equity", "SGX"),
+    "U11.SI": ("United Overseas Bank Limited", "equity", "SGX"),
+    "Z74.SI": ("Singapore Telecommunications Limited", "equity", "SGX"),
+    "C6L.SI": ("Singapore Airlines Limited", "equity", "SGX"),
+    "S68.SI": ("Singapore Exchange Limited", "equity", "SGX"),
+}
 
 
 def _safe_float(value: Any) -> float | None:
@@ -44,6 +87,39 @@ def _rank_by_market_cap(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return ranked
 
 
+def _fallback_market_row(symbol: str) -> Dict[str, Any]:
+    name, quote_type, exchange = CURATED_MARKET_FALLBACKS[symbol]
+    return {
+        "id": symbol.lower(),
+        "name": name,
+        "symbol": symbol,
+        "image": None,
+        "market_cap_rank": None,
+        "current_price": None,
+        "market_cap": None,
+        "total_volume": None,
+        "price_change_percentage_24h": None,
+        "price_change_percentage_7d": None,
+        "circulating_supply": None,
+        "ath": None,
+        "ath_change_percentage": None,
+        "quote_type": quote_type,
+        "exchange": exchange,
+    }
+
+
+def _with_curated_fallbacks(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    seen = {str(item.get("symbol", "")).upper() for item in items if isinstance(item, dict)}
+    missing = [
+        _fallback_market_row(symbol)
+        for symbol in CURATED_MARKET_SYMBOLS
+        if symbol.upper() not in seen and symbol in CURATED_MARKET_FALLBACKS
+    ]
+    if not missing:
+        return items
+    return [*items, *missing]
+
+
 def _read_json(path: Path) -> Dict[str, Any]:
     if not path.exists():
         return {}
@@ -67,7 +143,7 @@ def _load_symbol_universe(path: Path = DEFAULT_UNIVERSE_PATH) -> List[str]:
         if not value or value.startswith("#"):
             continue
         symbols.append(value)
-    deduped = list(dict.fromkeys(symbols))
+    deduped = list(dict.fromkeys([*CURATED_MARKET_SYMBOLS, *symbols]))
     if not deduped:
         raise ValueError(f"stock universe file is empty: {path}")
     return deduped
@@ -88,9 +164,12 @@ class YFinanceStockMarketProvider:
 
                 market_cap = _safe_int(fast_info.get("marketCap"))
                 if market_cap is None:
-                    market_cap = _safe_int(info.get("marketCap"))
-                if market_cap is None:
-                    raise RuntimeError(f"{symbol} missing market cap")
+                    market_cap = _safe_int(
+                        info.get("marketCap")
+                        or info.get("totalAssets")
+                        or info.get("netAssets")
+                        or info.get("totalNetAssets")
+                    )
 
                 volume = _safe_int(
                     fast_info.get("lastVolume")
@@ -100,6 +179,11 @@ class YFinanceStockMarketProvider:
                 pct_24h = _safe_float(info.get("regularMarketChangePercent"))
                 ath = _safe_float(info.get("fiftyTwoWeekHigh"))
                 name = str(info.get("longName") or info.get("shortName") or symbol)
+                quote_type = str(info.get("quoteType") or "").lower() or None
+                exchange = str(info.get("exchange") or info.get("fullExchangeName") or "") or None
+
+                if price is None and market_cap is None:
+                    raise RuntimeError(f"{symbol} missing price and capitalization data")
 
                 return {
                     "id": symbol.lower(),
@@ -115,6 +199,8 @@ class YFinanceStockMarketProvider:
                     "circulating_supply": None,
                     "ath": ath,
                     "ath_change_percentage": None,
+                    "quote_type": quote_type,
+                    "exchange": exchange,
                 }
             except Exception as exc:
                 last_error = exc
@@ -195,6 +281,7 @@ class StockMarketIngestionService:
         *,
         page: int,
         per_page: int,
+        query: str | None = None,
         max_age_seconds: int = DEFAULT_MAX_AGE_SECONDS,
     ) -> List[Dict[str, Any]]:
         normalized_page = max(1, int(page))
@@ -214,9 +301,24 @@ class StockMarketIngestionService:
         if not isinstance(items, list) or not items:
             raise RuntimeError("No precomputed stock rankings are available.")
 
+        items = _with_curated_fallbacks(items)
+
+        q = str(query or "").strip().lower()
+        if q:
+            items = [
+                item for item in items
+                if q in str(item.get("symbol", "")).lower()
+                or q in str(item.get("name", "")).lower()
+                or q in str(item.get("id", "")).lower()
+                or q in str(item.get("exchange", "")).lower()
+                or q in str(item.get("quote_type", "")).lower()
+            ]
+
         start = (normalized_page - 1) * normalized_per_page
         end = start + normalized_per_page
         page_rows = items[start:end]
+        if q and not page_rows:
+            return []
         if not page_rows:
             raise RuntimeError(f"No ranked stocks available for page={normalized_page}, per_page={normalized_per_page}.")
         return page_rows
@@ -227,9 +329,9 @@ def refresh_stock_market_data() -> Dict[str, Any]:
     return service.refresh()
 
 
-def get_precomputed_stock_rankings(page: int = 1, per_page: int = 50) -> List[Dict[str, Any]]:
+def get_precomputed_stock_rankings(page: int = 1, per_page: int = 50, query: str | None = None) -> List[Dict[str, Any]]:
     service = StockMarketIngestionService()
-    return service.get_precomputed_rankings(page=page, per_page=per_page)
+    return service.get_precomputed_rankings(page=page, per_page=per_page, query=query)
 
 
 def refresh_stock_market_symbol(symbol: str) -> Dict[str, Any]:
