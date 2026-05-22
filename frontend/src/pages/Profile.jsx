@@ -27,6 +27,10 @@ function fmtProfile$(n) {
   const converted = convertCurrency(n, 'SGD', DISPLAY_CURRENCY)
   return converted == null ? '—' : formatCurrency(converted, DISPLAY_CURRENCY, { maximumFractionDigits: 2 })
 }
+function profileAmountToUsd(n) {
+  const converted = convertCurrency(Number(n || 0), 'SGD', 'USD')
+  return converted == null ? Number(n || 0) : converted
+}
 function fmtSgd(n) {
   if (n == null) return '—'
   const converted = convertCurrency(n, 'SGD', DISPLAY_CURRENCY)
@@ -90,7 +94,7 @@ function deployableCash(profile) {
         return sum + Number(item?.value || 0)
       }, 0)
     : 0
-  return syncedCashBalance + bankEntryTotal
+  return profileAmountToUsd(syncedCashBalance + bankEntryTotal)
 }
 
 function profileAllocation(profile) {
@@ -143,8 +147,104 @@ const PROFILE_ALLOCATIONS = {
   High: { equities: 0.55, bonds: 0.10, cash: 0.10, commodities: 0.05, crypto: 0.20 },
 }
 
+const STOCK_SLICE_COLORS = ['#6d8df7', '#2ab8a3', '#c9a84c', '#ef8f50', '#9b8cf2', '#4aa3df', '#6f8f4e', '#d36f8a']
+
 function formatPercent(value) {
   return `${Math.round(Number(value || 0) * 100)}%`
+}
+
+function describeArcSlice(cx, cy, radius, startAngle, endAngle) {
+  const startRadians = (startAngle - 90) * Math.PI / 180
+  const endRadians = (endAngle - 90) * Math.PI / 180
+  const startX = cx + radius * Math.cos(startRadians)
+  const startY = cy + radius * Math.sin(startRadians)
+  const endX = cx + radius * Math.cos(endRadians)
+  const endY = cy + radius * Math.sin(endRadians)
+  const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0
+  return `M ${cx} ${cy} L ${startX} ${startY} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY} Z`
+}
+
+function StockPortfolioPie({ holdings = [], totalValue = 0 }) {
+  const [activeSlice, setActiveSlice] = useState(null)
+  const chartTotal = Number(totalValue || 0)
+  const slices = holdings
+    .map((holding, index) => ({
+      ...holding,
+      value: Number(holding.market_value || 0),
+      color: STOCK_SLICE_COLORS[index % STOCK_SLICE_COLORS.length],
+    }))
+    .filter(holding => holding.value > 0)
+  let cursor = 0
+  const active = activeSlice
+
+  if (!slices.length || chartTotal <= 0) {
+    return (
+      <div style={s.stockPieEmpty}>
+        Add stock holdings to see the stock-only portfolio breakdown.
+      </div>
+    )
+  }
+
+  return (
+    <div style={s.stockPieWrap}>
+      <div style={s.stockPieChartShell}>
+        <svg viewBox="0 0 220 220" role="img" aria-label="Stock portfolio breakdown" style={s.stockPieSvg}>
+          <circle cx="110" cy="110" r="88" fill="var(--surface2)" />
+          {slices.map(slice => {
+            const pct = slice.value / chartTotal
+            const start = cursor
+            const end = cursor + pct * 360
+            cursor = end
+            return (
+              <path
+                key={slice.symbol || slice.name}
+                d={describeArcSlice(110, 110, 88, start, end)}
+                fill={slice.color}
+                stroke="var(--surface)"
+                strokeWidth="2"
+                style={{
+                  cursor:'pointer',
+                  opacity:!active || active?.symbol === slice.symbol ? 1 : 0.82,
+                  filter:active?.symbol === slice.symbol ? 'drop-shadow(0 8px 14px rgba(15,23,42,0.18))' : 'none',
+                  transform:active?.symbol === slice.symbol ? 'scale(1.015)' : 'scale(1)',
+                  transformOrigin:'110px 110px',
+                  transition:'all 0.18s ease',
+                }}
+                onMouseEnter={() => setActiveSlice(slice)}
+                onMouseLeave={() => setActiveSlice(null)}
+              >
+                <title>{`${slice.symbol || slice.name}: ${(pct * 100).toFixed(1)}%`}</title>
+              </path>
+            )
+          })}
+          <circle cx="110" cy="110" r="46" fill="var(--surface)" stroke="var(--border)" strokeWidth="1" />
+          <text x="110" y="105" textAnchor="middle" style={s.stockPieCenterLabel}>Stocks</text>
+          <text x="110" y="127" textAnchor="middle" style={s.stockPieCenterValue}>{slices.length}</text>
+        </svg>
+        {activeSlice && (
+          <div style={s.stockPieTooltip}>
+            <div style={s.stockPieTooltipSymbol}>{activeSlice.symbol || activeSlice.name}</div>
+            <div style={s.stockPieTooltipPct}>{((activeSlice.value / chartTotal) * 100).toFixed(1)}%</div>
+            <div style={s.stockPieTooltipValue}>{fmt$(activeSlice.value)}</div>
+          </div>
+        )}
+      </div>
+      <div style={s.stockPieLegend}>
+        {slices.slice(0, 8).map(slice => (
+          <div
+            key={slice.symbol || slice.name}
+            style={s.stockPieLegendRow}
+            onMouseEnter={() => setActiveSlice(slice)}
+            onMouseLeave={() => setActiveSlice(null)}
+          >
+            <span style={{ ...s.stockPieDot, background:slice.color }} />
+            <span style={s.stockPieLegendName}>{slice.symbol || slice.name}</span>
+            <span style={s.stockPieLegendPct}>{((slice.value / chartTotal) * 100).toFixed(1)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function formatTrendDate(value) {
@@ -1533,6 +1633,7 @@ function FinancialManagerModal({
       label: item.name || item.symbol || `Stock ${index + 1}`,
       category: 'stocks',
       value: Number(marketValue || 0),
+      value_currency: 'USD',
       source: 'portfolio',
       asset_class: 'stocks',
       symbol: item.symbol || item.name || '',
@@ -1545,6 +1646,7 @@ function FinancialManagerModal({
       label: item.name || item.symbol || `Bond ${index + 1}`,
       category: 'bonds',
       value: Number(marketValue || 0),
+      value_currency: 'USD',
       source: 'portfolio',
       asset_class: 'bonds',
       symbol: item.symbol || item.name || '',
@@ -1557,6 +1659,7 @@ function FinancialManagerModal({
       label: item.name || item.symbol || `Real Asset ${index + 1}`,
       category: 'real_assets',
       value: Number(marketValue || 0),
+      value_currency: 'USD',
       source: 'portfolio',
       asset_class: 'real_assets',
       symbol: item.symbol || item.name || '',
@@ -1569,6 +1672,7 @@ function FinancialManagerModal({
       label: item.name || item.symbol || `Crypto ${index + 1}`,
       category: 'cryptos',
       value: Number(marketValue || 0),
+      value_currency: 'USD',
       source: 'portfolio',
       asset_class: 'cryptos',
       symbol: item.symbol || item.name || '',
@@ -1581,6 +1685,7 @@ function FinancialManagerModal({
       label: item.name || item.symbol || `Commodity ${index + 1}`,
       category: 'commodities',
       value: Number(marketValue || 0),
+      value_currency: 'USD',
       source: 'portfolio',
       asset_class: 'commodities',
       symbol: item.symbol || item.name || '',
@@ -1594,10 +1699,11 @@ function FinancialManagerModal({
               label: 'Synced Account Balance',
               category: 'banks',
               value: Number(profile?.cash_balance || 0),
+              value_currency: 'SGD',
               source: 'cash',
             }]
           : []),
-        ...(currentTab.items ?? []).map(item => ({ ...item, source:'manual' })),
+        ...(currentTab.items ?? []).map(item => ({ ...item, source:'manual', value_currency:'SGD' })),
         ...portfolioAssetItems,
       ]
     : (currentTab.items ?? [])
@@ -1641,17 +1747,17 @@ function FinancialManagerModal({
         <div style={fm.header}>
           <div>
             <div style={fm.eyebrow}>Manage Profile Financials</div>
-            <h2 style={fm.title}>Assets, liabilities, and income</h2>
-            <div style={fm.subline}>Changes recalculate net worth and wellness immediately.</div>
+            <h2 style={fm.title}>Add or manage financial items</h2>
+            <div style={fm.subline}>Add assets, liabilities, and income streams. Changes recalculate net worth and wellness immediately.</div>
           </div>
           <button onClick={onClose} style={fm.closeBtn}>×</button>
         </div>
 
         <div style={fm.tabs}>
           {[
-            ['assets', 'Assets'],
-            ['liabilities', 'Liabilities'],
-            ['income', 'Income'],
+            ['assets', 'Add Assets'],
+            ['liabilities', 'Add Liabilities'],
+            ['income', 'Add Income'],
           ].map(([key, label]) => (
             <button
               key={key}
@@ -1676,7 +1782,7 @@ function FinancialManagerModal({
                 <input
                   value={assetForm.label}
                   onChange={e => setAssetForm(prev => ({ ...prev, label:e.target.value }))}
-                  placeholder={needsExactSymbol ? 'Exact symbol (e.g., AAPL, BND, VNQ, BTC, GOLD)' : 'Asset label'}
+                  placeholder={needsExactSymbol ? 'Exact symbol (e.g., AAPL, ES3.SI, BND, BTC, GOLD)' : 'Asset label'}
                   style={fm.input}
                 />
                 <select
@@ -1705,7 +1811,7 @@ function FinancialManagerModal({
                 />
                 {needsExactSymbol && (
                   <div style={{ gridColumn:'1 / span 3', fontSize:'0.76rem', color:'var(--text-faint)' }}>
-                    For {assetForm.category} assets, enter exact symbol in label. Quantity will be added into portfolio using fetched live price.
+                    For {assetForm.category} assets, enter the ticker and quantity. Non-USD quotes are converted into the portfolio's USD base value.
                   </div>
                 )}
               </>
@@ -1810,7 +1916,7 @@ function FinancialManagerModal({
               <div style={fm.empty}>Nothing added yet.</div>
             ) : renderItems.map(item => {
               const value = activeTab === 'assets'
-                ? fmtProfile$(item.value)
+                ? (item.value_currency === 'USD' ? fmt$(item.value) : fmtProfile$(item.value))
                 : activeTab === 'liabilities'
                   ? fmtProfile$(item.amount)
                   : `${fmtProfile$(item.monthly_amount)} / mo`
@@ -1996,9 +2102,11 @@ export default function Profile() {
   const [gptRecs,    setGptRecs]    = useState(null)
   const [gptLoading, setGptLoading] = useState(false)
   const [gptError,   setGptError]   = useState('')
+  const [analysisScope, setAnalysisScope] = useState('holistic')
   const [analysisMode, setAnalysisMode] = useState('lite')
   const [selectedScenario, setSelectedScenario] = useState('base_case')
   const [wellnessHint, setWellnessHint] = useState(null)
+  const [wellnessSlide, setWellnessSlide] = useState('wellness')
   const [behavioralResilienceOpen, setBehavioralResilienceOpen] = useState(false)
   const [wrappedOpen, setWrappedOpen] = useState(false)
   const [wrappedIndex, setWrappedIndex] = useState(0)
@@ -2130,7 +2238,7 @@ export default function Profile() {
 
     const riskProfile = normalizeRiskBucket(profile.risk_profile)
     const stressScore = profileStressScore(profile)
-    const monthlyIncome = Number(profile.income || 0)
+    const monthlyIncome = profileAmountToUsd(profile.income || 0)
     const allocation = profileAllocation(profile)
     if (!allocation.total || allocation.total <= 0) return null
 
@@ -2259,6 +2367,7 @@ export default function Profile() {
     try {
       const params = new URLSearchParams({
         limit: '3',
+        analysis_scope: analysisScope,
       })
       if (latentGrowthContext) {
         params.set('latent_growth_context', JSON.stringify(latentGrowthContext))
@@ -2268,7 +2377,7 @@ export default function Profile() {
       setGptRecs(await res.json())
     } catch (e) { setGptError(e.message) }
     finally     { setGptLoading(false) }
-  }, [authUser?.user_id, latentGrowthContext])
+  }, [analysisScope, authUser?.user_id, latentGrowthContext])
 
   const fetchBenchmarks = useCallback(async () => {
     if (!authUser?.user_id) return
@@ -2304,6 +2413,10 @@ export default function Profile() {
     ...cryptos.map(h => ({ ...h, type:'Crypto' })),
   ]
   const stocksValue    = stocks.reduce((s,h)  => s + (h.market_value ?? 0), 0)
+  const stockPieHoldings = [...stocks]
+    .map(h => ({ ...h, market_value:Number(h.market_value || 0) }))
+    .filter(h => h.market_value > 0)
+    .sort((a, b) => b.market_value - a.market_value)
   const bondsValue     = bonds.reduce((s,h) => s + (h.market_value ?? 0), 0)
   const realAssetsValue = realAssets.reduce((s,h) => s + (h.market_value ?? 0), 0)
   const commoditiesValue = commodities.reduce((s,h) => s + (h.market_value ?? 0), 0)
@@ -2318,15 +2431,19 @@ export default function Profile() {
         name: key === 'banks' ? 'Bank Entries' : startCase(key),
         color: key === 'real_estate' ? 'var(--gold)' : key === 'business' ? 'var(--purple)' : key === 'banks' ? '#38bdf8' : 'var(--teal)',
         total: 0,
+        totalUsd: 0,
       }
     }
-    groups[key].total += Number(item.value || 0)
+    const value = Number(item.value || 0)
+    groups[key].total += value
+    groups[key].totalUsd += profileAmountToUsd(value)
     return groups
   }, {})
   const manualAssetRows = Object.values(manualAssetGroups)
-  const manualAssetTotal = manualAssetRows.reduce((sum, item) => sum + item.total, 0)
+  const manualAssetTotalUsd = manualAssetRows.reduce((sum, item) => sum + item.totalUsd, 0)
   const cashBalance = Number(profile?.cash_balance ?? 0)
-  const totalAUM       = portfolioValue + (profile?.cash_balance ?? 0)
+  const cashBalanceUsd = profileAmountToUsd(cashBalance)
+  const totalAUM       = portfolioValue + cashBalanceUsd
   const positionCount  = stocks.length + bonds.length + realAssets.length + commodities.length + cryptos.length
   const currentIncome  = incomeStreams.length
     ? incomeStreams.reduce((sum, item) => sum + Number(item.monthly_amount || 0), 0)
@@ -2372,18 +2489,18 @@ export default function Profile() {
   const [trendView, setTrendView] = useState('combined')
   const [showTrendInfo, setShowTrendInfo] = useState(false)
 
-  const compositionBase = portfolioValue + manualAssetTotal + cashBalance
+  const compositionBase = portfolioValue + manualAssetTotalUsd + cashBalanceUsd
   const COMPOSITION_REAL = [
     compositionBase > 0 && stocksValue > 0 && { icon:'📈', name:'Equities (Stocks)', pct:Math.round(stocksValue  / compositionBase * 100), val:fmt$(stocksValue),  color:'var(--blue)' },
     compositionBase > 0 && bondsValue > 0 && { icon:'🏛️', name:'Bonds', pct:Math.round(bondsValue / compositionBase * 100), val:fmt$(bondsValue), color:'var(--purple)' },
     compositionBase > 0 && realAssetsValue > 0 && { icon:'🏠', name:'Real Assets', pct:Math.round(realAssetsValue / compositionBase * 100), val:fmt$(realAssetsValue), color:'var(--green)' },
     compositionBase > 0 && commoditiesValue > 0 && { icon:'🪙', name:'Commodities', pct:Math.round(commoditiesValue / compositionBase * 100), val:fmt$(commoditiesValue), color:'#d4a63a' },
     compositionBase > 0 && cryptosValue > 0 && { icon:'₿',  name:'Digital Assets', pct:Math.round(cryptosValue / compositionBase * 100), val:fmt$(cryptosValue), color:'var(--teal)' },
-    compositionBase > 0 && cashBalance > 0 && { icon:'🏦', name:'Synced Account Balance', pct:Math.round(cashBalance / compositionBase * 100), val:fmtProfile$(cashBalance), color:'#7dd3fc' },
+    compositionBase > 0 && cashBalance > 0 && { icon:'🏦', name:'Synced Account Balance', pct:Math.round(cashBalanceUsd / compositionBase * 100), val:fmtProfile$(cashBalance), color:'#7dd3fc' },
     ...manualAssetRows.map(item => ({
       icon: item.icon,
       name: item.name,
-      pct: compositionBase > 0 ? Math.round(item.total / compositionBase * 100) : 0,
+      pct: compositionBase > 0 ? Math.round(item.totalUsd / compositionBase * 100) : 0,
       val: fmtProfile$(item.total),
       color: item.color,
     })),
@@ -2391,6 +2508,13 @@ export default function Profile() {
   ].filter(Boolean)
 
   const gptPayload = gptRecs?.gpt_recommendations ?? gptRecs?.recommendations ?? gptRecs ?? null
+  const activeAnalysisScope = String(gptRecs?.analysis_scope || analysisScope || 'holistic').toLowerCase()
+  const isStockAnalysis = activeAnalysisScope === 'stocks'
+  const analysisTitle = isStockAnalysis ? 'Stock Sleeve Review' : 'Portfolio Analysis'
+  const analysisOutlookTitle = isStockAnalysis ? 'Stock sleeve outlook' : 'Portfolio outlook'
+  const analysisDescription = isStockAnalysis
+    ? 'Reviews your stock sleeve with your wider cash, income, liabilities, risk profile, and wellness context in view.'
+    : 'Uses your portfolio context, risk profile, and financial wellness signals to generate curated insights and next-step guidance.'
   const gptSummary = redactUserIds(gptPayload?.summary)
   const gptTopRecs = toArray(gptPayload?.top_recommendations).length
     ? toArray(gptPayload?.top_recommendations).map(rec => (
@@ -3240,7 +3364,7 @@ export default function Profile() {
           <div style={{ flex:1 }}>
             <div style={s.userName}>{profile?.name ?? authUser?.username}</div>
             <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:12 }}>
-              {[['var(--teal)','Individual Investor'],['var(--gold)', riskLabelFromValue(profile?.risk_profile) ? `Risk: ${riskLabelFromValue(profile?.risk_profile)}` : 'Risk: —']].map(([c,t]) => (
+              {[['var(--teal)', profile?.investor_type || 'Individual Investor'],['var(--gold)', riskLabelFromValue(profile?.risk_profile) ? `Risk: ${riskLabelFromValue(profile?.risk_profile)}` : 'Risk: —']].map(([c,t]) => (
                 <span key={t} style={{ display:'flex', alignItems:'center', gap:6, fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' }}>
                   <div style={{ width:6, height:6, borderRadius:'50%', background:c }}/>{t}
                 </span>
@@ -3255,7 +3379,7 @@ export default function Profile() {
             {[
               [loading ? '...' : fmt$(totalAUM),                               'Total AUM',       'var(--gold)'],
               [loading ? '...' : fmt$(profile?.portfolio_value ?? portfolioValue),'Portfolio Value','var(--green)'],
-              [loading ? '...' : fmt$(profile?.cash_balance),                   'Synced Account Balance',   'var(--teal)'],
+              [loading ? '...' : fmtProfile$(profile?.cash_balance),            'Synced Account Balance',   'var(--teal)'],
             ].map(([v,l,c]) => (
               <div key={l} style={{ textAlign:'right' }}>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:'1.15rem', color:c }}>{v}</div>
@@ -3360,71 +3484,98 @@ export default function Profile() {
 
         {/* Row 1: Wellness + Composition */}
         <div style={{ ...s.twoCol, animation:'sectionIn 0.5s ease both', animationDelay:'0.24s' }}>
-          <div style={{ ...s.card, position:'relative' }}>
-            <div style={s.secLabel}>Financial Wellness Score</div>
+          <div style={{ ...s.card, ...s.wellnessSliderCard, position:'relative' }}>
+            <div style={s.secLabel}>
+              <span>{wellnessSlide === 'wellness' ? 'Financial Wellness Score' : 'Stock Portfolio Overview'}</span>
+              <button
+                type="button"
+                onClick={() => setWellnessSlide(prev => prev === 'wellness' ? 'stocks' : 'wellness')}
+                style={s.slideArrowBtn}
+                aria-label={wellnessSlide === 'wellness' ? 'Show stock portfolio overview' : 'Show financial wellness score'}
+                title={wellnessSlide === 'wellness' ? 'Show stock portfolio overview' : 'Show financial wellness score'}
+              >
+                {wellnessSlide === 'wellness' ? '→' : '←'}
+              </button>
+            </div>
             {wellnessHint && (
               <div style={s.hoverHint}>
                 {wellnessHint}
               </div>
             )}
             {loading ? <LoadingPulse /> : (
-              <div style={{ display:'flex', alignItems:'center', gap:24 }}>
-                <WellnessRing score={wellnessScore} />
-                <div style={{ flex:1 }}>
-                  {[
-                    { label:'Diversification', val:wellness.diversification_score, color:'var(--green)', hint:'How spread out your money is, so you are not relying too much on one asset.' },
-                    { label:'Liquidity',        val:wellness.liquidity_score,       color:'var(--blue)', hint:'How easily you can access cash for bills, emergencies, or short-term needs.' },
-                    { label:'Debt / Income',    val:wellness.debt_income_score,     color:'var(--orange)', hint:'How manageable your debt is compared with the income you bring in.' },
-                  ].map(w => (
-                    <div
-                      key={w.label}
-                      style={{ marginBottom:12 }}
-                      onMouseEnter={() => setWellnessHint(w.hint)}
-                      onMouseLeave={() => setWellnessHint(null)}
-                    >
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
-                        <span style={{ fontSize:'0.87rem', fontWeight:500, color:'var(--text)' }}>{w.label}</span>
-                        <span style={{ fontFamily:'var(--font-display)', fontSize:'0.87rem', fontWeight:700, color:'var(--text)' }}>{w.val != null ? Math.round(w.val) : '—'}</span>
+              <div style={s.wellnessSlideViewport}>
+                <div style={{ ...s.wellnessSlideTrack, transform:`translateX(${wellnessSlide === 'wellness' ? '0' : '-50%'})` }}>
+                  <div style={s.wellnessSlidePanel}>
+                    <div style={{ display:'flex', alignItems:'center', gap:24 }}>
+                      <WellnessRing score={wellnessScore} />
+                      <div style={{ flex:1 }}>
+                        {[
+                          { label:'Diversification', val:wellness.diversification_score, color:'var(--green)', hint:'How spread out your money is, so you are not relying too much on one asset.' },
+                          { label:'Liquidity',        val:wellness.liquidity_score,       color:'var(--blue)', hint:'How easily you can access cash for bills, emergencies, or short-term needs.' },
+                          { label:'Debt / Income',    val:wellness.debt_income_score,     color:'var(--orange)', hint:'How manageable your debt is compared with the income you bring in.' },
+                        ].map(w => (
+                          <div
+                            key={w.label}
+                            style={{ marginBottom:12 }}
+                            onMouseEnter={() => setWellnessHint(w.hint)}
+                            onMouseLeave={() => setWellnessHint(null)}
+                          >
+                            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
+                              <span style={{ fontSize:'0.87rem', fontWeight:500, color:'var(--text)' }}>{w.label}</span>
+                              <span style={{ fontFamily:'var(--font-display)', fontSize:'0.87rem', fontWeight:700, color:'var(--text)' }}>{w.val != null ? Math.round(w.val) : '—'}</span>
+                            </div>
+                            <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
+                              <div style={{ height:'100%', width:`${Math.min(w.val ?? 0, 100)}%`, background:w.color, borderRadius:3 }} />
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          style={{ marginBottom:12, display:'block', width:'100%', padding:0, background:'transparent', border:'none', textAlign:'left', cursor:behavioralResilienceScore != null ? 'pointer' : 'default' }}
+                          onClick={() => behavioralResilienceScore != null && setBehavioralResilienceOpen(true)}
+                          onMouseEnter={() => setWellnessHint('How likely you are to stay calm and avoid panic decisions when markets swing.')}
+                          onMouseLeave={() => setWellnessHint(null)}
+                          aria-label="Open behavioral resilience details"
+                          title="Open behavioral resilience details"
+                        >
+                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
+                            <span style={{ fontSize:'0.87rem', fontWeight:500, color:'var(--text)' }}>Behavioural Resilience</span>
+                            <span style={{ fontFamily:'var(--font-display)', fontSize:'0.87rem', fontWeight:700, color:'var(--text)' }}>
+                              {behavioralResilienceScore != null ? Math.round(behavioralResilienceScore) : '—'}
+                            </span>
+                          </div>
+                          <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
+                            <div
+                              style={{
+                                height:'100%',
+                                width:`${Math.min(behavioralResilienceScore ?? 0, 100)}%`,
+                                background:'#9fbce8',
+                                borderRadius:3,
+                              }}
+                            />
+                          </div>
+                        </button>
+                        <FutureBar
+                          label="Currency Exposure"
+                          onHoverChange={active => setWellnessHint(active ? 'How much exchange-rate moves could affect your portfolio if you hold assets in different currencies.' : null)}
+                        />
+                        <FutureBar
+                          label="Volatility Buffer"
+                          onHoverChange={active => setWellnessHint(active ? 'How much protection you have against sudden market ups and downs.' : null)}
+                        />
                       </div>
-                      <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
-                        <div style={{ height:'100%', width:`${Math.min(w.val ?? 0, 100)}%`, background:w.color, borderRadius:3 }} />
+                    </div>
+                  </div>
+                  <div style={s.wellnessSlidePanel}>
+                    <div style={s.stockOverviewHeader}>
+                      <div>
+                        <div style={s.stockOverviewTitle}>{fmt$(stocksValue)}</div>
+                        <div style={s.stockOverviewSub}>Current stock portfolio value across {stockPieHoldings.length} holding{stockPieHoldings.length === 1 ? '' : 's'}.</div>
                       </div>
+                      <span style={s.stockOverviewPill}>Stocks only</span>
                     </div>
-                  ))}
-                  <button
-                    type="button"
-                    style={{ marginBottom:12, display:'block', width:'100%', padding:0, background:'transparent', border:'none', textAlign:'left', cursor:behavioralResilienceScore != null ? 'pointer' : 'default' }}
-                    onClick={() => behavioralResilienceScore != null && setBehavioralResilienceOpen(true)}
-                    onMouseEnter={() => setWellnessHint('How likely you are to stay calm and avoid panic decisions when markets swing.')}
-                    onMouseLeave={() => setWellnessHint(null)}
-                    aria-label="Open behavioral resilience details"
-                    title="Open behavioral resilience details"
-                  >
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
-                      <span style={{ fontSize:'0.87rem', fontWeight:500, color:'var(--text)' }}>Behavioural Resilience</span>
-                      <span style={{ fontFamily:'var(--font-display)', fontSize:'0.87rem', fontWeight:700, color:'var(--text)' }}>
-                        {behavioralResilienceScore != null ? Math.round(behavioralResilienceScore) : '—'}
-                      </span>
-                    </div>
-                    <div style={{ height:5, background:'var(--surface2)', borderRadius:3, overflow:'hidden' }}>
-                      <div
-                        style={{
-                          height:'100%',
-                          width:`${Math.min(behavioralResilienceScore ?? 0, 100)}%`,
-                          background:'#9fbce8',
-                          borderRadius:3,
-                        }}
-                      />
-                    </div>
-                  </button>
-                  <FutureBar
-                    label="Currency Exposure"
-                    onHoverChange={active => setWellnessHint(active ? 'How much exchange-rate moves could affect your portfolio if you hold assets in different currencies.' : null)}
-                  />
-                  <FutureBar
-                    label="Volatility Buffer"
-                    onHoverChange={active => setWellnessHint(active ? 'How much protection you have against sudden market ups and downs.' : null)}
-                  />
+                    <StockPortfolioPie holdings={stockPieHoldings} totalValue={stocksValue} />
+                  </div>
                 </div>
               </div>
             )}
@@ -3437,9 +3588,9 @@ export default function Profile() {
                 <button type="button" onClick={reloadSyncedBalance} style={s.compBtnReload} disabled={syncedBalanceReloading}>
                   {syncedBalanceReloading ? 'Syncing...' : 'Sync'}
                 </button>
-                <button type="button" onClick={() => openFinancialModal('assets')} style={s.compBtnAsset}>Edit Assets</button>
-                <button type="button" onClick={() => openFinancialModal('liabilities')} style={s.compBtnLiability}>Edit Liabilities</button>
-                <button type="button" onClick={() => openFinancialModal('income')} style={s.compBtnIncome}>Edit Income</button>
+                <button type="button" onClick={() => openFinancialModal('assets')} style={s.compBtnAsset}>Add Assets</button>
+                <button type="button" onClick={() => openFinancialModal('liabilities')} style={s.compBtnLiability}>Add Liabilities</button>
+                <button type="button" onClick={() => openFinancialModal('income')} style={s.compBtnIncome}>Add Income</button>
               </div>
             </div>
             {loading ? <LoadingPulse /> : (
@@ -3582,10 +3733,32 @@ export default function Profile() {
         >
           <div style={s.secLabel}>
             <span style={{ display:'flex', alignItems:'center', gap:8 }}>
-              Portfolio Analysis
+              {analysisTitle}
               <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.6rem', padding:'2px 8px', borderRadius:6, background:'rgba(45,212,191,0.1)', color:'var(--teal)', border:'1px solid rgba(45,212,191,0.25)' }}>Unova AI</span>
             </span>
             <div style={s.analysisControls}>
+              <div style={s.modeSwitch}>
+                {[
+                  ['holistic', 'Holistic'],
+                  ['stocks', 'Stocks'],
+                ].map(([key, label]) => {
+                  const active = analysisScope === key
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        setAnalysisScope(key)
+                        setGptRecs(null)
+                        setGptError('')
+                      }}
+                      style={{ ...s.modeTab, ...(active ? s.modeTabActive : null) }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
               <div style={s.analysisActionSlot}>
                 {gptRecs && (
                   <button
@@ -3628,13 +3801,13 @@ export default function Profile() {
               >
                 {gptLoading
                   ? <><Spinner size={12} color="#080c14" /> Generating...</>
-                  : gptRecs ? '↻ Refresh Analysis' : 'Generate Analysis'}
+                  : gptRecs ? `↻ Refresh ${isStockAnalysis ? 'Stock Review' : 'Analysis'}` : `Generate ${analysisScope === 'stocks' ? 'Stock Review' : 'Analysis'}`}
               </button>
             </div>
           </div>
 
           <p style={{ fontSize:'0.9rem', color:'var(--text-dim)', lineHeight:1.72, marginBottom:20, maxWidth:900 }}>
-            Uses your portfolio context, risk profile, and financial wellness signals to generate curated insights and next-step guidance.
+            {analysisDescription}
           </p>
 
           {!isPremiumPlan && (
@@ -3662,7 +3835,10 @@ export default function Profile() {
                 <span style={{ fontFamily:'var(--font-display)', fontWeight:600, fontSize:'0.9rem', color:'var(--teal)' }}>Our analyst AI is reviewing your portfolio...</span>
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
-                {['Reading holdings and risk profile...','Evaluating portfolio composition...','Generating personalised recommendations...'].map((t,i) => (
+                {(analysisScope === 'stocks'
+                  ? ['Reading stock holdings and risk profile...','Checking core, tilt, and satellite exposure...','Generating personalised stock-sleeve guidance...']
+                  : ['Reading holdings and risk profile...','Evaluating portfolio composition...','Generating personalised recommendations...']
+                ).map((t,i) => (
                   <div key={t} style={{ display:'flex', alignItems:'center', gap:8, animation:`profilePulse 1.5s ease-in-out ${i*0.4}s infinite` }}>
                     <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--teal)', flexShrink:0 }} />
                     <span style={{ fontFamily:'var(--font-mono)', fontSize:'0.72rem', color:'var(--text-dim)' }}>{t}</span>
@@ -3676,9 +3852,11 @@ export default function Profile() {
           {!gptLoading && !gptError && gptRecs === null && (
             <div style={{ textAlign:'center', padding:'36px 20px' }}>
               <div style={{ fontSize:'2.2rem', marginBottom:12 }}>*</div>
-              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem', marginBottom:8 }}>Curated Portfolio Analysis</div>
+              <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'0.95rem', marginBottom:8 }}>{analysisScope === 'stocks' ? 'Curated Stock Sleeve Review' : 'Curated Portfolio Analysis'}</div>
               <div style={{ fontFamily:'var(--font-mono)', fontSize:'0.76rem', color:'var(--text-faint)', maxWidth:380, margin:'0 auto', lineHeight:1.7 }}>
-                Generate a tailored review based on your current holdings, financial wellness, and risk profile.
+                {analysisScope === 'stocks'
+                  ? 'Generate a stock-only review that still accounts for cash, income, liabilities, wellness, and risk profile.'
+                  : 'Generate a tailored review based on your current holdings, financial wellness, and risk profile.'}
               </div>
             </div>
           )}
@@ -3710,7 +3888,7 @@ export default function Profile() {
                   </div>
                 </div>
                 <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'1.2rem', marginBottom:gptSummary ? 10 : 0 }}>
-                  Portfolio outlook
+                  {analysisOutlookTitle}
                 </div>
                 {gptSummary ? (
                   <div style={{ fontSize:'1rem', color:'var(--text-dim)', lineHeight:1.82, maxWidth: 1080 }}>{gptSummary}</div>
@@ -4199,6 +4377,189 @@ const s = {
   userName:  { fontFamily:'var(--font-display)', fontSize:'1.45rem', fontWeight:800, marginBottom:6 },
   twoCol:    { display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(360px, 1fr))', gap:22, marginBottom:22 },
   card:      { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:18, padding:24 },
+  wellnessSliderCard: {
+    overflow:'hidden',
+    minHeight:310,
+  },
+  slideArrowBtn: {
+    appearance:'none',
+    WebkitAppearance:'none',
+    width:34,
+    height:34,
+    borderRadius:999,
+    border:'1px solid var(--border-act)',
+    background:'var(--surface2)',
+    color:'var(--text)',
+    display:'inline-flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontFamily:'var(--font-display)',
+    fontSize:'1.05rem',
+    fontWeight:800,
+    lineHeight:1,
+    cursor:'pointer',
+    boxShadow:'0 8px 20px rgba(15,23,42,0.06)',
+    outline:'none',
+  },
+  wellnessSlideViewport: {
+    overflow:'hidden',
+    width:'100%',
+  },
+  wellnessSlideTrack: {
+    display:'flex',
+    width:'200%',
+    transition:'transform 0.36s cubic-bezier(0.22, 1, 0.36, 1)',
+  },
+  wellnessSlidePanel: {
+    width:'50%',
+    flex:'0 0 50%',
+    minWidth:0,
+  },
+  stockOverviewHeader: {
+    display:'flex',
+    alignItems:'flex-start',
+    justifyContent:'space-between',
+    gap:16,
+    marginBottom:12,
+  },
+  stockOverviewTitle: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1.35rem',
+    fontWeight:800,
+    lineHeight:1.1,
+    marginBottom:5,
+  },
+  stockOverviewSub: {
+    color:'var(--text-faint)',
+    fontSize:'0.78rem',
+    lineHeight:1.45,
+  },
+  stockOverviewPill: {
+    flexShrink:0,
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.62rem',
+    letterSpacing:'0.08em',
+    textTransform:'uppercase',
+    color:'var(--blue)',
+    border:'1px solid rgba(109,141,247,0.2)',
+    background:'rgba(109,141,247,0.08)',
+    borderRadius:999,
+    padding:'6px 9px',
+  },
+  stockPieWrap: {
+    display:'grid',
+    gridTemplateColumns:'minmax(180px, 230px) minmax(150px, 1fr)',
+    alignItems:'center',
+    gap:18,
+  },
+  stockPieChartShell: {
+    position:'relative',
+    minHeight:230,
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+  },
+  stockPieSvg: {
+    width:'100%',
+    maxWidth:230,
+    height:'auto',
+    display:'block',
+  },
+  stockPieCenterLabel: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.58rem',
+    letterSpacing:'0.12em',
+    textTransform:'uppercase',
+    fill:'var(--text-faint)',
+  },
+  stockPieCenterValue: {
+    fontFamily:'var(--font-display)',
+    fontSize:'1.15rem',
+    fontWeight:800,
+    fill:'var(--text)',
+  },
+  stockPieTooltip: {
+    position:'absolute',
+    left:'50%',
+    bottom:6,
+    transform:'translateX(-50%)',
+    minWidth:128,
+    border:'1px solid var(--border)',
+    background:'var(--surface)',
+    borderRadius:12,
+    padding:'9px 11px',
+    boxShadow:'0 14px 32px rgba(15,23,42,0.16)',
+    textAlign:'center',
+    pointerEvents:'none',
+  },
+  stockPieTooltipSymbol: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.64rem',
+    letterSpacing:'0.08em',
+    color:'var(--text-faint)',
+    marginBottom:3,
+  },
+  stockPieTooltipPct: {
+    fontFamily:'var(--font-display)',
+    fontWeight:800,
+    fontSize:'1.08rem',
+    color:'var(--text)',
+    lineHeight:1.1,
+  },
+  stockPieTooltipValue: {
+    marginTop:3,
+    fontSize:'0.7rem',
+    color:'var(--text-faint)',
+  },
+  stockPieLegend: {
+    display:'flex',
+    flexDirection:'column',
+    gap:7,
+    minWidth:0,
+  },
+  stockPieLegendRow: {
+    display:'grid',
+    gridTemplateColumns:'12px minmax(0, 1fr) auto',
+    alignItems:'center',
+    gap:8,
+    padding:'7px 9px',
+    borderRadius:10,
+    border:'1px solid transparent',
+  },
+  stockPieDot: {
+    width:9,
+    height:9,
+    borderRadius:'50%',
+    display:'inline-block',
+  },
+  stockPieLegendName: {
+    minWidth:0,
+    overflow:'hidden',
+    textOverflow:'ellipsis',
+    whiteSpace:'nowrap',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.7rem',
+    color:'var(--text)',
+  },
+  stockPieLegendPct: {
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.68rem',
+    color:'var(--text-faint)',
+  },
+  stockPieEmpty: {
+    minHeight:220,
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    textAlign:'center',
+    color:'var(--text-faint)',
+    fontSize:'0.82rem',
+    lineHeight:1.7,
+    border:'1px dashed var(--border-act)',
+    borderRadius:16,
+    background:'var(--surface2)',
+    padding:20,
+  },
   cardFocused: {
     border:'1px solid rgba(45,212,191,0.34)',
     boxShadow:'0 20px 48px rgba(45,212,191,0.16)',
@@ -4365,7 +4726,7 @@ const s = {
     alignItems:'center',
     justifyContent:'flex-end',
     gap:12,
-    flexWrap:'nowrap',
+    flexWrap:'wrap',
     minWidth:0,
     flexShrink:0,
   },

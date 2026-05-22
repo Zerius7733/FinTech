@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any
 
 import backend.settings.constants as const
+from backend.services.currency import convert_currency
 from backend.services.wealth_wellness.engine import calculate_user_wellness
 
 
@@ -365,6 +366,7 @@ def recalculate_user_financials(user: dict[str, Any]) -> dict[str, Any]:
     ), 2)
     income_total = round(sum(float(item.get("monthly_amount", 0.0) or 0.0) for item in income_streams), 2)
     portfolio_total = _sum_portfolio_positions(user)
+    portfolio_total_sgd = round(convert_currency(portfolio_total, "USD", "SGD"), 2)
     cash_balance = round(float(user.get("cash_balance", 0.0) or 0.0), 2)
     expenses = round(float(user.get("expenses", 0.0) or 0.0), 2)
 
@@ -373,7 +375,8 @@ def recalculate_user_financials(user: dict[str, Any]) -> dict[str, Any]:
     user["mortgage"] = mortgage_total
     user["income"] = income_total
     user["portfolio_value"] = portfolio_total
-    user["total_balance"] = round(cash_balance + portfolio_total + real_estate_value + non_estate_asset_value, 2)
+    user["portfolio_value_currency"] = "USD"
+    user["total_balance"] = round(cash_balance + portfolio_total_sgd + real_estate_value + non_estate_asset_value, 2)
     user["net_worth"] = round(user["total_balance"] - liability_total - expenses, 2)
 
     wellness_result = calculate_user_wellness(user)

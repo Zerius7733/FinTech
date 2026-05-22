@@ -149,6 +149,8 @@ def _iter_portfolio_positions(user: Mapping[str, Any]) -> Iterable[Tuple[str, Ma
     if isinstance(portfolio, Mapping):
         bucket_map = {
             "stocks": "stocks",
+            "bonds": "bonds",
+            "real_assets": "real_assets",
             "cryptos": "crypto",
             "commodities": "commodity",
         }
@@ -174,6 +176,8 @@ def _iter_portfolio_positions(user: Mapping[str, Any]) -> Iterable[Tuple[str, Ma
 
 def _portfolio_totals(user: Mapping[str, Any]) -> Dict[str, Any]:
     stock_total = 0.0
+    bond_total = 0.0
+    real_asset_total = 0.0
     crypto_total = 0.0
     commodity_total = 0.0
     position_values: List[float] = []
@@ -187,10 +191,14 @@ def _portfolio_totals(user: Mapping[str, Any]) -> Dict[str, Any]:
             crypto_total += value
         elif bucket == "commodity":
             commodity_total += value
+        elif bucket == "bonds":
+            bond_total += value
+        elif bucket == "real_assets":
+            real_asset_total += value
         else:
             stock_total += value
 
-    computed_total = stock_total + crypto_total + commodity_total
+    computed_total = stock_total + bond_total + real_asset_total + crypto_total + commodity_total
     declared_total = max(0.0, _to_float(user.get("portfolio_value")))
 
     if computed_total > 0:
@@ -203,7 +211,7 @@ def _portfolio_totals(user: Mapping[str, Any]) -> Dict[str, Any]:
         reliable_total = 0.0
         source = "none"
 
-    asset_class_totals = [value for value in (stock_total, crypto_total, commodity_total) if value > 0]
+    asset_class_totals = [value for value in (stock_total, bond_total, real_asset_total, crypto_total, commodity_total) if value > 0]
     asset_class_hhi = 0.0
     if reliable_total > 0 and asset_class_totals:
         asset_class_hhi = sum((value / reliable_total) ** 2 for value in asset_class_totals)
@@ -214,6 +222,8 @@ def _portfolio_totals(user: Mapping[str, Any]) -> Dict[str, Any]:
 
     return {
         "stock_total": stock_total,
+        "bond_total": bond_total,
+        "real_asset_total": real_asset_total,
         "crypto_total": crypto_total,
         "commodity_total": commodity_total,
         "computed_portfolio_value": computed_total,
@@ -338,6 +348,8 @@ def _derive_financial_metrics(user: Mapping[str, Any]) -> Tuple[Dict[str, Any], 
         "mortgage_to_annual_income": _round(mortgage_to_annual_income, 4),
         "housing_cushion": _round(housing_cushion, 4),
         "stock_total": _round(portfolio_metrics["stock_total"]),
+        "bond_total": _round(portfolio_metrics["bond_total"]),
+        "real_asset_total": _round(portfolio_metrics["real_asset_total"]),
         "crypto_total": _round(portfolio_metrics["crypto_total"]),
         "commodity_total": _round(portfolio_metrics["commodity_total"]),
         "computed_portfolio_value": _round(portfolio_metrics["computed_portfolio_value"]),

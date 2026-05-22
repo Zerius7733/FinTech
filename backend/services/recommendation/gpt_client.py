@@ -47,33 +47,178 @@ def _build_prompt_payload(
     rule_based: Dict[str, Any],
     limit: int,
     latent_growth_context: Dict[str, Any] | None = None,
+    analysis_scope: str = "holistic",
 ) -> Dict[str, Any]:
-    portfolio = user.get("portfolio", []) or []
-    compact_portfolio: List[Dict[str, Any]] = []
-    for p in portfolio:
-        if not isinstance(p, dict):
-            continue
-        compact_portfolio.append(
-            {
-                "symbol": p.get("symbol"),
-                "qty": p.get("qty"),
-                "current_price": p.get("current_price"),
-                "market_value": p.get("market_value"),
-            }
-        )
+    compact_portfolio = _compact_portfolio_positions(user)
+    asset_class_totals: Dict[str, float] = {}
+    for position in compact_portfolio:
+        bucket = str(position.get("asset_class") or "unknown")
+        asset_class_totals[bucket] = round(asset_class_totals.get(bucket, 0.0) + float(position.get("market_value") or 0.0), 2)
+
+    normalized_scope = _normalize_analysis_scope(analysis_scope)
+    scoped_portfolio = (
+        [position for position in compact_portfolio if position.get("asset_class") == "stocks"]
+        if normalized_scope == "stocks"
+        else compact_portfolio
+    )
 
     payload = {
+        "analysis_scope": normalized_scope,
+        "user_profile": {
+            "investor_type": user.get("investor_type") or "Individual Investor",
+            "age": user.get("age"),
+            "country": user.get("country"),
+            "profile_currency": user.get("currency") or "USD",
+        },
         "risk_profile": user.get("risk_profile"),
         "financial_wellness_score": user.get("financial_wellness_score"),
         "financial_stress_index": user.get("financial_stress_index"),
         "wellness_metrics": user.get("wellness_metrics", {}),
-        "portfolio": compact_portfolio,
+        "cash_balance_sgd": user.get("cash_balance", 0.0),
+        "income_monthly_sgd": user.get("income", 0.0),
+        "liability_sgd": user.get("liability", 0.0),
+        "mortgage_sgd": user.get("mortgage", 0.0),
+        "manual_assets": _compact_manual_assets(user),
+        "portfolio": scoped_portfolio,
+        "asset_class_totals_usd": asset_class_totals,
         "rule_based_recommendations": rule_based.get("recommendations", []),
         "requested_recommendation_count": limit,
     }
+    if normalized_scope == "stocks":
+        payload["stock_review_context"] = _build_stock_review_context(compact_portfolio)
     if latent_growth_context:
         payload["latent_growth_context"] = latent_growth_context
     return payload
+
+
+def _normalize_analysis_scope(value: Any) -> str:
+    normalized = str(value or "holistic").strip().lower().replace("-", "_")
+    if normalized in {"stock", "stocks", "equities", "equity", "stock_sleeve"}:
+        return "stocks"
+    return "holistic"
+
+
+def _iter_bucketed_positions(user: Dict[str, Any]) -> List[Dict[str, Any]]:
+    portfolio = user.get("portfolio", []) or []
+    positions: List[Dict[str, Any]] = []
+    if isinstance(portfolio, list):
+        for position in portfolio:
+            if not isinstance(position, dict):
+                continue
+            next_position = dict(position)
+            next_position.setdefault("asset_class", _infer_asset_class(next_position))
+            positions.append(next_position)
+        return positions
+
+    if isinstance(portfolio, dict):
+        for bucket in ("stocks", "bonds", "real_assets", "cryptos", "commodities"):
+            bucket_positions = portfolio.get(bucket, [])
+            if not isinstance(bucket_positions, list):
+                continue
+            for position in bucket_positions:
+                if not isinstance(position, dict):
+                    continue
+                next_position = dict(position)
+                next_position["asset_class"] = bucket
+                positions.append(next_position)
+    return positions
+
+
+def _infer_asset_class(position: Dict[str, Any]) -> str:
+    symbol = str(position.get("symbol") or "").upper()
+    if symbol.endswith("-USD"):
+        return "cryptos"
+    if symbol.endswith("=F"):
+        return "commodities"
+    return "stocks"
+
+
+def _compact_portfolio_positions(user: Dict[str, Any]) -> List[Dict[str, Any]]:
+    compact: List[Dict[str, Any]] = []
+    for position in _iter_bucketed_positions(user):
+        compact.append(
+            {
+                "asset_class": position.get("asset_class"),
+                "symbol": position.get("symbol"),
+                "name": position.get("name"),
+                "qty": position.get("qty"),
+                "current_price_usd": position.get("current_price"),
+                "market_value": position.get("market_value"),
+                "quote_currency": position.get("quote_currency") or position.get("currency") or "USD",
+                "quote_current_price": position.get("quote_current_price"),
+            }
+        )
+    return compact
+
+
+def _compact_manual_assets(user: Dict[str, Any]) -> List[Dict[str, Any]]:
+    assets = user.get("manual_assets") or []
+    if not isinstance(assets, list):
+        return []
+    compact: List[Dict[str, Any]] = []
+    for item in assets:
+        if not isinstance(item, dict):
+            continue
+        compact.append(
+            {
+                "label": item.get("label"),
+                "category": item.get("category"),
+                "value_sgd": item.get("value"),
+            }
+        )
+    return compact
+
+
+def _stock_strategy_role(position: Dict[str, Any]) -> str:
+    symbol = str(position.get("symbol") or "").upper()
+    name = str(position.get("name") or "").lower()
+    broad_core_symbols = {"SPY", "VOO", "IVV", "VTI", "VT", "CSPX", "VWRA", "ES3.SI"}
+    if symbol in broad_core_symbols or "s&p" in name or "all-world" in name or "straits times" in name:
+        return "possible_core"
+    if "etf" in name or symbol in {"QQQ", "SCHD", "DIA", "IWM"}:
+        return "possible_tilt"
+    return "single_name_or_satellite"
+
+
+def _build_stock_review_context(compact_portfolio: List[Dict[str, Any]]) -> Dict[str, Any]:
+    stock_positions = [position for position in compact_portfolio if position.get("asset_class") == "stocks"]
+    stock_total = sum(float(position.get("market_value") or 0.0) for position in stock_positions)
+    all_total = sum(float(position.get("market_value") or 0.0) for position in compact_portfolio)
+    enriched: List[Dict[str, Any]] = []
+    for position in stock_positions:
+        value = float(position.get("market_value") or 0.0)
+        enriched.append(
+            {
+                "symbol": position.get("symbol"),
+                "name": position.get("name"),
+                "market_value": round(value, 2),
+                "stock_sleeve_weight": round((value / stock_total) * 100, 2) if stock_total > 0 else 0.0,
+                "strategy_role_hint": _stock_strategy_role(position),
+                "quote_currency": position.get("quote_currency"),
+            }
+        )
+    enriched.sort(key=lambda item: float(item.get("market_value") or 0.0), reverse=True)
+    core_value = sum(item["market_value"] for item in enriched if item.get("strategy_role_hint") == "possible_core")
+    tilt_value = sum(item["market_value"] for item in enriched if item.get("strategy_role_hint") == "possible_tilt")
+    satellite_value = max(0.0, stock_total - core_value - tilt_value)
+    return {
+        "stock_sleeve_value_usd": round(stock_total, 2),
+        "stock_sleeve_weight_of_portfolio": round((stock_total / all_total) * 100, 2) if all_total > 0 else 0.0,
+        "stock_count": len(stock_positions),
+        "top_positions": enriched[:10],
+        "strategy_mix_hint": {
+            "possible_core_weight": round((core_value / stock_total) * 100, 2) if stock_total > 0 else 0.0,
+            "possible_tilt_weight": round((tilt_value / stock_total) * 100, 2) if stock_total > 0 else 0.0,
+            "single_name_or_satellite_weight": round((satellite_value / stock_total) * 100, 2) if stock_total > 0 else 0.0,
+        },
+        "review_lenses": [
+            "core/satellite structure",
+            "tilt/satellite sizing",
+            "single-name concentration",
+            "country and currency exposure",
+            "fit against cash runway, liabilities, income stability, wellness, and risk profile",
+        ],
+    }
 
 
 _USER_ID_KEY_PATTERN = re.compile(r'("user_id"\s*:\s*)"[^"]*"', re.IGNORECASE)
@@ -162,6 +307,7 @@ def generate_gpt_recommendations(
     model: str = DEFAULT_MODEL,
     timeout_seconds: int = 45,
     latent_growth_context: Dict[str, Any] | None = None,
+    analysis_scope: str = "holistic",
 ) -> Dict[str, Any]:
     api_key = _find_api_key()
     if not api_key:
@@ -173,13 +319,24 @@ def generate_gpt_recommendations(
         rule_based=rule_based,
         limit=limit,
         latent_growth_context=latent_growth_context,
+        analysis_scope=analysis_scope,
     )
+    normalized_scope = input_payload["analysis_scope"]
 
     system_prompt = (
         "You are a financial wellness recommendation assistant. "
         "Return personalized, data-driven actions and scenario-based insights. "
         "Use only the provided data and recommendations. "
-        "Do not invent metrics or holdings. Keep output concise and practical."
+        "Do not invent metrics or holdings. Keep output concise and practical. "
+        "If investor_type is Student, account for unstable income, smaller balances, learning needs, and liquidity before growth."
+    )
+
+    scope_instruction = (
+        "Focus on the user's stock/equity sleeve only. Use cash, income, liabilities, wellness, and the wider portfolio as context. "
+        "Explicitly review whether a core/satellite or tilt/satellite approach appears sensible for the stock sleeve, without assuming either is always optimal. "
+        "Call out concentration, country/currency exposure, and which stock positions look like core, tilt, or satellite candidates based only on provided fields."
+        if normalized_scope == "stocks"
+        else "Review the full portfolio and financial profile holistically."
     )
 
     user_prompt = (
@@ -189,6 +346,7 @@ def generate_gpt_recommendations(
         "each with: title, action, why, priority. "
         "scenario_insights should include bullish_case, base_case, bearish_case. "
         "immediate_next_steps must be a short array for the next 30 days. "
+        f"{scope_instruction} "
         "If latent_growth_context is present, explicitly incorporate it into the analysis and next steps. "
         "If latent_growth_context is absent, do not mention it.\\n\\n"
         f"INPUT_DATA:\\n{json.dumps(input_payload, ensure_ascii=True)}"

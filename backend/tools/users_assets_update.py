@@ -1,6 +1,7 @@
 import csv
 import json
 from typing import Any, Dict
+from backend.services.currency import convert_currency
 from backend.services.wealth_wellness.engine import calculate_user_wellness
 
 def _to_float(value: Any) -> float:
@@ -152,12 +153,14 @@ def update_assets_from_csv(users: Dict[str, Any], csv_path: str) -> Dict[str, An
             liability_total = round(sum(float(item.get("amount", 0.0) or 0.0) for item in liability_items if not bool(item.get("is_mortgage"))), 2)
             mortgage_total = round(sum(float(item.get("amount", 0.0) or 0.0) for item in liability_items if bool(item.get("is_mortgage"))), 2)
             income_total = round(sum(float(item.get("monthly_amount", 0.0) or 0.0) for item in income_streams), 2)
+            portfolio_total_sgd = round(convert_currency(portfolio_total, "USD", "SGD"), 2)
             user["estate"] = real_estate_total
             user["liability"] = liability_total
             user["mortgage"] = mortgage_total
             user["income"] = income_total
             user["portfolio_value"] = round(portfolio_total, 2)
-            user["total_balance"] = round(user["cash_balance"] + portfolio_total + user["estate"] + other_manual_total, 2)
+            user["portfolio_value_currency"] = "USD"
+            user["total_balance"] = round(user["cash_balance"] + portfolio_total_sgd + user["estate"] + other_manual_total, 2)
             user["net_worth"] = round(user["total_balance"] - user["liability"] - user["expenses"], 2)
 
             wellness = calculate_user_wellness(user)

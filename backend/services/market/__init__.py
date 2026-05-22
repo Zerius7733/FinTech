@@ -7,6 +7,8 @@ from backend.services.market.providers import COMMODITY_ALIAS_TO_SYMBOL
 from backend.services.market.providers import fetch_coingecko_coin_listings
 from backend.services.market.providers import fetch_commodity_price
 from backend.services.market.providers import fetch_crypto_price
+from backend.services.market.providers import fetch_latest_price_quotes
+from backend.services.market.providers import fetch_latest_price_quotes_safe
 from backend.services.market.providers import fetch_latest_prices
 from backend.services.market.providers import fetch_stock_listings
 from backend.services.market.providers import fetch_stock_listings_from_nasdaq
@@ -26,6 +28,8 @@ __all__ = [
     "fetch_coingecko_coin_listings",
     "fetch_commodity_price",
     "fetch_crypto_price",
+    "fetch_latest_price_quotes",
+    "fetch_latest_price_quotes_safe",
     "fetch_latest_prices",
     "fetch_stock_listings",
     "fetch_stock_listings_from_nasdaq",

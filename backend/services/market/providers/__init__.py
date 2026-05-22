@@ -11,6 +11,8 @@ from backend.services.market.providers.stock_market_retriever import fetch_top_s
 from backend.services.market.providers.stock_market_retriever_nasdaq import fetch_stock_listings_from_nasdaq
 from backend.services.market.providers.stock_market_retriever_nasdaq import rebuild_stock_listings_cache_from_nasdaq
 from backend.services.market.providers.stock_price_updater import fetch_latest_prices
+from backend.services.market.providers.stock_price_updater import fetch_latest_price_quotes
+from backend.services.market.providers.stock_price_updater import fetch_latest_price_quotes_safe
 from backend.services.market.providers.stock_price_updater import update_stock_listings_cache_prices_file
 from backend.services.market.providers.stock_price_updater import update_stock_prices_file
 
@@ -19,6 +21,8 @@ __all__ = [
     "fetch_coingecko_coin_listings",
     "fetch_commodity_price",
     "fetch_crypto_price",
+    "fetch_latest_price_quotes",
+    "fetch_latest_price_quotes_safe",
     "fetch_latest_prices",
     "fetch_stock_listings",
     "fetch_stock_listings_from_nasdaq",

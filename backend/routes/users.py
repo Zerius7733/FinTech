@@ -68,6 +68,8 @@ def build_router(
                 "username": normalized_username,
                 "email": normalized_email,
                 "country": (payload.country or "").strip(),
+                "investor_type": (payload.investor_type or "Individual Investor").strip(),
+                "currency": (payload.currency or "USD").strip().upper(),
             }
             if payload.age is not None:
                 updates["age"] = str(payload.age)
@@ -91,6 +93,8 @@ def build_router(
                 user["username"] = updates.get("username", user.get("username", ""))
                 user["email"] = updates.get("email", user.get("email", ""))
                 user["country"] = updates.get("country", user.get("country", ""))
+                user["investor_type"] = updates.get("investor_type", user.get("investor_type", "Individual Investor"))
+                user["currency"] = updates.get("currency", user.get("currency", "USD"))
                 users[user_id] = user
                 user_store.write_users_data(users)
 
@@ -134,6 +138,8 @@ def build_router(
                     user["name"] = full_name
                 user["email"] = updates.get("email", user.get("email", ""))
                 user["country"] = updates.get("country", user.get("country", ""))
+                user["investor_type"] = updates.get("investor_type", user.get("investor_type", ""))
+                user["currency"] = updates.get("currency", user.get("currency", ""))
                 users[user_id] = user
                 user_store.write_users_data(users)
 

@@ -42,6 +42,8 @@ def ensure_users_csv_fieldnames(fieldnames: list[str]) -> list[str]:
         "age",
         "age_group",
         "country",
+        "investor_type",
+        "currency",
     ]
     for key in required:
         if key not in fieldnames:
@@ -108,6 +110,8 @@ def sync_user_to_assets_csv(user_id: str, user: dict[str, Any]) -> None:
         "age",
         "age_group",
         "country",
+        "investor_type",
+        "currency",
     ]
 
     if csv_path.exists():
@@ -137,6 +141,8 @@ def sync_user_to_assets_csv(user_id: str, user: dict[str, Any]) -> None:
         row.setdefault("age", "")
         row.setdefault("age_group", "")
         row.setdefault("country", "")
+        row.setdefault("investor_type", str(user.get("investor_type", "") or ""))
+        row.setdefault("currency", str(user.get("currency", "") or ""))
         row.setdefault("dbs", "0")
         row.setdefault("uob", "0")
         row.setdefault("ocbc", "0")
@@ -148,6 +154,8 @@ def sync_user_to_assets_csv(user_id: str, user: dict[str, Any]) -> None:
 
     target = rows[target_index]
     target["name"] = str(user.get("name", target.get("name", "")) or "")
+    target["investor_type"] = str(user.get("investor_type", target.get("investor_type", "")) or "")
+    target["currency"] = str(user.get("currency", target.get("currency", "")) or "")
     target.setdefault(const.SYNCED_ACCOUNT_BALANCE_FIELD, "0")
     target[const.SYNCED_BALANCE_RELOAD_COUNT_FIELD] = str(_safe_int(target.get(const.SYNCED_BALANCE_RELOAD_COUNT_FIELD), 0))
 

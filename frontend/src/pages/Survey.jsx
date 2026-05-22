@@ -94,6 +94,7 @@ const GOALS = [
   { icon:'🎓', title:'Education / Legacy',   desc:'Fund education or create a legacy.' },
 ]
 const HORIZONS = [{ num:'1–2', label:'Short Term' },{ num:'3–5', label:'Medium Term' },{ num:'5–10', label:'Long Term' },{ num:'10+', label:'Generational' }]
+const INVESTOR_TYPES = ['Student','Individual Investor','HNWI','Family Office','Institutional']
 
 const TYPE_COLOR = { equity:'#60a5fa', crypto:'#2dd4bf', etf:'#a78bfa', bond:'#f0abfc', commodity:'#fbbf24', reit:'#c9a84c', unknown:'#94a3b8' }
 const EMPTY_HOLDING = { ticker:'', name:'', shares:0, price:0, change:0, dir:'up', type:'equity' }
@@ -435,6 +436,7 @@ export default function Survey() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [country, setCountry] = useState('Singapore')
+  const [investorType, setInvestorType] = useState('Individual Investor')
   const [age,            setAge]            = useState('')
   const [selectedAssets, setSelectedAssets] = useState(new Set(['Equities','Fixed Income']))
   const [selectedGoals,  setSelectedGoals]  = useState(new Set(['Wealth Growth']))
@@ -560,6 +562,8 @@ export default function Survey() {
         username: finalUsername,
         email,
         country,
+        investor_type: investorType,
+        currency: country === 'Singapore' ? 'SGD' : 'USD',
         age: finalAge,
       }),
     })
@@ -651,7 +655,7 @@ export default function Survey() {
         </h2>
         <p style={{ color:'var(--text-dim)', fontSize:'0.92rem', lineHeight:1.7, marginBottom:20 }}>Your Unova is calibrated. Your personalised globe awaits.</p>
         <div style={{ display:'flex', flexWrap:'wrap', gap:10, justifyContent:'center', marginBottom:16 }}>
-          {[['Age', age ? `${age}` : '-'],['Risk',`${riskLevel}/100`],['Assets',`${importedHoldings.length}`],['Horizon',`${horizon}yr`]].map(([k,v]) => (
+          {[['Age', age ? `${age}` : '-'],['Type', investorType],['Risk',`${riskLevel}/100`],['Assets',`${importedHoldings.length}`],['Horizon',`${horizon}yr`]].map(([k,v]) => (
             <div key={k} style={cs.pill}>{k}: <span style={{ color:'var(--gold)' }}>{v}</span></div>
           ))}
         </div>
@@ -739,6 +743,12 @@ export default function Survey() {
                 <label style={cs.formLabel}>Country</label>
                 <select style={cs.formInput} value={country} onChange={e => setCountry(e.target.value)}>
                   {['Singapore','United Kingdom','United States','Australia','Japan'].map(o => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={cs.formLabel}>Investor Type</label>
+                <select style={cs.formInput} value={investorType} onChange={e => setInvestorType(e.target.value)}>
+                  {INVESTOR_TYPES.map(o => <option key={o}>{o}</option>)}
                 </select>
               </div>
             </div>

@@ -77,6 +77,8 @@ class SurveyProfileUpdateRequest(BaseModel):
     username: str | None = None
     email: str | None = None
     country: str | None = None
+    investor_type: str | None = None
+    currency: str | None = None
     age: int | None = Field(default=None, ge=18, le=100)
     age_group: str | None = None
 

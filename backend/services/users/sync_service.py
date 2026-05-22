@@ -79,6 +79,10 @@ def apply_synced_csv_profile_to_user(user: dict[str, Any], row: dict[str, Any]) 
     user["estate"] = synced_estate
     user["liability"] = synced_liability
     user["income"] = synced_income
+    if row.get("investor_type"):
+        user["investor_type"] = str(row.get("investor_type") or "").strip()
+    if row.get("currency"):
+        user["currency"] = str(row.get("currency") or "").strip().upper()
     user["manual_assets"] = manual_assets
     user["liability_items"] = liability_items
     user["income_streams"] = income_streams

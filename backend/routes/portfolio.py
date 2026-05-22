@@ -8,6 +8,9 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 
 import backend.api_models as models
+from backend.services.currency import convert_currency
+from backend.services.currency import infer_quote_currency
+from backend.services.currency import normalize_currency_code
 
 STOCK_SYMBOL_ALIASES = {
     "ES3": "ES3.SI",
@@ -26,6 +29,23 @@ def build_router(
 ) -> APIRouter:
     router = APIRouter()
 
+    def normalize_market_quote(symbol: str, quote: dict[str, Any]) -> tuple[float, str, float]:
+        quote_currency = normalize_currency_code(quote.get("currency"), default=infer_quote_currency(symbol))
+        quote_price = round(float(quote.get("price") or quote.get("current_price") or quote.get("price_usd") or 0.0), 6)
+        price_usd = round(float(quote.get("price_usd") or convert_currency(quote_price, quote_currency, "USD")), 6)
+        return price_usd, quote_currency, quote_price
+
+    def apply_position_currency_fields(item: dict[str, Any], price_usd: float, quote_currency: str, quote_price: float) -> None:
+        item["current_price"] = price_usd
+        item["currency"] = "USD"
+        item["market_value_currency"] = "USD"
+        if quote_currency != "USD":
+            item["quote_currency"] = quote_currency
+            item["quote_current_price"] = quote_price
+        else:
+            item.pop("quote_currency", None)
+            item.pop("quote_current_price", None)
+
     @router.get(
         "/users/{user_id}/danger/export",
         tags=["Users"],
@@ -41,7 +61,7 @@ def build_router(
             portfolio = user.get("portfolio", {})
             rows: list[dict[str, Any]] = []
             if isinstance(portfolio, dict):
-                for asset_class in ("stocks", "cryptos", "commodities"):
+                for asset_class in ("stocks", "bonds", "real_assets", "cryptos", "commodities"):
                     entries = portfolio.get(asset_class, [])
                     if not isinstance(entries, list):
                         continue
@@ -60,11 +80,14 @@ def build_router(
                                 "avg_price": round(avg_price, 6),
                                 "current_price": round(current_price, 6),
                                 "market_value": round(market_value, 2),
+                                "currency": str(item.get("currency") or "USD"),
+                                "quote_currency": str(item.get("quote_currency") or item.get("currency") or "USD"),
+                                "quote_current_price": item.get("quote_current_price", ""),
                             }
                         )
 
             output = io.StringIO()
-            headers = ["user_id", "asset_class", "symbol", "name", "qty", "avg_price", "current_price", "market_value"]
+            headers = ["user_id", "asset_class", "symbol", "name", "qty", "avg_price", "current_price", "market_value", "currency", "quote_currency", "quote_current_price"]
             writer = csv.DictWriter(output, fieldnames=headers)
             writer.writeheader()
             for row in rows:
@@ -94,7 +117,7 @@ def build_router(
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            user["portfolio"] = {"stocks": [], "cryptos": [], "commodities": []}
+            user["portfolio"] = {"stocks": [], "bonds": [], "real_assets": [], "cryptos": [], "commodities": []}
             user["manual_assets"] = []
             users_data[user_id] = portfolio.recalculate_user_financials(user)
             user_store.write_users_data(users_data)
@@ -315,23 +338,32 @@ def build_router(
             if query_type == "STOCK":
                 symbol = STOCK_SYMBOL_ALIASES.get(symbol, symbol)
 
+            quote_currency = "USD"
+            quote_price = 0.0
             if query_type in {"STOCK", "BOND", "REAL_ASSET"}:
                 fetched_symbol = symbol
-                price = round(float(market.fetch_latest_prices([symbol])[symbol]), 6)
+                quote = market.fetch_latest_price_quotes([symbol])[symbol]
+                price, quote_currency, quote_price = normalize_market_quote(symbol, quote)
             elif query_type == "CRYPTO":
                 quote = market.fetch_crypto_price(symbol)
                 fetched_symbol = str(quote.get("symbol") or symbol).upper()
                 price = round(float(quote.get("price") or 0.0), 6)
+                quote_price = price
             else:
                 quote = market.fetch_commodity_price(symbol)
                 fetched_symbol = str(quote.get("symbol") or symbol).upper()
                 price = round(float(quote.get("price") or 0.0), 6)
+                quote_price = price
 
             if price <= 0:
                 raise HTTPException(status_code=400, detail=f"could not fetch a valid market price for '{symbol}'")
 
             qty = round(float(payload.qty), 8)
-            avg_price = round(float(payload.avg_price), 6) if payload.avg_price is not None else price
+            avg_price = (
+                round(convert_currency(float(payload.avg_price), quote_currency, "USD"), 6)
+                if payload.avg_price is not None
+                else price
+            )
             market_value = round(qty * price, 2)
             incoming_name = (payload.name or "").strip()
 
@@ -353,7 +385,7 @@ def build_router(
                     weighted_avg = avg_price
                 existing["qty"] = new_qty
                 existing["avg_price"] = weighted_avg
-                existing["current_price"] = price
+                apply_position_currency_fields(existing, price, quote_currency, quote_price)
                 existing["market_value"] = round(new_qty * price, 2)
                 if incoming_name:
                     existing["name"] = incoming_name
@@ -363,9 +395,9 @@ def build_router(
                     "symbol": fetched_symbol,
                     "qty": qty,
                     "avg_price": avg_price,
-                    "current_price": price,
                     "market_value": market_value,
                 }
+                apply_position_currency_fields(item, price, quote_currency, quote_price)
                 if incoming_name:
                     item["name"] = incoming_name
                 entries.append(item)
@@ -383,7 +415,7 @@ def build_router(
     @router.delete(
         "/users/{user_id}/financials/portfolio/{asset_class}/{symbol}",
         tags=["Users"],
-        summary="Remove a portfolio holding (stocks, cryptos, or commodities) from a user profile",
+        summary="Remove a portfolio holding from a user profile",
     )
     def remove_user_portfolio_holding(user_id: str, asset_class: str, symbol: str) -> dict[str, Any]:
         try:
@@ -399,12 +431,16 @@ def build_router(
             bucket = asset_class.strip().lower()
             if bucket in {"stock", "stocks", "equity", "equities"}:
                 bucket = "stocks"
+            elif bucket in {"bond", "bonds", "fixed_income"}:
+                bucket = "bonds"
+            elif bucket in {"real_asset", "real_assets", "reit", "reits"}:
+                bucket = "real_assets"
             elif bucket in {"crypto", "cryptos", "digital_assets", "digital_asset"}:
                 bucket = "cryptos"
             elif bucket in {"commodity", "commodities"}:
                 bucket = "commodities"
             else:
-                raise HTTPException(status_code=400, detail="asset_class must be stocks, cryptos, or commodities")
+                raise HTTPException(status_code=400, detail="asset_class must be stocks, bonds, real_assets, cryptos, or commodities")
 
             entries = portfolio.get(bucket, [])
             if not isinstance(entries, list):

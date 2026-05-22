@@ -599,7 +599,7 @@ export default function SettingsModal({ onClose }) {
                 <Row name="Investor Type">
                   <SelInput
                     value={profileForm.investorType}
-                    opts={['Individual Investor','HNWI','Family Office','Institutional']}
+                    opts={['Individual Investor','Student','HNWI','Family Office','Institutional']}
                     onChange={v => setProfileField('investorType', v)}
                   />
                 </Row>
@@ -1066,7 +1066,6 @@ const s = {
     whiteSpace:'nowrap',
   },
 }
-
 
 
 

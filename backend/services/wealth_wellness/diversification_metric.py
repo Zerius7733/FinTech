@@ -30,9 +30,10 @@ def _extract_position_values(user: Dict[str, Any]) -> List[float]:
     if isinstance(portfolio, list):
         positions = portfolio
     elif isinstance(portfolio, dict):
-        stocks = portfolio.get("stocks", []) if isinstance(portfolio.get("stocks", []), list) else []
-        cryptos = portfolio.get("cryptos", []) if isinstance(portfolio.get("cryptos", []), list) else []
-        positions = stocks + cryptos
+        for bucket in ("stocks", "bonds", "real_assets", "cryptos", "commodities"):
+            bucket_positions = portfolio.get(bucket, [])
+            if isinstance(bucket_positions, list):
+                positions.extend(bucket_positions)
 
     for position in positions:
         market_value = float(position.get("market_value", 0))

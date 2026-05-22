@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
@@ -42,6 +43,8 @@ def build_router(
         user_id: str,
         limit: int = Query(3, ge=1, le=10, description="Maximum number of recommendation items"),
         model: str = Query(settings_config.openai_narrative_model(), description="OpenAI model name"),
+        analysis_scope: str = Query("holistic", description="holistic or stocks"),
+        latent_growth_context: str | None = Query(None, description="Optional JSON scenario context"),
     ) -> dict[str, Any]:
         try:
             data = user_store.read_users_data()
@@ -50,17 +53,34 @@ def build_router(
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
             rule_based = recommendation.generate_user_recommendations(user, limit=limit)
+            normalized_analysis_scope = (
+                "stocks"
+                if str(analysis_scope or "").strip().lower().replace("-", "_") in {"stock", "stocks", "equity", "equities", "stock_sleeve"}
+                else "holistic"
+            )
+            parsed_latent_growth_context = None
+            if latent_growth_context:
+                try:
+                    parsed_latent_growth_context = json.loads(latent_growth_context)
+                except json.JSONDecodeError as exc:
+                    raise HTTPException(status_code=400, detail="latent_growth_context must be valid JSON") from exc
+                if not isinstance(parsed_latent_growth_context, dict):
+                    raise HTTPException(status_code=400, detail="latent_growth_context must be a JSON object")
+
             gpt_output = recommendation.generate_gpt_recommendations(
                 user_id=user_id,
                 user=user,
                 rule_based=rule_based,
                 limit=limit,
                 model=model,
+                latent_growth_context=parsed_latent_growth_context,
+                analysis_scope=normalized_analysis_scope,
             )
             return {
                 "status": "ok",
                 "user_id": user_id,
                 "model": gpt_output["model"],
+                "analysis_scope": normalized_analysis_scope,
                 "rule_based": rule_based,
                 "gpt_recommendations": gpt_output["recommendations"],
             }
