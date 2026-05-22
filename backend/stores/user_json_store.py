@@ -1,5 +1,7 @@
 import csv
 import json
+import os
+import tempfile
 from typing import Any
 
 import backend.settings.constants as const
@@ -7,9 +9,50 @@ import backend.services.users as user_services
 from backend.services.portfolio.helpers import recalculate_user_financials
 
 
+def _load_json_document(path: str) -> dict[str, Any]:
+    with open(path, "r", encoding="utf-8-sig") as f:
+        raw = f.read()
+    if not raw.strip():
+        return {}
+    decoder = json.JSONDecoder()
+    index = 0
+    documents: list[Any] = []
+    while index < len(raw):
+        while index < len(raw) and raw[index].isspace():
+            index += 1
+        if index >= len(raw):
+            break
+        document, index = decoder.raw_decode(raw, index)
+        documents.append(document)
+
+    if not documents:
+        return {}
+    if len(documents) == 1:
+        return documents[0] if isinstance(documents[0], dict) else {}
+
+    merged: dict[str, Any] = {}
+    for document in documents:
+        if isinstance(document, dict):
+            merged.update(document)
+    return merged
+
+
+def _atomic_write_json(path: str, data: dict[str, Any]) -> None:
+    directory = os.path.dirname(path)
+    os.makedirs(directory, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(prefix=".user-json-", suffix=".tmp", dir=directory)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            f.write("\n")
+        os.replace(tmp_path, path)
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
 def read_users_data() -> dict[str, Any]:
-    with open(const.USER_JSON_PATH, "r", encoding="utf-8-sig") as f:
-        data = json.load(f)
+    data = _load_json_document(str(const.USER_JSON_PATH))
     normalized = user_services.normalize_users_data(data)
     normalized = hydrate_missing_login_users(normalized)
     return user_services.hydrate_users_from_csv(
@@ -34,8 +77,7 @@ def hydrate_missing_login_users(users: dict[str, Any]) -> dict[str, Any]:
 
 
 def write_users_data(data: dict[str, Any]) -> None:
-    with open(const.USER_JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(user_services.normalize_users_data(data), f, indent=2)
+    _atomic_write_json(str(const.USER_JSON_PATH), user_services.normalize_users_data(data))
 
 
 def next_available_user_id() -> str:
