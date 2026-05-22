@@ -138,11 +138,18 @@ class StockListingResponse(BaseModel):
     id: str
     name: str
     symbol: str
+    image: str | None = None
+    market_cap_rank: float | int | None = None
     current_price: float | int | None = None
     market_cap: float | int | None = None
     total_volume: float | int | None = None
     price_change_percentage_24h: float | int | None = None
+    price_change_percentage_7d: float | int | None = None
+    circulating_supply: float | int | None = None
     ath: float | int | None = None
+    ath_change_percentage: float | int | None = None
+    quote_type: str | None = None
+    exchange: str | None = None
 
 
 class AssetResolveResponse(BaseModel):

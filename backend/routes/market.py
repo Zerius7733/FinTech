@@ -98,11 +98,13 @@ def build_router(
     def get_stock_listings(
         page: int = Query(1, ge=1, description="Stock page number"),
         per_page: int = Query(50, ge=1, le=250, description="Items per page (max 250)"),
+        q: str | None = Query(None, description="Optional symbol/name search across the cached stock universe"),
     ) -> list[models.StockListingResponse]:
         try:
             rows = market.get_precomputed_stock_rankings(
                 page=page,
                 per_page=per_page,
+                query=q,
             )
             return [models.StockListingResponse(**row) for row in rows]
         except ValueError as exc:

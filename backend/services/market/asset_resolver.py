@@ -15,6 +15,20 @@ COMMODITIES = {
     "BRENT": "Brent Oil",
     "NG": "Natural Gas",
 }
+STOCK_ALIASES = {
+    "STI": {
+        "symbol": "^STI",
+        "name": "Straits Times Index",
+        "category": "stock",
+        "source": "local_mapping",
+    },
+    "ES3": {
+        "symbol": "ES3.SI",
+        "name": "SPDR Straits Times Index ETF",
+        "category": "stock",
+        "source": "local_mapping",
+    },
+}
 
 
 class TTLCache:
@@ -49,6 +63,13 @@ def _resolve_commodity(symbol: str) -> Optional[Dict[str, Any]]:
         "category": "commodity",
         "source": "local_mapping",
     }
+
+
+def _resolve_stock_alias(symbol: str) -> Optional[Dict[str, Any]]:
+    alias = STOCK_ALIASES.get(symbol)
+    if not alias:
+        return None
+    return dict(alias)
 
 
 def _resolve_crypto_coingecko(symbol: str) -> Optional[Dict[str, Any]]:
@@ -116,6 +137,11 @@ async def resolve_asset(query: str) -> Dict[str, Any]:
     if commodity:
         asset_resolver_cache.set(symbol, commodity)
         return {"query": symbol, **commodity}
+
+    stock_alias = _resolve_stock_alias(symbol)
+    if stock_alias:
+        asset_resolver_cache.set(symbol, stock_alias)
+        return {"query": symbol, **stock_alias}
 
     try:
         crypto = await asyncio.to_thread(_resolve_crypto_coingecko, symbol)
