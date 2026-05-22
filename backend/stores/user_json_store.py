@@ -22,7 +22,12 @@ def _load_json_document(path: str) -> dict[str, Any]:
             index += 1
         if index >= len(raw):
             break
-        document, index = decoder.raw_decode(raw, index)
+        try:
+            document, index = decoder.raw_decode(raw, index)
+        except json.JSONDecodeError:
+            if documents:
+                break
+            raise
         documents.append(document)
 
     if not documents:

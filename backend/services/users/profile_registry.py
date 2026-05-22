@@ -229,7 +229,12 @@ def _load_recoverable_json_object(json_path: Path) -> Dict[str, Any]:
             index += 1
         if index >= len(raw):
             break
-        document, index = decoder.raw_decode(raw, index)
+        try:
+            document, index = decoder.raw_decode(raw, index)
+        except json.JSONDecodeError:
+            if documents:
+                break
+            raise
         documents.append(document)
 
     if len(documents) == 1:
