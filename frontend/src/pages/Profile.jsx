@@ -2533,6 +2533,8 @@ export default function Profile() {
     ? Object.fromEntries(Object.entries(gptPayload.scenario_insights).map(([key, value]) => [key, typeof value === 'string' ? redactUserIds(value) : value]))
     : null
   const gptNextSteps = toArray(gptPayload?.immediate_next_steps).map(step => redactUserIds(step))
+  const gptRecommendedStrategy = redactUserIds(gptPayload?.recommended_strategy)
+  const gptStrategyAssessment = redactUserIds(gptPayload?.strategy_assessment)
   const scenarioCards = [
     { key:'bullish_case', label:'Bullish Case', text:gptScenarios?.bullish_case, color:'var(--green)' },
     { key:'base_case', label:'Base Case', text:gptScenarios?.base_case, color:'var(--gold)' },
@@ -3907,6 +3909,18 @@ export default function Profile() {
                   letterSpacing:'0.04em',
                 }}>
                   Tip: Switch to <span style={{ color:'var(--teal)' }}>Comprehensive</span> for more details.
+                </div>
+              )}
+
+              {(toText(gptRecommendedStrategy) || toText(gptStrategyAssessment)) && (
+                <div style={s.driverStrip}>
+                  <div style={s.driverEyebrow}>Recommended strategy</div>
+                  {toText(gptRecommendedStrategy) && (
+                    <div style={s.driverTitle}>{toText(gptRecommendedStrategy)}</div>
+                  )}
+                  {toText(gptStrategyAssessment) && (
+                    <div style={s.driverBody}>{toText(gptStrategyAssessment)}</div>
+                  )}
                 </div>
               )}
 

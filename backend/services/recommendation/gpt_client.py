@@ -71,6 +71,12 @@ def _build_prompt_payload(
     invested_total_usd = sum(float(position.get("market_value") or 0.0) for position in compact_portfolio)
     cash_balance_usd = round(convert_currency(cash_balance_sgd, "SGD", "USD"), 2)
     total_assets_context_usd = round(invested_total_usd + cash_balance_usd + manual_assets_usd, 2)
+    financial_context_totals = {
+        "invested_holdings": round(invested_total_usd, 2),
+        "cash": cash_balance_usd,
+        "manual_assets": manual_assets_usd,
+        "total_assets_for_allocation": total_assets_context_usd,
+    }
 
     payload = {
         "analysis_scope": normalized_scope,
@@ -79,6 +85,8 @@ def _build_prompt_payload(
             "age": user.get("age"),
             "country": user.get("country"),
             "profile_currency": user.get("currency") or "USD",
+            "investment_horizon": user.get("investment_horizon") or user.get("horizon"),
+            "goals": user.get("goals") or user.get("selected_goals") or [],
         },
         "risk_profile": user.get("risk_profile"),
         "financial_wellness_score": user.get("financial_wellness_score"),
@@ -96,12 +104,13 @@ def _build_prompt_payload(
         "manual_assets_total_usd": manual_assets_usd,
         "portfolio": scoped_portfolio,
         "asset_class_totals_usd": asset_class_totals,
-        "financial_context_totals_usd": {
-            "invested_holdings": round(invested_total_usd, 2),
-            "cash": cash_balance_usd,
-            "manual_assets": manual_assets_usd,
-            "total_assets_for_allocation": total_assets_context_usd,
-        },
+        "financial_context_totals_usd": financial_context_totals,
+        "strategy_evaluation_context": _build_strategy_evaluation_context(
+            user=user,
+            compact_portfolio=compact_portfolio,
+            asset_class_totals=asset_class_totals,
+            financial_context_totals=financial_context_totals,
+        ),
         "rule_based_recommendations": rule_based.get("recommendations", []),
         "requested_recommendation_count": limit,
     }
@@ -199,6 +208,162 @@ def _manual_assets_total_usd(user: Dict[str, Any]) -> float:
         if isinstance(item, dict):
             total += convert_currency(item.get("value") or 0.0, "SGD", "USD")
     return round(total, 2)
+
+
+def _risk_bucket(value: Any) -> str:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        normalized = str(value or "").strip().lower()
+        if normalized in {"low", "conservative"}:
+            return "low"
+        if normalized in {"high", "aggressive"}:
+            return "high"
+        return "balanced"
+    if numeric <= 33:
+        return "low"
+    if numeric >= 67:
+        return "high"
+    return "balanced"
+
+
+def _horizon_profile(value: Any) -> Dict[str, Any]:
+    raw = str(value or "").strip()
+    normalized = raw.replace("–", "-").replace("—", "-").lower()
+    if not normalized:
+        return {"label": "unknown", "min_years": None, "max_years": None, "bucket": "unknown"}
+    numbers = [int(match) for match in re.findall(r"\d+", normalized)]
+    if "10+" in normalized or "generational" in normalized:
+        return {"label": raw, "min_years": 10, "max_years": None, "bucket": "very_long"}
+    if len(numbers) >= 2:
+        min_years, max_years = numbers[0], numbers[1]
+    elif numbers:
+        min_years = max_years = numbers[0]
+    else:
+        min_years = max_years = None
+    if max_years is not None and max_years <= 2:
+        bucket = "short"
+    elif max_years is not None and max_years <= 5:
+        bucket = "medium"
+    elif min_years is not None and min_years >= 5:
+        bucket = "long"
+    else:
+        bucket = "unknown"
+    return {"label": raw, "min_years": min_years, "max_years": max_years, "bucket": bucket}
+
+
+def _top_position_weight(compact_portfolio: List[Dict[str, Any]]) -> float:
+    total = sum(float(position.get("market_value") or 0.0) for position in compact_portfolio)
+    if total <= 0:
+        return 0.0
+    largest = max((float(position.get("market_value") or 0.0) for position in compact_portfolio), default=0.0)
+    return round((largest / total) * 100, 2)
+
+
+def _portfolio_type(
+    *,
+    stock_weight: float,
+    cash_weight: float,
+    top_position_weight: float,
+    asset_class_count: int,
+    holding_count: int,
+    investor_type: str,
+) -> str:
+    if cash_weight >= 50:
+        return "cash_heavy"
+    if holding_count <= 2 and stock_weight >= 70:
+        return "simple_equity_core"
+    if top_position_weight >= 60:
+        return "concentrated"
+    if asset_class_count >= 3:
+        return "multi_asset"
+    if stock_weight >= 80:
+        return "equity_heavy"
+    if investor_type.lower() == "student":
+        return "early_stage_accumulation"
+    return "balanced_growth"
+
+
+def _build_strategy_evaluation_context(
+    *,
+    user: Dict[str, Any],
+    compact_portfolio: List[Dict[str, Any]],
+    asset_class_totals: Dict[str, float],
+    financial_context_totals: Dict[str, float],
+) -> Dict[str, Any]:
+    total_assets = float(financial_context_totals.get("total_assets_for_allocation") or 0.0)
+    cash_usd = float(financial_context_totals.get("cash") or 0.0)
+    invested_usd = float(financial_context_totals.get("invested_holdings") or 0.0)
+    stocks_usd = float(asset_class_totals.get("stocks") or 0.0)
+    active_asset_classes = [key for key, value in asset_class_totals.items() if float(value or 0.0) > 0]
+    investor_type = str(user.get("investor_type") or "Individual Investor")
+    horizon = _horizon_profile(user.get("investment_horizon") or user.get("horizon"))
+    cash_weight = round((cash_usd / total_assets) * 100, 2) if total_assets > 0 else 0.0
+    stock_weight = round((stocks_usd / total_assets) * 100, 2) if total_assets > 0 else 0.0
+    invested_weight = round((invested_usd / total_assets) * 100, 2) if total_assets > 0 else 0.0
+    concentration = _top_position_weight(compact_portfolio)
+    portfolio_type = _portfolio_type(
+        stock_weight=stock_weight,
+        cash_weight=cash_weight,
+        top_position_weight=concentration,
+        asset_class_count=len(active_asset_classes),
+        holding_count=len(compact_portfolio),
+        investor_type=investor_type,
+    )
+
+    return {
+        "risk_bucket": _risk_bucket(user.get("risk_profile")),
+        "investment_horizon": horizon,
+        "goals": user.get("goals") or user.get("selected_goals") or [],
+        "investor_type": investor_type,
+        "portfolio_type_hint": portfolio_type,
+        "metrics": {
+            "cash_weight_of_total_assets": cash_weight,
+            "invested_weight_of_total_assets": invested_weight,
+            "stock_weight_of_total_assets": stock_weight,
+            "top_position_weight_of_invested_holdings": concentration,
+            "holding_count": len(compact_portfolio),
+            "active_asset_classes": active_asset_classes,
+            "monthly_income_sgd": float(user.get("income") or 0.0),
+            "liability_sgd": float(user.get("liability") or 0.0),
+            "wellness_score": user.get("financial_wellness_score"),
+            "stress_index": user.get("financial_stress_index"),
+        },
+        "strategy_families_to_compare": [
+            {
+                "name": "cash-first defensive",
+                "best_when": "low liquidity, unstable or zero income, near-term goals, high stress, or student/early-stage profile",
+            },
+            {
+                "name": "simple market-cap indexing",
+                "best_when": "long horizon, limited need for complexity, desire for broad low-maintenance equity exposure",
+            },
+            {
+                "name": "goal-based buckets",
+                "best_when": "multiple goals or short/medium horizon money that should be separated from long-term investing",
+            },
+            {
+                "name": "Bogleheads three-fund or global balanced allocation",
+                "best_when": "need for broad equities plus bonds/cash aligned to risk and horizon",
+            },
+            {
+                "name": "core-satellite",
+                "best_when": "a diversified core already exists and satellites are small, intentional, and risk-budgeted",
+            },
+            {
+                "name": "factor or thematic tilts",
+                "best_when": "core is stable, horizon is long, risk tolerance supports tracking error, and tilt size is controlled",
+            },
+            {
+                "name": "income-focused allocation",
+                "best_when": "cashflow need, lower growth priority, or shorter horizon where distributions matter",
+            },
+            {
+                "name": "risk-balanced multi-asset",
+                "best_when": "moderate risk profile, need to reduce equity concentration, or resilience across market regimes",
+            },
+        ],
+    }
 
 
 def _stock_strategy_role(position: Dict[str, Any]) -> str:
@@ -367,21 +532,26 @@ def generate_gpt_recommendations(
         "Return personalized, data-driven actions and scenario-based insights. "
         "Use only the provided data and recommendations. "
         "Do not invent metrics or holdings. Keep output concise and practical. "
+        "Evaluate broad, proven portfolio construction approaches before recommending one. "
+        "Do not anchor on a strategy merely because it appears in the user prompt or holdings. "
         "If investor_type is Student, account for unstable income, smaller balances, learning needs, and liquidity before growth."
     )
 
     scope_instruction = (
         "Focus on the user's stock/equity sleeve only. Use cash, income, liabilities, wellness, and the wider portfolio as context. "
-        "Explicitly review whether a core/satellite or tilt/satellite approach appears sensible for the stock sleeve, without assuming either is always optimal. "
+        "Compare viable strategy families from strategy_evaluation_context, such as cash-first defensive, simple indexing, goal-based buckets, Bogleheads/global balanced, core-satellite, factor/thematic tilts, income-focused, and risk-balanced multi-asset. "
+        "Recommend core-satellite or factor/thematic tilts only if horizon, liquidity, risk, concentration, and portfolio type support them. "
         "Call out concentration, country/currency exposure, and which stock positions look like core, tilt, or satellite candidates based only on provided fields. "
         "When discussing allocation, distinguish stock_sleeve_weight_of_invested_holdings from stock_sleeve_weight_of_total_assets_including_cash; do not ignore cash."
         if normalized_scope == "stocks"
-        else "Review the full portfolio and financial profile holistically, including cash balance and liquidity before recommending growth actions."
+        else "Review the full portfolio and financial profile holistically, including cash balance, liquidity, risk, horizon, goals, and portfolio type before recommending a strategy."
     )
 
     user_prompt = (
         "Generate JSON with keys: "
-        "summary, top_recommendations, scenario_insights, immediate_next_steps. "
+        "summary, recommended_strategy, strategy_assessment, top_recommendations, scenario_insights, immediate_next_steps. "
+        "recommended_strategy must name one primary strategy or say 'no single strategy yet; stabilize first' when metrics do not support an investment strategy. "
+        "strategy_assessment must briefly compare at least three viable strategy families using strategy_evaluation_context metrics, and explain why the chosen strategy fits better than alternatives. "
         "top_recommendations must be an array of up to requested_recommendation_count items, "
         "each with: title, action, why, priority. "
         "scenario_insights should include bullish_case, base_case, bearish_case. "

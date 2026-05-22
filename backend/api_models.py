@@ -81,6 +81,8 @@ class SurveyProfileUpdateRequest(BaseModel):
     currency: str | None = None
     age: int | None = Field(default=None, ge=18, le=100)
     age_group: str | None = None
+    investment_horizon: str | None = None
+    goals: list[str] | None = None
 
 
 class UserProfileDetailsUpdateRequest(BaseModel):

@@ -565,6 +565,8 @@ export default function Survey() {
         investor_type: investorType,
         currency: country === 'Singapore' ? 'SGD' : 'USD',
         age: finalAge,
+        investment_horizon: horizon,
+        goals: Array.from(selectedGoals),
       }),
     })
     if (!profileRes.ok) {

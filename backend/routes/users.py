@@ -71,6 +71,8 @@ def build_router(
                 "investor_type": (payload.investor_type or "Individual Investor").strip(),
                 "currency": (payload.currency or "USD").strip().upper(),
             }
+            investment_horizon = (payload.investment_horizon or "").strip()
+            goals = [str(goal).strip() for goal in (payload.goals or []) if str(goal).strip()]
             if payload.age is not None:
                 updates["age"] = str(payload.age)
                 updates["age_group"] = user_store.age_to_group(int(payload.age))
@@ -95,9 +97,17 @@ def build_router(
                 user["country"] = updates.get("country", user.get("country", ""))
                 user["investor_type"] = updates.get("investor_type", user.get("investor_type", "Individual Investor"))
                 user["currency"] = updates.get("currency", user.get("currency", "USD"))
+                if investment_horizon:
+                    user["investment_horizon"] = investment_horizon
+                if goals:
+                    user["goals"] = goals
                 users[user_id] = user
                 user_store.write_users_data(users)
 
+            if investment_horizon:
+                updates["investment_horizon"] = investment_horizon
+            if goals:
+                updates["goals"] = goals
             return {"status": "ok", "user_id": user_id, "updates": updates}
         except HTTPException:
             raise
