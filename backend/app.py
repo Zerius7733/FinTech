@@ -1,3 +1,4 @@
+import shutil
 from typing import Any
 
 from fastapi import FastAPI
@@ -21,6 +22,20 @@ def _safe_summary(result: dict[str, Any]) -> dict[str, Any]:
     return {"status": "ok", "user_count": len([k for k in result.keys() if not k.startswith("_")])}
 
 
+def _copy_seed_file(src: Any, dst: Any) -> None:
+    if not src.exists() or dst.exists():
+        return
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst)
+
+
+def _copy_seed_tree(src: Any, dst: Any) -> None:
+    if not src.exists() or dst.exists():
+        return
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(src, dst)
+
+
 def _build_cors_options() -> dict[str, Any]:
     return {
         "allow_origins": settings.config.parse_csv_env(
@@ -35,6 +50,31 @@ def _build_cors_options() -> dict[str, Any]:
 
 
 def _prepare_persistence() -> None:
+    settings.constants.JSON_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    settings.constants.CSV_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    if settings.constants.DATA_DIR != settings.constants.REPO_DATA_DIR:
+        _copy_seed_tree(
+            settings.constants.REPO_DATA_DIR / "json" / "user_portfolio",
+            settings.constants.JSON_DATA_DIR / "user_portfolio",
+        )
+        for filename in (
+            "user.json",
+            "auth_state.json",
+            "screenshot_imports.json",
+            "stock_market_snapshot.json",
+            "stock_market_rankings.json",
+            "bond_market_snapshot.json",
+            "bond_market_rankings.json",
+            "real_asset_market_snapshot.json",
+            "real_asset_market_rankings.json",
+            "commodity_market_snapshot.json",
+            "commodity_market_rankings.json",
+            "coingecko_markets_cache.json",
+        ):
+            _copy_seed_file(settings.constants.REPO_DATA_DIR / "json" / filename, settings.constants.JSON_DATA_DIR / filename)
+        _copy_seed_file(settings.constants.REPO_DATA_DIR / "csv" / "users.csv", settings.constants.CSV_DATA_DIR / "users.csv")
+
     if settings.constants.USER_JSON_PATH.exists():
         api.rewrite_user_profiles_with_order(settings.constants.USER_JSON_PATH)
     if settings.constants.LOGIN_CSV_PATH != settings.constants.ASSETS_CSV_PATH:

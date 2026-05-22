@@ -5,10 +5,11 @@ from pathlib import Path
 
 # Static paths and app constants.
 BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_DIR = BASE_DIR / "data"
+REPO_DATA_DIR = BASE_DIR / "data"
+DATA_DIR = Path(os.getenv("PERSIST_DATA_DIR", str(REPO_DATA_DIR))).expanduser()
 JSON_DATA_DIR = DATA_DIR / "json"
 CSV_DATA_DIR = DATA_DIR / "csv"
-KNOWLEDGE_BASE_DIR = DATA_DIR / "knowledge_base"
+KNOWLEDGE_BASE_DIR = REPO_DATA_DIR / "knowledge_base"
 
 USER_JSON_PATH = JSON_DATA_DIR / "user.json"
 USER_PORTFOLIO_DIR = JSON_DATA_DIR / "user_portfolio"
