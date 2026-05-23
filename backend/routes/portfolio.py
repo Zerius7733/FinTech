@@ -500,13 +500,13 @@ def build_router(
             if not isinstance(user, dict):
                 raise HTTPException(status_code=404, detail=f"user_id '{user_id}' not found")
 
-            portfolio = user.get("portfolio")
-            if not isinstance(portfolio, dict):
+            portfolio_data = user.get("portfolio")
+            if not isinstance(portfolio_data, dict):
                 raise HTTPException(status_code=400, detail="user portfolio is not in expected format")
 
             bucket = normalize_portfolio_bucket(asset_class)
 
-            entries = portfolio.get(bucket, [])
+            entries = portfolio_data.get(bucket, [])
             if not isinstance(entries, list):
                 raise HTTPException(status_code=400, detail=f"portfolio bucket '{bucket}' is invalid")
 
@@ -526,8 +526,8 @@ def build_router(
                 raise HTTPException(status_code=404, detail=f"holding '{symbol}' not found in {bucket}")
 
             entries.pop(remove_index)
-            portfolio[bucket] = entries
-            user["portfolio"] = portfolio
+            portfolio_data[bucket] = entries
+            user["portfolio"] = portfolio_data
             users_data[user_id] = portfolio.recalculate_user_financials(user)
             user_store.write_users_data(users_data)
             return {"status": "ok", "user_id": user_id, "asset_class": bucket, "symbol": symbol, "user": users_data[user_id]}
