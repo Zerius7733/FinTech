@@ -225,7 +225,11 @@ def _load_recoverable_json_object(json_path: Path) -> Dict[str, Any]:
     if not raw.strip():
         return {}
 
-    decoder = json.JSONDecoder()
+    # Production persistence is file-backed and can be left with malformed JSON
+    # after an interrupted write. Non-strict parsing accepts raw control
+    # characters inside strings, while the multi-document loop recovers from
+    # duplicated JSON objects appended to the same file.
+    decoder = json.JSONDecoder(strict=False)
     index = 0
     documents: list[Any] = []
     while index < len(raw):
@@ -238,7 +242,7 @@ def _load_recoverable_json_object(json_path: Path) -> Dict[str, Any]:
         except json.JSONDecodeError:
             if documents:
                 break
-            raise
+            return {}
         documents.append(document)
 
     if len(documents) == 1:
@@ -266,6 +270,8 @@ def _atomic_write_json(json_path: Path, data: Dict[str, Any]) -> None:
 
 def rewrite_user_profiles_with_order(json_path: Path) -> None:
     data = _load_recoverable_json_object(json_path)
+    if not data and json_path.exists() and json_path.read_text(encoding="utf-8-sig").strip():
+        return
     rewritten = normalize_users_data(data)
     _atomic_write_json(json_path, rewritten)
 
