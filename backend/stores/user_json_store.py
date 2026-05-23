@@ -14,7 +14,7 @@ def _load_json_document(path: str) -> dict[str, Any]:
         raw = f.read()
     if not raw.strip():
         return {}
-    decoder = json.JSONDecoder()
+    decoder = json.JSONDecoder(strict=False)
     index = 0
     documents: list[Any] = []
     while index < len(raw):
@@ -27,7 +27,7 @@ def _load_json_document(path: str) -> dict[str, Any]:
         except json.JSONDecodeError:
             if documents:
                 break
-            raise
+            return {}
         documents.append(document)
 
     if not documents:
