@@ -1572,6 +1572,7 @@ function FinancialManagerModal({
   onSubmit,
   onUpdate,
   onRemove,
+  error,
   busy,
 }) {
   const [assetForm, setAssetForm] = useState({ label:'', category:'real_estate', value:'' })
@@ -1846,6 +1847,7 @@ function FinancialManagerModal({
           <div>
             <div style={fm.sectionTitle}>{currentTab.title}</div>
             <div style={fm.sectionBody}>{currentTab.description}</div>
+            {error && <div style={fm.inlineError}>{error}</div>}
             {editingItem && (
               <div style={fm.editingBanner}>
                 Editing {editingItem.label || editingItem.symbol}
@@ -4496,6 +4498,7 @@ export default function Profile() {
           onSubmit={submitFinancialItem}
           onUpdate={updateFinancialItem}
           onRemove={removeFinancialItem}
+          error={error}
           busy={financialBusy}
         />
         <YearWrappedModal
@@ -5608,6 +5611,17 @@ const fm = {
     cursor:'pointer',
     fontFamily:'var(--font-display)',
     fontWeight:700,
+  },
+  inlineError: {
+    marginTop:10,
+    border:'1px solid rgba(248,113,113,0.22)',
+    borderRadius:12,
+    background:'rgba(248,113,113,0.08)',
+    color:'var(--red)',
+    padding:'10px 12px',
+    fontFamily:'var(--font-mono)',
+    fontSize:'0.72rem',
+    lineHeight:1.5,
   },
   form: {
     display:'grid',

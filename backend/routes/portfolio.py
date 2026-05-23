@@ -63,6 +63,26 @@ def build_router(
     def empty_portfolio() -> dict[str, list[Any]]:
         return {"stocks": [], "bonds": [], "real_assets": [], "cryptos": [], "commodities": []}
 
+    def comparable_holding_symbols(value: Any, bucket: str) -> set[str]:
+        raw = str(value or "").strip().lower()
+        if not raw:
+            return set()
+        symbols = {raw}
+        if bucket == "cryptos":
+            for suffix in ("-usd", "/usd", "usd"):
+                if raw.endswith(suffix):
+                    symbols.add(raw[: -len(suffix)])
+        if bucket == "stocks" and raw in {"es3"}:
+            symbols.add("es3.si")
+        return {item for item in symbols if item}
+
+    def holding_matches_symbol(item: dict[str, Any], target: str, bucket: str) -> bool:
+        targets = comparable_holding_symbols(target, bucket)
+        candidates: set[str] = set()
+        for key in ("symbol", "name", "ticker", "id"):
+            candidates.update(comparable_holding_symbols(item.get(key), bucket))
+        return bool(targets & candidates)
+
     @router.get(
         "/users/{user_id}/danger/export",
         tags=["Users"],
@@ -498,7 +518,7 @@ def build_router(
                 (
                     idx
                     for idx, item in enumerate(entries)
-                    if str(item.get("symbol", "")).strip().lower() == target
+                    if isinstance(item, dict) and holding_matches_symbol(item, target, bucket)
                 ),
                 None,
             )
@@ -543,7 +563,14 @@ def build_router(
                 raise HTTPException(status_code=400, detail=f"portfolio bucket '{bucket}' is invalid")
 
             target = symbol.strip().lower()
-            item = next((entry for entry in entries if str(entry.get("symbol", "")).strip().lower() == target), None)
+            item = next(
+                (
+                    entry
+                    for entry in entries
+                    if isinstance(entry, dict) and holding_matches_symbol(entry, target, bucket)
+                ),
+                None,
+            )
             if item is None:
                 raise HTTPException(status_code=404, detail=f"holding '{symbol}' not found in {bucket}")
 
