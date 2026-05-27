@@ -205,7 +205,14 @@ def _console_email_mode_enabled() -> bool:
     return str(os.getenv("AUTH_EMAIL_MODE", "")).strip().lower() == "console"
 
 
+def _email_delivery_enabled() -> bool:
+    return str(os.getenv("AUTH_EMAIL_DELIVERY_ENABLED", "1")).strip().lower() not in {"0", "false", "no", "off"}
+
+
 def _send_email_via_smtp(recipient_email: str, subject: str, text_body: str) -> None:
+    if not _email_delivery_enabled():
+        print("[auth-email][disabled]", {"to": recipient_email, "subject": subject})
+        return
     if _console_email_mode_enabled():
         print("[auth-email][console]", {"to": recipient_email, "subject": subject, "body": text_body})
         return
@@ -463,13 +470,16 @@ def _build_otp_response(email: str, *, expires_at: str, otp_code: str | None = N
         "resend_available_in_seconds": OTP_RESEND_COOLDOWN_SECONDS,
         "otp_length": OTP_LENGTH,
     }
-    if _console_email_mode_enabled() and otp_code:
-        response["delivery_mode"] = "console"
+    if otp_code and (_console_email_mode_enabled() or not _email_delivery_enabled()):
+        response["delivery_mode"] = "disabled" if not _email_delivery_enabled() else "console"
         response["otp_code"] = otp_code
-        response["delivery_notice"] = (
-            "Email OTP delivery is still under development and requires funding to run in production. "
-            "For now, use the OTP shown here and in the backend console."
-        )
+        if not _email_delivery_enabled():
+            response["delivery_notice"] = "Email delivery is disabled. Use the OTP shown here for testing."
+        else:
+            response["delivery_notice"] = (
+                "Email OTP delivery is still under development and requires funding to run in production. "
+                "For now, use the OTP shown here and in the backend console."
+            )
     return response
 
 
@@ -582,7 +592,7 @@ def start_password_reset(*, login_csv_path: Path, auth_state_path: Path, identif
         _send_email_via_smtp(email, subject, body)
         state["password_resets"][email.lower()] = {"user_id": (row.get("user_id") or "").strip(), "email": email, "otp_hash": _hash_otp_code(email, otp_code), "otp_expires_at": expires_at, "otp_sent_at": _utc_now_iso(), "otp_attempts_remaining": OTP_MAX_ATTEMPTS}
         _atomic_write_json(auth_state_path, state)
-    return _build_otp_response(email, expires_at=expires_at)
+    return _build_otp_response(email, expires_at=expires_at, otp_code=otp_code)
 
 
 def reset_password_with_otp(*, login_csv_path: Path, auth_state_path: Path, email: str, otp_code: str, new_password: str) -> dict[str, Any]:
