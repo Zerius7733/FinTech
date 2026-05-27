@@ -4,6 +4,33 @@ from typing import Any
 import backend.settings.constants as const
 
 
+CANONICAL_USER_CSV_FIELDS = [
+    "user_id",
+    "created_at",
+    "username",
+    "password",
+    "email",
+    "email_verified",
+    "password_updated_at",
+    "name",
+    "dbs",
+    "uob",
+    "ocbc",
+    "other_banks",
+    const.SYNCED_ACCOUNT_BALANCE_FIELD,
+    const.SYNCED_BALANCE_RELOAD_COUNT_FIELD,
+    "liability",
+    "income",
+    "estate",
+    "expense",
+    "age",
+    "age_group",
+    "country",
+    "investor_type",
+    "currency",
+]
+
+
 def _safe_float(value: Any) -> float | None:
     try:
         number = float(value)
@@ -22,33 +49,12 @@ def _safe_int(value: Any, default: int = 0) -> int:
 
 
 def ensure_users_csv_fieldnames(fieldnames: list[str]) -> list[str]:
-    required = [
-        "user_id",
-        "created_at",
-        "username",
-        "password",
-        "email",
-        "name",
-        "dbs",
-        "uob",
-        "ocbc",
-        "other_banks",
-        const.SYNCED_ACCOUNT_BALANCE_FIELD,
-        const.SYNCED_BALANCE_RELOAD_COUNT_FIELD,
-        "liability",
-        "income",
-        "estate",
-        "expense",
-        "age",
-        "age_group",
-        "country",
-        "investor_type",
-        "currency",
-    ]
-    for key in required:
-        if key not in fieldnames:
-            fieldnames.append(key)
-    return fieldnames
+    normalized = [str(field or "").lstrip("\ufeff") for field in fieldnames if str(field or "").strip()]
+    merged = CANONICAL_USER_CSV_FIELDS[:]
+    for key in normalized:
+        if key not in merged:
+            merged.append(key)
+    return merged
 
 
 def read_synced_account_balance_from_csv_row(row: dict[str, Any]) -> float:
@@ -90,30 +96,6 @@ def load_users_csv_lookup() -> dict[str, dict[str, str]]:
 
 def sync_user_to_assets_csv(user_id: str, user: dict[str, Any]) -> None:
     csv_path = const.ASSETS_CSV_PATH
-    default_headers = [
-        "user_id",
-        "created_at",
-        "username",
-        "password",
-        "email",
-        "name",
-        "dbs",
-        "uob",
-        "ocbc",
-        "other_banks",
-        const.SYNCED_ACCOUNT_BALANCE_FIELD,
-        const.SYNCED_BALANCE_RELOAD_COUNT_FIELD,
-        "liability",
-        "income",
-        "estate",
-        "expense",
-        "age",
-        "age_group",
-        "country",
-        "investor_type",
-        "currency",
-    ]
-
     if csv_path.exists():
         with open(csv_path, "r", encoding="utf-8", newline="") as f:
             reader = csv.DictReader(f)
@@ -121,7 +103,7 @@ def sync_user_to_assets_csv(user_id: str, user: dict[str, Any]) -> None:
             fieldnames = list(reader.fieldnames or [])
     else:
         rows = []
-        fieldnames = default_headers[:]
+        fieldnames = CANONICAL_USER_CSV_FIELDS[:]
 
     fieldnames = ensure_users_csv_fieldnames(fieldnames)
 
@@ -175,12 +157,7 @@ def update_user_csv_profile(user_id: str, updates: dict[str, Any]) -> None:
             fieldnames = list(reader.fieldnames or [])
     else:
         rows = []
-        fieldnames = [
-            "user_id", "created_at", "username", "password", "email", "name",
-            "dbs", "uob", "ocbc", "other_banks", const.SYNCED_ACCOUNT_BALANCE_FIELD, const.SYNCED_BALANCE_RELOAD_COUNT_FIELD,
-            "liability", "income", "estate", "expense",
-            "age", "age_group", "country",
-        ]
+        fieldnames = CANONICAL_USER_CSV_FIELDS[:]
 
     fieldnames = ensure_users_csv_fieldnames(fieldnames)
 

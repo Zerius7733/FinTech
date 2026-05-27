@@ -2,77 +2,42 @@ import csv
 from pathlib import Path
 from typing import Dict
 
-USER_CSV_FIELDS = [
-    "user_id",
-    "username",
-    "password",
-    "email",
-    "name",
-    "dbs",
-    "uob",
-    "ocbc",
-    "other_banks",
-    "synced_account_balance",
-    "synced_balance_reload_count",
-    "liability",
-    "income",
-    "estate",
-    "expense",
-    "age",
-    "age_group",
-    "country",
-]
+from backend.stores.user_csv_store import CANONICAL_USER_CSV_FIELDS, ensure_users_csv_fieldnames
 
 
-def _load_rows(csv_path: Path) -> list[Dict[str, str]]:
+def _load_rows_with_fieldnames(csv_path: Path) -> tuple[list[str], list[Dict[str, str]]]:
     if not csv_path.exists():
-        return []
+        return CANONICAL_USER_CSV_FIELDS[:], []
     with open(csv_path, "r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        return [row for row in reader]
+        fieldnames = ensure_users_csv_fieldnames(list(reader.fieldnames or []))
+        return fieldnames, [row for row in reader]
 
 
-def _write_rows(csv_path: Path, rows: list[Dict[str, str]]) -> None:
+def _write_rows(csv_path: Path, rows: list[Dict[str, str]], fieldnames: list[str]) -> None:
+    fieldnames = ensure_users_csv_fieldnames(fieldnames)
     with open(csv_path, "w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=USER_CSV_FIELDS)
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for row in rows:
-            writer.writerow({key: row.get(key, "") for key in USER_CSV_FIELDS})
+            writer.writerow({key: row.get(key, "") for key in fieldnames})
 
 
 def _ensure_csv_exists(csv_path: Path) -> None:
     if csv_path.exists():
         return
     with open(csv_path, "w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=USER_CSV_FIELDS)
+        writer = csv.DictWriter(f, fieldnames=CANONICAL_USER_CSV_FIELDS)
         writer.writeheader()
 
 
 def add_default_assets_row(csv_path: Path, user_id: str, name: str) -> None:
     _ensure_csv_exists(csv_path)
-    rows = _load_rows(csv_path)
+    fieldnames, rows = _load_rows_with_fieldnames(csv_path)
     existing = next((row for row in rows if (row.get("user_id") or "").strip().lower() == user_id.strip().lower()), None)
     if existing is None:
-        existing = {
-            "user_id": user_id,
-            "username": "",
-            "password": "",
-            "email": "",
-            "name": name,
-            "dbs": "0",
-            "uob": "0",
-            "ocbc": "0",
-            "other_banks": "0",
-            "synced_account_balance": "0",
-            "synced_balance_reload_count": "0",
-            "liability": "0",
-            "income": "0",
-            "estate": "0",
-            "expense": "0",
-            "age": "",
-            "age_group": "",
-            "country": "",
-        }
+        existing = {key: "" for key in fieldnames}
+        existing.update({"user_id": user_id, "name": name})
         rows.append(existing)
     else:
         if not (existing.get("name") or "").strip():
@@ -80,8 +45,12 @@ def add_default_assets_row(csv_path: Path, user_id: str, name: str) -> None:
         for key in ("dbs", "uob", "ocbc", "other_banks", "synced_account_balance", "synced_balance_reload_count", "liability", "income", "estate", "expense"):
             if (existing.get(key) or "").strip() == "":
                 existing[key] = "0"
-        for key in ("username", "password", "email", "age", "age_group", "country"):
+        for key in ("username", "password", "email", "email_verified", "password_updated_at", "age", "age_group", "country", "investor_type", "currency"):
             if key not in existing:
                 existing[key] = ""
 
-    _write_rows(csv_path, rows)
+    for key in ("dbs", "uob", "ocbc", "other_banks", "synced_account_balance", "synced_balance_reload_count", "liability", "income", "estate", "expense"):
+        if (existing.get(key) or "").strip() == "":
+            existing[key] = "0"
+
+    _write_rows(csv_path, rows, fieldnames)

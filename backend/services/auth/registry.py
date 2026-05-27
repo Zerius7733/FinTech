@@ -14,11 +14,9 @@ from typing import Any
 
 from email_validator import EmailNotValidError, validate_email
 
-BASE_USER_CSV_FIELDS = [
-    "user_id", "created_at", "username", "password", "email", "email_verified", "password_updated_at",
-    "name", "dbs", "uob", "ocbc", "other_banks", "synced_account_balance", "synced_balance_reload_count",
-    "liability", "income", "estate", "expense", "age", "age_group", "country",
-]
+from backend.stores.user_csv_store import CANONICAL_USER_CSV_FIELDS, ensure_users_csv_fieldnames
+
+BASE_USER_CSV_FIELDS = CANONICAL_USER_CSV_FIELDS
 
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_UPPER_RE = re.compile(r"[A-Z]")
@@ -78,11 +76,7 @@ def _normalize_created_at(value: str | None) -> str:
 
 
 def _merge_fieldnames(existing_fieldnames: list[str]) -> list[str]:
-    merged = [str(field or "").lstrip("\ufeff") for field in existing_fieldnames if str(field or "").strip()]
-    for field in BASE_USER_CSV_FIELDS:
-        if field not in merged:
-            merged.append(field)
-    return merged
+    return ensure_users_csv_fieldnames(existing_fieldnames)
 
 
 def _load_login_rows_with_fieldnames(login_csv_path: Path) -> tuple[list[str], list[dict[str, str]]]:
@@ -90,7 +84,7 @@ def _load_login_rows_with_fieldnames(login_csv_path: Path) -> tuple[list[str], l
         return BASE_USER_CSV_FIELDS[:], []
     with open(login_csv_path, "r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        fieldnames = _merge_fieldnames(list(reader.fieldnames or []))
+        fieldnames = [str(field or "").lstrip("\ufeff") for field in list(reader.fieldnames or []) if str(field or "").strip()]
         rows = []
         for row in reader:
             rows.append({str(key or "").lstrip("\ufeff"): value or "" for key, value in (row or {}).items()})
