@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-ARG VITE_API_URL=https://fintech-production-d308.up.railway.app
+ARG VITE_API_URL=https://web-production-42934.up.railway.app
 ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build
 
